@@ -1,12 +1,37 @@
+import type { SocialPlatform } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { demoProjectView, type ProjectPageView } from "@/lib/demo-project";
+import { demoProjectView, type DemoSocial, type ProjectPageView } from "@/lib/demo-project";
+import { mapProjectRowToView } from "@/lib/map-project-row";
 import { prisma } from "@/lib/prisma";
+import { projectStatusLabel } from "@/lib/project-status";
+import { socialPlatformLabel } from "@/lib/social-platform";
+import { updateSourceTypeLabel } from "@/lib/update-source";
 
 export const dynamic = "force-dynamic";
 
+const SOCIAL_ORDER: SocialPlatform[] = [
+  "WEIBO",
+  "WECHAT_OFFICIAL",
+  "WECHAT_CHANNELS",
+  "DOUYIN",
+  "XIAOHONGSHU",
+  "BILIBILI",
+  "X",
+  "DISCORD",
+  "REDDIT",
+];
+
+function sortSocials(socials: DemoSocial[]): DemoSocial[] {
+  return [...socials].sort((a, b) => {
+    const ia = SOCIAL_ORDER.indexOf(a.platform);
+    const ib = SOCIAL_ORDER.indexOf(b.platform);
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+  });
+}
+
 async function loadFromDb(slug: string): Promise<ProjectPageView | null> {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL?.trim()) {
     return null;
   }
   try {
@@ -14,71 +39,35 @@ async function loadFromDb(slug: string): Promise<ProjectPageView | null> {
       where: { slug },
       include: {
         socialAccounts: true,
-        updates: { orderBy: { occurredAt: "desc" }, take: 20 },
+        updates: { orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }], take: 20 },
         githubSnapshots: { orderBy: { fetchedAt: "desc" }, take: 1 },
       },
     });
     if (!row) {
       return null;
     }
-    const snap = row.githubSnapshots[0];
-    return {
-      slug: row.slug,
-      name: row.name,
-      tagline: row.tagline ?? undefined,
-      description: row.description ?? "",
-      websiteUrl: row.websiteUrl ?? undefined,
-      githubUrl: row.githubUrl ?? undefined,
-      githubSnapshot: snap
-        ? {
-            repoFullName: snap.repoFullName,
-            defaultBranch: snap.defaultBranch ?? undefined,
-            stars: snap.stars,
-            forks: snap.forks,
-            openIssues: snap.openIssues,
-            watchers: snap.watchers,
-            commitCount7d: snap.commitCount7d,
-            commitCount30d: snap.commitCount30d,
-            contributorsCount: snap.contributorsCount,
-            lastCommitAt: snap.lastCommitAt ?? undefined,
-          }
-        : {
-            repoFullName: row.githubUrl?.replace("https://github.com/", "") ?? "—",
-            defaultBranch: "main",
-            stars: 0,
-            forks: 0,
-            openIssues: 0,
-            watchers: 0,
-            commitCount7d: 0,
-            commitCount30d: 0,
-            contributorsCount: 0,
-          },
-      socials: row.socialAccounts.map((s) => ({
-        platform: s.platform,
-        accountName: s.accountName,
-        accountUrl: s.accountUrl ?? undefined,
-      })),
-      updates: row.updates.map((u) => ({
-        sourceType: u.sourceType,
-        title: u.title,
-        summary: u.summary ?? undefined,
-        sourceUrl: u.sourceUrl ?? undefined,
-        occurredAt: u.occurredAt ?? u.createdAt,
-      })),
-      about: row.description ?? "介绍：暂无更多说明。",
-    };
-  } catch {
+    return mapProjectRowToView(row);
+  } catch (e) {
+    console.error("[project page] loadFromDb", e);
     return null;
   }
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const data =
-    slug === demoProjectView.slug ? demoProjectView : await loadFromDb(slug);
+  const fromDb = await loadFromDb(slug);
+  const data: ProjectPageView | null =
+    fromDb ?? (slug === demoProjectView.slug ? demoProjectView : null);
+
   if (!data) {
     notFound();
   }
+
+  const socials = sortSocials(data.socials);
+
+  const descriptionText = data.description.trim()
+    ? data.description
+    : "暂无项目介绍";
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -95,13 +84,52 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           {data.tagline ? (
             <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">{data.tagline}</p>
           ) : null}
+          <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <div>
+              <dt className="inline text-zinc-500">slug：</dt>
+              <dd className="inline font-mono text-zinc-800 dark:text-zinc-200">{data.slug}</dd>
+            </div>
+            <div>
+              <dt className="inline text-zinc-500">状态：</dt>
+              <dd className="inline">{projectStatusLabel(data.status)}</dd>
+            </div>
+            <div>
+              <dt className="inline text-zinc-500">创建时间：</dt>
+              <dd className="inline">{data.createdAt.toLocaleString("zh-CN")}</dd>
+            </div>
+          </dl>
         </header>
 
-        <section className="mb-10 space-y-2" aria-labelledby="intro-heading">
-          <h2 id="intro-heading" className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            简介
+        <section className="mb-10" aria-labelledby="links-heading">
+          <h2 id="links-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+            链接
           </h2>
-          <p className="leading-relaxed text-zinc-700 dark:text-zinc-300">{data.description}</p>
+          <ul className="flex flex-wrap gap-4 text-sm">
+            <li>
+              {data.githubUrl ? (
+                <a
+                  href={data.githubUrl}
+                  className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                >
+                  GitHub
+                </a>
+              ) : (
+                <span className="text-zinc-400">未填写 GitHub</span>
+              )}
+            </li>
+            <li>
+              {data.websiteUrl ? (
+                <a
+                  href={data.websiteUrl}
+                  className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                >
+                  官网
+                </a>
+              ) : (
+                <span className="text-zinc-400">未填写官网</span>
+              )}
+            </li>
+          </ul>
         </section>
 
         <section className="mb-10" aria-labelledby="github-heading">
@@ -120,6 +148,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 打开仓库
               </a>
             ) : null}
+            <p className="mt-3 text-xs text-zinc-500">
+              指标数据来自 GitHub 仓库快照；新建项目默认无自动同步，故可能显示为 0。
+            </p>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <div>
                 <dt className="text-zinc-500">Stars</dt>
@@ -163,18 +194,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <section className="mb-10" aria-labelledby="social-heading">
           <h2 id="social-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            社媒卡片
+            社媒
           </h2>
           <ul className="grid gap-3 sm:grid-cols-2">
-            {data.socials.length === 0 ? (
+            {socials.length === 0 ? (
               <li className="text-sm text-zinc-500">暂无社媒账号</li>
             ) : (
-              data.socials.map((s) => (
+              socials.map((s) => (
                 <li
                   key={`${s.platform}-${s.accountName}`}
                   className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
                 >
-                  <p className="text-xs uppercase text-zinc-500">{s.platform}</p>
+                  <p className="text-xs font-medium text-zinc-500">{socialPlatformLabel(s.platform)}</p>
                   {s.accountUrl ? (
                     <a
                       href={s.accountUrl}
@@ -197,7 +228,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </h2>
           <ul className="space-y-4">
             {data.updates.length === 0 ? (
-              <li className="text-sm text-zinc-500">暂无动态</li>
+              <li className="text-sm text-zinc-500">暂无项目动态</li>
             ) : (
               data.updates.map((u, i) => (
                 <li
@@ -205,7 +236,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
                 >
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-xs font-medium uppercase text-zinc-500">{u.sourceType}</span>
+                    <span className="text-xs font-medium text-zinc-500">
+                      {updateSourceTypeLabel(u.sourceType)}
+                    </span>
                     <time className="text-xs text-zinc-400">
                       {u.occurredAt.toLocaleString("zh-CN")}
                     </time>
@@ -228,9 +261,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <section aria-labelledby="about-heading">
           <h2 id="about-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            介绍
+            项目介绍
           </h2>
-          <p className="leading-relaxed text-zinc-700 dark:text-zinc-300">{data.about}</p>
+          <p className="leading-relaxed text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+            {descriptionText}
+          </p>
         </section>
       </div>
     </div>

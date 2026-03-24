@@ -13,6 +13,25 @@ enum ProjectStatus {
   ARCHIVED
 }
 
+enum SocialPlatform {
+  WECHAT_OFFICIAL
+  WECHAT_CHANNELS
+  DOUYIN
+  XIAOHONGSHU
+  WEIBO
+  BILIBILI
+  X
+  DISCORD
+  REDDIT
+}
+
+enum ProjectUpdateSourceType {
+  MANUAL
+  GITHUB
+  SOCIAL
+  SYSTEM
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -30,7 +49,7 @@ model Project {
   logoUrl     String?
   websiteUrl  String?
   githubUrl   String?
-  status      ProjectStatus @default(DRAFT)
+  status      ProjectStatus @default(ACTIVE)
   isPublic    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -41,27 +60,27 @@ model Project {
 }
 
 model ProjectSocialAccount {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  platform    String
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  platform    SocialPlatform
   accountName String
   accountUrl  String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime       @default(now())
 
   @@index([projectId])
 }
 
 model ProjectUpdate {
-  id          String    @id @default(cuid())
+  id          String                  @id @default(cuid())
   projectId   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sourceType  String
+  project     Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceType  ProjectUpdateSourceType
   title       String
   summary     String?
   sourceUrl   String?
   occurredAt  DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime                @default(now())
 
   @@index([projectId])
 }

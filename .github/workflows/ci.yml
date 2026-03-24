@@ -9,7 +9,25 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: muhub_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d muhub_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/muhub_ci?schema=public
 
     steps:
       - name: Checkout
@@ -38,10 +56,11 @@ jobs:
       - name: Prisma generate
         run: pnpm exec prisma generate
 
+      - name: Prisma migrate deploy
+        run: pnpm exec prisma migrate deploy
+
       - name: Build
         run: pnpm build
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/ci_placeholder?schema=public
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install chromium --with-deps
@@ -50,3 +69,4 @@ jobs:
         run: pnpm test:e2e
         env:
           CI: true
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/muhub_ci?schema=public

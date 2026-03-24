@@ -52,6 +52,8 @@ pnpm dev
 pnpm exec prisma generate
 ```
 
+配置好数据库并迁移后，可在 **`/dashboard/projects/new`** 创建项目，并在 **`/projects/<slug>`** 查看写入结果（单人开发态，无认证）。
+
 ## 常见问题
 
 - **Prisma Client 过期**：改 schema 后执行 `pnpm exec prisma generate`。
