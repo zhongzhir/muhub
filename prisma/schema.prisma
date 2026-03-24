@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  tagline     String?
+  description String?
+  logoUrl     String?
+  websiteUrl  String?
+  githubUrl   String?
+  status      ProjectStatus @default(DRAFT)
+  isPublic    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  socialAccounts  ProjectSocialAccount[]
+  updates         ProjectUpdate[]
+  githubSnapshots GithubRepoSnapshot[]
+}
+
+model ProjectSocialAccount {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  platform    String
+  accountName String
+  accountUrl  String?
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model ProjectUpdate {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceType  String
+  title       String
+  summary     String?
+  sourceUrl   String?
+  occurredAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([projectId])
+}
+
+model GithubRepoSnapshot {
+  id                String    @id @default(cuid())
+  projectId         String
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  repoFullName      String
+  defaultBranch     String?
+  stars             Int       @default(0)
+  forks             Int       @default(0)
+  openIssues        Int       @default(0)
+  watchers          Int       @default(0)
+  commitCount7d     Int       @default(0)
+  commitCount30d    Int       @default(0)
+  contributorsCount Int       @default(0)
+  lastCommitAt      DateTime?
+  fetchedAt         DateTime  @default(now())
+
+  @@index([projectId])
+}
