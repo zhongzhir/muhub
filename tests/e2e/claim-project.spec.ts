@@ -19,7 +19,7 @@ test.describe("项目认领", () => {
     await page.getByTestId("claim-project-button").click();
     await expect(page.getByRole("heading", { name: "认领项目" })).toBeVisible();
 
-    await page.locator("#repoUrl").fill(github);
+    await page.getByTestId("repo-url-input").fill(github);
     await page.getByRole("button", { name: "认领项目" }).click();
 
     await page.waitForURL(`**/projects/${slug}`);

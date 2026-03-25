@@ -46,6 +46,7 @@ export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
         </label>
         <input
           id="repoUrl"
+          data-testid="repo-url-input"
           name="repoUrl"
           type="url"
           required
