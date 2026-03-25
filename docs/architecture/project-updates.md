@@ -20,7 +20,7 @@
 
 ## 展示层
 
-- **`lib/project-updates.ts`**：`mapSourceTypeToOrigin`、`getUpdateStreamPrimaryLabel`、`buildProjectUpdateStreamModel`（badge 类名 + 主文案）。
+- **`lib/project-updates.ts`**：`mapSourceTypeToOrigin`、`getUpdateStreamPrimaryLabel`、`getUpdateSourceBadgeLabel`、`buildProjectUpdateStreamModel`（来源色与 **可选 `AI摘要` 并列徽章**；见第 19 轮 AI 摘要正文展示）。
 - **`lib/project-update-badges.ts`**：对上述模块的再导出，供页面按路径引用。
 
 手工发布：`publishProjectUpdate` 写入 `sourceType: MANUAL`、`sourceLabel: "手动发布"`、`isAiGenerated: false`。

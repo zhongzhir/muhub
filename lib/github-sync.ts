@@ -4,6 +4,7 @@
  */
 
 import { fetchGitHubLatestRelease, fetchGiteeRepoApi } from "@/lib/github";
+import { createReleaseProjectUpdate } from "@/lib/github-release-update";
 import { parseRepoUrl } from "@/lib/repo-platform";
 import { prisma } from "@/lib/prisma";
 
@@ -311,6 +312,12 @@ export async function syncGithubSnapshotForProjectSlug(
     };
   }
 
+  const prevSnap = await prisma.githubRepoSnapshot.findFirst({
+    where: { projectId: project.id },
+    orderBy: { fetchedAt: "desc" },
+    select: { latestReleaseTag: true },
+  });
+
   try {
     await prisma.githubRepoSnapshot.create({
       data: {
@@ -335,6 +342,27 @@ export async function syncGithubSnapshotForProjectSlug(
   } catch (e) {
     console.error("[syncGithubSnapshotForProjectSlug]", e);
     return { ok: false, message: "仓库数据请求失败，请稍后再试" };
+  }
+
+  const tag = fetched.data.latestReleaseTag?.trim();
+  const releaseAt = fetched.data.latestReleaseAt;
+  if (
+    tag &&
+    releaseAt &&
+    (!prevSnap?.latestReleaseTag || prevSnap.latestReleaseTag !== tag)
+  ) {
+    try {
+      await createReleaseProjectUpdate({
+        projectId: project.id,
+        platform: parsed.platform,
+        owner: parsed.owner,
+        repo: parsed.repo,
+        tag,
+        releaseAt,
+      });
+    } catch (e) {
+      console.error("[syncGithubSnapshotForProjectSlug] release update", e);
+    }
   }
 
   return { ok: true };

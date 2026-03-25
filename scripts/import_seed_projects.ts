@@ -7,6 +7,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
+import { enrichProjectWithAi } from "@/lib/ai/enrich-project";
 import { normalizeRepoWebUrl, parseRepoUrl } from "@/lib/repo-platform";
 
 type SeedRow = {
@@ -126,6 +127,7 @@ async function main(): Promise<void> {
           },
         });
         console.log(`[成功] ${slug}（${parsed.platform}：${parsed.owner}/${parsed.repo}）`);
+        void enrichProjectWithAi(slug).catch((err) => console.warn(`[import:seed] AI 补全跳过 ${slug}:`, err));
         success += 1;
       } catch (e) {
         console.error(`[失败] slug=${slug}：`, e);

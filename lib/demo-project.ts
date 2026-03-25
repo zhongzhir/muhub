@@ -53,6 +53,8 @@ export type ProjectPageView = {
   logoUrl?: string;
   tagline?: string;
   description: string;
+  /** AI/导入生成的轻量标签 */
+  tags?: string[];
   websiteUrl?: string;
   githubUrl?: string;
   /** 数据库项目无刷新记录时为 null */
@@ -75,6 +77,7 @@ export const demoProjectView: ProjectPageView = {
   tagline: "MUHUB 演示项目的标语示例",
   description:
     "这是一个用于展示项目详情页布局的示例项目，包含 GitHub 卡片、社媒与动态流等模块。",
+  tags: ["开源", "演示", "MUHUB"],
   websiteUrl: "https://example.com",
   githubUrl: "https://github.com/example/demo",
   githubSnapshot: {
@@ -109,7 +112,8 @@ export const demoProjectView: ProjectPageView = {
       id: "demo-update-1",
       sourceType: "GITHUB",
       title: "v1.2.0 发布",
-      summary: "改进性能与可访问性。",
+      summary: "本版本聚焦性能与可访问性改进，并修复若干边界问题（演示用 AI 摘要样式）。",
+      isAiGenerated: true,
       sourceUrl: "https://github.com/example/demo/releases/tag/v1.2.0",
       occurredAt: new Date("2026-03-18T09:00:00.000Z"),
       createdAt: new Date("2026-03-18T09:00:00.000Z"),

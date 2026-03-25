@@ -48,6 +48,24 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           claimStatus={data.claimStatus}
         />
 
+        {data.tags && data.tags.length > 0 ? (
+          <div
+            className="mt-6 flex flex-wrap items-center gap-2"
+            data-testid="project-tags"
+            aria-label="项目标签"
+          >
+            <span className="text-xs font-medium text-zinc-500">标签</span>
+            {data.tags.map((t) => (
+              <span
+                key={t}
+                className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
         {/* 仓库数据 */}
         <section
           className="mt-12 scroll-mt-8"
@@ -236,6 +254,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                       >
                         {stream.primaryLabel}
                       </span>
+                      {stream.aiAugment ? (
+                        <span
+                          data-testid="project-update-ai-badge"
+                          className={stream.aiAugment.className}
+                        >
+                          {stream.aiAugment.label}
+                        </span>
+                      ) : null}
                       <time
                         className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
                         dateTime={displayAt.toISOString()}
@@ -246,12 +272,25 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     <h3 className="mt-3 text-lg font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
                       {u.title}
                     </h3>
-                    {u.content ? (
+                    {u.content?.trim() ? (
                       <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
                         {u.content}
                       </p>
-                    ) : u.summary ? (
-                      <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{u.summary}</p>
+                    ) : null}
+                    {u.summary?.trim() ? (
+                      <p
+                        className={`mt-3 text-sm leading-relaxed ${
+                          u.isAiGenerated
+                            ? "border-l-2 border-amber-400/80 pl-3 text-zinc-700 dark:border-amber-500/60 dark:text-zinc-300"
+                            : "text-zinc-600 dark:text-zinc-400"
+                        }`}
+                        data-testid={u.isAiGenerated ? "project-update-ai-summary" : undefined}
+                      >
+                        {u.isAiGenerated ? (
+                          <span className="font-semibold text-amber-900 dark:text-amber-200">AI 摘要：</span>
+                        ) : null}
+                        {u.summary}
+                      </p>
                     ) : null}
                     {u.sourceUrl ? (
                       <a

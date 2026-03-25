@@ -42,6 +42,7 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     logoUrl: row.logoUrl ?? undefined,
     tagline: row.tagline ?? undefined,
     description: row.description ?? "",
+    tags: row.tags?.length ? [...row.tags] : [],
     websiteUrl: row.websiteUrl ?? undefined,
     githubUrl: row.githubUrl ?? undefined,
     githubSnapshot,

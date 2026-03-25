@@ -75,6 +75,7 @@ export function recommendedProjectToPageView(p: RecommendedProject): ProjectPage
     },
     socials: [],
     updates: [],
+    tags: [],
     status: "ACTIVE",
     createdAt: new Date(0),
     claimStatus: "UNCLAIMED",

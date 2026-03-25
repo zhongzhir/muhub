@@ -2,6 +2,7 @@
 
 import { Prisma, SocialPlatform } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { parseSocialInput } from "@/lib/social-input";
 import { prisma } from "@/lib/prisma";
 
@@ -113,6 +114,7 @@ export async function createProject(
             : undefined,
       },
     });
+    scheduleProjectAiEnrichment(slug);
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       const target = e.meta?.target;

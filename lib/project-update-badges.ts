@@ -3,9 +3,11 @@
  */
 export {
   buildProjectUpdateStreamModel,
+  getUpdateSourceBadgeLabel,
   getUpdateStreamPrimaryLabel,
   mapSourceTypeToOrigin,
   projectUpdateStreamBadgeClass,
   type ProjectUpdateStreamFields,
+  type ProjectUpdateStreamModel,
   type UpdateOriginKind,
 } from "./project-updates";

@@ -103,6 +103,18 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 - **文档**：**`docs/architecture/project-updates.md`** 说明后续如何接仓库/社媒/官网/AI（本轮不接 API、队列与 Webhook）。
 - **迁移**：`prisma/migrations/*/project_update_multisource`；部署前执行 **`pnpm exec prisma migrate deploy`**。
 
+## V1 第 19 轮：AI Native 第一阶段
+
+- **能力**：在 **不引入 Agent / 队列** 的前提下，使用 OpenAI Chat Completions（**`OPENAI_API_KEY`**，可选 **`OPENAI_BASE_URL` / `OPENAI_MODEL`**）生成 **项目介绍**、**导入项目标签**、**仓库/官方类动态摘要**；未配置 key 时 **静默跳过**，创建与刷新 **不报错**。
+- **项目简介**：`**import**` / **`seed**` 来源且 **`description`** 为空时，**`createProject`** 与 **`pnpm import:seed`** 后异步补全（**`lib/ai/enrich-project.ts`**）。
+- **标签**：**`Project.tags`**（`text[]`）；仅 **`import`** 且已填 **`githubUrl`**、标签为空时生成 3～5 个短标签。
+- **动态摘要**：手动 **刷新仓库快照** 若出现 **新的 Release 标签**（相对上一次快照），写入一条 **`GITHUB`** 动态并异步生成 **`summary` + `isAiGenerated`**（**`lib/github-sync.ts`** + **`lib/github-release-update.ts`**）；**不覆盖** `title` / `content` / `sourceType`。
+- **实现入口**：**`lib/ai/project-ai.ts`**（`generateProjectDescription`、`generateProjectTags`、`generateUpdateSummary`）；动态摘要应用 **`lib/ai/update-summary-ai.ts`**。
+- **UI**：**`isAiGenerated`** 时并列 **来源** + **「AI摘要」** 徽章，正文下 **「AI 摘要：」** 段落；详情与分享页展示 **`project-tags`**。
+- **文档**：**`docs/architecture/project-ai.md`**。
+- **迁移**：**`prisma/migrations/*/project_tags`**；部署前 **`pnpm exec prisma migrate deploy`**。
+- **E2E**：**`tests/e2e/ai-native-ui.spec.ts`**（演示页徽章/摘要/标签；无 key 时创建项目仍成功）。
+
 ## 启动方式
 
 前置：Node.js 20+、[pnpm](https://pnpm.io) 9+。

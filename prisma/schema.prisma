@@ -55,6 +55,8 @@ model Project {
   name        String
   tagline     String?
   description String?
+  /** AI 等处写入的轻量标签（导入项目等） */
+  tags        String[]      @default([])
   logoUrl     String?
   websiteUrl  String?
   githubUrl   String?

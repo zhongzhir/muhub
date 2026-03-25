@@ -194,6 +194,22 @@ export default async function ShareProjectPage({ params }: PageProps) {
               <p className="mt-3 text-xs text-zinc-500">创建于 {formatListDate(data.createdAt)}</p>
             </section>
 
+            {data.tags && data.tags.length > 0 ? (
+              <section className="py-5" data-testid="share-project-tags">
+                <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">标签</h2>
+                <ul className="flex flex-wrap gap-2">
+                  {data.tags.map((t) => (
+                    <li
+                      key={t}
+                      className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                    >
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
             {/* 社媒概览 */}
             <section className="py-5">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">

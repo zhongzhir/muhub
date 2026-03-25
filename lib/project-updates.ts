@@ -45,13 +45,21 @@ const ORIGIN_DEFAULT_LABEL: Record<UpdateOriginKind, string> = {
   system: "系统",
 };
 
-/** 列表/分享行主标题旁的来源文案（优先自定义 sourceLabel） */
-export function getUpdateStreamPrimaryLabel(u: ProjectUpdateStreamFields): string {
+/** 来源主徽章（不受 isAiGenerated 影响；用于与「AI摘要」并列展示） */
+export function getUpdateSourceBadgeLabel(u: ProjectUpdateStreamFields): string {
   const custom = u.sourceLabel?.trim();
   if (custom) return custom;
-  if (u.isAiGenerated) return "AI 摘要";
   const origin = mapSourceTypeToOrigin(u.sourceType);
   return ORIGIN_DEFAULT_LABEL[origin];
+}
+
+/** 分享行等：来源文案 + AI 标注 */
+export function getUpdateStreamPrimaryLabel(u: ProjectUpdateStreamFields): string {
+  const base = getUpdateSourceBadgeLabel(u);
+  if (u.isAiGenerated) {
+    return `${base} · AI摘要`;
+  }
+  return base;
 }
 
 export function projectUpdateStreamBadgeClass(origin: UpdateOriginKind): string {
@@ -74,12 +82,22 @@ export function projectUpdateStreamBadgeClass(origin: UpdateOriginKind): string 
   }
 }
 
-/** 构造展示模型（供详情流等） */
-export function buildProjectUpdateStreamModel(u: ProjectUpdateStreamFields) {
+export type ProjectUpdateStreamModel = {
+  origin: UpdateOriginKind;
+  primaryLabel: string;
+  badgeClass: string;
+  /** 与来源并列的 AI 徽章（仅 isAiGenerated） */
+  aiAugment: { label: string; className: string } | null;
+};
+
+/** 构造展示模型（供详情流等）：来源色 + 可选 AI 副徽章 */
+export function buildProjectUpdateStreamModel(u: ProjectUpdateStreamFields): ProjectUpdateStreamModel {
   const origin = mapSourceTypeToOrigin(u.sourceType);
-  const primaryLabel = getUpdateStreamPrimaryLabel(u);
-  const badgeOrigin: UpdateOriginKind =
-    u.sourceType === "AI" || Boolean(u.isAiGenerated) ? "ai" : origin;
-  const badgeClass = projectUpdateStreamBadgeClass(badgeOrigin);
-  return { origin, primaryLabel, badgeClass, badgeOrigin };
+  const primaryLabel = getUpdateSourceBadgeLabel(u);
+  const badgeClass = projectUpdateStreamBadgeClass(origin);
+  const aiAugment =
+    u.isAiGenerated === true
+      ? { label: "AI摘要", className: projectUpdateStreamBadgeClass("ai") }
+      : null;
+  return { origin, primaryLabel, badgeClass, aiAugment };
 }
