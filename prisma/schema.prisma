@@ -108,6 +108,8 @@ model GithubRepoSnapshot {
   commitCount30d    Int       @default(0)
   contributorsCount Int       @default(0)
   lastCommitAt      DateTime?
+  latestReleaseTag  String?
+  latestReleaseAt   DateTime?
   fetchedAt         DateTime  @default(now())
 
   @@index([projectId])

@@ -5,6 +5,7 @@ import { formatListDate } from "@/lib/format-date";
 import { isRecommendedProject } from "@/lib/recommended-projects";
 import { projectStatusLabel } from "@/lib/project-status";
 import { socialPlatformLabel } from "@/lib/social-platform";
+import { computeGithubActivity } from "@/lib/github-activity";
 import {
   projectShareInitial,
   takeRecentUpdatesForShare,
@@ -143,6 +144,25 @@ export default async function ShareProjectPage({ params }: PageProps) {
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.openIssues}</dd>
                   </div>
                 </dl>
+                <div
+                  className="mt-4 space-y-2 border-t border-zinc-100 pt-4 dark:border-zinc-800"
+                  data-testid="share-github-activity-block"
+                >
+                  {snap.lastCommitAt ? (
+                    <p className="text-sm" data-testid="share-github-last-commit">
+                      <span className="text-zinc-500">最近提交 </span>
+                      <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                        {snap.lastCommitAt.toLocaleString("zh-CN")}
+                      </span>
+                    </p>
+                  ) : null}
+                  <p className="text-sm" data-testid="share-github-activity">
+                    <span className="text-zinc-500">活跃度 </span>
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                      {computeGithubActivity(snap).label}
+                    </span>
+                  </p>
+                </div>
               </section>
             ) : null}
 

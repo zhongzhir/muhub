@@ -22,6 +22,8 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
         contributorsCount: snap.contributorsCount,
         lastCommitAt: snap.lastCommitAt ?? undefined,
         fetchedAt: snap.fetchedAt,
+        latestReleaseTag: snap.latestReleaseTag ?? undefined,
+        latestReleaseAt: snap.latestReleaseAt ?? undefined,
       }
     : null;
 

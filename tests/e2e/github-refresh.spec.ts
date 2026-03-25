@@ -31,5 +31,9 @@ test.describe("GitHub 手动刷新快照", () => {
     await expect(section.getByTestId("github-snapshot-forks")).toContainText("7");
     await expect(section.getByTestId("github-snapshot-issues")).toBeVisible();
     await expect(section.getByTestId("github-snapshot-watchers")).toBeVisible();
+
+    await expect(section.getByTestId("github-snapshot-activity")).toContainText("活跃项目");
+    await expect(section.getByTestId("github-snapshot-last-commit")).toBeVisible();
+    await expect(section.getByTestId("github-snapshot-release")).toContainText("v0.9.9-fixture");
   });
 });

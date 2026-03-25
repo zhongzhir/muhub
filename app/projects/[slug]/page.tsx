@@ -4,6 +4,7 @@ import { loadProjectPageView, sortProjectSocials } from "@/lib/load-project-page
 import { projectStatusLabel } from "@/lib/project-status";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { updateSourceTypeLabel } from "@/lib/update-source";
+import { computeGithubActivity } from "@/lib/github-activity";
 import { isRecommendedProject } from "@/lib/recommended-projects";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
@@ -201,6 +202,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 <p className="mt-3 text-xs text-zinc-500">
                   指标来自已保存的 GitHub 快照；手动刷新会新增一条记录并在此处显示最新数据。
                 </p>
+                <p className="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    data-testid="github-snapshot-activity"
+                    className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900 dark:bg-emerald-900/35 dark:text-emerald-200"
+                  >
+                    {computeGithubActivity(data.githubSnapshot).label}
+                  </span>
+                </p>
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                   <div data-testid="github-snapshot-stars">
                     <dt className="text-zinc-500">Stars</dt>
@@ -227,10 +236,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     <dd className="font-medium">{data.githubSnapshot.defaultBranch ?? "—"}</dd>
                   </div>
                   <div className="sm:col-span-2">
-                    <dt className="text-zinc-500">最近仓库活动</dt>
-                    <dd className="font-medium">
+                    <dt className="text-zinc-500">最近提交</dt>
+                    <dd className="font-medium" data-testid="github-snapshot-last-commit">
                       {data.githubSnapshot.lastCommitAt
                         ? data.githubSnapshot.lastCommitAt.toLocaleString("zh-CN")
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-zinc-500">最新版本</dt>
+                    <dd className="font-medium" data-testid="github-snapshot-release">
+                      {data.githubSnapshot.latestReleaseTag
+                        ? `${data.githubSnapshot.latestReleaseTag}${
+                            data.githubSnapshot.latestReleaseAt
+                              ? ` · ${data.githubSnapshot.latestReleaseAt.toLocaleString("zh-CN")}`
+                              : ""
+                          }`
                         : "—"}
                     </dd>
                   </div>

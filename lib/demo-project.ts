@@ -32,6 +32,8 @@ export type GithubSnapshotView = {
   lastCommitAt?: Date;
   /** 本条快照写入时间（仅数据库快照） */
   fetchedAt?: Date;
+  latestReleaseTag?: string;
+  latestReleaseAt?: Date;
 };
 
 /** 项目详情页展示用数据结构 */
@@ -74,6 +76,8 @@ export const demoProjectView: ProjectPageView = {
     commitCount30d: 48,
     contributorsCount: 9,
     lastCommitAt: new Date("2026-03-20T10:00:00.000Z"),
+    latestReleaseTag: "v1.2.0",
+    latestReleaseAt: new Date("2026-03-18T08:00:00.000Z"),
   },
   socials: [
     {

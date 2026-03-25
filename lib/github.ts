@@ -141,6 +141,44 @@ export async function fetchGitHubRepoForImport(
   }
 }
 
+function parseGithubIsoDate(s: string | null | undefined): Date | null {
+  if (!s) {
+    return null;
+  }
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * GET /repos/{owner}/{repo}/releases/latest
+ * 无 Release、404 或错误时返回 null（调用方可忽略）。
+ */
+export async function fetchGitHubLatestRelease(
+  owner: string,
+  repo: string,
+  headers: Record<string, string>,
+): Promise<{ tag: string; publishedAt: Date | null } | null> {
+  try {
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases/latest`;
+    const res = await fetch(url, { headers, cache: "no-store" });
+    if (!res.ok) {
+      return null;
+    }
+    const json = (await res.json()) as {
+      tag_name?: string;
+      published_at?: string | null;
+    };
+    const tag =
+      typeof json.tag_name === "string" && json.tag_name.trim() ? json.tag_name.trim() : null;
+    if (!tag) {
+      return null;
+    }
+    return { tag, publishedAt: parseGithubIsoDate(json.published_at ?? undefined) };
+  } catch {
+    return null;
+  }
+}
+
 /** 将导入结果编码为 /dashboard/projects/new 的 query（不含 slug / description） */
 export function buildNewProjectSearchParams(data: GitHubRepoImportPayload): URLSearchParams {
   const p = new URLSearchParams();

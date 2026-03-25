@@ -3,7 +3,7 @@
  * 仅 REST GET，无定时任务 / Webhook / OAuth。
  */
 
-import { parseGitHubRepoUrl } from "@/lib/github";
+import { fetchGitHubLatestRelease, parseGitHubRepoUrl } from "@/lib/github";
 import { prisma } from "@/lib/prisma";
 
 const E2E_FIXTURE_OWNER = "muhub";
@@ -53,6 +53,8 @@ export type GithubSnapshotPayload = {
   watchers: number;
   contributorsCount: number;
   lastCommitAt: Date | null;
+  latestReleaseTag: string | null;
+  latestReleaseAt: Date | null;
 };
 
 type FetchSnapshotResult =
@@ -130,6 +132,10 @@ export async function fetchGithubSnapshotPayload(
   repo: string,
 ): Promise<FetchSnapshotResult> {
   if (githubFixtureEnabled() && owner === E2E_FIXTURE_OWNER && repo === E2E_FIXTURE_REPO) {
+    const recent = new Date();
+    recent.setUTCDate(recent.getUTCDate() - 2);
+    const releaseAt = new Date();
+    releaseAt.setUTCDate(releaseAt.getUTCDate() - 1);
     return {
       ok: true,
       data: {
@@ -140,7 +146,9 @@ export async function fetchGithubSnapshotPayload(
         openIssues: 3,
         watchers: 5,
         contributorsCount: 3,
-        lastCommitAt: new Date("2025-06-01T12:00:00.000Z"),
+        lastCommitAt: recent,
+        latestReleaseTag: "v0.9.9-fixture",
+        latestReleaseAt: releaseAt,
       },
     };
   }
@@ -176,6 +184,10 @@ export async function fetchGithubSnapshotPayload(
     const contributorsCount =
       (await fetchContributorsCount(owner, repo, headers)) ?? 0;
 
+    const releaseInfo = await fetchGitHubLatestRelease(owner, repo, headers);
+    const latestReleaseTag = releaseInfo?.tag ?? null;
+    const latestReleaseAt = releaseInfo?.publishedAt ?? null;
+
     return {
       ok: true,
       data: {
@@ -191,6 +203,8 @@ export async function fetchGithubSnapshotPayload(
         watchers: watchersFromRepoJson(json),
         contributorsCount,
         lastCommitAt,
+        latestReleaseTag,
+        latestReleaseAt,
       },
     };
   } catch {
@@ -256,6 +270,8 @@ export async function syncGithubSnapshotForProjectSlug(
         commitCount30d: 0,
         contributorsCount: fetched.data.contributorsCount,
         lastCommitAt: fetched.data.lastCommitAt,
+        latestReleaseTag: fetched.data.latestReleaseTag,
+        latestReleaseAt: fetched.data.latestReleaseAt,
       },
     });
   } catch (e) {
