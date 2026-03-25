@@ -53,7 +53,7 @@
 ## 项目列表页如何回归
 
 1. 打开 **`/projects`**，应见一级标题 **「项目广场」**、搜索输入（`aria-label` / `搜索项目`）与 **「搜索」** 按钮。
-2. **有库无数据**：应见 **`data-testid="projects-empty-all"`**（暂无公开项目）；**有库有数据**（如 CI 在创建用例之后）：应至少见一张 **`data-testid="project-card"`** 卡片。
+2. **有库无数据**：应见 **`projects-empty-all`**（暂无公开项目）及以下 **`recommended-project-pool`**（推荐项目卡片）；**有库有数据**（如 CI 在创建用例之后）：应至少见一张 **`project-card`** 卡片（与空态二选一由列表是否为空决定）。
 3. 打开 **`/projects?q=demo`**，应出现 **「当前搜索：」** 文案及关键词 **demo**。
 4. 打开带不可能匹配词的搜索 URL（用例中为 `__no_such_project_xyz_123__`），应见 **`projects-empty-search`**（没有找到匹配的项目）。
 

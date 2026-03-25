@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ProjectCard } from "@/components/project-card";
+import { RecommendedProjectCard } from "@/components/recommended-project-card";
 import { fetchPublicProjects } from "@/lib/project-list";
+import { recommendedProjects } from "@/lib/recommended-projects";
 
 export const dynamic = "force-dynamic";
 
@@ -73,12 +75,29 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
 
         <section aria-label="项目列表">
           {showEmptyAll ? (
-            <p
-              data-testid="projects-empty-all"
-              className="rounded-lg border border-dashed border-zinc-300 bg-zinc-100/50 px-6 py-12 text-center text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400"
-            >
-              暂无公开项目
-            </p>
+            <div className="space-y-8">
+              <p
+                data-testid="projects-empty-all"
+                className="rounded-lg border border-dashed border-zinc-300 bg-zinc-100/50 px-6 py-8 text-center text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400"
+              >
+                暂无公开项目
+              </p>
+              <div data-testid="recommended-project-pool" className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  推荐项目
+                </h2>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  冷启动示例：浏览下方知名开源项目（点击卡片进入示例详情页）。
+                </p>
+                <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+                  {recommendedProjects.map((p) => (
+                    <li key={p.slug}>
+                      <RecommendedProjectCard project={p} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           ) : null}
 
           {showEmptySearch ? (

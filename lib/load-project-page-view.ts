@@ -2,6 +2,7 @@ import type { SocialPlatform } from "@prisma/client";
 import { demoProjectView, type DemoSocial, type ProjectPageView } from "@/lib/demo-project";
 import { mapProjectRowToView } from "@/lib/map-project-row";
 import { prisma } from "@/lib/prisma";
+import { getRecommendedProjectPageView } from "@/lib/recommended-projects";
 
 const SOCIAL_ORDER: SocialPlatform[] = [
   "WEIBO",
@@ -53,7 +54,9 @@ export async function loadProjectPageView(slug: string): Promise<{
 } | null> {
   const fromDb = await loadFromDb(slug);
   const data: ProjectPageView | null =
-    fromDb ?? (slug === demoProjectView.slug ? demoProjectView : null);
+    fromDb ??
+    getRecommendedProjectPageView(slug) ??
+    (slug === demoProjectView.slug ? demoProjectView : null);
 
   if (!data) {
     return null;
