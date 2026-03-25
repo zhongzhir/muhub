@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ProjectDetailHero } from "@/components/project/project-detail-hero";
 import { loadProjectPageView, sortProjectSocials } from "@/lib/load-project-page-view";
-import { projectStatusLabel } from "@/lib/project-status";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { updateSourceTypeLabel } from "@/lib/update-source";
 import { computeGithubActivity } from "@/lib/github-activity";
-import { codeHostLinkLabel, parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
+import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import { isRecommendedProject } from "@/lib/recommended-projects";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
@@ -21,9 +21,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const { data, fromDb } = loaded;
   const socials = sortProjectSocials(data.socials);
 
-  const descriptionText = data.description.trim()
-    ? data.description
-    : "暂无项目介绍";
+  const hasDescription = Boolean(data.description.trim());
+  const descriptionBody = hasDescription ? data.description.trim() : null;
 
   const showClaimCta = Boolean(
     fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim() && parseRepoUrl(data.githubUrl),
@@ -33,152 +32,40 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <div className="mx-auto max-w-3xl px-6 py-12">
-        <p className="mb-6 flex flex-wrap gap-4 text-sm text-zinc-500">
-          <Link href="/" className="underline-offset-4 hover:underline">
-            返回首页
-          </Link>
-          <Link
-            href={`/projects/${slug}/share`}
-            className="rounded-md font-medium text-zinc-800 underline-offset-4 hover:underline dark:text-zinc-200"
-          >
-            分享项目
-          </Link>
-          {fromDb ? (
-            <>
-              <Link
-                href={`/dashboard/projects/${slug}/edit`}
-                className="underline-offset-4 hover:underline"
-              >
-                编辑项目
-              </Link>
-              <Link
-                href={`/dashboard/projects/${slug}/updates/new`}
-                className="underline-offset-4 hover:underline"
-              >
-                发布动态
-              </Link>
-            </>
-          ) : null}
-        </p>
+      <div className="mx-auto max-w-5xl px-6 py-10 md:py-12">
+        <ProjectDetailHero
+          slug={slug}
+          name={data.name}
+          tagline={data.tagline}
+          status={data.status}
+          createdAt={data.createdAt}
+          githubUrl={data.githubUrl}
+          websiteUrl={data.websiteUrl}
+          fromDb={fromDb}
+          showClaimCta={showClaimCta}
+          showClaimed={showClaimed}
+          showRecommendedClaim={showRecommendedClaim}
+        />
 
-        {showRecommendedClaim ? (
-          <div
-            data-testid="recommended-project-hint"
-            className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/60 dark:bg-amber-950/30"
-          >
-            <p className="font-medium text-amber-950 dark:text-amber-100">这是推荐项目</p>
-            <p className="mt-1 text-sm text-amber-900/90 dark:text-amber-200/90">
-              认领后可编辑管理
-            </p>
-            <Link
-              href={`/dashboard/projects/new?from=recommended&slug=${encodeURIComponent(slug)}`}
-              data-testid="claim-recommended-button"
-              className="mt-4 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-            >
-              认领项目
-            </Link>
-          </div>
-        ) : null}
-
-        <header className="mb-10 border-b border-zinc-200 pb-8 dark:border-zinc-800">
-          <p className="text-sm font-medium text-zinc-500">项目主页</p>
-          <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-3xl font-semibold tracking-tight">{data.name}</h1>
-              {showClaimed ? (
-                <p
-                  data-testid="project-claimed-label"
-                  className="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-400"
-                >
-                  已认领
-                </p>
-              ) : null}
-            </div>
-            {showClaimCta ? (
-              <Link
-                href={`/projects/${slug}/claim`}
-                data-testid="claim-project-button"
-                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-              >
-                认领该项目
-              </Link>
-            ) : null}
-          </div>
-          {data.tagline ? (
-            <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">{data.tagline}</p>
-          ) : null}
-          <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <div>
-              <dt className="inline text-zinc-500">slug：</dt>
-              <dd className="inline font-mono text-zinc-800 dark:text-zinc-200">{data.slug}</dd>
-            </div>
-            <div>
-              <dt className="inline text-zinc-500">状态：</dt>
-              <dd className="inline">{projectStatusLabel(data.status)}</dd>
-            </div>
-            <div>
-              <dt className="inline text-zinc-500">创建时间：</dt>
-              <dd className="inline">{data.createdAt.toLocaleString("zh-CN")}</dd>
-            </div>
-          </dl>
-        </header>
-
-        <section className="mb-10" aria-labelledby="links-heading">
-          <h2 id="links-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            链接
-          </h2>
-          <ul className="flex flex-wrap gap-4 text-sm">
-            <li>
-              {data.githubUrl ? (
-                <a
-                  href={data.githubUrl}
-                  className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                >
-                  {codeHostLinkLabel(data.githubUrl)}
-                </a>
-              ) : (
-                <span className="text-zinc-400">未填写代码仓库</span>
-              )}
-            </li>
-            <li>
-              {data.websiteUrl ? (
-                <a
-                  href={data.websiteUrl}
-                  className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                >
-                  官网
-                </a>
-              ) : (
-                <span className="text-zinc-400">未填写官网</span>
-              )}
-            </li>
-          </ul>
-        </section>
-
+        {/* 仓库数据 */}
         <section
-          className="mb-10"
-          aria-labelledby="github-heading"
+          className="mt-12 scroll-mt-8"
+          aria-labelledby="repo-data-heading"
           data-testid="github-snapshot-section"
         >
-          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2
-              id="github-heading"
-              className="text-sm font-semibold uppercase tracking-wide text-zinc-500"
-            >
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 id="repo-data-heading" className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
               仓库数据
             </h2>
             {fromDb && data.githubUrl?.trim() ? (
               <RefreshGithubSnapshotForm slug={slug} />
             ) : null}
           </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-8">
             {!data.githubSnapshot ? (
               <div>
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  暂无仓库快照数据
-                </p>
-                <p className="mt-2 text-xs text-zinc-500">
+                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">暂无仓库快照数据</p>
+                <p className="mt-2 text-sm text-zinc-500">
                   {data.githubUrl?.trim()
                     ? "点击「刷新仓库数据」从 GitHub / Gitee 拉取指标（写入快照历史，详情展示最新一条）。"
                     : "请先在编辑页配置代码仓库地址后再刷新。"}
@@ -192,8 +79,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 >
                   {data.githubSnapshot.repoFullName}
                 </p>
-                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-                  <span className="text-zinc-500">平台：</span>
+                <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">
+                  <span className="text-zinc-500">平台</span>
+                  <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
                   <span data-testid="github-snapshot-platform">
                     {repoPlatformDisplayLabel(
                       data.githubSnapshot.repoPlatform ?? parseRepoUrl(data.githubUrl ?? "")?.platform,
@@ -203,15 +91,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 {data.githubUrl ? (
                   <a
                     href={data.githubUrl}
-                    className="mt-2 inline-block text-sm text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block text-sm font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
                   >
                     打开仓库
                   </a>
                 ) : null}
-                <p className="mt-3 text-xs text-zinc-500">
-                  指标来自已保存的仓库快照；手动刷新会新增一条记录并在此处显示最新数据。
-                </p>
-                <p className="mt-3 flex flex-wrap items-center gap-2">
+                <p className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
                   <span
                     data-testid="github-snapshot-activity"
                     className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900 dark:bg-emerald-900/35 dark:text-emerald-200"
@@ -219,42 +106,57 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     {computeGithubActivity(data.githubSnapshot).label}
                   </span>
                 </p>
-                <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-                  <div data-testid="github-snapshot-stars">
-                    <dt className="text-zinc-500">Stars</dt>
-                    <dd className="font-medium">{data.githubSnapshot.stars}</dd>
+                <p className="mt-2 text-xs text-zinc-500">
+                  指标来自已保存的仓库快照；手动刷新会新增一条记录并在此处显示最新数据。
+                </p>
+                <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-3">
+                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-stars">
+                    <dt className="text-xs font-medium text-zinc-500">Stars</dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                      {data.githubSnapshot.stars}
+                    </dd>
                   </div>
-                  <div data-testid="github-snapshot-forks">
-                    <dt className="text-zinc-500">Forks</dt>
-                    <dd className="font-medium">{data.githubSnapshot.forks}</dd>
+                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-forks">
+                    <dt className="text-xs font-medium text-zinc-500">Forks</dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                      {data.githubSnapshot.forks}
+                    </dd>
                   </div>
-                  <div data-testid="github-snapshot-issues">
-                    <dt className="text-zinc-500">Open Issues</dt>
-                    <dd className="font-medium">{data.githubSnapshot.openIssues}</dd>
+                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-issues">
+                    <dt className="text-xs font-medium text-zinc-500">Open Issues</dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                      {data.githubSnapshot.openIssues}
+                    </dd>
                   </div>
-                  <div data-testid="github-snapshot-watchers">
-                    <dt className="text-zinc-500">Watchers</dt>
-                    <dd className="font-medium">{data.githubSnapshot.watchers}</dd>
+                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-watchers">
+                    <dt className="text-xs font-medium text-zinc-500">Watchers</dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                      {data.githubSnapshot.watchers}
+                    </dd>
                   </div>
-                  <div>
-                    <dt className="text-zinc-500">贡献者（估算）</dt>
-                    <dd className="font-medium">{data.githubSnapshot.contributorsCount}</dd>
+                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50">
+                    <dt className="text-xs font-medium text-zinc-500">贡献者（估算）</dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                      {data.githubSnapshot.contributorsCount}
+                    </dd>
                   </div>
-                  <div>
-                    <dt className="text-zinc-500">默认分支</dt>
-                    <dd className="font-medium">{data.githubSnapshot.defaultBranch ?? "—"}</dd>
+                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50">
+                    <dt className="text-xs font-medium text-zinc-500">默认分支</dt>
+                    <dd className="mt-1 font-medium text-zinc-900 dark:text-zinc-50">
+                      {data.githubSnapshot.defaultBranch ?? "—"}
+                    </dd>
                   </div>
-                  <div className="sm:col-span-2">
-                    <dt className="text-zinc-500">最近提交</dt>
-                    <dd className="font-medium" data-testid="github-snapshot-last-commit">
+                  <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
+                    <dt className="text-xs font-medium text-zinc-500">最近提交</dt>
+                    <dd className="mt-1 font-medium" data-testid="github-snapshot-last-commit">
                       {data.githubSnapshot.lastCommitAt
                         ? data.githubSnapshot.lastCommitAt.toLocaleString("zh-CN")
                         : "—"}
                     </dd>
                   </div>
-                  <div className="sm:col-span-2">
-                    <dt className="text-zinc-500">最新版本</dt>
-                    <dd className="font-medium" data-testid="github-snapshot-release">
+                  <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
+                    <dt className="text-xs font-medium text-zinc-500">最新版本</dt>
+                    <dd className="mt-1 font-medium" data-testid="github-snapshot-release">
                       {data.githubSnapshot.latestReleaseTag
                         ? `${data.githubSnapshot.latestReleaseTag}${
                             data.githubSnapshot.latestReleaseAt
@@ -265,11 +167,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     </dd>
                   </div>
                   {data.githubSnapshot.fetchedAt ? (
-                    <div className="sm:col-span-3">
-                      <dt className="text-zinc-500">最近抓取时间</dt>
-                      <dd className="font-medium" data-testid="github-snapshot-fetched-at">
+                    <div className="col-span-2 text-xs text-zinc-500 sm:col-span-3">
+                      <span className="font-medium text-zinc-600 dark:text-zinc-400">最近抓取</span>
+                      <span className="ml-2" data-testid="github-snapshot-fetched-at">
                         {data.githubSnapshot.fetchedAt.toLocaleString("zh-CN")}
-                      </dd>
+                      </span>
                     </div>
                   ) : null}
                 </dl>
@@ -278,57 +180,34 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </div>
         </section>
 
-        <section className="mb-10" aria-labelledby="social-heading">
-          <h2 id="social-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            社媒
-          </h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {socials.length === 0 ? (
-              <li className="text-sm text-zinc-500">暂无社媒账号</li>
-            ) : (
-              socials.map((s) => (
-                <li
-                  key={`${s.platform}-${s.accountName}`}
-                  className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  <p className="text-xs font-medium text-zinc-500">{socialPlatformLabel(s.platform)}</p>
-                  {s.accountUrl ? (
-                    <a
-                      href={s.accountUrl}
-                      className="mt-1 block font-medium text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      {s.accountName}
-                    </a>
-                  ) : (
-                    <p className="mt-1 font-medium">{s.accountName}</p>
-                  )}
-                </li>
-              ))
-            )}
-          </ul>
-        </section>
-
-        <section className="mb-10" aria-labelledby="project-updates-heading" data-testid="project-updates-section">
-          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+        {/* 项目动态 */}
+        <section
+          className="mt-14 scroll-mt-8"
+          aria-labelledby="project-updates-heading"
+          data-testid="project-updates-section"
+        >
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2
               id="project-updates-heading"
-              className="text-sm font-semibold uppercase tracking-wide text-zinc-500"
+              className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
             >
               项目动态
             </h2>
             {fromDb ? (
               <Link
                 href={`/dashboard/projects/${slug}/updates/new`}
-                className="text-xs font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
+                className="inline-flex rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
               >
                 发布动态
               </Link>
             ) : null}
           </div>
-          <p className="mb-3 text-xs text-zinc-500">最近动态按发布时间倒序</p>
+          <p className="mb-4 text-xs text-zinc-500">按发布时间倒序（最新在前）</p>
           <ul className="space-y-4">
             {data.updates.length === 0 ? (
-              <li className="text-sm text-zinc-500">暂无项目动态</li>
+              <li className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
+                暂无项目动态
+              </li>
             ) : (
               data.updates.map((u, i) => {
                 const displayAt = u.createdAt ?? u.occurredAt;
@@ -336,26 +215,35 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   <li
                     key={u.id ?? `update-${u.title}-${displayAt.toISOString()}-${i}`}
                     data-testid="project-update-item"
-                    className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                    className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-6"
                   >
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-xs font-medium text-zinc-500">
+                    <div className="flex flex-wrap items-center gap-2 gap-y-1">
+                      <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
                         {updateSourceTypeLabel(u.sourceType)}
                       </span>
-                      <time className="text-xs text-zinc-400" dateTime={displayAt.toISOString()}>
+                      <time
+                        className="text-xs text-zinc-400 dark:text-zinc-500"
+                        dateTime={displayAt.toISOString()}
+                      >
                         {displayAt.toLocaleString("zh-CN")}
                       </time>
                     </div>
-                    <p className="mt-1 font-medium">{u.title}</p>
+                    <h3 className="mt-3 text-lg font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
+                      {u.title}
+                    </h3>
                     {u.content ? (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{u.content}</p>
+                      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                        {u.content}
+                      </p>
                     ) : u.summary ? (
-                      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{u.summary}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{u.summary}</p>
                     ) : null}
                     {u.sourceUrl ? (
                       <a
                         href={u.sourceUrl}
-                        className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-block text-sm font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
                       >
                         查看来源
                       </a>
@@ -367,13 +255,55 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </ul>
         </section>
 
-        <section aria-labelledby="about-heading">
-          <h2 id="about-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+        {/* 社媒 */}
+        <section className="mt-14 scroll-mt-8" aria-labelledby="social-heading">
+          <h2 id="social-heading" className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            社媒
+          </h2>
+          {socials.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
+              暂无社媒信息
+            </p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {socials.map((s) => (
+                <li key={`${s.platform}-${s.accountName}`}>
+                  {s.accountUrl ? (
+                    <a
+                      href={s.accountUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex max-w-full flex-col rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+                    >
+                      <span className="text-xs font-medium text-zinc-500">{socialPlatformLabel(s.platform)}</span>
+                      <span className="mt-0.5 truncate font-medium text-zinc-900 dark:text-zinc-100">{s.accountName}</span>
+                    </a>
+                  ) : (
+                    <span className="inline-flex flex-col rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800/80">
+                      <span className="text-xs font-medium text-zinc-500">{socialPlatformLabel(s.platform)}</span>
+                      <span className="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{s.accountName}</span>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* 项目介绍 */}
+        <section className="mt-14 scroll-mt-8 pb-8" aria-labelledby="about-heading">
+          <h2 id="about-heading" className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
             项目介绍
           </h2>
-          <p className="leading-relaxed text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
-            {descriptionText}
-          </p>
+          {descriptionBody ? (
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-800 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 md:p-8">
+              <p className="whitespace-pre-wrap leading-relaxed">{descriptionBody}</p>
+            </div>
+          ) : (
+            <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
+              暂无项目介绍
+            </p>
+          )}
         </section>
       </div>
     </div>

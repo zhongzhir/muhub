@@ -29,6 +29,16 @@
 6. **自动化（轻量）**：`pnpm exec playwright test tests/e2e/seed-projects-json.spec.ts`。
 7. **详细说明**：[`seed-import.md`](./seed-import.md)。
 
+## 项目详情页（产品化）如何回归
+
+1. 打开 **`/projects/demo`** 或任意 **`/projects/<slug>`**（库内或推荐示例）。
+2. **Hero**：一级标题为项目名称；可见文案 **「项目主页」**（`exact` 断言用）；**tagline**（若有）；徽章含 **发布状态**（已发布 / 草稿 / 已归档）；推荐示例有 **「推荐项目」** 徽章与 **`recommended-project-hint`**；库内未认领且已绑仓库时有 **「认领该项目」**（**`claim-project-button`**）；正式项目有 **「分享项目」「编辑项目」「发布动态」**。
+3. **仓库数据**：**`github-snapshot-section`** 内标题 **「仓库数据」**；无快照为 **「暂无仓库快照数据」**；有快照时可见 **Stars / Forks** 等 **`data-testid`**（如 **`github-snapshot-stars`**）；有 **`githubUrl`** 时区头可见 **「刷新仓库数据」**。
+4. **项目动态**：**`project-updates-section`** 内 **「项目动态」** 标题；右侧或附近 **「发布动态」**（库内）；列表 **`project-update-item`**（若有）。
+5. **社媒**：标题 **「社媒」**；无数据为 **「暂无社媒信息」**。
+6. **项目介绍**：标题 **「项目介绍」**；有正文或 **「暂无项目介绍」**。
+7. 自动化：见 **`tests/e2e/regression.spec.ts`**（demo）、**`create-project.spec.ts`**、**`project-updates.spec.ts`**、**`github-refresh.spec.ts`**、**`claim-project.spec.ts`** 等。
+
 ## 分享名片页如何回归
 
 1. 打开 **`/projects/demo/share`**（或任意有数据的 slug `/projects/<slug>/share`）。

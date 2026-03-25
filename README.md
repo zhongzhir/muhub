@@ -59,6 +59,18 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 - **`GITHUB_TOKEN`（可选）**：与导入相同，作为 `Authorization: Bearer`，提高未认证请求的 **API 速率上限**；非 OAuth。
 - **E2E**：**`tests/e2e/github-refresh.spec.ts`** 在 **`GITHUB_IMPORT_E2E_FIXTURE=1`** 或 **`GITHUB_REFRESH_E2E_FIXTURE=1`** 时对 **`muhub/e2e-fixture`** 走内置数据（**不访问外网**，与导入策略一致）；CI 已设置前者。
 
+## V1 第 16 轮：项目详情页（产品化布局）
+
+**`/projects/[slug]`** 采用 **单层信息架构**，自上而下：
+
+1. **顶部 Hero**（`components/project/project-detail-hero.tsx`）：**`h1` 项目名称**、**tagline**、**徽章**（推荐项目 / 已认领 / 发布状态）、**仓库与官网外链**、**操作按钮组**（分享项目、编辑项目、发布动态、认领入口等）、**slug / 创建时间**、返回首页；推荐项目仍保留 **`recommended-project-hint`** 与 **`claim-recommended-button`** 供认领流程使用。
+2. **仓库数据**：卡片展示平台、Stars、Forks、Issues、Watchers、最近提交、最新版本、活跃度；无快照时 **「暂无仓库快照数据」**；库内项目可 **刷新仓库数据**。
+3. **项目动态**：标题栏右侧 **发布动态**；列表卡片层级（类型 pill、时间、`h3` 标题、正文/摘要）；空态 **「暂无项目动态」**。
+4. **社媒**：**pill** 式条目；空态 **「暂无社媒信息」**。
+5. **项目介绍**：独立卡片区；空态 **「暂无项目介绍」**。
+
+页面容器约 **`max-w-5xl`**，业务能力与 **`data-testid`**（如 **`github-snapshot-section`**、**`project-updates-section`**）保持兼容现有 E2E。
+
 ## 启动方式
 
 前置：Node.js 20+、[pnpm](https://pnpm.io) 9+。
@@ -87,7 +99,7 @@ pnpm test:smoke     # Playwright 冒烟（仅首页）
 
 1. 配置可用的 **`DATABASE_URL`**，并执行迁移（见下节）。
 2. 浏览器打开 **`/dashboard/projects/new`**，填写 **项目名称**、**slug**（小写字母、数字、短横线）及可选字段。
-3. 提交后应跳转到 **`/projects/<slug>`**，页面头部显示项目名称、slug、状态、创建时间，**项目介绍**区显示你填写的内容（若为空则提示「暂无项目介绍」）。
+3. 提交后应跳转到 **`/projects/<slug>`**，**Hero 区**显示项目名称与「项目主页」标签、slug 与创建时间；**项目介绍**区显示你填写的内容（若为空则提示「暂无项目介绍」）。
 4. **自动化验证**：在设置好 `DATABASE_URL` 的机器上执行 `pnpm build && pnpm test:e2e`，会运行 **`tests/e2e/create-project.spec.ts`**（无 `DATABASE_URL` 时该用例会被 **skip**）。CI 中使用容器内 PostgreSQL，始终执行完整链路。
 
 ## 如何编辑项目
@@ -184,7 +196,7 @@ pnpm test:e2e
 | `/dashboard/projects/[slug]/edit` | 编辑项目（预填表单、保存后回详情） |
 | `/dashboard/projects/[slug]/updates/new` | 发布项目动态（标题 + 正文，写入 ProjectUpdate） |
 | `/projects` | 项目广场：公开项目列表与搜索（`?q=`） |
-| `/projects/[slug]` | 项目详情；优先读库，`demo` 无库时兜底演示数据 |
+| `/projects/[slug]` | 项目详情（Hero → 仓库数据 → 项目动态 → 社媒 → 介绍）；优先读库，`demo` 无库时兜底演示数据 |
 | `/projects/[slug]/share` | 分享名片页（Logo/首字母、标签、动态摘要、GitHub 指标、复制分享链接） |
 | `/projects/[slug]/claim` | 仓库地址核验认领（需已绑定 GitHub URL） |
 
