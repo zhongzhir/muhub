@@ -1,20 +1,6 @@
 import Link from "next/link";
 import { NewProjectForm } from "./new-project-form";
-import type { NewProjectPrefill } from "./prefill";
-
-function pickParam(
-  sp: Record<string, string | string[] | undefined>,
-  key: string,
-): string {
-  const v = sp[key];
-  if (typeof v === "string") {
-    return v;
-  }
-  if (Array.isArray(v) && v[0] !== undefined) {
-    return v[0];
-  }
-  return "";
-}
+import { resolveNewProjectPrefill } from "./prefill";
 
 export default async function NewProjectPage({
   searchParams,
@@ -22,12 +8,7 @@ export default async function NewProjectPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const prefill: NewProjectPrefill = {
-    name: pickParam(sp, "name"),
-    tagline: pickParam(sp, "tagline"),
-    githubUrl: pickParam(sp, "githubUrl"),
-    websiteUrl: pickParam(sp, "websiteUrl"),
-  };
+  const prefill = resolveNewProjectPrefill(sp);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">

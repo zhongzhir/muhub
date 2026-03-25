@@ -41,6 +41,10 @@ export const recommendedProjects: RecommendedProject[] = [
 
 const bySlug = new Map(recommendedProjects.map((p) => [p.slug, p] as const));
 
+export function isRecommendedProject(slug: string): boolean {
+  return bySlug.has(slug);
+}
+
 export function getRecommendedProjectBySlug(slug: string): RecommendedProject | undefined {
   return bySlug.get(slug);
 }
@@ -52,7 +56,7 @@ export function recommendedProjectToPageView(p: RecommendedProject): ProjectPage
     slug: p.slug,
     name: p.name,
     tagline: p.tagline,
-    description: `${p.tagline}\n\n此为 MUHUB 冷启动推荐示例，数据未写入数据库；「刷新 GitHub 数据」不可用。`,
+    description: `${p.tagline}\n\n此为 MUHUB 冷启动推荐示例，数据未写入数据库；可使用「认领项目」跳转到创建页转为正式项目。「刷新 GitHub 数据」在入库前不可用。`,
     websiteUrl: undefined,
     githubUrl,
     githubSnapshot: {

@@ -21,6 +21,7 @@ function FieldError({ message }: { message?: string }) {
 const emptyPrefill: NewProjectPrefill = {
   name: "",
   tagline: "",
+  slug: "",
   githubUrl: "",
   websiteUrl: "",
 };
@@ -68,6 +69,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           required
           autoComplete="off"
           placeholder="仅小写字母、数字、短横线，如 muhub"
+          defaultValue={p.slug || undefined}
         />
         <FieldError message={state.fieldErrors?.slug} />
 

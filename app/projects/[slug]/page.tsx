@@ -4,6 +4,7 @@ import { loadProjectPageView, sortProjectSocials } from "@/lib/load-project-page
 import { projectStatusLabel } from "@/lib/project-status";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { updateSourceTypeLabel } from "@/lib/update-source";
+import { isRecommendedProject } from "@/lib/recommended-projects";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim(),
   );
   const showClaimed = Boolean(fromDb && data.claimStatus === "CLAIMED");
+  const showRecommendedClaim = Boolean(!fromDb && isRecommendedProject(slug));
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -54,6 +56,25 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             </>
           ) : null}
         </p>
+
+        {showRecommendedClaim ? (
+          <div
+            data-testid="recommended-project-hint"
+            className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/60 dark:bg-amber-950/30"
+          >
+            <p className="font-medium text-amber-950 dark:text-amber-100">这是推荐项目</p>
+            <p className="mt-1 text-sm text-amber-900/90 dark:text-amber-200/90">
+              认领后可编辑管理
+            </p>
+            <Link
+              href={`/dashboard/projects/new?from=recommended&slug=${encodeURIComponent(slug)}`}
+              data-testid="claim-recommended-button"
+              className="mt-4 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            >
+              认领项目
+            </Link>
+          </div>
+        ) : null}
 
         <header className="mb-10 border-b border-zinc-200 pb-8 dark:border-zinc-800">
           <p className="text-sm font-medium text-zinc-500">项目主页</p>
