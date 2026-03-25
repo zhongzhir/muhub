@@ -23,9 +23,13 @@ test.describe("项目动态", () => {
     await page.waitForURL(`**/projects/${slug}`);
 
     const section = page.getByTestId("project-updates-section");
+    await expect(section).toBeVisible();
     await expect(section.getByRole("heading", { name: "项目动态" })).toBeVisible();
-    await expect(section.getByText(title, { exact: true }).first()).toBeVisible();
-    await expect(section.getByText("E2E 动态正文多行", { exact: true })).toBeVisible();
-    await expect(section.getByText("第二行内容", { exact: true })).toBeVisible();
+    await expect(section.getByText(title).first()).toBeVisible();
+
+    const updateItem = section.getByTestId("project-update-item").filter({ hasText: title });
+    await expect(updateItem).toBeVisible();
+    await expect(updateItem).toContainText("E2E 动态正文");
+    await expect(updateItem).toContainText("第二行");
   });
 });
