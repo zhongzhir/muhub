@@ -13,6 +13,7 @@ test.describe("创建项目链路", () => {
     await page.locator("#description").fill("这是 Playwright 创建链路的项目介绍正文。");
     await page.locator("#githubUrl").fill("https://github.com/octocat/hello-world");
     await page.locator("#websiteUrl").fill("https://example.com");
+    await page.locator("#docsUrl").fill("https://docs.example.com");
     await page.locator("#weibo").fill("@e2e-weibo");
     await page.locator("#wechat_official").fill("E2E 公众号");
 
@@ -22,5 +23,9 @@ test.describe("创建项目链路", () => {
     await expect(page.getByRole("heading", { level: 1, name: `E2E 项目 ${slug}` })).toBeVisible();
     await expect(page.getByText("项目主页", { exact: true })).toBeVisible();
     await expect(page.getByText("这是 Playwright 创建链路的项目介绍正文。")).toBeVisible();
+
+    const sources = page.getByTestId("project-sources-section");
+    await expect(sources).toBeVisible();
+    await expect(sources).toContainText("文档");
   });
 });

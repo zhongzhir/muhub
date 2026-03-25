@@ -77,6 +77,7 @@ export function recommendedProjectToPageView(p: RecommendedProject): ProjectPage
     updates: [],
     tags: [],
     aiCardSummary: undefined,
+    sources: [],
     status: "ACTIVE",
     createdAt: new Date(0),
     claimStatus: "UNCLAIMED",

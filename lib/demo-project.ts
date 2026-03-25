@@ -2,6 +2,7 @@
 
 import type {
   ClaimStatus,
+  ProjectSourceKind,
   ProjectStatus,
   ProjectUpdateSourceType,
   SocialPlatform,
@@ -22,6 +23,14 @@ export type DemoUpdate = {
   isAiGenerated?: boolean;
   occurredAt: Date;
   createdAt?: Date;
+};
+
+export type DemoProjectSource = {
+  id?: string;
+  kind: ProjectSourceKind;
+  url: string;
+  label?: string;
+  isPrimary?: boolean;
 };
 
 export type GithubSnapshotView = {
@@ -71,6 +80,8 @@ export type ProjectPageView = {
   /** 库内来源标记：seed / import / manual 等 */
   sourceType?: string | null;
   isFeatured?: boolean;
+  /** 多信息源（与 githubUrl / websiteUrl 可并存，展示时去重） */
+  sources?: DemoProjectSource[];
 };
 
 export const demoProjectView: ProjectPageView = {
@@ -84,6 +95,33 @@ export const demoProjectView: ProjectPageView = {
     "MUHUB 内置演示项目：展示多源动态、仓库快照、AI 摘要卡与运营向健康度标签（演示数据）。",
   websiteUrl: "https://example.com",
   githubUrl: "https://github.com/example/demo",
+  sources: [
+    {
+      id: "demo-src-gh",
+      kind: "GITHUB",
+      url: "https://github.com/example/demo",
+      isPrimary: true,
+    },
+    {
+      id: "demo-src-web",
+      kind: "WEBSITE",
+      url: "https://example.com",
+      isPrimary: false,
+    },
+    {
+      id: "demo-src-docs",
+      kind: "DOCS",
+      url: "https://example.com/docs",
+      label: "官方文档",
+      isPrimary: false,
+    },
+    {
+      id: "demo-src-blog",
+      kind: "BLOG",
+      url: "https://example.com/blog",
+      isPrimary: false,
+    },
+  ] satisfies DemoProjectSource[],
   githubSnapshot: {
     repoPlatform: "github",
     repoOwner: "example",

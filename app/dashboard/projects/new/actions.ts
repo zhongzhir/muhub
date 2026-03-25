@@ -1,8 +1,10 @@
 "use server";
 
+import type { ProjectSourceKind } from "@prisma/client";
 import { Prisma, SocialPlatform } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
+import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
 import { parseSocialInput } from "@/lib/social-input";
 import { prisma } from "@/lib/prisma";
 
@@ -32,7 +34,11 @@ export async function createProject(
   const tagline = String(formData.get("tagline") ?? "").trim() || null;
   const description = String(formData.get("description") ?? "").trim() || null;
   const githubUrlRaw = String(formData.get("githubUrl") ?? "").trim();
+  const giteeUrlRaw = String(formData.get("giteeUrl") ?? "").trim();
   const websiteUrlRaw = String(formData.get("websiteUrl") ?? "").trim();
+  const docsUrlRaw = String(formData.get("docsUrl") ?? "").trim();
+  const blogUrlRaw = String(formData.get("blogUrl") ?? "").trim();
+  const twitterUrlRaw = String(formData.get("twitterUrl") ?? "").trim();
 
   const fieldErrors: Partial<Record<string, string>> = {};
 
@@ -61,6 +67,42 @@ export async function createProject(
       websiteUrl = new URL(websiteUrlRaw).href;
     } catch {
       fieldErrors.websiteUrl = "官网 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+    }
+  }
+
+  let giteeUrl: string | null = null;
+  if (giteeUrlRaw) {
+    try {
+      giteeUrl = new URL(giteeUrlRaw).href;
+    } catch {
+      fieldErrors.giteeUrl = "Gitee URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+    }
+  }
+
+  let docsUrl: string | null = null;
+  if (docsUrlRaw) {
+    try {
+      docsUrl = new URL(docsUrlRaw).href;
+    } catch {
+      fieldErrors.docsUrl = "文档 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+    }
+  }
+
+  let blogUrl: string | null = null;
+  if (blogUrlRaw) {
+    try {
+      blogUrl = new URL(blogUrlRaw).href;
+    } catch {
+      fieldErrors.blogUrl = "博客 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+    }
+  }
+
+  let twitterUrl: string | null = null;
+  if (twitterUrlRaw) {
+    try {
+      twitterUrl = new URL(twitterUrlRaw).href;
+    } catch {
+      fieldErrors.twitterUrl = "社媒 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 
@@ -94,6 +136,46 @@ export async function createProject(
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
 
+  const projectSourceRows: { kind: ProjectSourceKind; url: string; isPrimary: boolean }[] = [];
+  if (githubUrl) {
+    projectSourceRows.push({
+      kind: inferRepoSourceKind(githubUrl),
+      url: githubUrl,
+      isPrimary: true,
+    });
+  }
+  if (
+    giteeUrl &&
+    (!githubUrl || normalizeSourceUrl(giteeUrl) !== normalizeSourceUrl(githubUrl))
+  ) {
+    projectSourceRows.push({
+      kind: "GITEE",
+      url: giteeUrl,
+      isPrimary: !githubUrl,
+    });
+  }
+  if (websiteUrl) {
+    projectSourceRows.push({ kind: "WEBSITE", url: websiteUrl, isPrimary: false });
+  }
+  if (docsUrl) {
+    projectSourceRows.push({ kind: "DOCS", url: docsUrl, isPrimary: false });
+  }
+  if (blogUrl) {
+    projectSourceRows.push({ kind: "BLOG", url: blogUrl, isPrimary: false });
+  }
+  if (twitterUrl) {
+    projectSourceRows.push({ kind: "TWITTER", url: twitterUrl, isPrimary: false });
+  }
+
+  const dedupedSources: typeof projectSourceRows = [];
+  const seenUrl = new Set<string>();
+  for (const row of projectSourceRows) {
+    const key = `${row.kind}:${normalizeSourceUrl(row.url)}`;
+    if (seenUrl.has(key)) continue;
+    seenUrl.add(key);
+    dedupedSources.push(row);
+  }
+
   try {
     await prisma.project.create({
       data: {
@@ -110,6 +192,12 @@ export async function createProject(
           socialCreates.length > 0
             ? {
                 create: socialCreates,
+              }
+            : undefined,
+        sources:
+          dedupedSources.length > 0
+            ? {
+                create: dedupedSources,
               }
             : undefined,
       },

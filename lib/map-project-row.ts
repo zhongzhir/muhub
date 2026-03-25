@@ -1,9 +1,16 @@
-import type { GithubRepoSnapshot, Project, ProjectSocialAccount, ProjectUpdate } from "@prisma/client";
+import type {
+  GithubRepoSnapshot,
+  Project,
+  ProjectSocialAccount,
+  ProjectSource,
+  ProjectUpdate,
+} from "@prisma/client";
 import type { ProjectPageView } from "@/lib/demo-project";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
 export type ProjectWithRelations = Project & {
   socialAccounts: ProjectSocialAccount[];
+  sources: ProjectSource[];
   updates: ProjectUpdate[];
   githubSnapshots: GithubRepoSnapshot[];
 };
@@ -72,5 +79,12 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     claimedBy: row.claimedBy ?? null,
     sourceType: row.sourceType ?? undefined,
     isFeatured: row.isFeatured,
+    sources: row.sources.map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      url: s.url,
+      label: s.label ?? undefined,
+      isPrimary: s.isPrimary,
+    })),
   };
 }

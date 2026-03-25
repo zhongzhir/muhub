@@ -42,6 +42,7 @@ async function loadFromDb(slug: string): Promise<ProjectPageView | null> {
       where: { slug },
       include: {
         socialAccounts: true,
+        sources: { orderBy: { createdAt: "asc" } },
         updates: { orderBy: { createdAt: "desc" }, take: 20 },
         githubSnapshots: { orderBy: { fetchedAt: "desc" }, take: 1 },
       },

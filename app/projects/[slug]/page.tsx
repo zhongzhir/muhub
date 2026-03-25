@@ -8,6 +8,7 @@ import { computeGithubActivity } from "@/lib/github-activity";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import { isRecommendedProject } from "@/lib/recommended-projects";
 import { computeProjectHealth } from "@/lib/project-health";
+import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   );
   const showRecommendedClaim = Boolean(!fromDb && isRecommendedProject(slug));
   const health = computeProjectHealth(data.githubSnapshot);
+  const sourceItems = getProjectSources({
+    legacyGithubUrl: data.githubUrl,
+    legacyWebsiteUrl: data.websiteUrl,
+    rows: (data.sources ?? []).map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      url: s.url,
+      label: s.label ?? null,
+      isPrimary: Boolean(s.isPrimary),
+    })),
+  });
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -82,6 +94,64 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             ))}
           </div>
         ) : null}
+
+        {/* 项目信息源 */}
+        <section
+          className="mt-12 scroll-mt-8"
+          aria-labelledby="project-sources-heading"
+          data-testid="project-sources-section"
+        >
+          <h2
+            id="project-sources-heading"
+            className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+          >
+            项目信息源
+          </h2>
+          {sourceItems.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
+              暂无信息源。在创建或编辑项目时补充仓库、官网、文档等链接后将在此展示。
+            </p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {sourceItems.map((s) => (
+                <li key={s.id ? `${s.id}` : `${s.kind}-${s.url}`}>
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="project-source-link"
+                    className="flex h-full flex-col rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/80"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-lg dark:bg-zinc-800"
+                        aria-hidden
+                      >
+                        {mapSourceEmoji(s.kind)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                            {s.categoryLabel}
+                          </span>
+                          {s.isPrimary ? (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
+                              主源
+                            </span>
+                          ) : null}
+                        </div>
+                        {s.hint ? (
+                          <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">{s.hint}</p>
+                        ) : null}
+                        <p className="mt-2 break-all text-xs text-blue-600 dark:text-blue-400">{s.url}</p>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {/* 仓库数据 */}
         <section

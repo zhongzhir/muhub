@@ -19,6 +19,7 @@
 | `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、**`project-badges`**、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
 | `ai-native-ui.spec.ts` | **AI Native UI / 降级**：**`/projects/demo`** 动态区 **`project-update-ai-badge`** / **`project-update-ai-summary`**、**`project-tags`**；分享页 **`share-project-tags`**；未设 **`OPENAI_API_KEY`** 时创建项目仍可跳转（需 **`DATABASE_URL`**） |
 | `ai-operations-ui.spec.ts` | **AI 运营 UI**：**`/projects/demo`** **`project-health-badge`**、**`project-ai-summary`**（内置演示数据） |
+| `project-sources.spec.ts` | **项目信息源**：**`/projects/demo`** **`project-sources-section`** 标题与 **`project-source-link`** |
 | `seed-projects-json.spec.ts` | **种子数据**：读取 **`data/seed-projects.json`**，断言条数 ≥6、含 GitHub 与 Gitee、每条 **`repoUrl`** 可被 **`parseRepoUrl`** 解析（**不写库**，CI 友好） |
 
 ## 批量导入种子项目如何回归
@@ -36,10 +37,11 @@
 1. 打开 **`/projects/demo`** 或任意 **`/projects/<slug>`**（库内或推荐示例）。
 2. **Hero**：一级标题为项目名称；可见文案 **「项目主页」**（`exact` 断言用）；**tagline**（若有）；徽章含 **发布状态**（已发布 / 草稿 / 已归档）；推荐示例有 **「推荐项目」** 徽章与 **`recommended-project-hint`**；库内未认领且已绑仓库时有 **「认领该项目」**（**`claim-project-button`**）；正式项目有 **「分享项目」「编辑项目」「发布动态」**。
 3. **仓库数据**：**`github-snapshot-section`** 内标题 **「仓库数据」**；无快照为 **「暂无仓库快照数据」**；有快照时可见 **Stars / Forks** 等 **`data-testid`**（如 **`github-snapshot-stars`**）；有 **`githubUrl`** 时区头可见 **「刷新仓库数据」**。
-4. **项目动态**：**`project-updates-section`** 内 **「项目动态」** 标题；右侧或附近 **「发布动态」**（库内）；列表 **`project-update-item`**（若有）；每条应含 **`project-update-source-badge`**（如 **手动发布 / 代码仓库 / 官方动态** 等，取决于 `sourceType` 与 `sourceLabel`）。
-5. **社媒**：标题 **「社媒」**；无数据为 **「暂无社媒信息」**。
-6. **项目介绍**：标题 **「项目介绍」**；有正文或 **「暂无项目介绍」**。
-7. 自动化：见 **`tests/e2e/regression.spec.ts`**（demo）、**`create-project.spec.ts`**、**`project-updates.spec.ts`**、**`github-refresh.spec.ts`**、**`claim-project.spec.ts`** 等。
+4. **项目信息源**：**`project-sources-section`**（**「项目信息源」**）；有 **`project-source-link`** 或 **「暂无信息源」** 空态（不报错）。
+5. **项目动态**：**`project-updates-section`** 内 **「项目动态」** 标题；右侧或附近 **「发布动态」**（库内）；列表 **`project-update-item`**（若有）；每条应含 **`project-update-source-badge`**（如 **手动发布 / 代码仓库 / 官方动态** 等，取决于 `sourceType` 与 `sourceLabel`）。
+6. **社媒**：标题 **「社媒」**；无数据为 **「暂无社媒信息」**。
+7. **项目介绍**：标题 **「项目介绍」**；有正文或 **「暂无项目介绍」**。
+8. 自动化：见 **`tests/e2e/regression.spec.ts`**（demo）、**`create-project.spec.ts`**、**`project-sources.spec.ts`**、**`project-updates.spec.ts`**、**`github-refresh.spec.ts`**、**`claim-project.spec.ts`** 等。
 
 ## 项目来源与状态 Badge 如何回归
 

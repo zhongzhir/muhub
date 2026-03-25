@@ -124,6 +124,16 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 - **文档**：**`docs/architecture/ai-operations.md`**。
 - **E2E**：**`tests/e2e/ai-operations-ui.spec.ts`**（演示页 health + 摘要卡；不依赖外网 API key）。
 
+## V1 第 21 轮：项目信息源系统（多信息源架构）
+
+- **模型**：**`ProjectSource`**（`ProjectSourceKind`：GITHUB / GITEE / WEBSITE / DOCS / BLOG / TWITTER），一条项目多行；**保留** **`githubUrl` / `websiteUrl`**，展示层 **`getProjectSources`** 与表数据 **去重合并**。
+- **工具**：**`lib/project-sources.ts`**（`getProjectSources`、`normalizeSourceType`、`mapSourceLabel`、`inferRepoSourceKind` 等）。
+- **创建项目**：**`/dashboard/projects/new`** 可填 **Gitee（第二仓库）**、**文档**、**博客**、**X/Twitter 主页**，写入 **`ProjectSource`**；种子脚本 **`import:seed`** 同步写入仓库 + 官网信息源。
+- **详情 UI**：**`project-sources-section`**（卡片列表 + 轻量符号、**主源** 标记）；无数据 **空态**。
+- **文档**：**`docs/architecture/project-sources.md`**。
+- **迁移**：**`prisma/migrations/*/project_sources`**。
+- **E2E**：**`tests/e2e/project-sources.spec.ts`**、**`create-project.spec.ts`** 断言信息源区与「文档」文案。
+
 ## 启动方式
 
 前置：Node.js 20+、[pnpm](https://pnpm.io) 9+。

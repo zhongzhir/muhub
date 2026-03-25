@@ -41,6 +41,16 @@ enum ClaimStatus {
   CLAIMED
 }
 
+/** 项目外部信息源（与 Project.githubUrl / websiteUrl 并存，逐步收敛至此表） */
+enum ProjectSourceKind {
+  GITHUB
+  GITEE
+  WEBSITE
+  DOCS
+  BLOG
+  TWITTER
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -75,8 +85,22 @@ model Project {
   updatedAt    DateTime      @updatedAt
 
   socialAccounts  ProjectSocialAccount[]
+  sources         ProjectSource[]
   updates         ProjectUpdate[]
   githubSnapshots GithubRepoSnapshot[]
+}
+
+model ProjectSource {
+  id        String            @id @default(cuid())
+  projectId String
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  kind      ProjectSourceKind
+  url       String
+  label     String?
+  isPrimary Boolean           @default(false)
+  createdAt DateTime          @default(now())
+
+  @@index([projectId])
 }
 
 model ProjectSocialAccount {

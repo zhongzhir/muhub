@@ -116,6 +116,19 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         />
         <FieldError message={state.fieldErrors?.githubUrl} />
 
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="giteeUrl">
+          Gitee URL（可选，第二仓库）
+        </label>
+        <input
+          id="giteeUrl"
+          className={inputClass}
+          name="giteeUrl"
+          type="url"
+          autoComplete="off"
+          placeholder="https://gitee.com/org/repo"
+        />
+        <FieldError message={state.fieldErrors?.giteeUrl} />
+
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="websiteUrl">
           官网 URL
         </label>
@@ -129,6 +142,45 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           defaultValue={p.websiteUrl || undefined}
         />
         <FieldError message={state.fieldErrors?.websiteUrl} />
+
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="docsUrl">
+          文档站点 URL（可选）
+        </label>
+        <input
+          id="docsUrl"
+          className={inputClass}
+          name="docsUrl"
+          type="url"
+          autoComplete="off"
+          placeholder="https://docs.example.com"
+        />
+        <FieldError message={state.fieldErrors?.docsUrl} />
+
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="blogUrl">
+          博客 URL（可选）
+        </label>
+        <input
+          id="blogUrl"
+          className={inputClass}
+          name="blogUrl"
+          type="url"
+          autoComplete="off"
+          placeholder="https://blog.example.com"
+        />
+        <FieldError message={state.fieldErrors?.blogUrl} />
+
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="twitterUrl">
+          X / Twitter 等主页 URL（可选）
+        </label>
+        <input
+          id="twitterUrl"
+          className={inputClass}
+          name="twitterUrl"
+          type="url"
+          autoComplete="off"
+          placeholder="https://x.com/…"
+        />
+        <FieldError message={state.fieldErrors?.twitterUrl} />
       </fieldset>
 
       <fieldset className="space-y-4">

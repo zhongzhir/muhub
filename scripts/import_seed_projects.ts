@@ -8,6 +8,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { enrichProjectWithAi } from "@/lib/ai/enrich-project";
+import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
 import { normalizeRepoWebUrl, parseRepoUrl } from "@/lib/repo-platform";
 
 type SeedRow = {
@@ -111,6 +112,15 @@ async function main(): Promise<void> {
           : "seed";
 
       try {
+        const repoKind = inferRepoSourceKind(canonicalRepoUrl);
+        const sourceCreates = [
+          { kind: repoKind, url: canonicalRepoUrl, isPrimary: true },
+          ...(websiteUrl &&
+          normalizeSourceUrl(websiteUrl) !== normalizeSourceUrl(canonicalRepoUrl)
+            ? [{ kind: "WEBSITE" as const, url: websiteUrl, isPrimary: false }]
+            : []),
+        ];
+
         await prisma.project.create({
           data: {
             slug,
@@ -124,6 +134,7 @@ async function main(): Promise<void> {
             status: "ACTIVE",
             isPublic: true,
             claimStatus: "UNCLAIMED",
+            sources: { create: sourceCreates },
           },
         });
         console.log(`[成功] ${slug}（${parsed.platform}：${parsed.owner}/${parsed.repo}）`);
