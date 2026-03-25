@@ -24,6 +24,7 @@ const emptyPrefill: NewProjectPrefill = {
   slug: "",
   githubUrl: "",
   websiteUrl: "",
+  creationSource: "manual",
 };
 
 export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
@@ -32,6 +33,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
 
   return (
     <form action={formAction} className="space-y-10">
+      <input type="hidden" name="creationSource" value={p.creationSource || "manual"} />
       {state.formError ? (
         <div
           role="alert"

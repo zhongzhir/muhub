@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadProjectPageView, sortProjectSocials } from "@/lib/load-project-page-view";
 import { formatListDate } from "@/lib/format-date";
-import { isRecommendedProject } from "@/lib/recommended-projects";
-import { projectStatusLabel } from "@/lib/project-status";
+import { ProjectBadgeStrip } from "@/components/project/project-badge-strip";
+import { buildProjectBadgeGroups } from "@/lib/project-badges";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { computeGithubActivity } from "@/lib/github-activity";
 import { codeHostLinkLabel, parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
@@ -32,9 +32,15 @@ export default async function ShareProjectPage({ params }: PageProps) {
     ? data.description
     : "暂无项目介绍";
 
-  const isRecommended = !fromDb && isRecommendedProject(slug);
-  const isClaimed = fromDb && data.claimStatus === "CLAIMED";
   const recentUpdates = takeRecentUpdatesForShare(data.updates);
+  const { source: shareSourceBadges, lifecycle: shareLifecycleBadges } = buildProjectBadgeGroups({
+    slug,
+    fromDb,
+    sourceType: data.sourceType,
+    isFeatured: data.isFeatured,
+    claimStatus: data.claimStatus,
+    status: data.status,
+  });
   const snap = data.githubSnapshot;
 
   const initial = projectShareInitial(data.name);
@@ -96,28 +102,12 @@ export default async function ShareProjectPage({ params }: PageProps) {
                     暂无简介
                   </p>
                 )}
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                  {isRecommended ? (
-                    <span
-                      data-testid="share-badge-recommended"
-                      className="rounded-full bg-amber-400/90 px-3 py-1 text-xs font-semibold text-amber-950"
-                    >
-                      推荐项目
-                    </span>
-                  ) : null}
-                  {isClaimed ? (
-                    <span
-                      data-testid="share-badge-claimed"
-                      className="rounded-full bg-emerald-400/90 px-3 py-1 text-xs font-semibold text-emerald-950"
-                    >
-                      已认领项目
-                    </span>
-                  ) : null}
-                  {fromDb ? (
-                    <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-zinc-100">
-                      {projectStatusLabel(data.status)}
-                    </span>
-                  ) : null}
+                <div className="mt-4 flex justify-center sm:justify-start">
+                  <ProjectBadgeStrip
+                    source={shareSourceBadges}
+                    lifecycle={shareLifecycleBadges}
+                    theme="dark"
+                  />
                 </div>
               </div>
             </div>

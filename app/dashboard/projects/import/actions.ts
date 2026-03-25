@@ -37,6 +37,7 @@ export async function importGitHubRepo(
     return { ...initialFail, formError: "GitHub 请求失败，请稍后再试" };
   }
 
-  const qs = buildNewProjectSearchParams(result.data).toString();
-  redirect(`/dashboard/projects/new?${qs}`);
+  const qs = buildNewProjectSearchParams(result.data);
+  qs.set("creationSource", "import");
+  redirect(`/dashboard/projects/new?${qs.toString()}`);
 }

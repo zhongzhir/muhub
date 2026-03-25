@@ -69,6 +69,9 @@ export async function createProject(
 
   const slug = slugInput;
 
+  const creationSource = String(formData.get("creationSource") ?? "").trim();
+  const sourceType = creationSource === "import" ? "import" : "manual";
+
   const socialSpecs: { platform: SocialPlatform; raw: string }[] = [
     { platform: "WEIBO", raw: String(formData.get("weibo") ?? "") },
     { platform: "WECHAT_OFFICIAL", raw: String(formData.get("wechat_official") ?? "") },
@@ -99,6 +102,7 @@ export async function createProject(
         description,
         githubUrl,
         websiteUrl,
+        sourceType,
         status: "ACTIVE",
         isPublic: true,
         socialAccounts:

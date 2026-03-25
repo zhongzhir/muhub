@@ -4,6 +4,7 @@ test("分享名片页：核心信息、动态区与复制链接反馈", async ({
   await page.goto("/projects/demo/share");
   await expect(page.getByTestId("share-project-name")).toHaveText("示例开源项目");
   await expect(page.getByTestId("share-project-tagline")).toHaveText("MUHUB 演示项目的标语示例");
+  await expect(page.getByTestId("project-badges")).toBeVisible();
 
   const recent = page.getByTestId("share-recent-updates");
   await expect(recent).toBeVisible();

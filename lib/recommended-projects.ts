@@ -80,6 +80,8 @@ export function recommendedProjectToPageView(p: RecommendedProject): ProjectPage
     claimStatus: "UNCLAIMED",
     claimedAt: null,
     claimedBy: null,
+    sourceType: undefined,
+    isFeatured: false,
   };
 }
 

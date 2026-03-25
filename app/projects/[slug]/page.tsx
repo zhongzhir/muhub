@@ -27,7 +27,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const showClaimCta = Boolean(
     fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim() && parseRepoUrl(data.githubUrl),
   );
-  const showClaimed = Boolean(fromDb && data.claimStatus === "CLAIMED");
   const showRecommendedClaim = Boolean(!fromDb && isRecommendedProject(slug));
 
   return (
@@ -43,8 +42,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           websiteUrl={data.websiteUrl}
           fromDb={fromDb}
           showClaimCta={showClaimCta}
-          showClaimed={showClaimed}
           showRecommendedClaim={showRecommendedClaim}
+          sourceType={data.sourceType}
+          isFeatured={data.isFeatured}
+          claimStatus={data.claimStatus}
         />
 
         {/* 仓库数据 */}

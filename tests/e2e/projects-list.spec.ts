@@ -13,6 +13,9 @@ test.describe("项目广场 /projects", () => {
     const emptyAll = page.getByTestId("projects-empty-all");
     const card = page.getByTestId("project-card").first();
     await expect(emptyAll.or(card)).toBeVisible();
+    if (await card.isVisible()) {
+      await expect(card.getByTestId("project-badges")).toBeVisible();
+    }
   });
 
   test("带搜索参数可打开并显示当前搜索词", async ({ page }) => {

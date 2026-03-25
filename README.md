@@ -71,6 +71,26 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 
 页面容器约 **`max-w-5xl`**，业务能力与 **`data-testid`**（如 **`github-snapshot-section`**、**`project-updates-section`**）保持兼容现有 E2E。
 
+## V1 第 17 轮：项目来源与状态（统一标签）
+
+在产品各页统一展示 **「来源」** 与 **「状态/生命周期」** 两类 **Badge**（`lib/project-badges.ts` + `components/project/project-badge-strip.tsx`），中文文案一致：
+
+**来源（择一主标签 + 可选精选）**
+
+- **推荐项目**：未入库的推荐池详情（`recommended-projects` slug）。
+- **种子项目**：入库且 **`Project.sourceType === "seed"`**（批量导入脚本）。
+- **仓库导入**：入库且 **`sourceType === "import"`**（自 **`/dashboard/projects/import`** 跳转创建并提交）。
+- **手工创建**：其它入库项目（含历史 **`sourceType` 为空**，创建时默认 **`manual`**）。
+- **演示**：仅内置 **`demo` 兜底**  slug。
+- **精选**：入库且 **`isFeatured === true`**（与上列可并存）。
+
+**状态 / 生命周期**
+
+- **草稿 / 已发布 / 已归档**：来自 **`Project.status`**。
+- **已认领 / 未认领**：仅 **库内项目** 显示认领状态。
+
+**页面**：**`/projects`** 卡片、**`/projects/[slug]`** Hero、**`/projects/[slug]/share`** 名片头均使用同一套规则；详情页已认领仍通过 **`project-claimed-label`** 挂到对应 badge 上以便 E2E。
+
 ## 启动方式
 
 前置：Node.js 20+、[pnpm](https://pnpm.io) 9+。

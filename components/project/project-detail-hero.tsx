@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { ProjectStatus } from "@prisma/client";
-import { projectStatusLabel } from "@/lib/project-status";
+import type { ClaimStatus, ProjectStatus } from "@prisma/client";
+import { ProjectBadgeStrip } from "@/components/project/project-badge-strip";
+import { buildProjectBadgeGroups } from "@/lib/project-badges";
 import { codeHostLinkLabel } from "@/lib/repo-platform";
 
 export type ProjectDetailHeroProps = {
@@ -13,8 +14,10 @@ export type ProjectDetailHeroProps = {
   websiteUrl: string | undefined;
   fromDb: boolean;
   showClaimCta: boolean;
-  showClaimed: boolean;
   showRecommendedClaim: boolean;
+  sourceType?: string | null;
+  isFeatured?: boolean;
+  claimStatus: ClaimStatus;
 };
 
 const btnBase =
@@ -32,9 +35,24 @@ export function ProjectDetailHero({
   websiteUrl,
   fromDb,
   showClaimCta,
-  showClaimed,
   showRecommendedClaim,
+  sourceType,
+  isFeatured,
+  claimStatus,
 }: ProjectDetailHeroProps) {
+  const groups = buildProjectBadgeGroups({
+    slug,
+    fromDb,
+    sourceType,
+    isFeatured,
+    claimStatus,
+    status,
+  });
+  const { source } = groups;
+  const lifecycleForHero = groups.lifecycle.map((b) =>
+    b.key === "life-claimed" ? { ...b, testId: "project-claimed-label" as const } : b,
+  );
+
   return (
     <section
       className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-gradient-to-b from-white to-zinc-50 px-6 py-8 shadow-sm dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950 md:px-10 md:py-10"
@@ -42,7 +60,10 @@ export function ProjectDetailHero({
     >
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">项目主页</p>
 
-      <h1 id="project-detail-title" className="mt-2 text-4xl font-bold tracking-tight text-zinc-900 md:text-5xl dark:text-zinc-50">
+      <h1
+        id="project-detail-title"
+        className="mt-2 text-4xl font-bold tracking-tight text-zinc-900 md:text-5xl dark:text-zinc-50"
+      >
         {name}
       </h1>
 
@@ -50,23 +71,8 @@ export function ProjectDetailHero({
         <p className="mt-4 max-w-3xl text-lg leading-snug text-zinc-600 dark:text-zinc-400">{tagline}</p>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        {showRecommendedClaim ? (
-          <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 dark:bg-amber-900/45 dark:text-amber-100">
-            推荐项目
-          </span>
-        ) : null}
-        {showClaimed ? (
-          <span
-            data-testid="project-claimed-label"
-            className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200"
-          >
-            已认领
-          </span>
-        ) : null}
-        <span className="inline-flex rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200">
-          {projectStatusLabel(status)}
-        </span>
+      <div className="mt-5">
+        <ProjectBadgeStrip source={source} lifecycle={lifecycleForHero} theme="light" />
       </div>
 
       {showRecommendedClaim ? (
@@ -145,7 +151,10 @@ export function ProjectDetailHero({
       </p>
 
       <div className="mt-4">
-        <Link href="/" className="text-sm font-medium text-zinc-500 underline-offset-4 hover:text-zinc-800 hover:underline dark:hover:text-zinc-300">
+        <Link
+          href="/"
+          className="text-sm font-medium text-zinc-500 underline-offset-4 hover:text-zinc-800 hover:underline dark:hover:text-zinc-300"
+        >
           ← 返回首页
         </Link>
       </div>

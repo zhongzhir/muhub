@@ -59,6 +59,9 @@ export type ProjectPageView = {
   claimStatus: ClaimStatus;
   claimedAt: Date | null;
   claimedBy: string | null;
+  /** 库内来源标记：seed / import / manual 等 */
+  sourceType?: string | null;
+  isFeatured?: boolean;
 };
 
 export const demoProjectView: ProjectPageView = {

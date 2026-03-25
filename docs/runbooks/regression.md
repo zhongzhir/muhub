@@ -18,6 +18,7 @@
 | `recommended-claim.spec.ts` | **推荐认领**：打开 **`/projects/langchain`**；若有 **`recommended-project-hint`** 则点 **认领项目**，否则直链 **`/dashboard/projects/new?from=recommended&slug=langchain`**；断言创建页 query 与 name/slug/tagline/GitHub 预填 |
 | `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
 | `seed-projects-json.spec.ts` | **种子数据**：读取 **`data/seed-projects.json`**，断言条数 ≥6、含 GitHub 与 Gitee、每条 **`repoUrl`** 可被 **`parseRepoUrl`** 解析（**不写库**，CI 友好） |
+| `share-project.spec.ts` / `projects-list.spec.ts` | **来源与状态 Badge**：分享页 **`project-badges`**；广场有 **`project-card`** 时同级 **`project-badges`** |
 
 ## 批量导入种子项目如何回归
 
@@ -38,6 +39,14 @@
 5. **社媒**：标题 **「社媒」**；无数据为 **「暂无社媒信息」**。
 6. **项目介绍**：标题 **「项目介绍」**；有正文或 **「暂无项目介绍」**。
 7. 自动化：见 **`tests/e2e/regression.spec.ts`**（demo）、**`create-project.spec.ts`**、**`project-updates.spec.ts`**、**`github-refresh.spec.ts`**、**`claim-project.spec.ts`** 等。
+
+## 项目来源与状态 Badge 如何回归
+
+1. **详情 `/projects/<slug>`**：Hero 内 **`project-badges`** 含 **`project-badges-source`**（来源）与 **`project-badges-lifecycle`**（发布状态 + 认领）；推荐示例有 **「推荐项目」**；库内种子有 **「种子项目」**；自导入页创建的有 **「仓库导入」**；普通创建 **「手工创建」**；已认领条带 **`project-claimed-label`**（**「已认领」**）。
+2. **分享 `/projects/<slug>/share`**：深色头图区同样 **`project-badges`**，文案与详情一致。
+3. **广场 `/projects`**：若出现 **`project-card`**，卡片内应有 **`project-badges`**（与列表数据源一致）。
+4. **手工**：对照 README「第 17 轮」核对 **推荐 / 种子 / 导入 / 手工 / 演示 / 精选** 与 **草稿·已发布·已归档·认领** 的组合是否符合预期。
+5. 自动化：**`share-project.spec.ts`**（**`project-badges`**）、**`projects-list.spec.ts`**（有卡片时断言 badge 区）、既有认领/推荐用例。
 
 ## 分享名片页如何回归
 

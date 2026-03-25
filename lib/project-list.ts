@@ -1,4 +1,4 @@
-import type { Prisma, ProjectStatus } from "@prisma/client";
+import type { ClaimStatus, Prisma, ProjectStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type ProjectListItem = {
@@ -9,6 +9,9 @@ export type ProjectListItem = {
   status: ProjectStatus;
   githubUrl: string | null;
   socialCount: number;
+  sourceType: string | null;
+  claimStatus: ClaimStatus;
+  isFeatured: boolean;
 };
 
 export async function fetchPublicProjects(
@@ -43,6 +46,9 @@ export async function fetchPublicProjects(
         createdAt: true,
         status: true,
         githubUrl: true,
+        sourceType: true,
+        claimStatus: true,
+        isFeatured: true,
         _count: { select: { socialAccounts: true } },
       },
     });
@@ -56,6 +62,9 @@ export async function fetchPublicProjects(
         status: r.status,
         githubUrl: r.githubUrl,
         socialCount: r._count.socialAccounts,
+        sourceType: r.sourceType,
+        claimStatus: r.claimStatus,
+        isFeatured: r.isFeatured,
       })),
       error: null,
     };

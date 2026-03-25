@@ -1,11 +1,20 @@
 import Link from "next/link";
 import type { ProjectListItem } from "@/lib/project-list";
+import { ProjectBadgeStrip } from "@/components/project/project-badge-strip";
+import { buildProjectBadgeGroups } from "@/lib/project-badges";
 import { formatListDate } from "@/lib/format-date";
-import { projectStatusLabel } from "@/lib/project-status";
 import { codeHostLinkLabel } from "@/lib/repo-platform";
 
 export function ProjectCard({ project }: { project: ProjectListItem }) {
   const taglineDisplay = project.tagline?.trim() ? project.tagline : "暂无简介";
+  const { source, lifecycle } = buildProjectBadgeGroups({
+    slug: project.slug,
+    fromDb: true,
+    sourceType: project.sourceType,
+    isFeatured: project.isFeatured,
+    claimStatus: project.claimStatus,
+    status: project.status,
+  });
 
   return (
     <article
@@ -20,6 +29,8 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{taglineDisplay}</p>
         </div>
 
+        <ProjectBadgeStrip source={source} lifecycle={lifecycle} theme="light" />
+
         <dl className="grid gap-1 text-sm text-zinc-600 dark:text-zinc-400">
           <div className="flex flex-wrap gap-x-2">
             <dt className="text-zinc-500">slug</dt>
@@ -28,10 +39,6 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           <div className="flex flex-wrap gap-x-2">
             <dt className="text-zinc-500">创建时间</dt>
             <dd>{formatListDate(project.createdAt)}</dd>
-          </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="text-zinc-500">状态</dt>
-            <dd>{projectStatusLabel(project.status)}</dd>
           </div>
           <div className="flex flex-wrap gap-x-2">
             <dt className="text-zinc-500">社媒</dt>

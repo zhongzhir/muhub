@@ -65,5 +65,7 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     claimStatus: row.claimStatus,
     claimedAt: row.claimedAt ?? null,
     claimedBy: row.claimedBy ?? null,
+    sourceType: row.sourceType ?? undefined,
+    isFeatured: row.isFeatured,
   };
 }

@@ -6,6 +6,8 @@ export type NewProjectPrefill = {
   slug: string;
   githubUrl: string;
   websiteUrl: string;
+  /** import → 写库 `sourceType=import`，否则 manual */
+  creationSource: string;
 };
 
 export function pickSearchParam(
@@ -38,12 +40,14 @@ export function resolveNewProjectPrefill(
         slug: rec.slug,
         githubUrl: `https://github.com/${rec.github}`,
         websiteUrl: "",
+        creationSource: pickSearchParam(sp, "creationSource").trim() || "manual",
       };
     }
   }
 
   const githubFromImport = pickSearchParam(sp, "import").trim();
   const githubUrlParam = pickSearchParam(sp, "githubUrl").trim();
+  const creationSource = pickSearchParam(sp, "creationSource").trim();
 
   return {
     name: pickSearchParam(sp, "name"),
@@ -51,5 +55,6 @@ export function resolveNewProjectPrefill(
     slug: pickSearchParam(sp, "slug"),
     githubUrl: githubUrlParam || githubFromImport,
     websiteUrl: pickSearchParam(sp, "websiteUrl"),
+    creationSource: creationSource || "manual",
   };
 }
