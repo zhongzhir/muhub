@@ -1,86 +1,84 @@
-import type { SocialPlatform } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { demoProjectView, type DemoSocial, type ProjectPageView } from "@/lib/demo-project";
-import { mapProjectRowToView } from "@/lib/map-project-row";
-import { prisma } from "@/lib/prisma";
+import { loadProjectPageView, sortProjectSocials } from "@/lib/load-project-page-view";
 import { projectStatusLabel } from "@/lib/project-status";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { updateSourceTypeLabel } from "@/lib/update-source";
+import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
 export const dynamic = "force-dynamic";
 
-const SOCIAL_ORDER: SocialPlatform[] = [
-  "WEIBO",
-  "WECHAT_OFFICIAL",
-  "WECHAT_CHANNELS",
-  "DOUYIN",
-  "XIAOHONGSHU",
-  "BILIBILI",
-  "X",
-  "DISCORD",
-  "REDDIT",
-];
-
-function sortSocials(socials: DemoSocial[]): DemoSocial[] {
-  return [...socials].sort((a, b) => {
-    const ia = SOCIAL_ORDER.indexOf(a.platform);
-    const ib = SOCIAL_ORDER.indexOf(b.platform);
-    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-  });
-}
-
-async function loadFromDb(slug: string): Promise<ProjectPageView | null> {
-  if (!process.env.DATABASE_URL?.trim()) {
-    return null;
-  }
-  try {
-    const row = await prisma.project.findUnique({
-      where: { slug },
-      include: {
-        socialAccounts: true,
-        updates: { orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }], take: 20 },
-        githubSnapshots: { orderBy: { fetchedAt: "desc" }, take: 1 },
-      },
-    });
-    if (!row) {
-      return null;
-    }
-    return mapProjectRowToView(row);
-  } catch (e) {
-    console.error("[project page] loadFromDb", e);
-    return null;
-  }
-}
-
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const fromDb = await loadFromDb(slug);
-  const data: ProjectPageView | null =
-    fromDb ?? (slug === demoProjectView.slug ? demoProjectView : null);
-
-  if (!data) {
+  const loaded = await loadProjectPageView(slug);
+  if (!loaded) {
     notFound();
   }
 
-  const socials = sortSocials(data.socials);
+  const { data, fromDb } = loaded;
+  const socials = sortProjectSocials(data.socials);
 
   const descriptionText = data.description.trim()
     ? data.description
     : "暂无项目介绍";
 
+  const showClaimCta = Boolean(
+    fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim(),
+  );
+  const showClaimed = Boolean(fromDb && data.claimStatus === "CLAIMED");
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <div className="mx-auto max-w-3xl px-6 py-12">
-        <p className="mb-6 text-sm text-zinc-500">
+        <p className="mb-6 flex flex-wrap gap-4 text-sm text-zinc-500">
           <Link href="/" className="underline-offset-4 hover:underline">
             返回首页
           </Link>
+          <Link href={`/projects/${slug}/share`} className="underline-offset-4 hover:underline">
+            分享项目
+          </Link>
+          {fromDb ? (
+            <>
+              <Link
+                href={`/dashboard/projects/${slug}/edit`}
+                className="underline-offset-4 hover:underline"
+              >
+                编辑项目
+              </Link>
+              <Link
+                href={`/dashboard/projects/${slug}/updates/new`}
+                className="underline-offset-4 hover:underline"
+              >
+                发布动态
+              </Link>
+            </>
+          ) : null}
         </p>
 
         <header className="mb-10 border-b border-zinc-200 pb-8 dark:border-zinc-800">
           <p className="text-sm font-medium text-zinc-500">项目主页</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{data.name}</h1>
+          <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-3xl font-semibold tracking-tight">{data.name}</h1>
+              {showClaimed ? (
+                <p
+                  data-testid="project-claimed-label"
+                  className="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-400"
+                >
+                  已认领
+                </p>
+              ) : null}
+            </div>
+            {showClaimCta ? (
+              <Link
+                href={`/projects/${slug}/claim`}
+                data-testid="claim-project-button"
+                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              >
+                认领该项目
+              </Link>
+            ) : null}
+          </div>
           {data.tagline ? (
             <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">{data.tagline}</p>
           ) : null}
@@ -132,63 +130,97 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </ul>
         </section>
 
-        <section className="mb-10" aria-labelledby="github-heading">
-          <h2 id="github-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            GitHub 卡片
-          </h2>
-          <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="font-mono text-sm text-zinc-800 dark:text-zinc-200">
-              {data.githubSnapshot.repoFullName}
-            </p>
-            {data.githubUrl ? (
-              <a
-                href={data.githubUrl}
-                className="mt-2 inline-block text-sm text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-              >
-                打开仓库
-              </a>
+        <section
+          className="mb-10"
+          aria-labelledby="github-heading"
+          data-testid="github-snapshot-section"
+        >
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2
+              id="github-heading"
+              className="text-sm font-semibold uppercase tracking-wide text-zinc-500"
+            >
+              GitHub 数据
+            </h2>
+            {fromDb && data.githubUrl?.trim() ? (
+              <RefreshGithubSnapshotForm slug={slug} />
             ) : null}
-            <p className="mt-3 text-xs text-zinc-500">
-              指标数据来自 GitHub 仓库快照；新建项目默认无自动同步，故可能显示为 0。
-            </p>
-            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+          </div>
+          <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            {!data.githubSnapshot ? (
               <div>
-                <dt className="text-zinc-500">Stars</dt>
-                <dd className="font-medium">{data.githubSnapshot.stars}</dd>
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  暂无 GitHub 数据
+                </p>
+                <p className="mt-2 text-xs text-zinc-500">
+                  {data.githubUrl?.trim()
+                    ? "点击「刷新 GitHub 数据」从 GitHub 拉取仓库指标（写入快照历史，详情展示最新一条）。"
+                    : "请先在编辑页配置 GitHub 仓库地址后再刷新。"}
+                </p>
               </div>
-              <div>
-                <dt className="text-zinc-500">Forks</dt>
-                <dd className="font-medium">{data.githubSnapshot.forks}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Open issues</dt>
-                <dd className="font-medium">{data.githubSnapshot.openIssues}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">贡献者</dt>
-                <dd className="font-medium">{data.githubSnapshot.contributorsCount}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">7d commits</dt>
-                <dd className="font-medium">{data.githubSnapshot.commitCount7d}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">30d commits</dt>
-                <dd className="font-medium">{data.githubSnapshot.commitCount30d}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">默认分支</dt>
-                <dd className="font-medium">{data.githubSnapshot.defaultBranch ?? "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">最近提交</dt>
-                <dd className="font-medium">
-                  {data.githubSnapshot.lastCommitAt
-                    ? data.githubSnapshot.lastCommitAt.toLocaleDateString("zh-CN")
-                    : "—"}
-                </dd>
-              </div>
-            </dl>
+            ) : (
+              <>
+                <p
+                  className="font-mono text-sm text-zinc-800 dark:text-zinc-200"
+                  data-testid="github-snapshot-repo"
+                >
+                  {data.githubSnapshot.repoFullName}
+                </p>
+                {data.githubUrl ? (
+                  <a
+                    href={data.githubUrl}
+                    className="mt-2 inline-block text-sm text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                  >
+                    打开仓库
+                  </a>
+                ) : null}
+                <p className="mt-3 text-xs text-zinc-500">
+                  指标来自已保存的 GitHub 快照；手动刷新会新增一条记录并在此处显示最新数据。
+                </p>
+                <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                  <div data-testid="github-snapshot-stars">
+                    <dt className="text-zinc-500">Stars</dt>
+                    <dd className="font-medium">{data.githubSnapshot.stars}</dd>
+                  </div>
+                  <div data-testid="github-snapshot-forks">
+                    <dt className="text-zinc-500">Forks</dt>
+                    <dd className="font-medium">{data.githubSnapshot.forks}</dd>
+                  </div>
+                  <div data-testid="github-snapshot-issues">
+                    <dt className="text-zinc-500">Open Issues</dt>
+                    <dd className="font-medium">{data.githubSnapshot.openIssues}</dd>
+                  </div>
+                  <div data-testid="github-snapshot-watchers">
+                    <dt className="text-zinc-500">Watchers</dt>
+                    <dd className="font-medium">{data.githubSnapshot.watchers}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">贡献者（估算）</dt>
+                    <dd className="font-medium">{data.githubSnapshot.contributorsCount}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-500">默认分支</dt>
+                    <dd className="font-medium">{data.githubSnapshot.defaultBranch ?? "—"}</dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-zinc-500">最近仓库活动</dt>
+                    <dd className="font-medium">
+                      {data.githubSnapshot.lastCommitAt
+                        ? data.githubSnapshot.lastCommitAt.toLocaleString("zh-CN")
+                        : "—"}
+                    </dd>
+                  </div>
+                  {data.githubSnapshot.fetchedAt ? (
+                    <div className="sm:col-span-3">
+                      <dt className="text-zinc-500">最近抓取时间</dt>
+                      <dd className="font-medium" data-testid="github-snapshot-fetched-at">
+                        {data.githubSnapshot.fetchedAt.toLocaleString("zh-CN")}
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </>
+            )}
           </div>
         </section>
 
@@ -222,39 +254,61 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </ul>
         </section>
 
-        <section className="mb-10" aria-labelledby="feed-heading">
-          <h2 id="feed-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            动态流
-          </h2>
+        <section className="mb-10" aria-labelledby="project-updates-heading" data-testid="project-updates-section">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+            <h2
+              id="project-updates-heading"
+              className="text-sm font-semibold uppercase tracking-wide text-zinc-500"
+            >
+              项目动态
+            </h2>
+            {fromDb ? (
+              <Link
+                href={`/dashboard/projects/${slug}/updates/new`}
+                className="text-xs font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
+              >
+                发布动态
+              </Link>
+            ) : null}
+          </div>
+          <p className="mb-3 text-xs text-zinc-500">最近动态按发布时间倒序</p>
           <ul className="space-y-4">
             {data.updates.length === 0 ? (
               <li className="text-sm text-zinc-500">暂无项目动态</li>
             ) : (
-              data.updates.map((u, i) => (
-                <li
-                  key={`${u.title}-${i}`}
-                  className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-xs font-medium text-zinc-500">
-                      {updateSourceTypeLabel(u.sourceType)}
-                    </span>
-                    <time className="text-xs text-zinc-400">
-                      {u.occurredAt.toLocaleString("zh-CN")}
-                    </time>
-                  </div>
-                  <p className="mt-1 font-medium">{u.title}</p>
-                  {u.summary ? <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{u.summary}</p> : null}
-                  {u.sourceUrl ? (
-                    <a
-                      href={u.sourceUrl}
-                      className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      查看来源
-                    </a>
-                  ) : null}
-                </li>
-              ))
+              data.updates.map((u, i) => {
+                const displayAt = u.createdAt ?? u.occurredAt;
+                return (
+                  <li
+                    key={u.id ?? `update-${u.title}-${displayAt.toISOString()}-${i}`}
+                    data-testid="project-update-item"
+                    className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-xs font-medium text-zinc-500">
+                        {updateSourceTypeLabel(u.sourceType)}
+                      </span>
+                      <time className="text-xs text-zinc-400" dateTime={displayAt.toISOString()}>
+                        {displayAt.toLocaleString("zh-CN")}
+                      </time>
+                    </div>
+                    <p className="mt-1 font-medium">{u.title}</p>
+                    {u.content ? (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{u.content}</p>
+                    ) : u.summary ? (
+                      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{u.summary}</p>
+                    ) : null}
+                    {u.sourceUrl ? (
+                      <a
+                        href={u.sourceUrl}
+                        className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
+                      >
+                        查看来源
+                      </a>
+                    ) : null}
+                  </li>
+                );
+              })
             )}
           </ul>
         </section>

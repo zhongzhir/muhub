@@ -1,15 +1,16 @@
 "use client";
 
 import { useActionState } from "react";
-import type { NewProjectPrefill } from "./prefill";
-import { createProject, type CreateProjectFormState } from "./actions";
+import Link from "next/link";
+import type { ProjectEditInitial } from "@/lib/project-edit";
+import { updateProject, type UpdateProjectFormState } from "./actions";
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
 
 const sectionTitle = "text-sm font-semibold text-zinc-800 dark:text-zinc-200";
 
-const initialState: CreateProjectFormState = { ok: false };
+const initialState: UpdateProjectFormState = { ok: false };
 
 function FieldError({ message }: { message?: string }) {
   if (!message) {
@@ -18,19 +19,13 @@ function FieldError({ message }: { message?: string }) {
   return <p className="mt-1 text-sm text-red-600 dark:text-red-400">{message}</p>;
 }
 
-const emptyPrefill: NewProjectPrefill = {
-  name: "",
-  tagline: "",
-  githubUrl: "",
-  websiteUrl: "",
-};
-
-export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
-  const p = prefill ?? emptyPrefill;
-  const [state, formAction, pending] = useActionState(createProject, initialState);
+export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
+  const [state, formAction, pending] = useActionState(updateProject, initialState);
 
   return (
     <form action={formAction} className="space-y-10">
+      <input type="hidden" name="slug" value={initial.slug} />
+
       {state.formError ? (
         <div
           role="alert"
@@ -52,24 +47,18 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           type="text"
           required
           autoComplete="off"
-          placeholder="例如：MUHUB"
-          defaultValue={p.name || undefined}
+          defaultValue={initial.name}
         />
         <FieldError message={state.fieldErrors?.name} />
 
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="slug">
-          slug <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="slug"
-          className={inputClass}
-          name="slug"
-          type="text"
-          required
-          autoComplete="off"
-          placeholder="仅小写字母、数字、短横线，如 muhub"
-        />
-        <FieldError message={state.fieldErrors?.slug} />
+        <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">slug</span>
+        <p
+          className={`${inputClass} bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300`}
+          aria-readonly="true"
+        >
+          {initial.slug}
+        </p>
+        <p className="text-xs text-zinc-500">slug 创建后不可修改。</p>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tagline">
           一句话介绍
@@ -80,8 +69,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           name="tagline"
           type="text"
           autoComplete="off"
-          placeholder="简短标语"
-          defaultValue={p.tagline || undefined}
+          defaultValue={initial.tagline}
         />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="description">
@@ -92,7 +80,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           className={`${inputClass} min-h-[120px] resize-y`}
           name="description"
           rows={5}
-          placeholder="支持多行描述"
+          defaultValue={initial.description}
         />
       </fieldset>
 
@@ -107,8 +95,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           name="githubUrl"
           type="url"
           autoComplete="off"
-          placeholder="https://github.com/org/repo"
-          defaultValue={p.githubUrl || undefined}
+          defaultValue={initial.githubUrl}
         />
         <FieldError message={state.fieldErrors?.githubUrl} />
 
@@ -121,8 +108,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           name="websiteUrl"
           type="url"
           autoComplete="off"
-          placeholder="https://..."
-          defaultValue={p.websiteUrl || undefined}
+          defaultValue={initial.websiteUrl}
         />
         <FieldError message={state.fieldErrors?.websiteUrl} />
       </fieldset>
@@ -130,12 +116,12 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
       <fieldset className="space-y-4">
         <legend className={sectionTitle}>社媒信息</legend>
         <p className="text-xs text-zinc-500">
-          可填写账号名或完整链接；以 http(s) 开头的输入会保存为链接。
+          可填写账号名或完整链接；留空并保存将移除对应平台记录。
         </p>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="weibo">
           微博
         </label>
-        <input id="weibo" className={inputClass} name="weibo" type="text" autoComplete="off" />
+        <input id="weibo" className={inputClass} name="weibo" type="text" defaultValue={initial.weibo} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="wechat_official">
           微信公众号
@@ -145,27 +131,71 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           className={inputClass}
           name="wechat_official"
           type="text"
-          autoComplete="off"
+          defaultValue={initial.wechat_official}
         />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="douyin">
           抖音
         </label>
-        <input id="douyin" className={inputClass} name="douyin" type="text" autoComplete="off" />
+        <input id="douyin" className={inputClass} name="douyin" type="text" defaultValue={initial.douyin} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="xiaohongshu">
           小红书
         </label>
-        <input id="xiaohongshu" className={inputClass} name="xiaohongshu" type="text" autoComplete="off" />
+        <input
+          id="xiaohongshu"
+          className={inputClass}
+          name="xiaohongshu"
+          type="text"
+          defaultValue={initial.xiaohongshu}
+        />
       </fieldset>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white sm:w-auto"
-      >
-        {pending ? "提交中…" : "创建项目"}
-      </button>
+      <fieldset className="space-y-4">
+        <legend className={sectionTitle}>可见性与状态</legend>
+        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            name="isPublic"
+            value="true"
+            defaultChecked={initial.isPublic}
+            className="h-4 w-4 rounded border-zinc-300"
+          />
+          在项目广场公开展示（isPublic）
+        </label>
+
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="status">
+          项目状态
+        </label>
+        <select
+          id="status"
+          name="status"
+          className={inputClass}
+          defaultValue={initial.status}
+          aria-invalid={Boolean(state.fieldErrors?.status)}
+        >
+          <option value="DRAFT">草稿</option>
+          <option value="ACTIVE">已发布</option>
+          <option value="ARCHIVED">已归档</option>
+        </select>
+        <FieldError message={state.fieldErrors?.status} />
+      </fieldset>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="submit"
+          disabled={pending}
+          className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+        >
+          {pending ? "保存中…" : "保存修改"}
+        </button>
+        <Link
+          href={`/projects/${initial.slug}`}
+          className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+        >
+          返回项目页
+        </Link>
+      </div>
     </form>
   );
 }

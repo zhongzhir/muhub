@@ -1,6 +1,7 @@
 /** 内置演示数据：仅在数据库中无对应 slug 且访问 demo 时使用 */
 
 import type {
+  ClaimStatus,
   ProjectStatus,
   ProjectUpdateSourceType,
   SocialPlatform,
@@ -8,11 +9,14 @@ import type {
 
 export type DemoSocial = { platform: SocialPlatform; accountName: string; accountUrl?: string };
 export type DemoUpdate = {
+  id?: string;
   sourceType: ProjectUpdateSourceType;
   title: string;
   summary?: string;
+  content?: string;
   sourceUrl?: string;
   occurredAt: Date;
+  createdAt?: Date;
 };
 
 export type GithubSnapshotView = {
@@ -26,6 +30,8 @@ export type GithubSnapshotView = {
   commitCount30d: number;
   contributorsCount: number;
   lastCommitAt?: Date;
+  /** 本条快照写入时间（仅数据库快照） */
+  fetchedAt?: Date;
 };
 
 /** 项目详情页展示用数据结构 */
@@ -36,11 +42,15 @@ export type ProjectPageView = {
   description: string;
   websiteUrl?: string;
   githubUrl?: string;
-  githubSnapshot: GithubSnapshotView;
+  /** 数据库项目无刷新记录时为 null */
+  githubSnapshot: GithubSnapshotView | null;
   socials: DemoSocial[];
   updates: DemoUpdate[];
   status: ProjectStatus;
   createdAt: Date;
+  claimStatus: ClaimStatus;
+  claimedAt: Date | null;
+  claimedBy: string | null;
 };
 
 export const demoProjectView: ProjectPageView = {
@@ -75,19 +85,27 @@ export const demoProjectView: ProjectPageView = {
   ] satisfies DemoSocial[],
   updates: [
     {
+      id: "demo-update-1",
       sourceType: "GITHUB",
       title: "v1.2.0 发布",
       summary: "改进性能与可访问性。",
       sourceUrl: "https://github.com/example/demo/releases/tag/v1.2.0",
       occurredAt: new Date("2026-03-18T09:00:00.000Z"),
+      createdAt: new Date("2026-03-18T09:00:00.000Z"),
     },
     {
+      id: "demo-update-2",
       sourceType: "MANUAL",
       title: "架构演进笔记",
       summary: "记录近期模块拆分与缓存策略。",
+      content: "本期将核心模块拆分为独立包，并调整了静态资源的缓存策略。",
       occurredAt: new Date("2026-03-10T14:30:00.000Z"),
+      createdAt: new Date("2026-03-10T14:30:00.000Z"),
     },
   ] satisfies DemoUpdate[],
   status: "ACTIVE",
   createdAt: new Date("2026-01-01T08:00:00.000Z"),
+  claimStatus: "UNCLAIMED",
+  claimedAt: null,
+  claimedBy: null,
 };

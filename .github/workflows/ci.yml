@@ -70,3 +70,4 @@ jobs:
         env:
           CI: true
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/muhub_ci?schema=public
+          GITHUB_IMPORT_E2E_FIXTURE: "1"

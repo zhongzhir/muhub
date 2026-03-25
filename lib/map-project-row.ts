@@ -21,18 +21,9 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
         commitCount30d: snap.commitCount30d,
         contributorsCount: snap.contributorsCount,
         lastCommitAt: snap.lastCommitAt ?? undefined,
+        fetchedAt: snap.fetchedAt,
       }
-    : {
-        repoFullName: row.githubUrl?.replace(/^https?:\/\/github\.com\//i, "").replace(/\/$/, "") || "—",
-        defaultBranch: "main",
-        stars: 0,
-        forks: 0,
-        openIssues: 0,
-        watchers: 0,
-        commitCount7d: 0,
-        commitCount30d: 0,
-        contributorsCount: 0,
-      };
+    : null;
 
   return {
     slug: row.slug,
@@ -48,13 +39,19 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
       accountUrl: s.accountUrl ?? undefined,
     })),
     updates: row.updates.map((u) => ({
+      id: u.id,
       sourceType: u.sourceType,
       title: u.title,
       summary: u.summary ?? undefined,
+      content: u.content ?? undefined,
       sourceUrl: u.sourceUrl ?? undefined,
       occurredAt: u.occurredAt ?? u.createdAt,
+      createdAt: u.createdAt,
     })),
     status: row.status,
     createdAt: row.createdAt,
+    claimStatus: row.claimStatus,
+    claimedAt: row.claimedAt ?? null,
+    claimedBy: row.claimedBy ?? null,
   };
 }
