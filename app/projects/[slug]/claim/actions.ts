@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { parseGitHubRepoUrl, githubRepoUrlsMatch } from "@/lib/github";
+import { githubRepoUrlsMatch } from "@/lib/github";
+import { parseRepoUrl } from "@/lib/repo-platform";
 import { prisma } from "@/lib/prisma";
 
 export type ClaimProjectFormState = {
@@ -27,7 +28,7 @@ export async function claimProject(
   }
 
   if (!repoUrl) {
-    return { ...initialFail, formError: "请填写 GitHub 仓库地址。" };
+    return { ...initialFail, formError: "请填写代码仓库地址（GitHub / Gitee）。" };
   }
 
   const project = await prisma.project.findUnique({
@@ -48,20 +49,20 @@ export async function claimProject(
   }
 
   if (!project.githubUrl?.trim()) {
-    return { ...initialFail, formError: "该项目未绑定 GitHub 仓库，无法通过仓库地址认领。" };
+    return { ...initialFail, formError: "该项目未绑定代码仓库，无法通过仓库地址认领。" };
   }
 
-  if (!parseGitHubRepoUrl(repoUrl)) {
-    return { ...initialFail, formError: "GitHub 地址格式错误" };
+  if (!parseRepoUrl(repoUrl)) {
+    return { ...initialFail, formError: "仓库地址格式错误（当前支持 GitHub、Gitee）" };
   }
 
   if (!githubRepoUrlsMatch(project.githubUrl, repoUrl)) {
-    return { ...initialFail, formError: "GitHub 地址与项目不匹配" };
+    return { ...initialFail, formError: "仓库地址与项目不匹配" };
   }
 
-  const parsed = parseGitHubRepoUrl(repoUrl);
+  const parsed = parseRepoUrl(repoUrl);
   if (!parsed) {
-    return { ...initialFail, formError: "GitHub 地址格式错误" };
+    return { ...initialFail, formError: "仓库地址格式错误（当前支持 GitHub、Gitee）" };
   }
 
   const claimedBy = `${parsed.owner}/${parsed.repo}`;

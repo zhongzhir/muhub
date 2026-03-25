@@ -1,5 +1,6 @@
 import type { GithubRepoSnapshot, Project, ProjectSocialAccount, ProjectUpdate } from "@prisma/client";
 import type { ProjectPageView } from "@/lib/demo-project";
+import { parseRepoUrl } from "@/lib/repo-platform";
 
 export type ProjectWithRelations = Project & {
   socialAccounts: ProjectSocialAccount[];
@@ -9,8 +10,16 @@ export type ProjectWithRelations = Project & {
 
 export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView {
   const snap = row.githubSnapshots[0];
+  const inferredPlatform =
+    snap?.repoPlatform === "github" || snap?.repoPlatform === "gitee"
+      ? snap.repoPlatform
+      : parseRepoUrl(row.githubUrl ?? "")?.platform;
+
   const githubSnapshot = snap
     ? {
+        repoPlatform: inferredPlatform,
+        repoOwner: snap.repoOwner ?? undefined,
+        repoName: snap.repoName ?? undefined,
         repoFullName: snap.repoFullName,
         defaultBranch: snap.defaultBranch ?? undefined,
         stars: snap.stars,

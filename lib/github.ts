@@ -3,6 +3,8 @@
  * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 
+import { parseRepoUrl, repoUrlsMatch, normalizeRepoWebUrl } from "@/lib/repo-platform";
+
 export type GitHubRepoImportPayload = {
   name: string;
   tagline: string;
@@ -23,34 +25,13 @@ type GitHubApiRepo = {
   owner?: { login?: string };
 };
 
+/** 仅接受 github.com（导入 GitHub 用）；Gitee 请用 {@link parseRepoUrl} */
 export function parseGitHubRepoUrl(raw: string): { owner: string; repo: string } | null {
-  const s = raw.trim();
-  if (!s) {
+  const p = parseRepoUrl(raw);
+  if (!p || p.platform !== "github") {
     return null;
   }
-
-  try {
-    const u = new URL(s);
-    const host = u.hostname.toLowerCase();
-    if (host !== "github.com" && host !== "www.github.com") {
-      return null;
-    }
-    const segments = u.pathname.split("/").filter(Boolean);
-    if (segments.length < 2) {
-      return null;
-    }
-    const owner = segments[0]!;
-    let repo = segments[1]!;
-    if (repo.endsWith(".git")) {
-      repo = repo.slice(0, -4);
-    }
-    if (!owner || !repo) {
-      return null;
-    }
-    return { owner, repo };
-  } catch {
-    return null;
-  }
+  return { owner: p.owner, repo: p.repo };
 }
 
 export type FetchGitHubRepoResult =
@@ -193,21 +174,49 @@ export function buildNewProjectSearchParams(data: GitHubRepoImportPayload): URLS
   return p;
 }
 
-/** 规范化为可比较的 GitHub 仓库 web 地址（小写 owner/repo，无末尾 / 与 .git） */
+/** 规范化为可比较的仓库 web 地址（GitHub / Gitee，路径小写） */
 export function normalizeGithubRepoWebUrl(raw: string): string | null {
-  const parsed = parseGitHubRepoUrl(raw.trim());
-  if (!parsed) {
-    return null;
-  }
-  return `https://github.com/${parsed.owner.toLowerCase()}/${parsed.repo.toLowerCase()}`;
+  return normalizeRepoWebUrl(raw);
 }
 
 /** 判断用户输入的仓库 URL 与项目存储的 githubUrl 是否指向同一仓库 */
 export function githubRepoUrlsMatch(stored: string | null | undefined, input: string): boolean {
-  if (!stored?.trim()) {
-    return false;
+  return repoUrlsMatch(stored, input);
+}
+
+type GiteeApiRepo = {
+  full_name?: string;
+  stargazers_count?: number;
+  forks_count?: number;
+  default_branch?: string | null;
+  pushed_at?: string | null;
+};
+
+export type FetchGiteeRepoResult =
+  | { kind: "ok"; json: GiteeApiRepo }
+  | { kind: "not_found" }
+  | { kind: "error" };
+
+/**
+ * GET https://gitee.com/api/v5/repos/{owner}/{repo}
+ * 404 → not_found；其它失败 → error（调用方可忽略并退回默认值）。
+ */
+export async function fetchGiteeRepoApi(owner: string, repo: string): Promise<FetchGiteeRepoResult> {
+  const url = `https://gitee.com/api/v5/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "MUHUB-Repo" },
+      cache: "no-store",
+    });
+    if (res.status === 404) {
+      return { kind: "not_found" };
+    }
+    if (!res.ok) {
+      return { kind: "error" };
+    }
+    const json = (await res.json()) as GiteeApiRepo;
+    return { kind: "ok", json };
+  } catch {
+    return { kind: "error" };
   }
-  const a = normalizeGithubRepoWebUrl(stored);
-  const b = normalizeGithubRepoWebUrl(input);
-  return Boolean(a && b && a === b);
 }

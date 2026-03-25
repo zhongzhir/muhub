@@ -34,7 +34,7 @@ export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
       <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
         你正在认领项目 <strong className="text-zinc-900 dark:text-zinc-100">{projectName}</strong>
         （<span className="font-mono text-sm">{slug}</span>
-        ）。请输入<strong>与此项目已保存的 GitHub 仓库</strong>一致的地址以完成认领。当前记录为：
+        ）。请输入<strong>与此项目已保存的代码仓库（GitHub / Gitee）</strong>一致的地址以完成认领。当前记录为：
       </p>
       <p className="rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 font-mono text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
         {hintGithubUrl}
@@ -42,7 +42,7 @@ export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="repoUrl">
-          GitHub Repo URL
+          仓库 URL（GitHub / Gitee）
         </label>
         <input
           id="repoUrl"
@@ -51,7 +51,7 @@ export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
           required
           autoComplete="off"
           placeholder={hintGithubUrl}
-          aria-label="GitHub Repo URL"
+          aria-label="代码仓库 URL"
           className={inputClass}
         />
       </div>

@@ -20,8 +20,8 @@ test.describe("GitHub 手动刷新快照", () => {
     await page.waitForURL(`**/projects/${slug}`);
 
     const section = page.getByTestId("github-snapshot-section");
-    await expect(section.getByRole("heading", { name: "GitHub 数据" })).toBeVisible();
-    await expect(section.getByText("暂无 GitHub 数据")).toBeVisible();
+    await expect(section.getByRole("heading", { name: "仓库数据" })).toBeVisible();
+    await expect(section.getByText("暂无仓库快照数据")).toBeVisible();
 
     await page.getByTestId("refresh-github-snapshot").click();
     await page.waitForURL(`**/projects/${slug}`);
@@ -32,6 +32,7 @@ test.describe("GitHub 手动刷新快照", () => {
     await expect(section.getByTestId("github-snapshot-issues")).toBeVisible();
     await expect(section.getByTestId("github-snapshot-watchers")).toBeVisible();
 
+    await expect(section.getByTestId("github-snapshot-platform")).toHaveText("GitHub");
     await expect(section.getByTestId("github-snapshot-activity")).toContainText("活跃项目");
     await expect(section.getByTestId("github-snapshot-last-commit")).toBeVisible();
     await expect(section.getByTestId("github-snapshot-release")).toContainText("v0.9.9-fixture");

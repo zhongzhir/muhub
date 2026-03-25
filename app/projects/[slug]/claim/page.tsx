@@ -46,7 +46,7 @@ export default async function ClaimProjectPage({ params }: PageProps) {
         <div className="mx-auto max-w-xl">
           <h1 className="text-2xl font-semibold tracking-tight">认领项目</h1>
           <p className="mt-4 text-sm text-red-700 dark:text-red-300">
-            该项目未绑定 GitHub 仓库地址，无法通过仓库认领。请先编辑项目补充 GitHub URL。
+            该项目未绑定代码仓库地址，无法通过仓库认领。请先编辑项目补充 GitHub / Gitee URL。
           </p>
           <p className="mt-6 flex flex-wrap gap-4 text-sm">
             <Link href={`/projects/${slug}`} className="underline underline-offset-4">

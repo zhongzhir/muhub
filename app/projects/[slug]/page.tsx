@@ -5,6 +5,7 @@ import { projectStatusLabel } from "@/lib/project-status";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { updateSourceTypeLabel } from "@/lib/update-source";
 import { computeGithubActivity } from "@/lib/github-activity";
+import { codeHostLinkLabel, parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import { isRecommendedProject } from "@/lib/recommended-projects";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
@@ -25,7 +26,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     : "暂无项目介绍";
 
   const showClaimCta = Boolean(
-    fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim(),
+    fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim() && parseRepoUrl(data.githubUrl),
   );
   const showClaimed = Boolean(fromDb && data.claimStatus === "CLAIMED");
   const showRecommendedClaim = Boolean(!fromDb && isRecommendedProject(slug));
@@ -134,10 +135,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   href={data.githubUrl}
                   className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
                 >
-                  GitHub
+                  {codeHostLinkLabel(data.githubUrl)}
                 </a>
               ) : (
-                <span className="text-zinc-400">未填写 GitHub</span>
+                <span className="text-zinc-400">未填写代码仓库</span>
               )}
             </li>
             <li>
@@ -165,7 +166,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               id="github-heading"
               className="text-sm font-semibold uppercase tracking-wide text-zinc-500"
             >
-              GitHub 数据
+              仓库数据
             </h2>
             {fromDb && data.githubUrl?.trim() ? (
               <RefreshGithubSnapshotForm slug={slug} />
@@ -175,12 +176,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             {!data.githubSnapshot ? (
               <div>
                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  暂无 GitHub 数据
+                  暂无仓库快照数据
                 </p>
                 <p className="mt-2 text-xs text-zinc-500">
                   {data.githubUrl?.trim()
-                    ? "点击「刷新 GitHub 数据」从 GitHub 拉取仓库指标（写入快照历史，详情展示最新一条）。"
-                    : "请先在编辑页配置 GitHub 仓库地址后再刷新。"}
+                    ? "点击「刷新仓库数据」从 GitHub / Gitee 拉取指标（写入快照历史，详情展示最新一条）。"
+                    : "请先在编辑页配置代码仓库地址后再刷新。"}
                 </p>
               </div>
             ) : (
@@ -191,6 +192,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 >
                   {data.githubSnapshot.repoFullName}
                 </p>
+                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+                  <span className="text-zinc-500">平台：</span>
+                  <span data-testid="github-snapshot-platform">
+                    {repoPlatformDisplayLabel(
+                      data.githubSnapshot.repoPlatform ?? parseRepoUrl(data.githubUrl ?? "")?.platform,
+                    )}
+                  </span>
+                </p>
                 {data.githubUrl ? (
                   <a
                     href={data.githubUrl}
@@ -200,7 +209,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   </a>
                 ) : null}
                 <p className="mt-3 text-xs text-zinc-500">
-                  指标来自已保存的 GitHub 快照；手动刷新会新增一条记录并在此处显示最新数据。
+                  指标来自已保存的仓库快照；手动刷新会新增一条记录并在此处显示最新数据。
                 </p>
                 <p className="mt-3 flex flex-wrap items-center gap-2">
                   <span

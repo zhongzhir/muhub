@@ -20,6 +20,10 @@ export type DemoUpdate = {
 };
 
 export type GithubSnapshotView = {
+  /** 快照写入的平台；旧数据可为空，由页面用仓库 URL 推断 */
+  repoPlatform?: "github" | "gitee";
+  repoOwner?: string;
+  repoName?: string;
   repoFullName: string;
   defaultBranch?: string;
   stars: number;
@@ -66,6 +70,9 @@ export const demoProjectView: ProjectPageView = {
   websiteUrl: "https://example.com",
   githubUrl: "https://github.com/example/demo",
   githubSnapshot: {
+    repoPlatform: "github",
+    repoOwner: "example",
+    repoName: "demo",
     repoFullName: "example/demo",
     defaultBranch: "main",
     stars: 128,

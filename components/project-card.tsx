@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProjectListItem } from "@/lib/project-list";
 import { formatListDate } from "@/lib/format-date";
 import { projectStatusLabel } from "@/lib/project-status";
+import { codeHostLinkLabel } from "@/lib/repo-platform";
 
 export function ProjectCard({ project }: { project: ProjectListItem }) {
   const taglineDisplay = project.tagline?.trim() ? project.tagline : "暂无简介";
@@ -45,10 +46,10 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
             rel="noopener noreferrer"
             className="text-sm text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
           >
-            GitHub
+            {codeHostLinkLabel(project.githubUrl)}
           </a>
         ) : (
-          <span className="text-sm text-zinc-400">未填写 GitHub</span>
+          <span className="text-sm text-zinc-400">未填写代码仓库</span>
         )}
       </div>
 

@@ -6,6 +6,7 @@ import { isRecommendedProject } from "@/lib/recommended-projects";
 import { projectStatusLabel } from "@/lib/project-status";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { computeGithubActivity } from "@/lib/github-activity";
+import { codeHostLinkLabel, parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import {
   projectShareInitial,
   takeRecentUpdatesForShare,
@@ -125,9 +126,13 @@ export default async function ShareProjectPage({ params }: PageProps) {
           <div className="space-y-0 divide-y divide-zinc-100 px-6 dark:divide-zinc-800">
             {/* GitHub 精简指标 */}
             {snap ? (
-              <section className="py-5" aria-label="GitHub 指标" data-testid="share-github-stats">
+              <section className="py-5" aria-label="仓库指标" data-testid="share-github-stats">
                 <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  GitHub
+                  <span data-testid="share-repo-platform-heading">
+                    {repoPlatformDisplayLabel(
+                      snap.repoPlatform ?? parseRepoUrl(data.githubUrl ?? "")?.platform,
+                    )}
+                  </span>
                 </h2>
                 <p className="mb-3 font-mono text-xs text-zinc-500">{snap.repoFullName}</p>
                 <dl className="grid grid-cols-3 gap-3 text-center sm:text-left">
@@ -176,10 +181,10 @@ export default async function ShareProjectPage({ params }: PageProps) {
                       href={data.githubUrl}
                       className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
                     >
-                      GitHub
+                      {codeHostLinkLabel(data.githubUrl)}
                     </a>
                   ) : (
-                    <span className="text-zinc-400">GitHub —</span>
+                    <span className="text-zinc-400">代码仓库 —</span>
                   )}
                 </li>
                 <li>

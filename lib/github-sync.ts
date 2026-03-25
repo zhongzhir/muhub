@@ -3,7 +3,8 @@
  * 仅 REST GET，无定时任务 / Webhook / OAuth。
  */
 
-import { fetchGitHubLatestRelease, parseGitHubRepoUrl } from "@/lib/github";
+import { fetchGitHubLatestRelease, fetchGiteeRepoApi } from "@/lib/github";
+import { parseRepoUrl } from "@/lib/repo-platform";
 import { prisma } from "@/lib/prisma";
 
 const E2E_FIXTURE_OWNER = "muhub";
@@ -45,6 +46,9 @@ type GitHubCommitApi = {
 };
 
 export type GithubSnapshotPayload = {
+  repoPlatform: "github" | "gitee";
+  repoOwner: string;
+  repoName: string;
   repoFullName: string;
   defaultBranch: string | null;
   stars: number;
@@ -139,6 +143,9 @@ export async function fetchGithubSnapshotPayload(
     return {
       ok: true,
       data: {
+        repoPlatform: "github",
+        repoOwner: E2E_FIXTURE_OWNER,
+        repoName: E2E_FIXTURE_REPO,
         repoFullName: `${E2E_FIXTURE_OWNER}/${E2E_FIXTURE_REPO}`,
         defaultBranch: "main",
         stars: 42,
@@ -191,6 +198,9 @@ export async function fetchGithubSnapshotPayload(
     return {
       ok: true,
       data: {
+        repoPlatform: "github",
+        repoOwner: owner,
+        repoName: repo,
         repoFullName: fullName,
         defaultBranch:
           typeof json.default_branch === "string" && json.default_branch
@@ -210,6 +220,48 @@ export async function fetchGithubSnapshotPayload(
   } catch {
     return { ok: false, reason: "api_error" };
   }
+}
+
+async function fetchGiteeSnapshotPayload(
+  owner: string,
+  repo: string,
+): Promise<FetchSnapshotResult> {
+  const r = await fetchGiteeRepoApi(owner, repo);
+  if (r.kind === "not_found") {
+    return { ok: false, reason: "not_found" };
+  }
+  const json = r.kind === "ok" ? r.json : null;
+  const stars =
+    json && typeof json.stargazers_count === "number" ? json.stargazers_count : 0;
+  const forks = json && typeof json.forks_count === "number" ? json.forks_count : 0;
+  const fullName =
+    json && typeof json.full_name === "string" && json.full_name.trim()
+      ? json.full_name.trim()
+      : `${owner}/${repo}`;
+  const defaultBranch =
+    json && typeof json.default_branch === "string" && json.default_branch
+      ? json.default_branch
+      : null;
+  const lastCommitAt = json ? parseIsoDate(json.pushed_at ?? undefined) : null;
+
+  return {
+    ok: true,
+    data: {
+      repoPlatform: "gitee",
+      repoOwner: owner,
+      repoName: repo,
+      repoFullName: fullName,
+      defaultBranch,
+      stars,
+      forks,
+      openIssues: 0,
+      watchers: 0,
+      contributorsCount: 0,
+      lastCommitAt,
+      latestReleaseTag: null,
+      latestReleaseAt: null,
+    },
+  };
 }
 
 export type SyncGithubSnapshotResult =
@@ -237,22 +289,25 @@ export async function syncGithubSnapshotForProjectSlug(
 
   const rawUrl = project.githubUrl?.trim();
   if (!rawUrl) {
-    return { ok: false, message: "未配置 GitHub 仓库地址" };
+    return { ok: false, message: "未配置代码仓库地址" };
   }
 
-  const parsed = parseGitHubRepoUrl(rawUrl);
+  const parsed = parseRepoUrl(rawUrl);
   if (!parsed) {
-    return { ok: false, message: "GitHub 地址格式错误" };
+    return { ok: false, message: "仓库地址格式错误（当前支持 GitHub、Gitee）" };
   }
 
-  const fetched = await fetchGithubSnapshotPayload(parsed.owner, parsed.repo);
+  const fetched =
+    parsed.platform === "github"
+      ? await fetchGithubSnapshotPayload(parsed.owner, parsed.repo)
+      : await fetchGiteeSnapshotPayload(parsed.owner, parsed.repo);
   if (!fetched.ok) {
     return {
       ok: false,
       message:
         fetched.reason === "not_found"
-          ? "未找到该 GitHub 仓库"
-          : "GitHub 请求失败，请稍后再试",
+          ? "未找到该仓库"
+          : "仓库数据请求失败，请稍后再试",
     };
   }
 
@@ -260,6 +315,9 @@ export async function syncGithubSnapshotForProjectSlug(
     await prisma.githubRepoSnapshot.create({
       data: {
         projectId: project.id,
+        repoPlatform: fetched.data.repoPlatform,
+        repoOwner: fetched.data.repoOwner,
+        repoName: fetched.data.repoName,
         repoFullName: fetched.data.repoFullName,
         defaultBranch: fetched.data.defaultBranch,
         stars: fetched.data.stars,
@@ -276,7 +334,7 @@ export async function syncGithubSnapshotForProjectSlug(
     });
   } catch (e) {
     console.error("[syncGithubSnapshotForProjectSlug]", e);
-    return { ok: false, message: "GitHub 请求失败，请稍后再试" };
+    return { ok: false, message: "仓库数据请求失败，请稍后再试" };
   }
 
   return { ok: true };
