@@ -9,16 +9,15 @@
 | `regression.spec.ts` | 首页「MUHUB」、创建项目页标题「创建项目」、`/projects/demo` 文案「项目主页」（`exact: true`，避免与标语子串冲突） |
 | `smoke.spec.ts` | 冒烟：仅验证首页标题 |
 | `create-project.spec.ts` | **创建项目闭环**：填写 `/dashboard/projects/new` 表单 → 提交 → 跳转 `/projects/[slug]` → 断言 **项目名称**、**项目主页**、**项目介绍**正文（需 **`DATABASE_URL`** 且已迁移；未配置时 **skip**） |
-| `projects-list.spec.ts` | **项目广场**：`/projects` 标题「项目广场」、搜索框；**空列表或卡片**二选一（`projects-empty-all` **或** `project-card`）；**`/projects?q=demo`** 显示当前搜索词；**无匹配搜索词**出现 `projects-empty-search`（不依赖库内是否有数据） |
+| `projects-list.spec.ts` | **项目广场**：`/projects` 标题「项目广场」、搜索框；**空列表或卡片**二选一（`projects-empty-all` **或** `project-card`）；有卡片时断言 **`project-badges`**；**`/projects?q=demo`** 显示当前搜索词；**无匹配搜索词**出现 `projects-empty-search`（不依赖库内是否有数据） |
 | `edit-project.spec.ts` | **编辑项目**：先创建项目 → 打开 **`/dashboard/projects/<slug>/edit`** → 修改名称与 tagline → **保存修改** → 回到详情页并看到新标题与标语（需 **`DATABASE_URL`**；无则 **skip**） |
 | `import-github.spec.ts` | **GitHub 导入**：非 GitHub 域名 → **「GitHub 地址格式错误」**；若 **`GITHUB_IMPORT_E2E_FIXTURE=1`**：`muhub/e2e-fixture` → 跳转 **`/dashboard/projects/new`** 并预填字段（CI 默认开启 fixture；未设置时第二条 **skip**） |
 | `claim-project.spec.ts` | **认领**：创建带 GitHub 的项目 → 详情 **认领该项目** → **`/projects/.../claim`** 填写一致 URL → 回详情见 **`project-claimed-label`**「已认领」（需 **`DATABASE_URL`**） |
 | `project-updates.spec.ts` | **项目动态**：创建项目 → **`/dashboard/projects/<slug>/updates/new`** 填写标题与内容并 **发布** → 详情 **`project-updates-section`** 可见标题与正文（需 **`DATABASE_URL`** 与 **`ProjectUpdate.content` 迁移） |
 | `github-refresh.spec.ts` | **GitHub 刷新**：创建带 **`muhub/e2e-fixture`** 的项目 → 详情 **「刷新 GitHub 数据」** → **`github-snapshot-section`** 可见 Stars/Forks 等（需 **`DATABASE_URL`** + **`GITHUB_IMPORT_E2E_FIXTURE=1`** 或 **`GITHUB_REFRESH_E2E_FIXTURE=1`**） |
 | `recommended-claim.spec.ts` | **推荐认领**：打开 **`/projects/langchain`**；若有 **`recommended-project-hint`** 则点 **认领项目**，否则直链 **`/dashboard/projects/new?from=recommended&slug=langchain`**；断言创建页 query 与 name/slug/tagline/GitHub 预填 |
-| `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
+| `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、**`project-badges`**、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
 | `seed-projects-json.spec.ts` | **种子数据**：读取 **`data/seed-projects.json`**，断言条数 ≥6、含 GitHub 与 Gitee、每条 **`repoUrl`** 可被 **`parseRepoUrl`** 解析（**不写库**，CI 友好） |
-| `share-project.spec.ts` / `projects-list.spec.ts` | **来源与状态 Badge**：分享页 **`project-badges`**；广场有 **`project-card`** 时同级 **`project-badges`** |
 
 ## 批量导入种子项目如何回归
 
