@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "isFeatured" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Project" ADD COLUMN IF NOT EXISTS "sourceType" TEXT;

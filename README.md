@@ -116,6 +116,26 @@ pnpm test:smoke     # Playwright 冒烟（仅首页）
 
 未配置 `DATABASE_URL` 时：首页、**`/projects`**、`/projects/demo` 仍可访问；**提交创建**会提示未配置数据库；非 `demo` 的详情 slug 无法从库读取时会 404。
 
+## 冷启动：批量导入种子项目
+
+面向上线初期：**不写后台导入页、不做定时任务**，用脚本一次性灌入示例项目。
+
+- **数据文件**：根目录 **`data/seed-projects.json`**（数组；每项至少含 **`name` / `slug` / `tagline` / `repoUrl`**，可选 **`websiteUrl`、 `description`、`isFeatured`、`sourcePlatform`、`sourceType`**）。内置多条 GitHub 与 Gitee 混合示例，可按需增删。
+- **执行**（需 **Node.js 20+**，以便 **`--env-file`** 加载 `.env`）：
+
+  ```bash
+  pnpm exec prisma migrate deploy   # 确保含 isFeatured / sourceType 等迁移
+  pnpm import:seed
+  ```
+
+  脚本会复用 **`parseRepoUrl`** 校验 **`repoUrl`**，将规范化地址写入 **`Project.githubUrl`**；**`slug` 已存在则跳过**；非法仓库地址跳过并打日志；结束时打印**成功 / 跳过 / 失败**计数。
+- **导入后如何验证**：
+  1. 浏览器打开 **`/projects`**，列表中应出现种子项目卡片（按 **`isPublic`** 与创建时间排序，与手动创建一致）。
+  2. 点击任意种子 **`slug`**（如 **`/projects/pytorch`**）进入详情，仓库链接与文案正确。
+  3. 再次执行 **`pnpm import:seed`**，控制台应大量 **「已存在同 slug」** 跳过，统计 **成功 0、跳过 N**（幂等）。
+- **自动化（轻量）**：不强制跑全库写入；可运行 **`pnpm exec playwright test tests/e2e/seed-projects-json.spec.ts`**，仅校验种子 JSON 条数、GitHub/Gitee 混合、**`repoUrl` 均可解析**。
+- **详细 runbook**：[`docs/runbooks/seed-import.md`](docs/runbooks/seed-import.md)。
+
 ## 测试方式
 
 - **E2E**：默认会拉起本地服务（非 CI 用 `pnpm dev`，CI 用 `pnpm start`，需先执行 `pnpm build`）。
@@ -172,3 +192,4 @@ pnpm test:e2e
 
 - [本地与环境搭建](docs/runbooks/dev-setup.md)
 - [回归测试说明](docs/runbooks/regression.md)
+- [冷启动种子导入](docs/runbooks/seed-import.md)

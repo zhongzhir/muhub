@@ -17,6 +17,17 @@
 | `github-refresh.spec.ts` | **GitHub 刷新**：创建带 **`muhub/e2e-fixture`** 的项目 → 详情 **「刷新 GitHub 数据」** → **`github-snapshot-section`** 可见 Stars/Forks 等（需 **`DATABASE_URL`** + **`GITHUB_IMPORT_E2E_FIXTURE=1`** 或 **`GITHUB_REFRESH_E2E_FIXTURE=1`**） |
 | `recommended-claim.spec.ts` | **推荐认领**：打开 **`/projects/langchain`**；若有 **`recommended-project-hint`** 则点 **认领项目**，否则直链 **`/dashboard/projects/new?from=recommended&slug=langchain`**；断言创建页 query 与 name/slug/tagline/GitHub 预填 |
 | `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
+| `seed-projects-json.spec.ts` | **种子数据**：读取 **`data/seed-projects.json`**，断言条数 ≥6、含 GitHub 与 Gitee、每条 **`repoUrl`** 可被 **`parseRepoUrl`** 解析（**不写库**，CI 友好） |
+
+## 批量导入种子项目如何回归
+
+1. **前置**：PostgreSQL + **`DATABASE_URL`** + **`pnpm exec prisma migrate deploy`**（含 **`Project.isFeatured` / `sourceType`**）。
+2. **执行**：`pnpm import:seed`（依赖 **`package.json`** 中 **`node --env-file=.env`**；若无 `.env` 请自行导出 **`DATABASE_URL`**）。
+3. **期望**：控制台按每条打印 **`[成功]`** 或 **`[跳过]`**（重复执行时因 **slug 已存在** 应全部为跳过）；末尾 **成功 / 跳过 / 失败** 统计合理；任一条 **create** 抛错时出现 **`[失败]`** 且进程退出码非零。
+4. **页面**：打开 **`/projects`**，应能见到种子中的 **项目名称**（如 React、PyTorch 等）；进入 **`/projects/pytorch`**（若未被删）等详情，**仓库** 链接与 **平台** 展示正常。
+5. **推荐池**：数据库中 **仍无任何公开项目** 时，广场仍显示 **推荐项目** 冷启动区；导入 **至少一条公开项目** 后，列表以 **`project-card`** 展示库内数据（与空态 **二选一**），**`lib/recommended-projects.ts`** 内置 slug 逻辑未改，**仅库无数据时**走推荐示例详情。
+6. **自动化（轻量）**：`pnpm exec playwright test tests/e2e/seed-projects-json.spec.ts`。
+7. **详细说明**：[`seed-import.md`](./seed-import.md)。
 
 ## 分享名片页如何回归
 

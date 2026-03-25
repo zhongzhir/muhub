@@ -54,6 +54,10 @@ model Project {
   logoUrl     String?
   websiteUrl  String?
   githubUrl   String?
+  /** 种子/运营标记：广场当前列表不按此排序，仅预留 */
+  isFeatured   Boolean       @default(false)
+  /** 数据来源占位，如 seed、manual */
+  sourceType   String?
   status       ProjectStatus @default(ACTIVE)
   isPublic     Boolean       @default(true)
   claimStatus  ClaimStatus   @default(UNCLAIMED)

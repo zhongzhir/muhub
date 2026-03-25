@@ -1,0 +1,90 @@
+[
+  {
+    "name": "React",
+    "slug": "facebook-react",
+    "tagline": "用于构建用户界面的 JavaScript 库",
+    "repoUrl": "https://github.com/facebook/react",
+    "websiteUrl": "https://react.dev",
+    "description": "Meta 开源的声明式 UI 库，广泛用于 Web 与原生渲染生态。",
+    "isFeatured": true,
+    "sourcePlatform": "github",
+    "sourceType": "seed"
+  },
+  {
+    "name": "TensorFlow",
+    "slug": "tensorflow",
+    "tagline": "端到端开源机器学习平台",
+    "repoUrl": "https://github.com/tensorflow/tensorflow",
+    "websiteUrl": "https://www.tensorflow.org",
+    "description": "Google 维护的机器学习框架，支持从研究到生产的全链路。",
+    "isFeatured": true,
+    "sourcePlatform": "github",
+    "sourceType": "seed"
+  },
+  {
+    "name": "Kubernetes",
+    "slug": "kubernetes",
+    "tagline": "生产级容器编排系统",
+    "repoUrl": "https://github.com/kubernetes/kubernetes",
+    "websiteUrl": "https://kubernetes.io",
+    "description": "CNCF 孵化的容器集群调度与运维标准项目。",
+    "isFeatured": false,
+    "sourcePlatform": "github",
+    "sourceType": "seed"
+  },
+  {
+    "name": "Visual Studio Code",
+    "slug": "vscode",
+    "tagline": "跨平台代码编辑器",
+    "repoUrl": "https://github.com/microsoft/vscode",
+    "websiteUrl": "https://code.visualstudio.com",
+    "description": "微软开源的编辑器内核，插件生态丰富。",
+    "isFeatured": false,
+    "sourcePlatform": "github",
+    "sourceType": "seed"
+  },
+  {
+    "name": "PyTorch",
+    "slug": "pytorch",
+    "tagline": "动态图优先的深度学习框架",
+    "repoUrl": "https://github.com/pytorch/pytorch",
+    "websiteUrl": "https://pytorch.org",
+    "description": "适合研究与生产的张量计算与神经网络库。",
+    "isFeatured": false,
+    "sourcePlatform": "github",
+    "sourceType": "seed"
+  },
+  {
+    "name": "Vue.js（Gitee 镜像）",
+    "slug": "mirrors-vue-gitee",
+    "tagline": "渐进式 JavaScript 框架（镜像仓）",
+    "repoUrl": "https://gitee.com/mirrors/vue",
+    "websiteUrl": "https://vuejs.org",
+    "description": "Gitee 上可访问的 Vue 镜像仓库示例，便于国内网络展示多平台。",
+    "isFeatured": false,
+    "sourcePlatform": "gitee",
+    "sourceType": "seed"
+  },
+  {
+    "name": "openGauss",
+    "slug": "opengauss-server",
+    "tagline": "企业级开源关系型数据库",
+    "repoUrl": "https://gitee.com/opengauss/openGauss-server",
+    "websiteUrl": "https://opengauss.org",
+    "description": "华为开源的高性能、高可用数据库内核项目。",
+    "isFeatured": true,
+    "sourcePlatform": "gitee",
+    "sourceType": "seed"
+  },
+  {
+    "name": "Apache Flink",
+    "slug": "apache-flink",
+    "tagline": "分布式流处理与批处理引擎",
+    "repoUrl": "https://github.com/apache/flink",
+    "websiteUrl": "https://flink.apache.org",
+    "description": "Apache 软件基金会下的有状态流计算与数据分析引擎。",
+    "isFeatured": false,
+    "sourcePlatform": "github",
+    "sourceType": "seed"
+  }
+]
