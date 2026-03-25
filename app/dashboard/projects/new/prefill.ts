@@ -42,11 +42,14 @@ export function resolveNewProjectPrefill(
     }
   }
 
+  const githubFromImport = pickSearchParam(sp, "import").trim();
+  const githubUrlParam = pickSearchParam(sp, "githubUrl").trim();
+
   return {
     name: pickSearchParam(sp, "name"),
     tagline: pickSearchParam(sp, "tagline"),
     slug: pickSearchParam(sp, "slug"),
-    githubUrl: pickSearchParam(sp, "githubUrl"),
+    githubUrl: githubUrlParam || githubFromImport,
     websiteUrl: pickSearchParam(sp, "websiteUrl"),
   };
 }
