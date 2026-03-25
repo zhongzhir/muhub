@@ -40,9 +40,9 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 
 ## V1.1 第 6 轮：项目分享卡片
 
-- **`/projects/[slug]/share`（分享项目）**：与详情页同源数据的 **名片式** 页面，`max-w-xl` 布局，便于转发；展示 **名称、一句话介绍、项目介绍、GitHub / 官网、社媒、创建时间**。
-- **详情页** 顶部提供 **「分享项目」** 链接进入分享页；分享页提供 **「复制链接」**（复制当前页完整 URL）。
-- **自动化**：**`tests/e2e/share-project.spec.ts`** 使用内置 **`demo`** 数据路由 **`/projects/demo/share`**（无需数据库）。
+- **`/projects/[slug]/share`（分享 / 项目名片）**：与详情同源，**`max-w-xl`**，面向 **商务展示、社交传播、截图转发**；顶部 **深色名片头**（**Logo URL** 或 **项目名首字母** 占位）、**项目名称（主标题）**、**tagline**、**状态标签**（**推荐项目** / **已认领项目** / 库内 **发布状态**）、**GitHub 精简指标**（有快照时 Stars / Forks / Issues）、**链接与创建时间**、**社媒概览**（数量 + 平台标签）、**最近 1～2 条动态**（仅标题 + 时间）、**关于项目**（`line-clamp` 压缩长文）、底部 **「复制分享链接」** 主按钮；成功复制后 **按钮与 `role=status` 提示「已复制链接」**（无剪贴板权限时显示重试类文案）。
+- **详情页** 顶部 **「分享项目」** 链至分享页（略加粗以示入口）。
+- **自动化**：**`tests/e2e/share-project.spec.ts`** 走 **`/projects/demo/share`**（无库亦可）；复制步骤兼容剪贴板受限环境。
 
 ## V1.1 第 7 轮：项目动态
 
@@ -165,7 +165,7 @@ pnpm test:e2e
 | `/dashboard/projects/[slug]/updates/new` | 发布项目动态（标题 + 正文，写入 ProjectUpdate） |
 | `/projects` | 项目广场：公开项目列表与搜索（`?q=`） |
 | `/projects/[slug]` | 项目详情；优先读库，`demo` 无库时兜底演示数据 |
-| `/projects/[slug]/share` | 分享名片页（简洁布局，可复制链接） |
+| `/projects/[slug]/share` | 分享名片页（Logo/首字母、标签、动态摘要、GitHub 指标、复制分享链接） |
 | `/projects/[slug]/claim` | 仓库地址核验认领（需已绑定 GitHub URL） |
 
 ## 文档

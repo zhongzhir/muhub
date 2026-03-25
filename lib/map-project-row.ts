@@ -28,6 +28,7 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
   return {
     slug: row.slug,
     name: row.name,
+    logoUrl: row.logoUrl ?? undefined,
     tagline: row.tagline ?? undefined,
     description: row.description ?? "",
     websiteUrl: row.websiteUrl ?? undefined,

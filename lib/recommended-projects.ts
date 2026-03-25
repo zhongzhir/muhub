@@ -55,6 +55,7 @@ export function recommendedProjectToPageView(p: RecommendedProject): ProjectPage
   return {
     slug: p.slug,
     name: p.name,
+    logoUrl: undefined,
     tagline: p.tagline,
     description: `${p.tagline}\n\n此为 MUHUB 冷启动推荐示例，数据未写入数据库；可使用「认领项目」跳转到创建页转为正式项目。「刷新 GitHub 数据」在入库前不可用。`,
     websiteUrl: undefined,

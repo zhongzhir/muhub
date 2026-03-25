@@ -16,6 +16,15 @@
 | `project-updates.spec.ts` | **项目动态**：创建项目 → **`/dashboard/projects/<slug>/updates/new`** 填写标题与内容并 **发布** → 详情 **`project-updates-section`** 可见标题与正文（需 **`DATABASE_URL`** 与 **`ProjectUpdate.content` 迁移） |
 | `github-refresh.spec.ts` | **GitHub 刷新**：创建带 **`muhub/e2e-fixture`** 的项目 → 详情 **「刷新 GitHub 数据」** → **`github-snapshot-section`** 可见 Stars/Forks 等（需 **`DATABASE_URL`** + **`GITHUB_IMPORT_E2E_FIXTURE=1`** 或 **`GITHUB_REFRESH_E2E_FIXTURE=1`**） |
 | `recommended-claim.spec.ts` | **推荐认领**：打开 **`/projects/langchain`**；若有 **`recommended-project-hint`** 则点 **认领项目**，否则直链 **`/dashboard/projects/new?from=recommended&slug=langchain`**；断言创建页 query 与 name/slug/tagline/GitHub 预填 |
+| `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
+
+## 分享名片页如何回归
+
+1. 打开 **`/projects/demo/share`**（或任意有数据的 slug `/projects/<slug>/share`）。
+2. 应见顶部名片区：**项目名称**、**tagline**；**最近动态** 区有条目或「暂无动态」（取决于数据来源）。
+3. **复制**：点击 **`copy-share-link`**，在允许剪贴板的浏览器中按钮应变更为 **「已复制链接」**，下方出现 **`role="status"`** 的「已复制链接」；若环境禁止剪贴板，按钮可显示 **「复制失败，请重试」** 及提示文案。
+4. **数据库项目**：已认领时头图区有 **「已认领项目」**；推荐 slug 且非库数据时有 **「推荐项目」**。
+5. 自动化：**`share-project.spec.ts`**。
 
 ## 认领如何回归
 

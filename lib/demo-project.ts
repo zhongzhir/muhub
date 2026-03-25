@@ -38,6 +38,8 @@ export type GithubSnapshotView = {
 export type ProjectPageView = {
   slug: string;
   name: string;
+  /** 项目 Logo URL（可选；分享页等用于展示） */
+  logoUrl?: string;
   tagline?: string;
   description: string;
   websiteUrl?: string;

@@ -36,7 +36,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <Link href="/" className="underline-offset-4 hover:underline">
             返回首页
           </Link>
-          <Link href={`/projects/${slug}/share`} className="underline-offset-4 hover:underline">
+          <Link
+            href={`/projects/${slug}/share`}
+            className="rounded-md font-medium text-zinc-800 underline-offset-4 hover:underline dark:text-zinc-200"
+          >
             分享项目
           </Link>
           {fromDb ? (
