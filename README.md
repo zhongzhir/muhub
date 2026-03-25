@@ -65,7 +65,7 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 ```bash
 pnpm install
 cp .env.example .env
-# 编辑 .env：真实创建与详情读库需要 DATABASE_URL
+# 编辑 .env：将 DATABASE_URL 等替换为你的真实连接串（.env.example 仅为占位符，勿把真实密码提交进仓库）
 pnpm dev
 ```
 
