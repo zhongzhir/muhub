@@ -115,6 +115,15 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 - **迁移**：**`prisma/migrations/*/project_tags`**；部署前 **`pnpm exec prisma migrate deploy`**。
 - **E2E**：**`tests/e2e/ai-native-ui.spec.ts`**（演示页徽章/摘要/标签；无 key 时创建项目仍成功）。
 
+## V1 第 20 轮：AI 自动运营机制（第一阶段）
+
+- **脚本**：**`pnpm ai:update`** → **`scripts/run_ai_update.ts`**，遍历近期 **有仓库快照** 的活跃项目，对比 **GitHub/Gitee** 与库内最新快照；有 **Release** 或 **提交时间** 变化则 **追加快照** 并可能写入 **Release 动态** 或 **「AI 更新」活跃度动态**（**7 天**冷却）；另批量补全 **`Project.aiCardSummary`**（无 **OPENAI_API_KEY** 时摘要卡步骤跳过，动态仍可模板降级）。
+- **实现**：**`lib/ai/project-ai-cron.ts`**（`checkProjectUpdates`、`refreshProjectAiCardSummaries`）、**`fetchLiveRepoSnapshotForUrl`**（**`lib/github-sync.ts`**）、**`generateRepoActivityCronLine` / `generateProjectHeroCardSummary`**（**`lib/ai/project-ai.ts`**）。
+- **健康度**：**`lib/project-health.ts`** 的 **`computeProjectHealth`**（与 **`computeGithubActivity`** 一致：**活跃项目 / 持续维护 / 低活跃**），详情 Hero **`project-health-badge`**。
+- **摘要卡**：**`aiCardSummary`** 展示于 Hero 下方 **`project-ai-summary`**（迁移 **`project_ai_card_summary`**）。
+- **文档**：**`docs/architecture/ai-operations.md`**。
+- **E2E**：**`tests/e2e/ai-operations-ui.spec.ts`**（演示页 health + 摘要卡；不依赖外网 API key）。
+
 ## 启动方式
 
 前置：Node.js 20+、[pnpm](https://pnpm.io) 9+。
@@ -137,6 +146,7 @@ pnpm lint           # ESLint
 pnpm typecheck      # TypeScript 检查
 pnpm test:e2e       # Playwright 全量 E2E
 pnpm test:smoke     # Playwright 冒烟（仅首页）
+pnpm ai:update      # AI 运营：快照对比 + 可选动态/摘要卡（需 DATABASE_URL）
 ```
 
 ## 如何创建项目并验证写入

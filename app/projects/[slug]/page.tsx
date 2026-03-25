@@ -7,6 +7,7 @@ import { buildProjectUpdateStreamModel } from "@/lib/project-updates";
 import { computeGithubActivity } from "@/lib/github-activity";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import { isRecommendedProject } from "@/lib/recommended-projects";
+import { computeProjectHealth } from "@/lib/project-health";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim() && parseRepoUrl(data.githubUrl),
   );
   const showRecommendedClaim = Boolean(!fromDb && isRecommendedProject(slug));
+  const health = computeProjectHealth(data.githubSnapshot);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -46,7 +48,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           sourceType={data.sourceType}
           isFeatured={data.isFeatured}
           claimStatus={data.claimStatus}
+          health={health}
         />
+
+        {data.aiCardSummary?.trim() ? (
+          <div
+            className="mt-6 rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50/90 to-white px-6 py-5 shadow-sm dark:border-violet-900/40 dark:from-violet-950/35 dark:to-zinc-900 md:px-8"
+            data-testid="project-ai-summary"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
+              AI 项目摘要
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+              {data.aiCardSummary.trim()}
+            </p>
+          </div>
+        ) : null}
 
         {data.tags && data.tags.length > 0 ? (
           <div

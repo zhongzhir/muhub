@@ -18,6 +18,7 @@
 | `recommended-claim.spec.ts` | **推荐认领**：打开 **`/projects/langchain`**；若有 **`recommended-project-hint`** 则点 **认领项目**，否则直链 **`/dashboard/projects/new?from=recommended&slug=langchain`**；断言创建页 query 与 name/slug/tagline/GitHub 预填 |
 | `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、**`project-badges`**、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
 | `ai-native-ui.spec.ts` | **AI Native UI / 降级**：**`/projects/demo`** 动态区 **`project-update-ai-badge`** / **`project-update-ai-summary`**、**`project-tags`**；分享页 **`share-project-tags`**；未设 **`OPENAI_API_KEY`** 时创建项目仍可跳转（需 **`DATABASE_URL`**） |
+| `ai-operations-ui.spec.ts` | **AI 运营 UI**：**`/projects/demo`** **`project-health-badge`**、**`project-ai-summary`**（内置演示数据） |
 | `seed-projects-json.spec.ts` | **种子数据**：读取 **`data/seed-projects.json`**，断言条数 ≥6、含 GitHub 与 Gitee、每条 **`repoUrl`** 可被 **`parseRepoUrl`** 解析（**不写库**，CI 友好） |
 
 ## 批量导入种子项目如何回归

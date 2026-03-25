@@ -57,6 +57,8 @@ model Project {
   description String?
   /** AI 等处写入的轻量标签（导入项目等） */
   tags        String[]      @default([])
+  /** 运营脚本 / AI 生成的详情页摘要卡（hero 下） */
+  aiCardSummary String?
   logoUrl     String?
   websiteUrl  String?
   githubUrl   String?

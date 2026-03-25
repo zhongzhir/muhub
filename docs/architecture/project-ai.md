@@ -34,3 +34,4 @@
 
 - **`OFFICIAL` 动态** 写入后，在创建处调用 `scheduleAiSummaryForUpdate(id)` 即可复用同一套摘要逻辑。
 - 更复杂的 pipeline、异步队列、Webhook 同步另立里程碑。
+- 周期性脚本与摘要卡字段见 **[ai-operations.md](./ai-operations.md)**（第 20 轮）。

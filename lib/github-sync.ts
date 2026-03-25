@@ -62,7 +62,7 @@ export type GithubSnapshotPayload = {
   latestReleaseAt: Date | null;
 };
 
-type FetchSnapshotResult =
+export type FetchSnapshotResult =
   | { ok: true; data: GithubSnapshotPayload }
   | { ok: false; reason: "not_found" | "api_error" };
 
@@ -223,7 +223,7 @@ export async function fetchGithubSnapshotPayload(
   }
 }
 
-async function fetchGiteeSnapshotPayload(
+export async function fetchGiteeSnapshotPayload(
   owner: string,
   repo: string,
 ): Promise<FetchSnapshotResult> {
@@ -268,6 +268,18 @@ async function fetchGiteeSnapshotPayload(
 export type SyncGithubSnapshotResult =
   | { ok: true }
   | { ok: false; message: string };
+
+/** 拉取远端仓库指标（不写库），供运营脚本对比快照 */
+export async function fetchLiveRepoSnapshotForUrl(rawUrl: string): Promise<FetchSnapshotResult> {
+  const parsed = parseRepoUrl(rawUrl.trim());
+  if (!parsed) {
+    return { ok: false, reason: "api_error" };
+  }
+  if (parsed.platform === "github") {
+    return fetchGithubSnapshotPayload(parsed.owner, parsed.repo);
+  }
+  return fetchGiteeSnapshotPayload(parsed.owner, parsed.repo);
+}
 
 /**
  * 校验 URL、请求 GitHub、插入一条 GithubRepoSnapshot（保留历史）。

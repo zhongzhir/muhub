@@ -3,6 +3,8 @@ import type { ClaimStatus, ProjectStatus } from "@prisma/client";
 import { ProjectBadgeStrip } from "@/components/project/project-badge-strip";
 import { buildProjectBadgeGroups } from "@/lib/project-badges";
 import { codeHostLinkLabel } from "@/lib/repo-platform";
+import type { ProjectHealthBadge } from "@/lib/project-health";
+import { projectHealthBadgeClass } from "@/lib/project-health";
 
 export type ProjectDetailHeroProps = {
   slug: string;
@@ -18,6 +20,8 @@ export type ProjectDetailHeroProps = {
   sourceType?: string | null;
   isFeatured?: boolean;
   claimStatus: ClaimStatus;
+  /** 基于仓库快照的健康度（无快照则不展示） */
+  health?: ProjectHealthBadge | null;
 };
 
 const btnBase =
@@ -39,6 +43,7 @@ export function ProjectDetailHero({
   sourceType,
   isFeatured,
   claimStatus,
+  health,
 }: ProjectDetailHeroProps) {
   const groups = buildProjectBadgeGroups({
     slug,
@@ -71,8 +76,16 @@ export function ProjectDetailHero({
         <p className="mt-4 max-w-3xl text-lg leading-snug text-zinc-600 dark:text-zinc-400">{tagline}</p>
       ) : null}
 
-      <div className="mt-5">
+      <div className="mt-5 flex flex-wrap items-center gap-2">
         <ProjectBadgeStrip source={source} lifecycle={lifecycleForHero} theme="light" />
+        {health ? (
+          <span
+            data-testid="project-health-badge"
+            className={projectHealthBadgeClass(health.variant)}
+          >
+            {health.label}
+          </span>
+        ) : null}
       </div>
 
       {showRecommendedClaim ? (

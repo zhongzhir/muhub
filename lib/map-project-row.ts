@@ -43,6 +43,7 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     tagline: row.tagline ?? undefined,
     description: row.description ?? "",
     tags: row.tags?.length ? [...row.tags] : [],
+    aiCardSummary: row.aiCardSummary ?? undefined,
     websiteUrl: row.websiteUrl ?? undefined,
     githubUrl: row.githubUrl ?? undefined,
     githubSnapshot,

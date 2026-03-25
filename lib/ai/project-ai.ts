@@ -214,3 +214,59 @@ export async function generateUpdateSummary(input: UpdateSummaryInput): Promise<
     suggestedTitle,
   };
 }
+
+export type RepoActivityCronInput = {
+  projectName: string;
+  repoFullName: string;
+  /** 可读时间提示（如 ISO 或本地化串） */
+  lastCommitHint: string;
+};
+
+/** 运营脚本：一句话说明仓库新近提交活跃（无 key 返回 null） */
+export async function generateRepoActivityCronLine(input: RepoActivityCronInput): Promise<string | null> {
+  const text = await chatCompletion(
+    [
+      {
+        role: "system",
+        content:
+          "用 1～2 句简体中文概括开源仓库「最近仍有提交、持续迭代」类动态，语气克制、不编造数据，≤100 字。不要标题前缀、不要 Markdown。",
+      },
+      {
+        role: "user",
+        content: `项目名：${input.projectName}\n仓库：${input.repoFullName}\n最近提交参考：${input.lastCommitHint}`,
+      },
+    ],
+    120,
+  );
+  const line = text?.replace(/\s+/g, " ").trim();
+  return line ? line.slice(0, 200) : null;
+}
+
+export type ProjectHeroCardInput = {
+  name: string;
+  tagline?: string | null;
+  description: string;
+  tags: string[];
+};
+
+/** 详情页摘要卡：综合介绍与标签的一句简短概括 */
+export async function generateProjectHeroCardSummary(input: ProjectHeroCardInput): Promise<string | null> {
+  const desc = input.description.trim().slice(0, 2500);
+  const tagStr = input.tags.length ? input.tags.join("、") : "（无标签）";
+  const text = await chatCompletion(
+    [
+      {
+        role: "system",
+        content:
+          "你是产品编辑。根据项目名称、一句话介绍、正文介绍与技术标签，写一段「AI 项目摘要」：2～3 句简体中文，≤160 字，信息密度高、不重复粘贴原文、不捏造。不要 Markdown。",
+      },
+      {
+        role: "user",
+        content: `名称：${input.name}\n一句话：${input.tagline?.trim() || "—"}\n介绍：${desc || "—"}\n标签：${tagStr}`,
+      },
+    ],
+    180,
+  );
+  const line = text?.trim();
+  return line ? line.slice(0, 320) : null;
+}

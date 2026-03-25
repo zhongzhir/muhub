@@ -55,6 +55,8 @@ export type ProjectPageView = {
   description: string;
   /** AI/导入生成的轻量标签 */
   tags?: string[];
+  /** 运营脚本生成的详情页摘要卡 */
+  aiCardSummary?: string | null;
   websiteUrl?: string;
   githubUrl?: string;
   /** 数据库项目无刷新记录时为 null */
@@ -78,6 +80,8 @@ export const demoProjectView: ProjectPageView = {
   description:
     "这是一个用于展示项目详情页布局的示例项目，包含 GitHub 卡片、社媒与动态流等模块。",
   tags: ["开源", "演示", "MUHUB"],
+  aiCardSummary:
+    "MUHUB 内置演示项目：展示多源动态、仓库快照、AI 摘要卡与运营向健康度标签（演示数据）。",
   websiteUrl: "https://example.com",
   githubUrl: "https://github.com/example/demo",
   githubSnapshot: {
