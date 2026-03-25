@@ -56,15 +56,18 @@ export async function publishProjectUpdate(
       data: {
         projectId: project.id,
         sourceType: "MANUAL",
+        sourceLabel: "手动发布",
         title,
         content,
+        isAiGenerated: false,
       },
     });
   } catch (e) {
     console.error("[publishProjectUpdate]", e);
     return {
       ...initialFail,
-      formError: "发布失败，请稍后重试。若持续出现，请确认数据库可连接且迁移已应用（含 ProjectUpdate.content）。",
+      formError:
+        "发布失败，请稍后重试。若持续出现，请确认数据库可连接且迁移已应用（含 ProjectUpdate 多源字段如 sourceLabel / isAiGenerated）。",
     };
   }
 

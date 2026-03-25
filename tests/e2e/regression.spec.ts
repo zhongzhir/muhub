@@ -14,5 +14,12 @@ test.describe("MUHUB 回归", () => {
   test("项目详情 demo", async ({ page }) => {
     await page.goto("/projects/demo");
     await expect(page.getByText("项目主页", { exact: true })).toBeVisible();
+    const section = page.getByTestId("project-updates-section");
+    await expect(section).toBeVisible();
+    await expect(section.getByRole("heading", { name: "项目动态" })).toBeVisible();
+    const itemCount = await section.getByTestId("project-update-item").count();
+    if (itemCount > 0) {
+      await expect(section.getByTestId("project-update-source-badge").first()).toBeVisible();
+    }
   });
 });

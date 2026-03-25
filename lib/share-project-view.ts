@@ -14,5 +14,10 @@ export function projectShareInitial(name: string): string {
 }
 
 export function takeRecentUpdatesForShare(updates: DemoUpdate[], limit = SHARE_RECENT_UPDATES_LIMIT): DemoUpdate[] {
-  return updates.slice(0, limit);
+  const sorted = [...updates].sort((a, b) => {
+    const ta = (a.createdAt ?? a.occurredAt).getTime();
+    const tb = (b.createdAt ?? b.occurredAt).getTime();
+    return tb - ta;
+  });
+  return sorted.slice(0, limit);
 }

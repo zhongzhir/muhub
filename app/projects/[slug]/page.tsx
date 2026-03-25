@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
 import { loadProjectPageView, sortProjectSocials } from "@/lib/load-project-page-view";
 import { socialPlatformLabel } from "@/lib/social-platform";
-import { updateSourceTypeLabel } from "@/lib/update-source";
+import { buildProjectUpdateStreamModel } from "@/lib/project-updates";
 import { computeGithubActivity } from "@/lib/github-activity";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import { isRecommendedProject } from "@/lib/recommended-projects";
@@ -203,8 +203,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               </Link>
             ) : null}
           </div>
-          <p className="mb-4 text-xs text-zinc-500">按发布时间倒序（最新在前）</p>
-          <ul className="space-y-4">
+          <p className="mb-4 text-xs text-zinc-500">
+            多源动态：手动发布、仓库、官方与 AI 等来源统一展示；当前按发布时间倒序（最新在前）。
+          </p>
+          <ul className="relative space-y-0 before:absolute before:left-[11px] before:top-3 before:h-[calc(100%-1.5rem)] before:w-px before:bg-zinc-200 dark:before:bg-zinc-700 sm:before:left-[13px]">
             {data.updates.length === 0 ? (
               <li className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
                 暂无项目动态
@@ -212,18 +214,30 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             ) : (
               data.updates.map((u, i) => {
                 const displayAt = u.createdAt ?? u.occurredAt;
+                const stream = buildProjectUpdateStreamModel({
+                  sourceType: u.sourceType,
+                  sourceLabel: u.sourceLabel,
+                  isAiGenerated: u.isAiGenerated,
+                });
                 return (
                   <li
                     key={u.id ?? `update-${u.title}-${displayAt.toISOString()}-${i}`}
                     data-testid="project-update-item"
-                    className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-6"
+                    className="relative border-b border-zinc-100 py-6 pl-9 last:border-b-0 dark:border-zinc-800/80 sm:pl-10"
                   >
+                    <span
+                      className="absolute left-0 top-8 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-zinc-200 text-[10px] shadow-sm dark:border-zinc-900 dark:bg-zinc-700"
+                      aria-hidden
+                    />
                     <div className="flex flex-wrap items-center gap-2 gap-y-1">
-                      <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                        {updateSourceTypeLabel(u.sourceType)}
+                      <span
+                        data-testid="project-update-source-badge"
+                        className={stream.badgeClass}
+                      >
+                        {stream.primaryLabel}
                       </span>
                       <time
-                        className="text-xs text-zinc-400 dark:text-zinc-500"
+                        className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
                         dateTime={displayAt.toISOString()}
                       >
                         {displayAt.toLocaleString("zh-CN")}
@@ -244,9 +258,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                         href={u.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-4 inline-block text-sm font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                        className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
                       >
                         查看来源
+                        <span aria-hidden>↗</span>
                       </a>
                     ) : null}
                   </li>

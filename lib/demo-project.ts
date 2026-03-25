@@ -11,10 +11,15 @@ export type DemoSocial = { platform: SocialPlatform; accountName: string; accoun
 export type DemoUpdate = {
   id?: string;
   sourceType: ProjectUpdateSourceType;
+  /** 展示用来源文案，覆盖默认映射 */
+  sourceLabel?: string;
   title: string;
   summary?: string;
   content?: string;
   sourceUrl?: string;
+  /** 扩展元数据（JSON 文本），供后续 webhook / 社媒等使用 */
+  metaJson?: string;
+  isAiGenerated?: boolean;
   occurredAt: Date;
   createdAt?: Date;
 };
@@ -112,11 +117,21 @@ export const demoProjectView: ProjectPageView = {
     {
       id: "demo-update-2",
       sourceType: "MANUAL",
+      sourceLabel: "手动发布",
       title: "架构演进笔记",
       summary: "记录近期模块拆分与缓存策略。",
       content: "本期将核心模块拆分为独立包，并调整了静态资源的缓存策略。",
       occurredAt: new Date("2026-03-10T14:30:00.000Z"),
       createdAt: new Date("2026-03-10T14:30:00.000Z"),
+    },
+    {
+      id: "demo-update-3",
+      sourceType: "OFFICIAL",
+      title: "官网 Changelog 摘录",
+      summary: "展示「官方动态」来源样式（第一版架构预留）。",
+      sourceUrl: "https://example.com/changelog",
+      occurredAt: new Date("2026-03-05T12:00:00.000Z"),
+      createdAt: new Date("2026-03-05T12:00:00.000Z"),
     },
   ] satisfies DemoUpdate[],
   status: "ACTIVE",

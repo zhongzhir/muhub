@@ -4,6 +4,15 @@ import { mapProjectRowToView } from "@/lib/map-project-row";
 import { prisma } from "@/lib/prisma";
 import { getRecommendedProjectPageView } from "@/lib/recommended-projects";
 
+/** 详情 / 分享统一：动态按时间倒序 */
+function sortProjectUpdatesByTime(updates: ProjectPageView["updates"]): ProjectPageView["updates"] {
+  return [...updates].sort((a, b) => {
+    const ta = (a.createdAt ?? a.occurredAt).getTime();
+    const tb = (b.createdAt ?? b.occurredAt).getTime();
+    return tb - ta;
+  });
+}
+
 const SOCIAL_ORDER: SocialPlatform[] = [
   "WEIBO",
   "WECHAT_OFFICIAL",
@@ -62,5 +71,8 @@ export async function loadProjectPageView(slug: string): Promise<{
     return null;
   }
 
-  return { data, fromDb: Boolean(fromDb) };
+  return {
+    data: { ...data, updates: sortProjectUpdatesByTime(data.updates) },
+    fromDb: Boolean(fromDb),
+  };
 }

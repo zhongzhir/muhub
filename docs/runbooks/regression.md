@@ -13,7 +13,7 @@
 | `edit-project.spec.ts` | **编辑项目**：先创建项目 → 打开 **`/dashboard/projects/<slug>/edit`** → 修改名称与 tagline → **保存修改** → 回到详情页并看到新标题与标语（需 **`DATABASE_URL`**；无则 **skip**） |
 | `import-github.spec.ts` | **GitHub 导入**：非 GitHub 域名 → **「GitHub 地址格式错误」**；若 **`GITHUB_IMPORT_E2E_FIXTURE=1`**：`muhub/e2e-fixture` → 跳转 **`/dashboard/projects/new`** 并预填字段（CI 默认开启 fixture；未设置时第二条 **skip**） |
 | `claim-project.spec.ts` | **认领**：创建带 GitHub 的项目 → 详情 **认领该项目** → **`/projects/.../claim`** 填写一致 URL → 回详情见 **`project-claimed-label`**「已认领」（需 **`DATABASE_URL`**） |
-| `project-updates.spec.ts` | **项目动态**：创建项目 → **`/dashboard/projects/<slug>/updates/new`** 填写标题与内容并 **发布** → 详情 **`project-updates-section`** 可见标题与正文（需 **`DATABASE_URL`** 与 **`ProjectUpdate.content` 迁移） |
+| `project-updates.spec.ts` | **项目动态**：创建项目 → **`/dashboard/projects/<slug>/updates/new`** 发布 → 详情 **`project-updates-section`** 可见标题、正文与 **`project-update-source-badge`**（**手动发布**）（需 **`DATABASE_URL`** 与 **`ProjectUpdate` 多源迁移**） |
 | `github-refresh.spec.ts` | **GitHub 刷新**：创建带 **`muhub/e2e-fixture`** 的项目 → 详情 **「刷新 GitHub 数据」** → **`github-snapshot-section`** 可见 Stars/Forks 等（需 **`DATABASE_URL`** + **`GITHUB_IMPORT_E2E_FIXTURE=1`** 或 **`GITHUB_REFRESH_E2E_FIXTURE=1`**） |
 | `recommended-claim.spec.ts` | **推荐认领**：打开 **`/projects/langchain`**；若有 **`recommended-project-hint`** 则点 **认领项目**，否则直链 **`/dashboard/projects/new?from=recommended&slug=langchain`**；断言创建页 query 与 name/slug/tagline/GitHub 预填 |
 | `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、**`project-badges`**、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
@@ -34,7 +34,7 @@
 1. 打开 **`/projects/demo`** 或任意 **`/projects/<slug>`**（库内或推荐示例）。
 2. **Hero**：一级标题为项目名称；可见文案 **「项目主页」**（`exact` 断言用）；**tagline**（若有）；徽章含 **发布状态**（已发布 / 草稿 / 已归档）；推荐示例有 **「推荐项目」** 徽章与 **`recommended-project-hint`**；库内未认领且已绑仓库时有 **「认领该项目」**（**`claim-project-button`**）；正式项目有 **「分享项目」「编辑项目」「发布动态」**。
 3. **仓库数据**：**`github-snapshot-section`** 内标题 **「仓库数据」**；无快照为 **「暂无仓库快照数据」**；有快照时可见 **Stars / Forks** 等 **`data-testid`**（如 **`github-snapshot-stars`**）；有 **`githubUrl`** 时区头可见 **「刷新仓库数据」**。
-4. **项目动态**：**`project-updates-section`** 内 **「项目动态」** 标题；右侧或附近 **「发布动态」**（库内）；列表 **`project-update-item`**（若有）。
+4. **项目动态**：**`project-updates-section`** 内 **「项目动态」** 标题；右侧或附近 **「发布动态」**（库内）；列表 **`project-update-item`**（若有）；每条应含 **`project-update-source-badge`**（如 **手动发布 / 代码仓库 / 官方动态** 等，取决于 `sourceType` 与 `sourceLabel`）。
 5. **社媒**：标题 **「社媒」**；无数据为 **「暂无社媒信息」**。
 6. **项目介绍**：标题 **「项目介绍」**；有正文或 **「暂无项目介绍」**。
 7. 自动化：见 **`tests/e2e/regression.spec.ts`**（demo）、**`create-project.spec.ts`**、**`project-updates.spec.ts`**、**`github-refresh.spec.ts`**、**`claim-project.spec.ts`** 等。
@@ -46,6 +46,15 @@
 3. **广场 `/projects`**：若出现 **`project-card`**，卡片内应有 **`project-badges`**（与列表数据源一致）。
 4. **手工**：对照 README「第 17 轮」核对 **推荐 / 种子 / 导入 / 手工 / 演示 / 精选** 与 **草稿·已发布·已归档·认领** 的组合是否符合预期。
 5. 自动化：**`share-project.spec.ts`**（**`project-badges`**）、**`projects-list.spec.ts`**（有卡片时断言 badge 区）、既有认领/推荐用例。
+
+## 项目动态来源如何回归
+
+1. **迁移**：**`pnpm exec prisma migrate deploy`** 应用含 **`OFFICIAL` / `AI`** 枚举与 **`sourceLabel` / `metaJson` / `isAiGenerated`** 的迁移。
+2. **详情**：打开 **`/projects/demo`**（内置演示）或任意有动态的 slug；**`project-updates-section`** 内每条 **`project-update-item`** 有 **`project-update-source-badge`**，文案与来源一致（演示含 **代码仓库 / 手动发布 / 官方动态** 等示例）。
+3. **手工发布**：**`/dashboard/projects/<slug>/updates/new`** 发布后回到详情，对应条目的 badge 为 **手动发布**（与 E2E **`project-updates.spec.ts`** 一致）。
+4. **外链**：动态含 **`sourceUrl`** 时，条目内 **「查看来源」** 可点开，页面不报错。
+5. **分享**：**`/projects/<slug>/share`** 的 **最近动态** 中，非空时 **`share-recent-update-item`** 含 **`share-recent-update-source`**，文案与详情统一。
+6. **自动化**：**`regression.spec.ts`**（demo 详情在有条目时断言来源 badge）、**`share-project.spec.ts`**（有条目时断言来源行）、**`project-updates.spec.ts`**（库内发布断言 **手动发布**）。
 
 ## 分享名片页如何回归
 

@@ -40,7 +40,7 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 
 ## V1.1 第 6 轮：项目分享卡片
 
-- **`/projects/[slug]/share`（分享 / 项目名片）**：与详情同源，**`max-w-xl`**，面向 **商务展示、社交传播、截图转发**；顶部 **深色名片头**（**Logo URL** 或 **项目名首字母** 占位）、**项目名称（主标题）**、**tagline**、**状态标签**（**推荐项目** / **已认领项目** / 库内 **发布状态**）、**GitHub 精简指标**（有快照时 Stars / Forks / Issues）、**链接与创建时间**、**社媒概览**（数量 + 平台标签）、**最近 1～2 条动态**（仅标题 + 时间）、**关于项目**（`line-clamp` 压缩长文）、底部 **「复制分享链接」** 主按钮；成功复制后 **按钮与 `role=status` 提示「已复制链接」**（无剪贴板权限时显示重试类文案）。
+- **`/projects/[slug]/share`（分享 / 项目名片）**：与详情同源，**`max-w-xl`**，面向 **商务展示、社交传播、截图转发**；顶部 **深色名片头**（**Logo URL** 或 **项目名首字母** 占位）、**项目名称（主标题）**、**tagline**、**状态标签**（**推荐项目** / **已认领项目** / 库内 **发布状态**）、**GitHub 精简指标**（有快照时 Stars / Forks / Issues）、**链接与创建时间**、**社媒概览**（数量 + 平台标签）、**最近 1～2 条动态**（标题 + **统一来源文案** + 时间）、**关于项目**（`line-clamp` 压缩长文）、底部 **「复制分享链接」** 主按钮；成功复制后 **按钮与 `role=status` 提示「已复制链接」**（无剪贴板权限时显示重试类文案）。
 - **详情页** 顶部 **「分享项目」** 链至分享页（略加粗以示入口）。
 - **自动化**：**`tests/e2e/share-project.spec.ts`** 走 **`/projects/demo/share`**（无库亦可）；复制步骤兼容剪贴板受限环境。
 
@@ -48,7 +48,7 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 
 - **`/dashboard/projects/[slug]/updates/new`（发布项目动态）**：填写 **标题**、**内容**，点击 **「发布」** 写入 **`ProjectUpdate`**（`sourceType = MANUAL`，字段 **`title` / `content` / `createdAt`**；历史来源仍可保留 **`summary`** 等）。
 - **`/projects/[slug]` 详情页**：**「项目动态」** 区块展示最近动态，按 **`createdAt` 倒序**；数据库来源的详情/编辑页提供 **「发布动态」** 入口。
-- **自动化**：**`tests/e2e/project-updates.spec.ts`**（需 **`DATABASE_URL`** 与迁移 **`ProjectUpdate.content`**；无库时 **skip**）。
+- **自动化**：**`tests/e2e/project-updates.spec.ts`**（需 **`DATABASE_URL`** 与迁移（含 **`ProjectUpdate` 多源字段**）；无库时 **skip**）。
 
 ## V1.1 第 8 轮：GitHub 数据手动刷新
 
@@ -90,6 +90,18 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 - **已认领 / 未认领**：仅 **库内项目** 显示认领状态。
 
 **页面**：**`/projects`** 卡片、**`/projects/[slug]`** Hero、**`/projects/[slug]/share`** 名片头均使用同一套规则；详情页已认领仍通过 **`project-claimed-label`** 挂到对应 badge 上以便 E2E。
+
+## V1 第 18 轮：多源动态架构（第一版）
+
+- **目标**：在不删改既有「发布动态 / 列表 / E2E」行为的前提下，统一 **ProjectUpdate** 的来源表达与详情「动态流」展示，并为 **社交媒体 / 官网 / AI 摘要** 等预留字段。
+- **模型（最小迁移）**：`ProjectUpdate` 增加 **`sourceLabel`**（可选）、**`metaJson`**（可选 JSON 文本）、**`isAiGenerated`**（默认 `false`）；枚举增加 **`OFFICIAL`**、**`AI`**。历史数据无新列时等价于旧行为。
+- **产品层来源（展示映射）**：**manual** / **repo** / **social** / **official** / **ai** / **system** ← 由 `sourceType`（及 `isAiGenerated`）推导；**`sourceLabel`** 优先作为 badge 主文案。
+- **工具模块**：**`lib/project-updates.ts`**（映射、文案、`buildProjectUpdateStreamModel`）、**`lib/project-update-badges.ts`**（再导出）。
+- **详情 `/projects/[slug]`**：「项目动态」为 **时间线式动态流**（`project-update-item`、`project-update-source-badge`）；保留 **「发布动态」**；有 **`sourceUrl`** 时 **「查看来源」** 外链。
+- **手工发布**：**`/dashboard/projects/[slug]/updates/new`** 写入 **`sourceLabel: 手动发布`** 等，详情展示 **手动发布** 徽章。
+- **分享 `/projects/[slug]/share`**：**最近动态** 行内 **`share-recent-update-source`** 与详情同一套 label 规则。
+- **文档**：**`docs/architecture/project-updates.md`** 说明后续如何接仓库/社媒/官网/AI（本轮不接 API、队列与 Webhook）。
+- **迁移**：`prisma/migrations/*/project_update_multisource`；部署前执行 **`pnpm exec prisma migrate deploy`**。
 
 ## 启动方式
 

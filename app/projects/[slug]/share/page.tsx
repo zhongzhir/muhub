@@ -11,6 +11,7 @@ import {
   projectShareInitial,
   takeRecentUpdatesForShare,
 } from "@/lib/share-project-view";
+import { getUpdateStreamPrimaryLabel } from "@/lib/project-updates";
 import { CopyLinkButton } from "./copy-link-button";
 
 export const dynamic = "force-dynamic";
@@ -237,6 +238,16 @@ export default async function ShareProjectPage({ params }: PageProps) {
                         className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-800/40"
                       >
                         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{u.title}</p>
+                        <p
+                          className="mt-0.5 text-xs text-zinc-500"
+                          data-testid="share-recent-update-source"
+                        >
+                          {getUpdateStreamPrimaryLabel({
+                            sourceType: u.sourceType,
+                            sourceLabel: u.sourceLabel,
+                            isAiGenerated: u.isAiGenerated,
+                          })}
+                        </p>
                         <time className="mt-0.5 block text-xs text-zinc-500" dateTime={t.toISOString()}>
                           {t.toLocaleString("zh-CN")}
                         </time>

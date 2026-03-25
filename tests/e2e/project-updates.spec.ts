@@ -2,7 +2,10 @@ import { test, expect } from "@playwright/test";
 
 test.describe("项目动态", () => {
   test("发布动态后详情页项目动态区显示标题与正文", async ({ page }) => {
-    test.skip(!process.env.DATABASE_URL?.trim(), "需要 DATABASE_URL 且已迁移（含 ProjectUpdate.content）");
+    test.skip(
+      !process.env.DATABASE_URL?.trim(),
+      "需要 DATABASE_URL 且已迁移（含 ProjectUpdate 多源字段）",
+    );
 
     const slug = `e2e-upd-${Date.now()}`;
     const title = `E2E 动态标题 ${Date.now()}`;
@@ -29,6 +32,7 @@ test.describe("项目动态", () => {
 
     const updateItem = section.getByTestId("project-update-item").filter({ hasText: title });
     await expect(updateItem).toBeVisible();
+    await expect(updateItem.getByTestId("project-update-source-badge")).toHaveText(/手动发布/);
     await expect(updateItem).toContainText("E2E 动态正文");
     await expect(updateItem).toContainText("第二行");
   });

@@ -11,6 +11,9 @@ test("分享名片页：核心信息、动态区与复制链接反馈", async ({
   await expect(
     recent.getByTestId("share-recent-update-item").first().or(recent.getByText("暂无动态")),
   ).toBeVisible();
+  if ((await recent.getByText("暂无动态").count()) === 0) {
+    await expect(recent.getByTestId("share-recent-update-source").first()).toBeVisible();
+  }
 
   const copyBtn = page.getByTestId("copy-share-link");
   await expect(copyBtn).toBeVisible();

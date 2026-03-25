@@ -30,6 +30,10 @@ enum ProjectUpdateSourceType {
   GITHUB
   SOCIAL
   SYSTEM
+  /** 官网 / 博客 / Changelog */
+  OFFICIAL
+  /** AI 生成或摘要（亦可配合 isAiGenerated） */
+  AI
 }
 
 enum ClaimStatus {
@@ -88,10 +92,15 @@ model ProjectUpdate {
   projectId   String
   project     Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
   sourceType  ProjectUpdateSourceType
+  /** 展示用来源文案（覆盖默认映射时） */
+  sourceLabel String?
   title       String
   summary     String?
   content     String?
   sourceUrl   String?
+  /** 插件/同步扩展字段（JSON 文本） */
+  metaJson    String?
+  isAiGenerated Boolean               @default(false)
   occurredAt  DateTime?
   createdAt   DateTime                @default(now())
 

@@ -53,10 +53,13 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     updates: row.updates.map((u) => ({
       id: u.id,
       sourceType: u.sourceType,
+      sourceLabel: u.sourceLabel ?? undefined,
       title: u.title,
       summary: u.summary ?? undefined,
       content: u.content ?? undefined,
       sourceUrl: u.sourceUrl ?? undefined,
+      metaJson: u.metaJson ?? undefined,
+      isAiGenerated: u.isAiGenerated,
       occurredAt: u.occurredAt ?? u.createdAt,
       createdAt: u.createdAt,
     })),
