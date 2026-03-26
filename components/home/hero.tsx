@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 
-/** 与 public/brand/muhub_logo_mark.png 源比例一致（512×512）；展示尺寸由 Tailwind 控制 */
-const MARK_WIDTH = 512;
-const MARK_HEIGHT = 512;
+/** 与 public/brand/muhub_logo_mark.png 源比例一致；展示尺寸由 Tailwind 控制（移动端优先） */
+const MARK_WIDTH = 365;
+const MARK_HEIGHT = 405;
 
 export default function Hero() {
   return (

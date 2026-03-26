@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** 与 public/brand/muhub_logo_horizontal.png 源文件比例一致（720×180） */
-const HORIZONTAL_WIDTH = 720;
-const HORIZONTAL_HEIGHT = 180;
+/** 与 public/brand/muhub_logo_horizontal.png 源文件比例一致 */
+const HORIZONTAL_WIDTH = 530;
+const HORIZONTAL_HEIGHT = 600;
 
 export function SiteHeader() {
   return (

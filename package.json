@@ -17,8 +17,7 @@
     "source:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/source_update.ts",
     "summary:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/summary_update.ts",
     "cron:all": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/cron_all.ts",
-    "brand:slice": "node scripts/slice_brand_from_source.mjs",
-    "brand:muhub": "node scripts/generate_muhub_brand_png.mjs"
+    "brand:slice": "node scripts/slice_brand_from_source.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
