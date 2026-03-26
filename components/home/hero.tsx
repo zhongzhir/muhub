@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 
+const MARK_SIZE = 320;
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-zinc-50/90 to-zinc-50 px-4 pb-24 pt-12 text-center dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900">
@@ -11,11 +13,11 @@ export default function Hero() {
 
       <div className="relative mx-auto flex max-w-2xl flex-col items-center">
         <Image
-          src="/brand/logo-mark.svg"
+          src="/brand/logo-mark.png"
           alt=""
-          width={84}
-          height={84}
-          className="mb-5 h-[4.25rem] w-[4.25rem] drop-shadow-sm md:h-[5.25rem] md:w-[5.25rem] md:mb-6"
+          width={MARK_SIZE}
+          height={MARK_SIZE}
+          className="mb-5 h-24 w-24 drop-shadow-sm sm:h-28 sm:w-28 md:mb-6 md:h-32 md:w-32"
           priority
         />
 

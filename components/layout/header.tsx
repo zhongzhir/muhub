@@ -1,5 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
-import { BrandLogoLockup } from "@/components/brand/logo-lockup";
+
+/** 与 scripts/export_brand_png.mjs 中横版导出高度 160 对应的设计宽 */
+const HORIZONTAL_WIDTH = 787;
+const HORIZONTAL_HEIGHT = 160;
 
 export function SiteHeader() {
   return (
@@ -7,10 +11,17 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-2.5">
         <Link
           href="/"
-          className="-m-1 rounded-md p-1 outline-offset-2 transition hover:opacity-[0.92] focus-visible:outline focus-visible:ring-2 focus-visible:ring-teal-600/35 dark:focus-visible:ring-teal-500/40"
+          className="-m-1 flex shrink-0 items-center rounded-md p-1 outline-offset-2 transition hover:opacity-[0.92] focus-visible:outline focus-visible:ring-2 focus-visible:ring-teal-600/35 dark:focus-visible:ring-teal-500/40"
           aria-label="木哈布首页"
         >
-          <BrandLogoLockup heightClass="h-8 md:h-[34px]" />
+          <Image
+            src="/brand/logo-horizontal.png"
+            alt="木哈布"
+            width={HORIZONTAL_WIDTH}
+            height={HORIZONTAL_HEIGHT}
+            className="h-9 w-auto md:h-10"
+            priority
+          />
         </Link>
         <nav
           className="ml-auto flex flex-wrap items-center justify-end gap-0.5 sm:gap-1"

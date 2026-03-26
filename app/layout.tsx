@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   description: "木哈布 — AI Native 项目展示与多源动态聚合",
   manifest: "/manifest.json",
   icons: {
-    icon: [{ url: "/brand/logo-icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/brand/logo-icon.svg", type: "image/svg+xml" }],
+    icon: [{ url: "/brand/logo-icon.png", type: "image/png", sizes: "192x192" }],
+    apple: [{ url: "/brand/logo-icon.png", sizes: "192x192" }],
   },
 };
 
