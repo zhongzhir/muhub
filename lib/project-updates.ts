@@ -9,7 +9,10 @@ export type UpdateOriginKind =
   | "social"
   | "official"
   | "ai"
-  | "system";
+  | "system"
+  | "website"
+  | "blog"
+  | "docs";
 
 /** 动态流展示所需最小字段（DB / Demo 均可） */
 export type ProjectUpdateStreamFields = {
@@ -30,6 +33,12 @@ export function mapSourceTypeToOrigin(sourceType: ProjectUpdateSourceType): Upda
       return "official";
     case "AI":
       return "ai";
+    case "WEBSITE":
+      return "website";
+    case "BLOG":
+      return "blog";
+    case "DOCS":
+      return "docs";
     case "SYSTEM":
     default:
       return "system";
@@ -43,6 +52,9 @@ const ORIGIN_DEFAULT_LABEL: Record<UpdateOriginKind, string> = {
   official: "官方动态",
   ai: "AI 摘要",
   system: "系统",
+  website: "官网",
+  blog: "博客",
+  docs: "文档",
 };
 
 /** 来源主徽章（不受 isAiGenerated 影响；用于与「AI摘要」并列展示） */
@@ -74,6 +86,12 @@ export function projectUpdateStreamBadgeClass(origin: UpdateOriginKind): string 
       return `${base} bg-pink-50 text-pink-800 ring-pink-600/15 dark:bg-pink-950/35 dark:text-pink-200 dark:ring-pink-400/25`;
     case "official":
       return `${base} bg-emerald-50 text-emerald-800 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-400/25`;
+    case "website":
+      return `${base} bg-cyan-50 text-cyan-900 ring-cyan-600/15 dark:bg-cyan-950/40 dark:text-cyan-200 dark:ring-cyan-400/25`;
+    case "blog":
+      return `${base} bg-orange-50 text-orange-900 ring-orange-600/20 dark:bg-orange-950/35 dark:text-orange-200 dark:ring-orange-400/25`;
+    case "docs":
+      return `${base} bg-indigo-50 text-indigo-900 ring-indigo-600/15 dark:bg-indigo-950/40 dark:text-indigo-200 dark:ring-indigo-400/25`;
     case "ai":
       return `${base} bg-amber-50 text-amber-900 ring-amber-600/20 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-400/25`;
     case "system":

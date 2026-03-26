@@ -34,6 +34,12 @@ enum ProjectUpdateSourceType {
   OFFICIAL
   /** AI 生成或摘要（亦可配合 isAiGenerated） */
   AI
+  /** 信息源抓取：官网页 */
+  WEBSITE
+  /** 信息源抓取：博客 */
+  BLOG
+  /** 信息源抓取：文档站 */
+  DOCS
 }
 
 enum ClaimStatus {
