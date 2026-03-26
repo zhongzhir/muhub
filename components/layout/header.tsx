@@ -1,33 +1,37 @@
 import Link from "next/link";
-import Image from "next/image";
+import { BrandLogoLockup } from "@/components/brand/logo-lockup";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/90">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+    <header className="sticky top-0 z-50 border-b border-zinc-200/35 bg-white/70 backdrop-blur-md dark:border-zinc-800/35 dark:bg-zinc-950/75">
+      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-2.5">
         <Link
           href="/"
-          className="flex items-center gap-3 text-zinc-900 transition hover:opacity-90 dark:text-zinc-50"
-          aria-label="木哈布 首页"
+          className="-m-1 rounded-md p-1 outline-offset-2 transition hover:opacity-[0.92] focus-visible:outline focus-visible:ring-2 focus-visible:ring-teal-600/35 dark:focus-visible:ring-teal-500/40"
+          aria-label="木哈布首页"
         >
-          <Image
-            src="/brand/icon.png"
-            alt=""
-            width={36}
-            height={36}
-            className="h-9 w-9 shrink-0 rounded-lg object-cover"
-            priority
-          />
-          <span className="text-lg font-bold tracking-tight">木哈布</span>
+          <BrandLogoLockup heightClass="h-8 md:h-[34px]" />
         </Link>
-        <nav className="ml-auto flex flex-wrap items-center gap-4 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          <Link href="/projects" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+        <nav
+          className="ml-auto flex flex-wrap items-center justify-end gap-0.5 sm:gap-1"
+          aria-label="主导航"
+        >
+          <Link
+            href="/projects"
+            className="rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+          >
             浏览项目
           </Link>
-          <Link href="/dashboard/projects/new" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+          <Link
+            href="/dashboard/projects/new"
+            className="rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+          >
             创建项目
           </Link>
-          <Link href="/dashboard/projects/import" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+          <Link
+            href="/dashboard/projects/import"
+            className="rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+          >
             导入项目
           </Link>
         </nav>
