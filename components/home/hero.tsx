@@ -1,35 +1,35 @@
 import Link from "next/link";
 import Image from "next/image";
 
-/** 与 public/brand/muhub_logo_mark.png 一致；与 Header 同一品牌图形 */
+/** 与 public/brand/muhub_logo_mark.png 源比例一致；展示尺寸由 Tailwind 控制（移动端优先） */
 const MARK_WIDTH = 365;
 const MARK_HEIGHT = 405;
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-zinc-50 via-zinc-50/95 to-zinc-100/80 px-4 pb-24 pt-12 text-center dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900">
+    <section className="relative overflow-hidden bg-gradient-to-b from-zinc-50 via-zinc-50/95 to-zinc-100/80 px-4 pb-24 pt-10 text-center sm:pt-12 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-teal-500/[0.07] to-transparent dark:from-teal-400/[0.08]"
         aria-hidden
       />
 
       <div className="relative mx-auto flex max-w-2xl flex-col items-center">
-        <div className="mb-5 bg-transparent md:mb-6">
+        <div className="mb-6 flex w-full justify-center bg-transparent sm:mb-8">
           <Image
             src="/brand/muhub_logo_mark.png"
             alt="木哈布"
             width={MARK_WIDTH}
             height={MARK_HEIGHT}
-            className="h-auto w-auto max-w-[min(100%,280px)] bg-transparent object-contain object-center sm:max-w-[300px] md:max-w-[320px]"
+            className="h-auto w-24 bg-transparent object-contain object-center md:w-32 lg:w-36"
             priority
           />
         </div>
 
-        <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-5xl">
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl md:text-5xl">
           木哈布
         </h1>
 
-        <p className="mt-3 max-w-lg text-sm font-semibold leading-snug text-teal-800 md:text-base dark:text-teal-300/95">
+        <p className="mt-3 max-w-lg px-1 text-sm font-semibold leading-snug text-teal-800 sm:text-base dark:text-teal-300/95">
           AI Native 项目展示与动态聚合平台
         </p>
 
