@@ -71,7 +71,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
               完整主页
             </Link>
             <Link href="/" className="underline-offset-4 hover:underline">
-              MUHUB
+              木哈布
             </Link>
           </div>
         </div>

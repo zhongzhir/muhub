@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("分享名片页：亮点优先、当前进展、信息源与复制链接", async ({ page }) => {
   await page.goto("/projects/demo/share");
   await expect(page.getByTestId("share-project-name")).toHaveText("示例开源项目");
-  await expect(page.getByTestId("share-project-tagline")).toHaveText("MUHUB 演示项目的标语示例");
+  await expect(page.getByTestId("share-project-tagline")).toHaveText("木哈布 演示项目的标语示例");
   await expect(page.getByTestId("project-badges")).toBeVisible();
 
   await expect(page.getByTestId("share-project-highlights")).toBeVisible();

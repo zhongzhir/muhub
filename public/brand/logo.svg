@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 52" role="img" aria-label="???">
+  <defs>
+    <linearGradient id="mhGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#27272a"/>
+      <stop offset="1" stop-color="#52525b"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="4" width="44" height="44" rx="12" fill="url(#mhGrad)"/>
+  <text x="24" y="36" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="700" fill="#fafafa">&#x6728;</text>
+  <text x="56" y="37" font-family="system-ui,sans-serif" font-size="26" font-weight="700" fill="#18181b">&#x6728;&#x54C8;&#x5E03;</text>
+</svg>

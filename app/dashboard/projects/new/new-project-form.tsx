@@ -55,7 +55,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           type="text"
           required
           autoComplete="off"
-          placeholder="例如：MUHUB"
+          placeholder="例如：木哈布"
           defaultValue={p.name || undefined}
         />
         <FieldError message={state.fieldErrors?.name} />

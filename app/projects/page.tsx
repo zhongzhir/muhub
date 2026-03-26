@@ -30,7 +30,7 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
         <header className="mb-10">
           <h1 className="text-3xl font-semibold tracking-tight">项目广场</h1>
           <p className="mt-2 max-w-2xl text-zinc-600 dark:text-zinc-400">
-            浏览 MUHUB 上公开展示的创业项目（仅展示标记为公开的项目）。
+            浏览木哈布上公开展示的创业项目（仅展示标记为公开的项目）。
           </p>
         </header>
 

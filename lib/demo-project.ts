@@ -94,15 +94,15 @@ export type ProjectPageView = {
 export const demoProjectView: ProjectPageView = {
   slug: "demo",
   name: "示例开源项目",
-  tagline: "MUHUB 演示项目的标语示例",
+  tagline: "木哈布 演示项目的标语示例",
   description:
     "这是一个用于展示项目详情页布局的示例项目，包含 GitHub 卡片、社媒与动态流等模块。",
-  tags: ["开源", "演示", "MUHUB"],
+  tags: ["开源", "演示", "木哈布"],
   aiCardSummary:
-    "MUHUB 内置演示项目：展示多源动态、仓库快照、AI 摘要卡与运营向健康度标签（演示数据）。",
+    "木哈布内置演示项目：展示多源动态、仓库快照、AI 摘要卡与运营向健康度标签（演示数据）。",
   aiWeeklySummary: {
     summary:
-      "本周演示动态涵盖版本发布（GitHub）、手动笔记与多信息源快照示例；整体呈现 MUHUB 多源聚合与 AI 摘要能力（演示文案，非真实抓取结果）。",
+      "本周演示动态涵盖版本发布（GitHub）、手动笔记与多信息源快照示例；整体呈现木哈布多源聚合与 AI 摘要能力（演示文案，非真实抓取结果）。",
     startAt: new Date("2026-03-17T00:00:00.000Z"),
     endAt: new Date("2026-03-24T08:00:00.000Z"),
     createdAt: new Date("2026-03-24T08:05:00.000Z"),

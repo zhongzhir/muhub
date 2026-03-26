@@ -3,10 +3,10 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section className="bg-gradient-to-b from-white to-zinc-50 px-4 py-20 text-center dark:from-zinc-950 dark:to-zinc-900">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+      <h1 className="text-5xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">木哈布</h1>
+      <p className="mx-auto mt-4 max-w-xl text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
         AI Native 项目展示平台
       </p>
-      <h1 className="mt-4 text-5xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">MUHUB</h1>
 
       <p className="mx-auto mt-5 max-w-2xl text-lg leading-snug text-zinc-600 dark:text-zinc-300">
         统一展示开源与创业项目，聚合仓库、官网与多源动态；结合 AI 生成摘要与周总结，

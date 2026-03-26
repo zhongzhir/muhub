@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("MUHUB 回归", () => {
-  test("首页包含 MUHUB", async ({ page }) => {
+test.describe("木哈布 回归", () => {
+  test("首页包含木哈布", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "MUHUB", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "木哈布", exact: true })).toBeVisible();
   });
 
   test("创建项目页", async ({ page }) => {

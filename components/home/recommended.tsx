@@ -5,7 +5,7 @@ export default function RecommendedProjects() {
     <section className="border-t border-zinc-200/80 py-16 dark:border-zinc-800">
       <div className="mx-auto max-w-6xl px-4">
         <h2 className="text-center text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          看看这些项目在 MUHUB 上的样子
+          看看这些项目在木哈布上的样子
         </h2>
         <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-zinc-600 dark:text-zinc-400">
           以下为冷启动示例，点击可体验详情与分享名片（未写入你的数据库时仅以只读演示呈现）。

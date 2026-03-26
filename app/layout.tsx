@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SiteHeader } from "@/components/layout/header";
+import { SiteFooter } from "@/components/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MUHUB",
-  description: "MUHUB — 项目聚合与展示平台",
+  title: "木哈布 | AI项目展示平台",
+  description: "木哈布 — AI Native 项目展示与多源动态聚合",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [{ url: "/brand/icon.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
@@ -24,10 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <SiteHeader />
         {children}
+        <SiteFooter />
       </body>
     </html>
   );
