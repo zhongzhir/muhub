@@ -4,6 +4,7 @@ import type {
   ProjectSocialAccount,
   ProjectSource,
   ProjectUpdate,
+  ProjectWeeklySummary,
 } from "@prisma/client";
 import type { ProjectPageView } from "@/lib/demo-project";
 import { parseRepoUrl } from "@/lib/repo-platform";
@@ -13,6 +14,7 @@ export type ProjectWithRelations = Project & {
   sources: ProjectSource[];
   updates: ProjectUpdate[];
   githubSnapshots: GithubRepoSnapshot[];
+  weeklySummaries: ProjectWeeklySummary[];
 };
 
 export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView {
@@ -43,6 +45,8 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
       }
     : null;
 
+  const latestWeekly = row.weeklySummaries[0];
+
   return {
     slug: row.slug,
     name: row.name,
@@ -51,6 +55,14 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     description: row.description ?? "",
     tags: row.tags?.length ? [...row.tags] : [],
     aiCardSummary: row.aiCardSummary ?? undefined,
+    aiWeeklySummary: latestWeekly
+      ? {
+          summary: latestWeekly.summary,
+          startAt: latestWeekly.startAt,
+          endAt: latestWeekly.endAt,
+          createdAt: latestWeekly.createdAt,
+        }
+      : null,
     websiteUrl: row.websiteUrl ?? undefined,
     githubUrl: row.githubUrl ?? undefined,
     githubSnapshot,

@@ -90,10 +90,25 @@ model Project {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  socialAccounts  ProjectSocialAccount[]
-  sources         ProjectSource[]
-  updates         ProjectUpdate[]
-  githubSnapshots GithubRepoSnapshot[]
+  socialAccounts    ProjectSocialAccount[]
+  sources           ProjectSource[]
+  updates           ProjectUpdate[]
+  githubSnapshots   GithubRepoSnapshot[]
+  weeklySummaries   ProjectWeeklySummary[]
+}
+
+/** AI 多源动态周总结（由定时脚本写入，项目页展示最新一条） */
+model ProjectWeeklySummary {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  summary   String   @db.Text
+  startAt   DateTime
+  endAt     DateTime
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
 }
 
 model ProjectSource {

@@ -270,3 +270,35 @@ export async function generateProjectHeroCardSummary(input: ProjectHeroCardInput
   const line = text?.trim();
   return line ? line.slice(0, 320) : null;
 }
+
+export type ProjectWeeklySummaryAiInput = {
+  projectName: string;
+  /** 展示用时间范围说明 */
+  rangeLabel: string;
+  /** 多行动态摘录 */
+  feed: string;
+};
+
+/** 基于近一周动态摘录生成中文周总结（无 key 返回 null） */
+export async function generateProjectWeeklySummaryAi(
+  input: ProjectWeeklySummaryAiInput,
+): Promise<string | null> {
+  const feed = input.feed.trim().slice(0, 12_000);
+  if (!feed) return null;
+  const text = await chatCompletion(
+    [
+      {
+        role: "system",
+        content:
+          "你是中文技术编辑。根据给定时间窗口内的项目多源动态摘录，写一段「AI Weekly Summary」：3～6 句简体中文，归纳发布、仓库、官网/文档/博客等来源的要点；仅根据摘录内容归纳，不捏造未出现的信息。不要 Markdown 标题、不要用项目符号列表。语气简洁专业。",
+      },
+      {
+        role: "user",
+        content: `项目：${input.projectName}\n时间：${input.rangeLabel}\n动态摘录：\n${feed}`,
+      },
+    ],
+    700,
+  );
+  const line = text?.trim();
+  return line ? line.slice(0, 4000) : null;
+}

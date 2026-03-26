@@ -66,6 +66,13 @@ export type ProjectPageView = {
   tags?: string[];
   /** 运营脚本生成的详情页摘要卡 */
   aiCardSummary?: string | null;
+  /** 最新一条 AI 多源周总结（库内） */
+  aiWeeklySummary?: {
+    summary: string;
+    startAt: Date;
+    endAt: Date;
+    createdAt: Date;
+  } | null;
   websiteUrl?: string;
   githubUrl?: string;
   /** 数据库项目无刷新记录时为 null */
@@ -93,6 +100,13 @@ export const demoProjectView: ProjectPageView = {
   tags: ["开源", "演示", "MUHUB"],
   aiCardSummary:
     "MUHUB 内置演示项目：展示多源动态、仓库快照、AI 摘要卡与运营向健康度标签（演示数据）。",
+  aiWeeklySummary: {
+    summary:
+      "本周演示动态涵盖版本发布（GitHub）、手动笔记与多信息源快照示例；整体呈现 MUHUB 多源聚合与 AI 摘要能力（演示文案，非真实抓取结果）。",
+    startAt: new Date("2026-03-17T00:00:00.000Z"),
+    endAt: new Date("2026-03-24T08:00:00.000Z"),
+    createdAt: new Date("2026-03-24T08:05:00.000Z"),
+  },
   websiteUrl: "https://example.com",
   githubUrl: "https://github.com/example/demo",
   sources: [

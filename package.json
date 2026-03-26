@@ -13,7 +13,8 @@
     "test:smoke": "playwright test tests/e2e/smoke.spec.ts",
     "import:seed": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/import_seed_projects.ts",
     "ai:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run_ai_update.ts",
-    "source:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/source_update.ts"
+    "source:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/source_update.ts",
+    "summary:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/summary_update.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

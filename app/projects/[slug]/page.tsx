@@ -77,6 +77,50 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </div>
         ) : null}
 
+        {data.aiWeeklySummary?.summary?.trim() ? (
+          <div
+            className="mt-6 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 to-white px-6 py-5 shadow-sm dark:border-amber-900/40 dark:from-amber-950/30 dark:to-zinc-900 md:px-8"
+            data-testid="project-ai-weekly-summary"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+              AI Weekly Summary
+            </p>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              汇总窗口{" "}
+              {data.aiWeeklySummary.startAt.toLocaleString("zh-CN", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Asia/Shanghai",
+              })}{" "}
+              —{" "}
+              {data.aiWeeklySummary.endAt.toLocaleString("zh-CN", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Asia/Shanghai",
+              })}
+              <span className="mx-1 text-zinc-400">·</span>
+              生成于{" "}
+              {data.aiWeeklySummary.createdAt.toLocaleString("zh-CN", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Asia/Shanghai",
+              })}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+              {data.aiWeeklySummary.summary.trim()}
+            </p>
+          </div>
+        ) : null}
+
         {data.tags && data.tags.length > 0 ? (
           <div
             className="mt-6 flex flex-wrap items-center gap-2"
