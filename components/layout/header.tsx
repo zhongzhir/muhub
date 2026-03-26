@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** 与 scripts/export_brand_png.mjs 中横版导出高度 160 对应的设计宽 */
-const HORIZONTAL_WIDTH = 787;
-const HORIZONTAL_HEIGHT = 160;
+/** 与 public/brand/logo-horizontal.png 实际像素一致（由 scripts/slice_brand_from_source.mjs 自源文件生成） */
+const HORIZONTAL_WIDTH = 263;
+const HORIZONTAL_HEIGHT = 88;
 
 export function SiteHeader() {
   return (

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const MARK_SIZE = 320;
+/** 与 public/brand/logo-mark.png 源像素一致（展示时由 CSS 放大） */
+const MARK_SIZE = 88;
 
 export default function Hero() {
   return (

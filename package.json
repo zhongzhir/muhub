@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "prisma generate && next build --turbopack",
+    "dev": "next dev",
+    "build": "prisma generate && next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
@@ -17,7 +17,7 @@
     "source:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/source_update.ts",
     "summary:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/summary_update.ts",
     "cron:all": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/cron_all.ts",
-    "brand:export-png": "node scripts/export_brand_png.mjs"
+    "brand:slice": "node scripts/slice_brand_from_source.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
