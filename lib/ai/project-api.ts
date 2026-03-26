@@ -99,7 +99,7 @@ async function fetchRecentGithubCommits(
   }
 }
 
-function e2eFixturePayload(githubUrlNorm: string): ProjectSummaryPayload {
+function e2eFixturePayload(): ProjectSummaryPayload {
   const base = `https://github.com/${E2E_FIXTURE_OWNER}/${E2E_FIXTURE_REPO}`;
   return {
     name: "E2E Fixture Repo",
@@ -147,7 +147,7 @@ export async function fetchProjectSummary(githubUrl: string): Promise<FetchProje
     owner === E2E_FIXTURE_OWNER &&
     repo === E2E_FIXTURE_REPO
   ) {
-    return { ok: true, data: e2eFixturePayload(trimmed) };
+    return { ok: true, data: e2eFixturePayload() };
   }
 
   const repoRes = await fetchGitHubRepoForImport(owner, repo);

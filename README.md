@@ -134,6 +134,35 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 - **迁移**：**`prisma/migrations/*/project_sources`**。
 - **E2E**：**`tests/e2e/project-sources.spec.ts`**、**`create-project.spec.ts`** 断言信息源区与「文档」文案。
 
+## Deployment（上线）
+
+面向生产或预发环境，建议按下列顺序收口：
+
+1. **环境变量**（参见根目录 **`.env.example`**）
+   - **`DATABASE_URL`**：PostgreSQL 连接串（`sslmode=require` 等按托管方要求）。
+   - **`OPENAI_API_KEY`**（可选）：AI 简介、标签、动态摘要、周总结、项目 API 等；不配则相关能力静默降级。
+   - **`NEXTAUTH_SECRET`**（可选占位）：若后续接入 NextAuth 用于会话签名；请使用足够长的随机串，**勿提交真实 `.env`**。
+   - **`NEXT_PUBLIC_APP_URL`**：站点根 URL（如 `https://your-domain.com`）。
+   - **`GITHUB_TOKEN`**（可选）：提高 GitHub REST 速率上限，只读公开库即可。
+
+2. **数据库**
+   - 首次或新版本部署后执行：**`pnpm exec prisma migrate deploy`**。
+   - **本地开发重建库（会清空数据）**：**`pnpm db:reset`**（`prisma migrate reset --force`）。
+
+3. **构建与启动**
+   - **`pnpm install`** → **`pnpm build`** → **`pnpm start`**（或使用 Vercel / 其他平台的等价命令）。
+
+4. **健康检查**
+   - **`GET /api/health`** → **`{ "status": "ok" }`**，供负载均衡、Uptime 探针使用（不访问数据库）。
+
+5. **定时任务（运营脚本）**
+   - 在宿主机或 Cron Job 中按需执行：**`pnpm cron:all`**，将依次运行 **`ai:update`** → **`source:update`** → **`summary:update`**（均需 **`DATABASE_URL`**；后两者对 AI key / 外网有依赖时可部分跳过，见各脚本日志）。
+   - 也可拆分单独配置 crontab 调用各 `pnpm run …`。
+
+6. **托管说明**
+   - **Vercel**：见下文「Vercel 说明」；Build 使用仓库 **`pnpm build`**，并在目标数据库上执行 **`prisma migrate deploy`**。
+   - 其他 Node 宿主：保证 **Node.js 20+**、启动前 **`prisma generate`**（已含在 **`postinstall` / `build`** 中亦可）。
+
 ## 启动方式
 
 前置：Node.js 20+、[pnpm](https://pnpm.io) 9+。
@@ -157,6 +186,10 @@ pnpm typecheck      # TypeScript 检查
 pnpm test:e2e       # Playwright 全量 E2E
 pnpm test:smoke     # Playwright 冒烟（仅首页）
 pnpm ai:update      # AI 运营：快照对比 + 可选动态/摘要卡（需 DATABASE_URL）
+pnpm source:update  # 信息源抓取写入动态（需 DATABASE_URL）
+pnpm summary:update # AI 周总结（需 DATABASE_URL；OPENAI_API_KEY）
+pnpm cron:all       # 依次执行 ai:update → source:update → summary:update
+pnpm db:reset       # 开发用：prisma migrate reset --force（清空数据）
 ```
 
 ## 如何创建项目并验证写入
@@ -263,6 +296,8 @@ pnpm test:e2e
 | `/projects/[slug]` | 项目详情（Hero → 仓库数据 → 项目动态 → 社媒 → 介绍）；优先读库，`demo` 无库时兜底演示数据 |
 | `/projects/[slug]/share` | 分享名片页（Logo/首字母、标签、动态摘要、GitHub 指标、复制分享链接） |
 | `/projects/[slug]/claim` | 仓库地址核验认领（需已绑定 GitHub URL） |
+| `/api/health` | 健康检查 JSON `{ "status": "ok" }` |
+| `/api/ai/project` | POST/GET：`githubUrl` → 项目整合 JSON（见第 24 轮） |
 
 ## 文档
 
