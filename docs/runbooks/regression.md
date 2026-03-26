@@ -16,7 +16,7 @@
 | `project-updates.spec.ts` | **项目动态**：创建项目 → **`/dashboard/projects/<slug>/updates/new`** 发布 → 详情 **`project-updates-section`** 可见标题、正文与 **`project-update-source-badge`**（**手动发布**）（需 **`DATABASE_URL`** 与 **`ProjectUpdate` 多源迁移**） |
 | `github-refresh.spec.ts` | **GitHub 刷新**：创建带 **`muhub/e2e-fixture`** 的项目 → 详情 **「刷新 GitHub 数据」** → **`github-snapshot-section`** 可见 Stars/Forks 等（需 **`DATABASE_URL`** + **`GITHUB_IMPORT_E2E_FIXTURE=1`** 或 **`GITHUB_REFRESH_E2E_FIXTURE=1`**） |
 | `recommended-claim.spec.ts` | **推荐认领**：打开 **`/projects/langchain`**；若有 **`recommended-project-hint`** 则点 **认领项目**，否则直链 **`/dashboard/projects/new?from=recommended&slug=langchain`**；断言创建页 query 与 name/slug/tagline/GitHub 预填 |
-| `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、**`project-badges`**、`share-recent-updates`、**`copy-share-link`** 点击后按钮为「已复制链接」或「复制失败」类（兼容无剪贴板环境） |
+| `share-project.spec.ts` | **`/projects/demo/share`**：`share-project-name` / `share-project-tagline`、**`project-badges`**、**`share-project-highlights`**（**项目亮点**）、**`share-project-progress`**（**当前进展**）、**`share-project-sources`**、**`copy-share-link`**（兼容无剪贴板环境） |
 | `ai-native-ui.spec.ts` | **AI Native UI / 降级**：**`/projects/demo`** 动态区 **`project-update-ai-badge`** / **`project-update-ai-summary`**、**`project-tags`**；分享页 **`share-project-tags`**；未设 **`OPENAI_API_KEY`** 时创建项目仍可跳转（需 **`DATABASE_URL`**） |
 | `ai-operations-ui.spec.ts` | **AI 运营 UI**：**`/projects/demo`** **`project-health-badge`**、**`project-ai-summary`**（内置演示数据） |
 | `project-sources.spec.ts` | **项目信息源**：**`/projects/demo`** **`project-sources-section`** 标题与 **`project-source-link`** |
@@ -57,16 +57,20 @@
 2. **详情**：打开 **`/projects/demo`**（内置演示）或任意有动态的 slug；**`project-updates-section`** 内每条 **`project-update-item`** 有 **`project-update-source-badge`**，文案与来源一致（演示含 **代码仓库 / 手动发布 / 官方动态** 等示例）。
 3. **手工发布**：**`/dashboard/projects/<slug>/updates/new`** 发布后回到详情，对应条目的 badge 为 **手动发布**（与 E2E **`project-updates.spec.ts`** 一致）。
 4. **外链**：动态含 **`sourceUrl`** 时，条目内 **「查看来源」** 可点开，页面不报错。
-5. **分享**：**`/projects/<slug>/share`** 的 **最近动态** 中，非空时 **`share-recent-update-item`** 含 **`share-recent-update-source`**，文案与详情统一。
-6. **自动化**：**`regression.spec.ts`**（demo 详情在有条目时断言来源 badge）、**`share-project.spec.ts`**（有条目时断言来源行）、**`project-updates.spec.ts`**（库内发布断言 **手动发布**）。
+5. **分享**：**`/projects/<slug>/share`** 的 **当前进展** 区（**`share-project-progress`**）在 **周总结** 与 **最近动态** 二选一时可呈现其一；若为动态列表，非空时 **`share-recent-update-item`** 含 **`share-recent-update-source`**。
+6. **自动化**：**`regression.spec.ts`**（demo 详情在有条目时断言来源 badge）、**`share-project.spec.ts`**（亮点/进展区块）、**`project-updates.spec.ts`**（库内发布断言 **手动发布**）。
 
 ## 分享名片页如何回归
 
 1. 打开 **`/projects/demo/share`**（或任意有数据的 slug `/projects/<slug>/share`）。
-2. 应见顶部名片区：**项目名称**、**tagline**；**最近动态** 区有条目或「暂无动态」（取决于数据来源）。
-3. **复制**：点击 **`copy-share-link`**，在允许剪贴板的浏览器中按钮应变更为 **「已复制链接」**，下方出现 **`role="status"`** 的「已复制链接」；若环境禁止剪贴板，按钮可显示 **「复制失败，请重试」** 及提示文案。
-4. **数据库项目**：已认领时头图区有 **「已认领项目」**；推荐 slug 且非库数据时有 **「推荐项目」**。
-5. 自动化：**`share-project.spec.ts`**。
+2. **Hero**：**项目名称**、**tagline**、头图区 **`project-badges`**（与详情规则一致）。
+3. **项目亮点**（**`share-project-highlights`**）：标题 **「项目亮点」**；内容优先来自 **`aiCardSummary`** → **`description`** → **`tagline`**（可无数据库新字段）；演示数据应可见 **`share-highlight-lead`** 首段卡片。
+4. **当前进展**（**`share-project-progress`**）：标题 **「当前进展」**；优先 **`aiWeeklySummary`**，否则 **最近 1～2 条动态**（含摘要与来源行），再否则 **release/提交** 线索或温和占位；不要求与详情动态条数完全一致。
+5. **项目信息源**（**`share-project-sources`**）：**「项目信息源」** 下 **`share-source-link`** 网格（demo 有多条）+ **社媒**区（可点链接或纯文本账号）。
+6. **仓库指标参考**：在页面 **后部**（**`share-github-stats`**），副标题说明为辅助参考；无快照时整块可不存在。
+7. **复制**：底部 **`copy-share-link`**；允许剪贴板时 **「已复制链接」** + **`role="status"`**；否则可为 **「复制失败，请重试」**。
+8. **数据库项目**：已认领时头图区有 **「已认领项目」**；推荐 slug 且非库数据时有 **「推荐项目」**。
+9. 自动化：**`share-project.spec.ts`**。
 
 ## 认领如何回归
 

@@ -10,8 +10,12 @@ import { codeHostLinkLabel, parseRepoUrl, repoPlatformDisplayLabel } from "@/lib
 import {
   projectShareInitial,
   takeRecentUpdatesForShare,
+  buildShareHighlightParagraphs,
+  buildShareProgressModel,
 } from "@/lib/share-project-view";
-import { getUpdateStreamPrimaryLabel } from "@/lib/project-updates";
+import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
+import { ShareHighlightSection } from "@/components/project/share-highlight-section";
+import { ShareProgressSection } from "@/components/project/share-progress-section";
 import { CopyLinkButton } from "./copy-link-button";
 
 export const dynamic = "force-dynamic";
@@ -29,11 +33,10 @@ export default async function ShareProjectPage({ params }: PageProps) {
 
   const { data, fromDb } = loaded;
   const socials = sortProjectSocials(data.socials);
-  const descriptionText = data.description.trim()
-    ? data.description
-    : "暂无项目介绍";
-
   const recentUpdates = takeRecentUpdatesForShare(data.updates);
+  const highlight = buildShareHighlightParagraphs(data);
+  const progressModel = buildShareProgressModel(data, recentUpdates);
+
   const { source: shareSourceBadges, lifecycle: shareLifecycleBadges } = buildProjectBadgeGroups({
     slug,
     fromDb,
@@ -43,6 +46,18 @@ export default async function ShareProjectPage({ params }: PageProps) {
     status: data.status,
   });
   const snap = data.githubSnapshot;
+
+  const sourceItems = getProjectSources({
+    legacyGithubUrl: data.githubUrl,
+    legacyWebsiteUrl: data.websiteUrl,
+    rows: (data.sources ?? []).map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      url: s.url,
+      label: s.label ?? null,
+      isPrimary: Boolean(s.isPrimary),
+    })),
+  });
 
   const initial = projectShareInitial(data.name);
 
@@ -62,7 +77,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
         </div>
 
         <article className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-xl ring-1 ring-zinc-200/50 dark:border-zinc-700/90 dark:bg-zinc-900 dark:ring-zinc-800/80">
-          {/* 顶部品牌区 */}
+          {/* 1. Hero */}
           <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 px-6 pb-8 pt-8 text-white">
             <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left">
               <div className="relative shrink-0">
@@ -114,19 +129,116 @@ export default async function ShareProjectPage({ params }: PageProps) {
             </div>
           </div>
 
-          <div className="space-y-0 divide-y divide-zinc-100 px-6 dark:divide-zinc-800">
-            {/* GitHub 精简指标 */}
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            {/* 2. 项目亮点 */}
+            <ShareHighlightSection
+              paragraphs={highlight.paragraphs}
+              source={highlight.source}
+              tags={data.tags && data.tags.length > 0 ? data.tags : undefined}
+            />
+
+            {/* 3. 当前进展 */}
+            <ShareProgressSection model={progressModel} githubSnapshot={snap} />
+
+            {/* 4. 信息源 / 链接 */}
+            <section
+              className="px-6 py-6"
+              aria-labelledby="share-sources-heading"
+              data-testid="share-project-sources"
+            >
+              <h2
+                id="share-sources-heading"
+                className="text-xs font-semibold uppercase tracking-widest text-zinc-500"
+              >
+                项目信息源
+              </h2>
+              <p className="mt-1 text-[11px] text-zinc-400">仓库 · 官网 · 文档 · 博客与社媒，一键跳转</p>
+              {sourceItems.length === 0 ? (
+                <p className="mt-4 text-sm text-zinc-400">暂无公开链接，可在完整主页查看是否已配置。</p>
+              ) : (
+                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {sourceItems.map((s) => (
+                    <li key={s.id ? `${s.id}` : `${s.kind}-${s.url}`}>
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid="share-source-link"
+                        className="flex items-center gap-3 rounded-xl border border-zinc-200/90 bg-zinc-50/80 px-3 py-3 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-100 dark:hover:border-zinc-500"
+                      >
+                        <span className="text-lg" aria-hidden>
+                          {mapSourceEmoji(s.kind)}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{s.categoryLabel}</span>
+                          {s.hint ? (
+                            <span className="mt-0.5 block truncate text-[11px] font-normal text-zinc-500">
+                              {s.hint}
+                            </span>
+                          ) : null}
+                        </span>
+                        {s.isPrimary ? (
+                          <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
+                            主
+                          </span>
+                        ) : null}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="mt-6">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">社媒</h3>
+                {socials.length === 0 ? (
+                  <p className="mt-2 text-sm text-zinc-400">暂无社媒</p>
+                ) : (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {socials.map((s) => (
+                      <li key={`${s.platform}-${s.accountName}`}>
+                        {s.accountUrl?.trim() ? (
+                          <a
+                            href={s.accountUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-blue-400 dark:hover:bg-zinc-700"
+                          >
+                            {socialPlatformLabel(s.platform)}
+                          </a>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            {socialPlatformLabel(s.platform)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <p className="mt-4 text-xs text-zinc-500">创建于 {formatListDate(data.createdAt)}</p>
+            </section>
+
+            {/* 5. 仓库数据（后置、辅助参考） */}
             {snap ? (
-              <section className="py-5" aria-label="仓库指标" data-testid="share-github-stats">
-                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  <span data-testid="share-repo-platform-heading">
-                    {repoPlatformDisplayLabel(
-                      snap.repoPlatform ?? parseRepoUrl(data.githubUrl ?? "")?.platform,
-                    )}
-                  </span>
+              <section
+                className="px-6 py-6"
+                aria-label="仓库指标参考"
+                data-testid="share-github-stats"
+              >
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  仓库指标参考
                 </h2>
-                <p className="mb-3 font-mono text-xs text-zinc-500">{snap.repoFullName}</p>
-                <dl className="grid grid-cols-3 gap-3 text-center sm:text-left">
+                <p className="mt-1 text-[11px] text-zinc-400">
+                  以下为快照数据，仅供侧面了解活跃度，不影响上方价值叙述。
+                </p>
+                <p className="mt-3 text-xs font-medium text-zinc-500" data-testid="share-repo-platform-heading">
+                  {repoPlatformDisplayLabel(
+                    snap.repoPlatform ?? parseRepoUrl(data.githubUrl ?? "")?.platform,
+                  )}
+                </p>
+                <p className="mt-1 font-mono text-xs text-zinc-500">{snap.repoFullName}</p>
+                <dl className="mt-4 grid grid-cols-3 gap-3 text-center sm:text-left">
                   <div className="rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-800/80">
                     <dt className="text-[11px] font-medium uppercase text-zinc-500">Stars</dt>
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.stars}</dd>
@@ -158,135 +270,26 @@ export default async function ShareProjectPage({ params }: PageProps) {
                       {computeGithubActivity(snap).label}
                     </span>
                   </p>
+                  {data.githubUrl ? (
+                    <p>
+                      <a
+                        href={data.githubUrl}
+                        className="text-sm font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                      >
+                        {codeHostLinkLabel(data.githubUrl)}
+                      </a>
+                    </p>
+                  ) : null}
                 </div>
               </section>
             ) : null}
-
-            {/* 链接与时间 */}
-            <section className="py-5">
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">链接</h2>
-              <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
-                <li>
-                  {data.githubUrl ? (
-                    <a
-                      href={data.githubUrl}
-                      className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                    >
-                      {codeHostLinkLabel(data.githubUrl)}
-                    </a>
-                  ) : (
-                    <span className="text-zinc-400">代码仓库 —</span>
-                  )}
-                </li>
-                <li>
-                  {data.websiteUrl ? (
-                    <a
-                      href={data.websiteUrl}
-                      className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                    >
-                      官网
-                    </a>
-                  ) : (
-                    <span className="text-zinc-400">官网 —</span>
-                  )}
-                </li>
-              </ul>
-              <p className="mt-3 text-xs text-zinc-500">创建于 {formatListDate(data.createdAt)}</p>
-            </section>
-
-            {data.tags && data.tags.length > 0 ? (
-              <section className="py-5" data-testid="share-project-tags">
-                <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">标签</h2>
-                <ul className="flex flex-wrap gap-2">
-                  {data.tags.map((t) => (
-                    <li
-                      key={t}
-                      className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                    >
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {/* 社媒概览 */}
-            <section className="py-5">
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                社媒概览
-              </h2>
-              {socials.length === 0 ? (
-                <p className="text-sm text-zinc-400">暂无社媒</p>
-              ) : (
-                <>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {socials.length} 个账号
-                  </p>
-                  <ul className="mt-2 flex flex-wrap gap-2">
-                    {socials.slice(0, 6).map((s) => (
-                      <li
-                        key={`${s.platform}-${s.accountName}`}
-                        className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                      >
-                        {socialPlatformLabel(s.platform)}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </section>
-
-            {/* 最近动态 */}
-            <section className="py-5" data-testid="share-recent-updates">
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                最近动态
-              </h2>
-              {recentUpdates.length === 0 ? (
-                <p className="text-sm text-zinc-400">暂无动态</p>
-              ) : (
-                <ul className="space-y-3">
-                  {recentUpdates.map((u, i) => {
-                    const t = u.createdAt ?? u.occurredAt;
-                    return (
-                      <li
-                        key={u.id ?? `${u.title}-${t.toISOString()}-${i}`}
-                        data-testid="share-recent-update-item"
-                        className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-800/40"
-                      >
-                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{u.title}</p>
-                        <p
-                          className="mt-0.5 text-xs text-zinc-500"
-                          data-testid="share-recent-update-source"
-                        >
-                          {getUpdateStreamPrimaryLabel({
-                            sourceType: u.sourceType,
-                            sourceLabel: u.sourceLabel,
-                            isAiGenerated: u.isAiGenerated,
-                          })}
-                        </p>
-                        <time className="mt-0.5 block text-xs text-zinc-500" dateTime={t.toISOString()}>
-                          {t.toLocaleString("zh-CN")}
-                        </time>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-
-            {/* 项目介绍（便于截图时仍有上下文，略压缩） */}
-            <section className="py-5">
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                关于项目
-              </h2>
-              <p className="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                {descriptionText}
-              </p>
-            </section>
           </div>
 
-          <footer className="border-t border-zinc-100 bg-zinc-50/80 px-6 py-6 dark:border-zinc-800 dark:bg-zinc-900/80">
-            <p className="mb-4 text-center text-xs text-zinc-500">复制下方链接，便于聊天或邮件中分享本名片</p>
+          {/* 6. 复制分享链接 CTA */}
+          <footer className="border-t border-zinc-100 bg-zinc-50/90 px-6 py-8 dark:border-zinc-800 dark:bg-zinc-900/90">
+            <p className="mb-4 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              复制链接，将本名片发给投资人、合作方或客户
+            </p>
             <div className="flex justify-center">
               <CopyLinkButton />
             </div>

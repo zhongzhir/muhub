@@ -44,6 +44,13 @@ Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQ
 - **详情页** 顶部 **「分享项目」** 链至分享页（略加粗以示入口）。
 - **自动化**：**`tests/e2e/share-project.spec.ts`** 走 **`/projects/demo/share`**（无库亦可）；复制步骤兼容剪贴板受限环境。
 
+## V1 第 26 轮：分享页体验升级（亮点优先）
+
+- **定位**：分享页由「数据罗列」调整为 **项目名片 / 对外介绍**，适合投资人、合作方与客户；**价值与进展在前，指标在后**，不删减能力仅 **重组层级**。
+- **顺序**：**Hero**（名称、tagline、来源/状态徽章、Logo 或首字）→ **项目亮点**（优先 **`aiCardSummary`**，其次 **`description`**，再 **`tagline`**；可切段展示；技术标签 chips 附于亮点区）→ **当前进展**（优先 **`aiWeeklySummary`**，否则 **最近 1～2 条动态**（含摘要），再否则 **release/提交** 线索 + 温和占位）→ **项目信息源**（仓库 / 官网 / 文档 / 博客等快捷卡片 + **社媒**）→ **仓库指标参考**（Stars / Forks / Issues、最近提交、活跃度，**后置说明性文案**）→ **复制分享链接** CTA。
+- **实现**：**`app/projects/[slug]/share/page.tsx`**、**`lib/share-project-view.ts`**（`buildShareHighlightParagraphs`、`buildShareProgressModel` 等）、**`components/project/share-highlight-section.tsx`**、**`components/project/share-progress-section.tsx`**。
+- **回归**：**`tests/e2e/share-project.spec.ts`** 与 **`docs/runbooks/regression.md`**「分享名片页」。
+
 ## V1.1 第 7 轮：项目动态
 
 - **`/dashboard/projects/[slug]/updates/new`（发布项目动态）**：填写 **标题**、**内容**，点击 **「发布」** 写入 **`ProjectUpdate`**（`sourceType = MANUAL`，字段 **`title` / `content` / `createdAt`**；历史来源仍可保留 **`summary`** 等）。
@@ -294,7 +301,7 @@ pnpm test:e2e
 | `/dashboard/projects/[slug]/updates/new` | 发布项目动态（标题 + 正文，写入 ProjectUpdate） |
 | `/projects` | 项目广场：公开项目列表与搜索（`?q=`） |
 | `/projects/[slug]` | 项目详情（Hero → 仓库数据 → 项目动态 → 社媒 → 介绍）；优先读库，`demo` 无库时兜底演示数据 |
-| `/projects/[slug]/share` | 分享名片页（Logo/首字母、标签、动态摘要、GitHub 指标、复制分享链接） |
+| `/projects/[slug]/share` | 分享名片页（亮点优先、当前进展、信息源、后置仓库指标、复制链接） |
 | `/projects/[slug]/claim` | 仓库地址核验认领（需已绑定 GitHub URL） |
 | `/api/health` | 健康检查 JSON `{ "status": "ok" }` |
 | `/api/ai/project` | POST/GET：`githubUrl` → 项目整合 JSON（见第 24 轮） |

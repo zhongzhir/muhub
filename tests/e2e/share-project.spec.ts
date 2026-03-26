@@ -1,18 +1,27 @@
 import { test, expect } from "@playwright/test";
 
-test("分享名片页：核心信息、动态区与复制链接反馈", async ({ page }) => {
+test("分享名片页：亮点优先、当前进展、信息源与复制链接", async ({ page }) => {
   await page.goto("/projects/demo/share");
   await expect(page.getByTestId("share-project-name")).toHaveText("示例开源项目");
   await expect(page.getByTestId("share-project-tagline")).toHaveText("MUHUB 演示项目的标语示例");
   await expect(page.getByTestId("project-badges")).toBeVisible();
 
-  const recent = page.getByTestId("share-recent-updates");
-  await expect(recent).toBeVisible();
-  await expect(
-    recent.getByTestId("share-recent-update-item").first().or(recent.getByText("暂无动态")),
-  ).toBeVisible();
-  if ((await recent.getByText("暂无动态").count()) === 0) {
-    await expect(recent.getByTestId("share-recent-update-source").first()).toBeVisible();
+  await expect(page.getByTestId("share-project-highlights")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "项目亮点" })).toBeVisible();
+  await expect(page.getByTestId("share-highlight-lead")).toBeVisible();
+
+  const progress = page.getByTestId("share-project-progress");
+  await expect(progress).toBeVisible();
+  await expect(page.getByRole("heading", { name: "当前进展" })).toBeVisible();
+  // demo 优先展示 AI 周总结；若数据为空则可能为动态列表或占位，不做脆弱 exact 匹配
+  await expect(progress.locator("p, li").first()).toBeVisible();
+
+  const sources = page.getByTestId("share-project-sources");
+  await expect(sources).toBeVisible();
+  await expect(page.getByRole("heading", { name: "项目信息源" })).toBeVisible();
+  const sourceLinks = page.getByTestId("share-source-link");
+  if ((await sourceLinks.count()) > 0) {
+    await expect(sourceLinks.first()).toBeVisible();
   }
 
   const copyBtn = page.getByTestId("copy-share-link");
@@ -20,13 +29,11 @@ test("分享名片页：核心信息、动态区与复制链接反馈", async ({
   await expect(copyBtn).toHaveText("复制分享链接");
 
   await copyBtn.click();
-  // 无头环境可能无剪贴板权限：成功为「已复制链接」+ role=status；失败时按钮为「复制失败，请重试」
   await expect(copyBtn).toHaveText(/已复制链接|复制失败/);
   if ((await page.getByRole("status").count()) > 0) {
     await expect(page.getByRole("status")).toHaveText("已复制链接");
   }
 
-  // 内置 demo 有快照时会展示；若数据库已占用了 slug demo 且无快照，区块可不存在
   const stats = page.getByTestId("share-github-stats");
   if ((await stats.count()) > 0) {
     await expect(stats).toBeVisible();
