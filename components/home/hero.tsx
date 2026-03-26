@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 
-/** 与 public/brand/logo-mark.png 源像素一致（展示时由 CSS 放大） */
-const MARK_SIZE = 88;
+/** 与 public/brand/muhub_logo_mark.png 源像素一致（展示时由 CSS 控制大小） */
+const MARK_WIDTH = 365;
+const MARK_HEIGHT = 405;
 
 export default function Hero() {
   return (
@@ -14,11 +15,11 @@ export default function Hero() {
 
       <div className="relative mx-auto flex max-w-2xl flex-col items-center">
         <Image
-          src="/brand/logo-mark.png"
+          src="/brand/muhub_logo_mark.png"
           alt=""
-          width={MARK_SIZE}
-          height={MARK_SIZE}
-          className="mb-5 h-24 w-24 drop-shadow-sm sm:h-28 sm:w-28 md:mb-6 md:h-32 md:w-32"
+          width={MARK_WIDTH}
+          height={MARK_HEIGHT}
+          className="mb-5 h-auto max-h-32 w-auto max-w-[min(100%,280px)] drop-shadow-sm sm:max-h-36 md:mb-6 md:max-h-40"
           priority
         />
 

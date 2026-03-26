@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** 与 public/brand/logo-horizontal.png 实际像素一致（由 scripts/slice_brand_from_source.mjs 自源文件生成） */
-const HORIZONTAL_WIDTH = 263;
-const HORIZONTAL_HEIGHT = 88;
+/** 与 public/brand/muhub_logo_horizontal.png 实际像素一致 */
+const HORIZONTAL_WIDTH = 530;
+const HORIZONTAL_HEIGHT = 600;
 
 export function SiteHeader() {
   return (
@@ -15,7 +15,7 @@ export function SiteHeader() {
           aria-label="木哈布首页"
         >
           <Image
-            src="/brand/logo-horizontal.png"
+            src="/brand/muhub_logo_horizontal.png"
             alt="木哈布"
             width={HORIZONTAL_WIDTH}
             height={HORIZONTAL_HEIGHT}
