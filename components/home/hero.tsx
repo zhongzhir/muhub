@@ -1,27 +1,29 @@
 import Link from "next/link";
 import Image from "next/image";
 
-/** 与 public/brand/muhub_logo_mark.png 源像素一致（展示时由 CSS 控制大小） */
+/** 与 public/brand/muhub_logo_mark.png 一致；与 Header 同一品牌图形 */
 const MARK_WIDTH = 365;
 const MARK_HEIGHT = 405;
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-zinc-50/90 to-zinc-50 px-4 pb-24 pt-12 text-center dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900">
+    <section className="relative overflow-hidden bg-gradient-to-b from-zinc-50 via-zinc-50/95 to-zinc-100/80 px-4 pb-24 pt-12 text-center dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-900">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-teal-500/[0.07] to-transparent dark:from-teal-400/[0.08]"
         aria-hidden
       />
 
       <div className="relative mx-auto flex max-w-2xl flex-col items-center">
-        <Image
-          src="/brand/muhub_logo_mark.png"
-          alt=""
-          width={MARK_WIDTH}
-          height={MARK_HEIGHT}
-          className="mb-5 h-auto max-h-32 w-auto max-w-[min(100%,280px)] drop-shadow-sm sm:max-h-36 md:mb-6 md:max-h-40"
-          priority
-        />
+        <div className="mb-5 bg-transparent md:mb-6">
+          <Image
+            src="/brand/muhub_logo_mark.png"
+            alt="木哈布"
+            width={MARK_WIDTH}
+            height={MARK_HEIGHT}
+            className="h-auto w-auto max-w-[min(100%,280px)] bg-transparent object-contain object-center sm:max-w-[300px] md:max-w-[320px]"
+            priority
+          />
+        </div>
 
         <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-5xl">
           木哈布

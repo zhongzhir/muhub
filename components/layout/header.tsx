@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** 与 public/brand/muhub_logo_horizontal.png 实际像素一致 */
-const HORIZONTAL_WIDTH = 530;
-const HORIZONTAL_HEIGHT = 600;
+/** 与 public/brand/muhub_logo_mark.png 一致；与 Hero 同一品牌图形 */
+const MARK_WIDTH = 365;
+const MARK_HEIGHT = 405;
 
 export function SiteHeader() {
   return (
@@ -15,11 +15,11 @@ export function SiteHeader() {
           aria-label="木哈布首页"
         >
           <Image
-            src="/brand/muhub_logo_horizontal.png"
+            src="/brand/muhub_logo_mark.png"
             alt="木哈布"
-            width={HORIZONTAL_WIDTH}
-            height={HORIZONTAL_HEIGHT}
-            className="h-9 w-auto md:h-10"
+            width={MARK_WIDTH}
+            height={MARK_HEIGHT}
+            className="h-8 w-auto md:h-9"
             priority
           />
         </Link>
