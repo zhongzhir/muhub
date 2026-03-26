@@ -7,7 +7,7 @@
 | 用例文件 | 说明 |
 |----------|------|
 | `regression.spec.ts` | 首页「MUHUB」、创建项目页标题「创建项目」、`/projects/demo` 文案「项目主页」（`exact: true`，避免与标语子串冲突） |
-| `smoke.spec.ts` | 冒烟：仅验证首页标题 |
+| `smoke.spec.ts` | 冒烟：首页 **`MUHUB`** 标题（`exact`）、**`home-beta-notice`** |
 | `create-project.spec.ts` | **创建项目闭环**：填写 `/dashboard/projects/new` 表单 → 提交 → 跳转 `/projects/[slug]` → 断言 **项目名称**、**项目主页**、**项目介绍**正文（需 **`DATABASE_URL`** 且已迁移；未配置时 **skip**） |
 | `projects-list.spec.ts` | **项目广场**：`/projects` 标题「项目广场」、搜索框；**空列表或卡片**二选一（`projects-empty-all` **或** `project-card`）；有卡片时断言 **`project-badges`**；**`/projects?q=demo`** 显示当前搜索词；**无匹配搜索词**出现 `projects-empty-search`（不依赖库内是否有数据） |
 | `edit-project.spec.ts` | **编辑项目**：先创建项目 → 打开 **`/dashboard/projects/<slug>/edit`** → 修改名称与 tagline → **保存修改** → 回到详情页并看到新标题与标语（需 **`DATABASE_URL`**；无则 **skip**） |

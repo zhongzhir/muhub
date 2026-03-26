@@ -1,6 +1,21 @@
 # MUHUB
 
-Next.js 15 全栈应用：创业项目数据镜像与展示（Prisma + PostgreSQL）。**不包含**评分、推荐、融资、支付或链上能力。
+Next.js 15 全栈应用：**AI Native 项目展示与多源动态聚合**（Prisma + PostgreSQL）。面向统一呈现项目名片、仓库与信息源、动态时间线，以及 **AI 摘要与周总结**；**不包含**站内评分、投融资交易、支付或链上能力。
+
+## Beta 说明与功能总览
+
+**MUHUB 当前为 Beta**：能力会持续迭代，欢迎用 **公开仓库项目** 试用并反馈。
+
+| 模块 | 内容 |
+|------|------|
+| 项目 | 创建、**GitHub 导入**、**Gitee**（创建页 URL + 快照）、**仓库认领** |
+| 信息源 | 官网 / 文档 / 博客 / 社媒等与仓库合并展示（`ProjectSource`） |
+| 动态 | 手动发布、Release、信息源抓取、AI 运营动态等多来源 |
+| AI | 项目摘要卡（`aiCardSummary`）、动态 **AI 摘要**、**Weekly Summary** |
+| API | **`GET` / `POST /api/ai/project`**：传入 `githubUrl` 返回整合 JSON（详见 **[`docs/architecture/ai-api.md`](docs/architecture/ai-api.md)**） |
+| 运维 | **`pnpm cron:all`**（`ai:update` → `source:update` → `summary:update`）；健康检查 **`GET /api/health`** |
+
+**环境与部署提要**：变量见 **`.env.example`**；部署步骤见下文 **「Deployment（上线）」** 与 **[`docs/runbooks/release-checklist.md`](docs/runbooks/release-checklist.md)**；日常脚本见 **[`docs/runbooks/operations.md`](docs/runbooks/operations.md)**。
 
 ## 当前已实现的业务链路（V1 第 1 轮）
 
@@ -304,10 +319,13 @@ pnpm test:e2e
 | `/projects/[slug]/share` | 分享名片页（亮点优先、当前进展、信息源、后置仓库指标、复制链接） |
 | `/projects/[slug]/claim` | 仓库地址核验认领（需已绑定 GitHub URL） |
 | `/api/health` | 健康检查 JSON `{ "status": "ok" }` |
-| `/api/ai/project` | POST/GET：`githubUrl` → 项目整合 JSON（见第 24 轮） |
+| `/api/ai/project` | POST/GET：`githubUrl` → 项目整合 JSON（[AI API 文档](docs/architecture/ai-api.md)） |
 
 ## 文档
 
 - [本地与环境搭建](docs/runbooks/dev-setup.md)
 - [回归测试说明](docs/runbooks/regression.md)
 - [冷启动种子导入](docs/runbooks/seed-import.md)
+- [上线检查清单](docs/runbooks/release-checklist.md)
+- [日常运营命令](docs/runbooks/operations.md)
+- [AI 项目 API（/api/ai/project）](docs/architecture/ai-api.md)
