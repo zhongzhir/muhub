@@ -1,9 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { githubRepoUrlsMatch } from "@/lib/github";
 import { parseRepoUrl } from "@/lib/repo-platform";
 import { prisma } from "@/lib/prisma";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
 export type ClaimProjectFormState = {
   ok: boolean;
@@ -27,7 +29,7 @@ export async function claimProject(
     return { ...initialFail, formError: "未配置 DATABASE_URL，无法完成认领。" };
   }
 
-  const slug = String(formData.get("slug") ?? "").trim();
+  const slug = normalizeProjectSlugParam(String(formData.get("slug") ?? ""));
   const repoUrl = String(formData.get("repoUrl") ?? "").trim();
 
   if (!slug) {
@@ -87,6 +89,8 @@ export async function claimProject(
   if (updated.count === 0) {
     return { ...initialFail, formError: "该项目已被认领" };
   }
+
+  revalidatePath(`/projects/${slug}`, "page");
 
   return { ok: true, redirectPath: `/projects/${slug}` };
 }
