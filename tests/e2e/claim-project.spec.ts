@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginAsE2EUser } from "./helpers/auth";
 import {
   waitForProjectDetailUrl,
   waitForProjectSlugAfterCreate,
@@ -7,6 +8,8 @@ import {
 test.describe("项目认领", () => {
   test("未认领项目可填写 GitHub 地址完成认领", async ({ page }) => {
     test.skip(!process.env.DATABASE_URL?.trim(), "需要 DATABASE_URL 且已迁移");
+
+    await loginAsE2EUser(page);
 
     const projectName = `认领测试项目-${Date.now()}`;
     const github = "https://github.com/octocat/Hello-World";

@@ -1,10 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { slugifyProjectName } from "@/lib/project-slug";
+import { loginAsE2EUser } from "./helpers/auth";
 import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("创建项目链路", () => {
   test("提交表单后跳转详情并展示数据", async ({ page }) => {
     test.skip(!process.env.DATABASE_URL?.trim(), "需要配置 DATABASE_URL 且已执行 prisma migrate deploy");
+
+    await loginAsE2EUser(page);
 
     const suffix = `e2e-${Date.now()}`;
     const projectName = `E2E 项目 ${suffix}`;

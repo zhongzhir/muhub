@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginAsE2EUser } from "./helpers/auth";
 import {
   waitForProjectDetailUrl,
   waitForProjectSlugAfterCreate,
@@ -10,6 +11,8 @@ test.describe("项目动态", () => {
       !process.env.DATABASE_URL?.trim(),
       "需要 DATABASE_URL 且已迁移（含 ProjectUpdate 多源字段）",
     );
+
+    await loginAsE2EUser(page);
 
     const id = Date.now();
     const projectName = `动态测试项目-${id}`;

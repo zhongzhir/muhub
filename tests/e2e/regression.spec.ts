@@ -6,9 +6,11 @@ test.describe("木哈布 回归", () => {
     await expect(page.getByRole("heading", { name: "木哈布 MUHUB", exact: true })).toBeVisible();
   });
 
-  test("创建项目页", async ({ page }) => {
+  test("未登录访问创建项目页会跳转登录", async ({ page }) => {
     await page.goto("/dashboard/projects/new");
-    await expect(page.getByRole("heading", { name: "创建项目" })).toBeVisible();
+    await page.waitForURL(/\/auth\/signin(\?|$)/);
+    await expect(page.getByRole("heading", { name: "登录 MUHUB" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "使用 GitHub 登录" })).toBeVisible();
   });
 
   test("项目详情 demo", async ({ page }) => {

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginAsE2EUser } from "./helpers/auth";
 import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("AI Native 第一阶段（UI 与降级）", () => {
@@ -22,6 +23,8 @@ test.describe("AI Native 第一阶段（UI 与降级）", () => {
   test("无 OPENAI_API_KEY 时创建项目仍可完成跳转（静默跳过补全）", async ({ page }) => {
     test.skip(!!process.env.OPENAI_API_KEY?.trim(), "本地若设了 OPENAI_API_KEY 则跳过本降级用例");
     test.skip(!process.env.DATABASE_URL?.trim(), "需要 DATABASE_URL");
+
+    await loginAsE2EUser(page);
 
     const id = Date.now();
     const projectName = `AI 降级测-${id}`;

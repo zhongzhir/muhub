@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginAsE2EUser } from "./helpers/auth";
 import {
   waitForProjectDetailUrl,
   waitForProjectSlugAfterCreate,
@@ -7,6 +8,8 @@ import {
 test.describe("编辑项目链路", () => {
   test("创建后进入编辑页、修改名称并保存回详情", async ({ page }) => {
     test.skip(!process.env.DATABASE_URL?.trim(), "需要 DATABASE_URL 且已迁移");
+
+    await loginAsE2EUser(page);
 
     const projectName = `编辑前名称-${Date.now()}`;
 

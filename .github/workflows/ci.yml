@@ -28,6 +28,9 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/muhub_ci?schema=public
+      # NextAuth 与会话签发（仅 CI 占位，禁止用于生产）
+      AUTH_SECRET: ci-muhub-auth-secret-for-github-actions-e2e-only-32b
+      E2E_TEST_SECRET: ci-muhub-e2e-gate-secret-for-github-actions-only-32b
 
     steps:
       - name: Checkout
@@ -69,5 +72,4 @@ jobs:
         run: pnpm test:e2e
         env:
           CI: true
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/muhub_ci?schema=public
           GITHUB_IMPORT_E2E_FIXTURE: "1"
