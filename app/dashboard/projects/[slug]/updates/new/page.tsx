@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { PublishUpdateForm } from "./publish-update-form";
 
 type PageProps = {
@@ -10,7 +11,7 @@ type PageProps = {
 };
 
 export default async function NewProjectUpdatePage({ params }: PageProps) {
-  const { slug } = await params;
+  const slug = normalizeProjectSlugParam((await params).slug);
 
   if (!process.env.DATABASE_URL?.trim()) {
     return (

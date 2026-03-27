@@ -24,7 +24,11 @@ test.describe("项目动态", () => {
     await page.getByRole("button", { name: "创建项目" }).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 
-    await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}/updates/new`);
+    // 与产品一致：从详情页「发布动态」进入，避免 goto 手工 encode 与 Next Link 不一致导致查库/权限异常
+    const publishLink = page.getByRole("link", { name: "发布动态" }).first();
+    await expect(publishLink).toBeVisible();
+    await publishLink.click();
+    await page.waitForURL(/\/dashboard\/projects\/[^/]+\/updates\/new\/?$/);
     await expect(page.getByRole("heading", { name: "发布项目动态" })).toBeVisible();
 
     await page.locator("#title").fill(title);

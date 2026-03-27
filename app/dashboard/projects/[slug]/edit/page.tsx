@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { fetchProjectForEdit } from "@/lib/project-edit";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { EditProjectForm } from "./edit-project-form";
 
 type PageProps = {
@@ -11,7 +12,7 @@ type PageProps = {
 };
 
 export default async function EditProjectPage({ params }: PageProps) {
-  const { slug } = await params;
+  const slug = normalizeProjectSlugParam((await params).slug);
 
   if (!process.env.DATABASE_URL?.trim()) {
     return (
