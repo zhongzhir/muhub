@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { claimProject, type ClaimProjectFormState } from "./actions";
+
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
@@ -18,8 +18,6 @@ type Props = {
 
 export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
   const [state, formAction, pending] = useActionState(claimProject, initialState);
-
-  useRedirectFromActionState(state.redirectPath);
 
   return (
     <form action={formAction} className="space-y-6">

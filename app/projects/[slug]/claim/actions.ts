@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { githubRepoUrlsMatch } from "@/lib/github";
 import { parseRepoUrl } from "@/lib/repo-platform";
@@ -10,7 +11,6 @@ import { normalizeProjectSlugParam } from "@/lib/route-slug";
 export type ClaimProjectFormState = {
   ok: boolean;
   formError?: string;
-  redirectPath?: string;
 };
 
 const initialFail: ClaimProjectFormState = { ok: false };
@@ -91,6 +91,5 @@ export async function claimProject(
   }
 
   revalidatePath(`/projects/${slug}`, "page");
-
-  return { ok: true, redirectPath: `/projects/${slug}` };
+  redirect(`/projects/${slug}`);
 }
