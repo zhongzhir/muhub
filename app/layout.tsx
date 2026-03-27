@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/header";
 import { SiteFooter } from "@/components/footer";
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
@@ -98,6 +99,7 @@ export default function RootLayout({
         <SiteHeader />
         {children}
         <SiteFooter />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

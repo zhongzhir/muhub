@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PwaInstallButton } from "@/components/pwa/pwa-install-button";
 
 export function SiteFooter() {
   return (
@@ -10,6 +11,7 @@ export function SiteFooter() {
           反馈建议
         </Link>
       </p>
+      <PwaInstallButton />
     </footer>
   );
 }
