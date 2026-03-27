@@ -25,7 +25,7 @@ export function ImportGitHubForm() {
 
       <div>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="repoUrl">
-          GitHub Repo URL
+          GitHub 仓库地址
         </label>
         <input
           id="repoUrl"
@@ -34,7 +34,7 @@ export function ImportGitHubForm() {
           required
           autoComplete="off"
           placeholder="https://github.com/vercel/next.js"
-          aria-label="GitHub Repo URL"
+          aria-label="GitHub 仓库地址"
           className={inputClass}
         />
         <p className="mt-2 text-xs text-zinc-500">

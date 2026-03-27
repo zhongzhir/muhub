@@ -33,8 +33,8 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
 
         <dl className="grid gap-1 text-sm text-zinc-600 dark:text-zinc-400">
           <div className="flex flex-wrap gap-x-2">
-            <dt className="text-zinc-500">slug</dt>
-            <dd className="font-mono text-zinc-800 dark:text-zinc-200">{project.slug}</dd>
+            <dt className="text-zinc-500">页面路径</dt>
+            <dd className="break-all font-mono text-sm text-zinc-800 dark:text-zinc-200">{project.slug}</dd>
           </div>
           <div className="flex flex-wrap gap-x-2">
             <dt className="text-zinc-500">创建时间</dt>

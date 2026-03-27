@@ -67,14 +67,12 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           项目访问地址 <span className="text-red-500">*</span>
         </label>
         <p id="slug-hint" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          用于生成项目页面链接，例如：{pathPrefix}
+          这是你在木哈布上的项目页面地址，不是 GitHub 仓库地址。例如：{pathPrefix}
           {exampleSlug}
         </p>
-        <div
-          className={`mt-1 flex min-w-0 overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus-within:border-zinc-400 dark:focus-within:ring-zinc-400`}
-        >
+        <div className="mt-1 flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus-within:border-zinc-400 dark:focus-within:ring-zinc-400 sm:flex-row">
           <span
-            className="inline-flex shrink-0 items-center border-r border-zinc-200 bg-zinc-50 px-2.5 py-2 text-xs text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
+            className="inline-flex shrink-0 items-center border-zinc-200 bg-zinc-50 px-2.5 py-2 text-[11px] leading-snug text-zinc-600 [overflow-wrap:anywhere] break-all border-b sm:border-b-0 sm:border-r dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
             aria-hidden
           >
             {pathPrefix}
@@ -121,7 +119,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
       <fieldset className="space-y-4">
         <legend className={sectionTitle}>项目链接</legend>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="githubUrl">
-          GitHub URL
+          GitHub 仓库链接
         </label>
         <input
           id="githubUrl"
@@ -135,7 +133,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.githubUrl} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="giteeUrl">
-          Gitee URL（可选，第二仓库）
+          Gitee 仓库链接（可选，第二仓库）
         </label>
         <input
           id="giteeUrl"
@@ -148,7 +146,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.giteeUrl} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="websiteUrl">
-          官网 URL
+          官网链接
         </label>
         <input
           id="websiteUrl"
@@ -162,7 +160,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.websiteUrl} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="docsUrl">
-          文档站点 URL（可选）
+          文档站链接（可选）
         </label>
         <input
           id="docsUrl"
@@ -175,7 +173,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.docsUrl} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="blogUrl">
-          博客 URL（可选）
+          博客链接（可选）
         </label>
         <input
           id="blogUrl"
@@ -188,7 +186,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.blogUrl} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="twitterUrl">
-          X / Twitter 等主页 URL（可选）
+          海外社媒主页（X / Twitter）链接（可选）
         </label>
         <input
           id="twitterUrl"

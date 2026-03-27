@@ -54,7 +54,10 @@ export default async function NewProjectUpdatePage({ params }: PageProps) {
         </p>
         <h1 className="mb-2 text-2xl font-semibold tracking-tight">发布项目动态</h1>
         <p className="mb-8 text-sm text-zinc-600 dark:text-zinc-400">
-          {exists.name} <span className="font-mono text-zinc-500">({exists.slug})</span>
+          {exists.name}{" "}
+          <span className="text-zinc-500">
+            （页面路径 <span className="font-mono break-all">{exists.slug}</span>）
+          </span>
         </p>
         <PublishUpdateForm slug={slug} />
       </div>

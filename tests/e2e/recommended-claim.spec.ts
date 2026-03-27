@@ -22,7 +22,7 @@ test.describe("推荐项目认领", () => {
     await expect(page).toHaveURL(/slug=langchain/);
 
     await expect(page.locator("#name")).toHaveValue("LangChain");
-    await expect(page.locator("#slug")).toHaveValue("langchain");
+    await expect(page.locator("#project-slug-input")).toHaveValue("langchain");
     await expect(page.locator("#tagline")).toHaveValue("Build LLM applications");
     await expect(page.locator("#githubUrl")).toHaveValue("https://github.com/langchain-ai/langchain");
   });

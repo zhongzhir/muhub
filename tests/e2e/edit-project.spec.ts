@@ -8,7 +8,7 @@ test.describe("编辑项目链路", () => {
 
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill("编辑前名称");
-    await page.locator("#slug").fill(slug);
+    await page.locator("#project-slug-input").fill(slug);
     await page.locator("#tagline").fill("原始标语");
     await page.getByRole("button", { name: "创建项目" }).click();
     await page.waitForURL(`**/projects/${slug}`);

@@ -35,7 +35,7 @@ export async function updateProject(
 
   const slug = String(formData.get("slug") ?? "").trim();
   if (!slug) {
-    return { ...initialFail, formError: "缺少 slug，无法定位项目。" };
+    return { ...initialFail, formError: "无法定位当前项目，请从项目页重新进入编辑。" };
   }
 
   const existing = await prisma.project.findUnique({
@@ -69,7 +69,7 @@ export async function updateProject(
     try {
       githubUrl = new URL(githubUrlRaw).href;
     } catch {
-      fieldErrors.githubUrl = "GitHub URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.githubUrl = "GitHub 仓库链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 
@@ -78,7 +78,7 @@ export async function updateProject(
     try {
       websiteUrl = new URL(websiteUrlRaw).href;
     } catch {
-      fieldErrors.websiteUrl = "官网 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.websiteUrl = "官网链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 

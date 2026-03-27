@@ -9,7 +9,7 @@ test.describe("项目认领", () => {
 
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill("认领测试项目");
-    await page.locator("#slug").fill(slug);
+    await page.locator("#project-slug-input").fill(slug);
     await page.locator("#githubUrl").fill(github);
     await page.getByRole("button", { name: "创建项目" }).click();
     await page.waitForURL(`**/projects/${slug}`);

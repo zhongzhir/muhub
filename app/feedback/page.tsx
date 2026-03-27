@@ -24,7 +24,7 @@ export default function FeedbackPage() {
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             木哈布 MUHUB 当前处于 Beta
-            阶段。若你在试用中遇到 bug、功能缺口或有产品想法，我们非常感谢你能抽出时间告诉我们。
+            阶段。若你在试用中出现缺陷、功能缺口或有产品想法，我们非常感谢你能抽出时间告诉我们。
           </p>
         </header>
 
@@ -35,12 +35,11 @@ export default function FeedbackPage() {
           <ul className="mt-4 list-inside list-disc space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             <li>
               <strong className="font-medium text-zinc-700 dark:text-zinc-300">邮件（占位）</strong>
-              ：正式支持邮箱上线后将更新在本页；此前可优先通过下方公开仓库 Issue 留言。
+              ：正式支持邮箱上线后将更新在本页；此前可优先通过公开代码仓库的工单留言。
             </li>
             <li>
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">GitHub Issue（占位）</strong>
-              ：若仓库已公开，可通过 Issue / Discussions
-              提交可复现步骤与期望行为；链接待运营侧同步至此页。
+              <strong className="font-medium text-zinc-700 dark:text-zinc-300">代码仓库工单（占位）</strong>
+              ：若仓库已公开，可通过工单与讨论区提交可复现步骤与期望行为；链接待运营侧同步至此页。
             </li>
             <li>
               <strong className="font-medium text-zinc-700 dark:text-zinc-300">产品内路径</strong>

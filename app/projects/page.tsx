@@ -54,7 +54,7 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
                 name="q"
                 type="search"
                 defaultValue={searchTerm}
-                placeholder="按名称、slug 或一句话介绍搜索"
+                placeholder="按名称、页面路径或一句话介绍搜索"
                 aria-label="搜索项目"
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400"
               />

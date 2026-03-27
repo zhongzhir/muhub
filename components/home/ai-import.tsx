@@ -45,7 +45,8 @@ export default function AIImport() {
           </button>
         </form>
         <p className="mt-3 text-xs text-zinc-500">
-          提交后请在创建页补全 slug 与介绍；导入页可一键读取 GitHub API 写入名称与描述。
+          提交后请在创建页补全 <strong className="font-medium text-zinc-700 dark:text-zinc-300">项目访问地址</strong>
+          与介绍；在「导入项目」页可一键读取 GitHub 接口写入名称与描述。
         </p>
       </div>
     </section>

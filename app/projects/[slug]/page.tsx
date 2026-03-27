@@ -339,7 +339,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 </p>
                 <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-3">
                   <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-stars">
-                    <dt className="text-xs font-medium text-zinc-500">Stars</dt>
+                    <dt className="text-xs font-medium text-zinc-500">星标</dt>
                     <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
                       {data.githubSnapshot.stars}
                     </dd>
@@ -351,7 +351,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                     </dd>
                   </div>
                   <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-issues">
-                    <dt className="text-xs font-medium text-zinc-500">Open Issues</dt>
+                    <dt className="text-xs font-medium text-zinc-500">待处理议题</dt>
                     <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
                       {data.githubSnapshot.openIssues}
                     </dd>

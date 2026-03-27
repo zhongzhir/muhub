@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { projectPublicPathPrefix } from "@/lib/seo/site";
 import type { ProjectEditInitial } from "@/lib/project-edit";
 import { updateProject, type UpdateProjectFormState } from "./actions";
 
@@ -21,6 +22,7 @@ function FieldError({ message }: { message?: string }) {
 
 export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
   const [state, formAction, pending] = useActionState(updateProject, initialState);
+  const pathPrefix = projectPublicPathPrefix();
 
   return (
     <form action={formAction} className="space-y-10">
@@ -31,7 +33,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
           role="alert"
           className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200"
         >
-          {state.formError}
+          <p className="whitespace-pre-line">{state.formError}</p>
         </div>
       ) : null}
 
@@ -51,14 +53,25 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         />
         <FieldError message={state.fieldErrors?.name} />
 
-        <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">slug</span>
-        <p
-          className={`${inputClass} bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300`}
-          aria-readonly="true"
-        >
-          {initial.slug}
+        <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">项目访问地址</span>
+        <p id="edit-slug-hint" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          这是你在木哈布上的项目页面地址，不是 GitHub 仓库地址。创建后不可修改。
         </p>
-        <p className="text-xs text-zinc-500">slug 创建后不可修改。</p>
+        <div className="mt-1 flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm dark:border-zinc-600 dark:bg-zinc-900 sm:flex-row">
+          <span
+            className="inline-flex items-center border-zinc-200 bg-zinc-50 px-2.5 py-2 text-[11px] leading-snug text-zinc-600 [overflow-wrap:anywhere] break-all border-b sm:border-b-0 sm:border-r dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
+            aria-hidden
+          >
+            {pathPrefix}
+          </span>
+          <p
+            className="min-w-0 flex-1 [overflow-wrap:anywhere] break-all bg-zinc-100 px-3 py-2 text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+            aria-readonly="true"
+            aria-describedby="edit-slug-hint"
+          >
+            {initial.slug}
+          </p>
+        </div>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tagline">
           一句话介绍
@@ -87,7 +100,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
       <fieldset className="space-y-4">
         <legend className={sectionTitle}>项目链接</legend>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="githubUrl">
-          GitHub URL
+          GitHub 仓库链接
         </label>
         <input
           id="githubUrl"
@@ -100,7 +113,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         <FieldError message={state.fieldErrors?.githubUrl} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="websiteUrl">
-          官网 URL
+          官网链接
         </label>
         <input
           id="websiteUrl"
@@ -161,7 +174,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
             defaultChecked={initial.isPublic}
             className="h-4 w-4 rounded border-zinc-300"
           />
-          在项目广场公开展示（isPublic）
+          在项目广场公开展示
         </label>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="status">

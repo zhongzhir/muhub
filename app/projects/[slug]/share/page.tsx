@@ -16,6 +16,8 @@ import {
 import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
 import { ShareHighlightSection } from "@/components/project/share-highlight-section";
 import { ShareProgressSection } from "@/components/project/share-progress-section";
+import { buildProjectShareSocialLine, projectCanonicalUrl } from "@/lib/share/project-share";
+import { buildWeiboShareUrl } from "@/lib/share/weibo";
 import { CopyLinkButton } from "./copy-link-button";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +62,8 @@ export default async function ShareProjectPage({ params }: PageProps) {
   });
 
   const initial = projectShareInitial(data.name);
+  const canonicalProjectUrl = projectCanonicalUrl(slug);
+  const weiboShareHref = buildWeiboShareUrl(canonicalProjectUrl, buildProjectShareSocialLine(data));
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 via-zinc-100 to-zinc-200 px-4 py-8 text-zinc-900 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900 dark:text-zinc-50 sm:py-12">
@@ -240,7 +244,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
                 <p className="mt-1 font-mono text-xs text-zinc-500">{snap.repoFullName}</p>
                 <dl className="mt-4 grid grid-cols-3 gap-3 text-center sm:text-left">
                   <div className="rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-800/80">
-                    <dt className="text-[11px] font-medium uppercase text-zinc-500">Stars</dt>
+                    <dt className="text-[11px] font-medium text-zinc-500">星标</dt>
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.stars}</dd>
                   </div>
                   <div className="rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-800/80">
@@ -248,7 +252,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.forks}</dd>
                   </div>
                   <div className="rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-800/80">
-                    <dt className="text-[11px] font-medium uppercase text-zinc-500">Issues</dt>
+                    <dt className="text-[11px] font-medium text-zinc-500">待处理议题</dt>
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.openIssues}</dd>
                   </div>
                 </dl>
@@ -290,8 +294,16 @@ export default async function ShareProjectPage({ params }: PageProps) {
             <p className="mb-4 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
               复制链接，将本名片发给投资人、合作方或客户
             </p>
-            <div className="flex justify-center">
+            <div className="mx-auto flex w-full max-w-md min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
               <CopyLinkButton />
+              <a
+                href={weiboShareHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[3.25rem] w-full items-center justify-center rounded-xl border border-zinc-300 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:w-auto sm:min-h-0 sm:min-w-[200px] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              >
+                分享到微博
+              </a>
             </div>
           </footer>
         </article>

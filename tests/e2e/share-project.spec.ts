@@ -29,10 +29,10 @@ test("分享名片页：亮点优先、当前进展、信息源与复制链接",
   await expect(copyBtn).toHaveText("复制分享链接");
 
   await copyBtn.click();
-  await expect(copyBtn).toHaveText(/已复制链接|复制失败/);
-  if ((await page.getByRole("status").count()) > 0) {
-    await expect(page.getByRole("status")).toHaveText("已复制链接");
-  }
+  // 成功：按钮文案变为「已复制链接」；失败（无剪贴板权限等）：出现手动复制兜底区
+  await expect(
+    copyBtn.filter({ hasText: "已复制链接" }).or(page.getByTestId("manual-copy-fallback")),
+  ).toBeVisible({ timeout: 10_000 });
 
   const stats = page.getByTestId("share-github-stats");
   if ((await stats.count()) > 0) {

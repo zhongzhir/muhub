@@ -5,6 +5,7 @@ import { buildProjectBadgeGroups } from "@/lib/project-badges";
 import { codeHostLinkLabel } from "@/lib/repo-platform";
 import type { ProjectHealthBadge } from "@/lib/project-health";
 import { projectHealthBadgeClass } from "@/lib/project-health";
+import { projectPublicPathPrefix } from "@/lib/seo/site";
 
 export type ProjectDetailHeroProps = {
   slug: string;
@@ -45,6 +46,7 @@ export function ProjectDetailHero({
   claimStatus,
   health,
 }: ProjectDetailHeroProps) {
+  const pathPrefix = projectPublicPathPrefix();
   const groups = buildProjectBadgeGroups({
     slug,
     fromDb,
@@ -175,8 +177,12 @@ export function ProjectDetailHero({
         ) : null}
       </div>
 
-      <p className="mt-6 text-xs text-zinc-500">
-        <span className="font-mono text-zinc-700 dark:text-zinc-300">{slug}</span>
+      <p className="mt-6 max-w-full text-xs leading-relaxed text-zinc-500 [overflow-wrap:anywhere]">
+        <span className="text-zinc-600 dark:text-zinc-400">木哈布项目页</span>{" "}
+        <span className="font-mono text-zinc-700 dark:text-zinc-300">
+          {pathPrefix}
+          {slug}
+        </span>
         <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
         创建于 {createdAt.toLocaleString("zh-CN")}
       </p>

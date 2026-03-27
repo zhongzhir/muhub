@@ -24,7 +24,7 @@ export async function publishProjectUpdate(
 
   const slug = String(formData.get("slug") ?? "").trim();
   if (!slug) {
-    return { ...initialFail, formError: "缺少 slug，无法定位项目。" };
+    return { ...initialFail, formError: "无法定位当前项目，请从项目页重新进入发布动态。" };
   }
 
   const project = await prisma.project.findUnique({

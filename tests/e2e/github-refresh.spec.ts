@@ -14,7 +14,7 @@ test.describe("GitHub 手动刷新快照", () => {
 
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill("GitHub 刷新测试");
-    await page.locator("#slug").fill(slug);
+    await page.locator("#project-slug-input").fill(slug);
     await page.locator("#githubUrl").fill("https://github.com/muhub/e2e-fixture");
     await page.getByRole("button", { name: "创建项目" }).click();
     await page.waitForURL(`**/projects/${slug}`);

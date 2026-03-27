@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useId, useState } from "react";
+import { ManualCopyTextarea } from "@/components/share/manual-copy-textarea";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 export function CopyLinkButton() {
@@ -11,19 +12,22 @@ export function CopyLinkButton() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (!url) {
       setPhase("error");
-      window.setTimeout(() => setPhase("idle"), 2500);
       return;
     }
     const ok = await copyTextToClipboard(url);
-    setPhase(ok ? "copied" : "error");
-    window.setTimeout(() => setPhase("idle"), 2500);
+    if (ok) {
+      setPhase("copied");
+      window.setTimeout(() => setPhase("idle"), 2500);
+    } else {
+      setPhase("error");
+    }
   }, []);
 
-  const label =
-    phase === "copied" ? "已复制链接" : phase === "error" ? "复制失败，请手动复制" : "复制分享链接";
+  const label = phase === "copied" ? "已复制链接" : "复制分享链接";
+  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
-    <div className="flex flex-col items-stretch gap-2 sm:items-center">
+    <div className="flex w-full min-w-0 max-w-md flex-col items-stretch gap-2 sm:items-center">
       <button
         type="button"
         onClick={onClick}
@@ -43,9 +47,12 @@ export function CopyLinkButton() {
         </p>
       ) : null}
       {phase === "error" ? (
-        <p role="alert" className="text-center text-sm text-red-600 dark:text-red-400">
-          复制失败，请手动复制
-        </p>
+        <div className="w-full min-w-0 px-0.5 sm:px-0" role="alert">
+          <p className="text-center text-sm font-medium leading-snug text-amber-900 [overflow-wrap:anywhere] dark:text-amber-200">
+            复制失败，请长按下方链接手动复制
+          </p>
+          {pageUrl ? <ManualCopyTextarea value={pageUrl} hint="名片页链接（可长按复制）" /> : null}
+        </div>
       ) : null}
     </div>
   );

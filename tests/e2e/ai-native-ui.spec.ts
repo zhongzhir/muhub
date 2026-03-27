@@ -25,7 +25,7 @@ test.describe("AI Native 第一阶段（UI 与降级）", () => {
     const slug = `e2e-ai-${Date.now()}`;
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill("AI 降级测");
-    await page.locator("#slug").fill(slug);
+    await page.locator("#project-slug-input").fill(slug);
     await page.getByRole("button", { name: "创建项目" }).click();
     await page.waitForURL(`**/projects/${slug}`);
     await expect(page.getByRole("heading", { name: "AI 降级测" })).toBeVisible();

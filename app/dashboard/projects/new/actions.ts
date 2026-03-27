@@ -61,7 +61,7 @@ export async function createProject(
     try {
       githubUrl = new URL(githubUrlRaw).href;
     } catch {
-      fieldErrors.githubUrl = "GitHub URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.githubUrl = "GitHub 仓库链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 
@@ -70,7 +70,7 @@ export async function createProject(
     try {
       websiteUrl = new URL(websiteUrlRaw).href;
     } catch {
-      fieldErrors.websiteUrl = "官网 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.websiteUrl = "官网链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 
@@ -79,7 +79,7 @@ export async function createProject(
     try {
       giteeUrl = new URL(giteeUrlRaw).href;
     } catch {
-      fieldErrors.giteeUrl = "Gitee URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.giteeUrl = "Gitee 仓库链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 
@@ -88,7 +88,7 @@ export async function createProject(
     try {
       docsUrl = new URL(docsUrlRaw).href;
     } catch {
-      fieldErrors.docsUrl = "文档 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.docsUrl = "文档站链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 
@@ -97,7 +97,7 @@ export async function createProject(
     try {
       blogUrl = new URL(blogUrlRaw).href;
     } catch {
-      fieldErrors.blogUrl = "博客 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.blogUrl = "博客链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 
@@ -106,7 +106,7 @@ export async function createProject(
     try {
       twitterUrl = new URL(twitterUrlRaw).href;
     } catch {
-      fieldErrors.twitterUrl = "社媒 URL 格式不正确，请以 http:// 或 https:// 开头的完整地址";
+      fieldErrors.twitterUrl = "社媒主页链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
 

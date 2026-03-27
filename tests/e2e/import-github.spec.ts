@@ -4,7 +4,7 @@ test.describe("从 GitHub 导入", () => {
   test("错误地址提示 GitHub 地址格式错误", async ({ page }) => {
     await page.goto("/dashboard/projects/import");
     await expect(page.getByRole("heading", { name: "从 GitHub 导入项目" })).toBeVisible();
-    await page.getByLabel("GitHub Repo URL").fill("https://example.com/not-github");
+    await page.getByLabel("GitHub 仓库地址").fill("https://example.com/not-github");
     await page.getByRole("button", { name: "导入项目" }).click();
     await expect(page.getByText("GitHub 地址格式错误")).toBeVisible();
   });
@@ -16,7 +16,7 @@ test.describe("从 GitHub 导入", () => {
     );
 
     await page.goto("/dashboard/projects/import");
-    await page.getByLabel("GitHub Repo URL").fill("https://github.com/muhub/e2e-fixture");
+    await page.getByLabel("GitHub 仓库地址").fill("https://github.com/muhub/e2e-fixture");
     await page.getByRole("button", { name: "导入项目" }).click();
 
     await page.waitForURL(/\/dashboard\/projects\/new\?/);
