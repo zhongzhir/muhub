@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
 export type PublishProjectUpdateFormState = {
   ok: boolean;
@@ -30,7 +31,7 @@ export async function publishProjectUpdate(
     };
   }
 
-  const slug = String(formData.get("slug") ?? "").trim();
+  const slug = normalizeProjectSlugParam(String(formData.get("slug") ?? ""));
   if (!slug) {
     return { ...initialFail, formError: "无法定位当前项目，请从项目页重新进入发布动态。" };
   }
@@ -74,7 +75,7 @@ export async function publishProjectUpdate(
         isAiGenerated: false,
       },
     });
-    revalidatePath(`/projects/${slug}`);
+    revalidatePath(`/projects/${slug}`, "page");
   } catch (e) {
     console.error("[publishProjectUpdate]", e);
     return {

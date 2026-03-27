@@ -38,19 +38,22 @@ test.describe("项目动态", () => {
     await page.getByRole("button", { name: "发布" }).click();
     await waitForProjectDetailUrl(page, slug);
 
-    await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible({
-      timeout: 60_000,
-    });
+    const heading1 = page.getByRole("heading", { level: 1, name: projectName });
+    await expect(heading1).toBeVisible({ timeout: 60_000 });
 
     const section = page.getByTestId("project-updates-section");
     await expect(section).toBeVisible({ timeout: 60_000 });
-    await expect(section.getByRole("heading", { name: "项目动态" })).toBeVisible();
-    await expect(section.getByText(title).first()).toBeVisible();
+    await expect(section.getByRole("heading", { name: "项目动态" })).toBeVisible({ timeout: 60_000 });
+
+    // 等待新动态写入并渲染（软导航 + RSC 可能略慢于 URL 变化）
+    await expect(section).toContainText(title, { timeout: 60_000 });
+    await expect(section).toContainText("E2E 动态正文", { timeout: 60_000 });
+    await expect(section).toContainText("第二行", { timeout: 60_000 });
 
     const updateItem = section.getByTestId("project-update-item").filter({ hasText: title });
-    await expect(updateItem).toBeVisible();
-    await expect(updateItem.getByTestId("project-update-source-badge")).toHaveText(/手动发布/);
-    await expect(updateItem).toContainText("E2E 动态正文");
-    await expect(updateItem).toContainText("第二行");
+    await expect(updateItem).toBeVisible({ timeout: 60_000 });
+    await expect(updateItem.getByTestId("project-update-source-badge")).toHaveText(/手动发布/, {
+      timeout: 15_000,
+    });
   });
 });

@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_noStore as noStore } from "next/cache";
 import type { SocialPlatform } from "@prisma/client";
 import { demoProjectView, type DemoSocial, type ProjectPageView } from "@/lib/demo-project";
 import { mapProjectRowToView } from "@/lib/map-project-row";
@@ -65,6 +66,7 @@ export async function loadProjectPageView(rawSlug: string): Promise<{
   data: ProjectPageView;
   fromDb: boolean;
 } | null> {
+  noStore();
   const slug = normalizeProjectSlugParam(rawSlug);
   const fromDb = await loadFromDb(slug);
   const data: ProjectPageView | null =
