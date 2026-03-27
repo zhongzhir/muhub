@@ -11,6 +11,10 @@ export function BetaTrustStrip() {
         木哈布 MUHUB 当前为 <span className="font-medium text-zinc-700 dark:text-zinc-300">Beta</span>
         ，支持从 GitHub / Gitee 导入与手工维护项目主页；我们欢迎项目方、合作方、投资人与开发者试用，并会持续改进稳定性与能力。
       </p>
+      <p className="mx-auto mt-3 max-w-2xl text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-500">
+        也可在系统浏览器中将本站<strong className="font-medium text-zinc-600 dark:text-zinc-400"> 添加到手机桌面</strong>
+        ，以便像应用一样全屏打开。
+      </p>
     </aside>
   );
 }

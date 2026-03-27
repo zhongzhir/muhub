@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/header";
@@ -26,6 +26,15 @@ const geistMono = Geist_Mono({
 });
 
 const metadataBase = new URL(SITE_URL);
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#18181b" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase,
@@ -62,11 +71,17 @@ export const metadata: Metadata = {
     images: [absoluteUrl("/og-default.png")],
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "MUHUB",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png", sizes: "32x32" },
-      { url: "/brand/muhub_logo_icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/pwa/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/pwa/icon-512.png", type: "image/png", sizes: "512x512" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
