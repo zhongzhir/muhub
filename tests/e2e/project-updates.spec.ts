@@ -7,23 +7,23 @@ test.describe("项目动态", () => {
       "需要 DATABASE_URL 且已迁移（含 ProjectUpdate 多源字段）",
     );
 
-    const slug = `e2e-upd-${Date.now()}`;
+    const id = Date.now();
+    const projectName = `动态测试项目-${id}`;
     const title = `E2E 动态标题 ${Date.now()}`;
     const body = `E2E 动态正文多行\n第二行内容`;
 
     await page.goto("/dashboard/projects/new");
-    await page.locator("#name").fill("动态测试项目");
-    await page.locator("#project-slug-input").fill(slug);
+    await page.locator("#name").fill(projectName);
     await page.getByRole("button", { name: "创建项目" }).click();
-    await page.waitForURL(`**/projects/${slug}`);
+    await page.waitForURL(`**/projects/${projectName}`);
 
-    await page.goto(`/dashboard/projects/${slug}/updates/new`);
+    await page.goto(`/dashboard/projects/${encodeURIComponent(projectName)}/updates/new`);
     await expect(page.getByRole("heading", { name: "发布项目动态" })).toBeVisible();
 
     await page.locator("#title").fill(title);
     await page.locator("#content").fill(body);
     await page.getByRole("button", { name: "发布" }).click();
-    await page.waitForURL(`**/projects/${slug}`);
+    await page.waitForURL(`**/projects/${projectName}`);
 
     const section = page.getByTestId("project-updates-section");
     await expect(section).toBeVisible();

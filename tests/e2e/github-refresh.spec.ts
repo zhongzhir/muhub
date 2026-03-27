@@ -10,21 +10,20 @@ test.describe("GitHub 手动刷新快照", () => {
       "设置 GITHUB_IMPORT_E2E_FIXTURE=1 或 GITHUB_REFRESH_E2E_FIXTURE=1 时使用内置 fixture（CI 默认开启前者）",
     );
 
-    const slug = `e2e-gh-${Date.now()}`;
+    const projectName = `GitHub 刷新测试-${Date.now()}`;
 
     await page.goto("/dashboard/projects/new");
-    await page.locator("#name").fill("GitHub 刷新测试");
-    await page.locator("#project-slug-input").fill(slug);
+    await page.locator("#name").fill(projectName);
     await page.locator("#githubUrl").fill("https://github.com/muhub/e2e-fixture");
     await page.getByRole("button", { name: "创建项目" }).click();
-    await page.waitForURL(`**/projects/${slug}`);
+    await page.waitForURL(`**/projects/${projectName}`);
 
     const section = page.getByTestId("github-snapshot-section");
     await expect(section.getByRole("heading", { name: "仓库数据" })).toBeVisible();
     await expect(section.getByText("暂无仓库快照数据")).toBeVisible();
 
     await page.getByTestId("refresh-github-snapshot").click();
-    await page.waitForURL(`**/projects/${slug}`);
+    await page.waitForURL(`**/projects/${projectName}`);
 
     await expect(section.getByTestId("github-snapshot-repo")).toHaveText("muhub/e2e-fixture");
     await expect(section.getByTestId("github-snapshot-stars")).toContainText("42");

@@ -32,7 +32,6 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
   const p = prefill ?? emptyPrefill;
   const [state, formAction, pending] = useActionState(createProject, initialState);
   const pathPrefix = projectPublicPathPrefix();
-  const exampleSlug = "muhub";
 
   return (
     <form action={formAction} className="space-y-10">
@@ -58,38 +57,42 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           type="text"
           required
           autoComplete="off"
-          placeholder="例如：木哈布"
+          placeholder="例如：木哈布 或 MUHUB"
           defaultValue={p.name || undefined}
         />
         <FieldError message={state.fieldErrors?.name} />
-
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="project-slug-input">
-          项目访问地址 <span className="text-red-500">*</span>
-        </label>
-        <p id="slug-hint" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          这是你在木哈布上的项目页面地址，不是 GitHub 仓库地址。例如：{pathPrefix}
-          {exampleSlug}
+        <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          保存后系统会根据<strong className="font-medium text-zinc-600 dark:text-zinc-300">项目名称</strong>
+          自动生成页面地址（支持中文）；若与他人重复，会自动加上「-2」「-3」等后缀。此地址用于木哈布站内项目页，不是
+          GitHub 仓库链接。
         </p>
-        <div className="mt-1 flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus-within:border-zinc-400 dark:focus-within:ring-zinc-400 sm:flex-row">
-          <span
-            className="inline-flex shrink-0 items-center border-zinc-200 bg-zinc-50 px-2.5 py-2 text-[11px] leading-snug text-zinc-600 [overflow-wrap:anywhere] break-all border-b sm:border-b-0 sm:border-r dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
-            aria-hidden
-          >
-            {pathPrefix}
-          </span>
+
+        <details className="mt-2 rounded-lg border border-zinc-200/90 bg-zinc-50/60 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900/35">
+          <summary className="cursor-pointer select-none text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            高级选项：自定义访问地址（可选）
+          </summary>
+          <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            默认无需填写。若填写，将优先使用该路径（经校验与去重）。前缀为{" "}
+            <span className="font-mono text-[11px] text-zinc-600 dark:text-zinc-400">{pathPrefix}</span>
+          </p>
+          <label className="mt-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400" htmlFor="project-slug-override">
+            自定义路径段
+          </label>
           <input
-            id="project-slug-input"
-            className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-sm outline-none dark:text-zinc-100"
-            name="slug"
+            id="project-slug-override"
+            className={inputClass}
+            name="slugOverride"
             type="text"
-            required
             autoComplete="off"
-            placeholder="仅小写字母、数字、短横线，如 muhub"
+            placeholder="留空则根据项目名称自动生成"
             defaultValue={p.slug || undefined}
-            aria-describedby="slug-hint"
+            aria-describedby="slug-override-hint"
           />
-        </div>
-        <FieldError message={state.fieldErrors?.slug} />
+          <p id="slug-override-hint" className="sr-only">
+            可选。可与中文、英文小写、数字及短横线组合。
+          </p>
+          <FieldError message={state.fieldErrors?.slugOverride} />
+        </details>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tagline">
           一句话介绍
@@ -112,7 +115,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           className={`${inputClass} min-h-[120px] resize-y`}
           name="description"
           rows={5}
-          placeholder="支持多行描述"
+          placeholder="支持多行描述（可选）"
         />
       </fieldset>
 

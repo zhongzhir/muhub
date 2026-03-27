@@ -7,6 +7,7 @@ import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
 import { parseSocialInput } from "@/lib/social-input";
 import { prisma } from "@/lib/prisma";
+import { fallbackSlugBase, isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 
 export type CreateProjectFormState = {
   ok: boolean;
@@ -16,9 +17,27 @@ export type CreateProjectFormState = {
 
 const initialFail: CreateProjectFormState = { ok: false };
 
-const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
 const isProduction = process.env.NODE_ENV === "production";
+
+async function allocateUniqueSlug(base: string): Promise<string> {
+  let b = base;
+  if (!b) {
+    b = fallbackSlugBase();
+  }
+  let candidate = b;
+  let n = 2;
+  for (;;) {
+    const row = await prisma.project.findUnique({ where: { slug: candidate }, select: { id: true } });
+    if (!row) {
+      return candidate;
+    }
+    candidate = `${b}-${n}`;
+    n += 1;
+    if (n > 10_000) {
+      throw new Error("allocateUniqueSlug: too many collisions");
+    }
+  }
+}
 
 export async function createProject(
   _prev: CreateProjectFormState,
@@ -34,7 +53,7 @@ export async function createProject(
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const slugInput = String(formData.get("slug") ?? "").trim().toLowerCase();
+  const slugOverrideRaw = String(formData.get("slugOverride") ?? "").trim();
   const tagline = String(formData.get("tagline") ?? "").trim() || null;
   const description = String(formData.get("description") ?? "").trim() || null;
   const githubUrlRaw = String(formData.get("githubUrl") ?? "").trim();
@@ -49,11 +68,22 @@ export async function createProject(
   if (!name) {
     fieldErrors.name = "请填写项目名称";
   }
-  if (!slugInput) {
-    fieldErrors.slug = "请填写项目访问地址（路径后缀）";
-  } else if (!SLUG_PATTERN.test(slugInput)) {
-    fieldErrors.slug =
-      "地址后缀仅允许小写字母、数字与短横线（-），不能以短横线开头或结尾，且不能连续出现多个短横线";
+
+  let baseSlug: string | undefined;
+  if (slugOverrideRaw) {
+    baseSlug = slugifyProjectName(slugOverrideRaw);
+    if (!baseSlug || !isValidProjectSlug(baseSlug)) {
+      fieldErrors.slugOverride =
+        "自定义地址无效：请使用中文、英文字母、数字与短横线，且不要将短横线放在首尾";
+    }
+  } else if (name) {
+    baseSlug = slugifyProjectName(name);
+    if (!baseSlug) {
+      fieldErrors.name = "项目名称需包含可用的中文、字母或数字，以便生成页面地址";
+    } else if (!isValidProjectSlug(baseSlug)) {
+      fieldErrors.name = "项目名称生成的地址不合法，请微调名称后重试";
+      baseSlug = undefined;
+    }
   }
 
   let githubUrl: string | null = null;
@@ -114,7 +144,15 @@ export async function createProject(
     return { ...initialFail, fieldErrors };
   }
 
-  const slug = slugInput;
+  let slug: string;
+  try {
+    slug = await allocateUniqueSlug(baseSlug ?? fallbackSlugBase());
+  } catch {
+    return {
+      ...initialFail,
+      formError: "无法生成唯一页面地址，请稍后重试或调整项目名称。",
+    };
+  }
 
   const creationSource = String(formData.get("creationSource") ?? "").trim();
   const sourceType = creationSource === "import" ? "import" : "manual";
@@ -214,7 +252,7 @@ export async function createProject(
       if (t.includes("slug")) {
         return {
           ...initialFail,
-          fieldErrors: { slug: "该地址已被使用，请换一个后缀" },
+          formError: "页面地址与他人冲突，请修改项目名称或在高级选项中调整自定义地址后重试。",
         };
       }
       return {
