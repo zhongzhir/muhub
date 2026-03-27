@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+import {
+  waitForProjectDetailUrl,
+  waitForProjectSlugAfterCreate,
+} from "./helpers/wait-project-after-create";
 
 test.describe("项目认领", () => {
   test("未认领项目可填写 GitHub 地址完成认领", async ({ page }) => {
@@ -11,7 +15,7 @@ test.describe("项目认领", () => {
     await page.locator("#name").fill(projectName);
     await page.locator("#githubUrl").fill(github);
     await page.getByRole("button", { name: "创建项目" }).click();
-    await page.waitForURL(`**/projects/${projectName}`);
+    const slug = await waitForProjectSlugAfterCreate(page);
 
     await expect(page.getByTestId("claim-project-button")).toBeVisible();
 
@@ -21,7 +25,7 @@ test.describe("项目认领", () => {
     await page.getByTestId("repo-url-input").fill(github);
     await page.getByRole("button", { name: "认领项目" }).click();
 
-    await page.waitForURL(`**/projects/${projectName}`);
+    await waitForProjectDetailUrl(page, slug);
     await expect(page.getByTestId("project-claimed-label")).toHaveText("已认领");
     await expect(page.getByTestId("claim-project-button")).toHaveCount(0);
   });

@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { slugifyProjectName } from "@/lib/project-slug";
+import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("创建项目链路", () => {
   test("提交表单后跳转详情并展示数据", async ({ page }) => {
@@ -6,7 +8,7 @@ test.describe("创建项目链路", () => {
 
     const suffix = `e2e-${Date.now()}`;
     const projectName = `E2E 项目 ${suffix}`;
-    const expectedSlug = `e2e-项目-${suffix}`;
+    const expectedSlug = slugifyProjectName(projectName);
     await page.goto("/dashboard/projects/new");
 
     await page.locator("#name").fill(projectName);
@@ -20,7 +22,10 @@ test.describe("创建项目链路", () => {
 
     await page.getByRole("button", { name: "创建项目" }).click();
 
-    await page.waitForURL(`**/projects/${expectedSlug}`);
+    const slug = await waitForProjectSlugAfterCreate(page);
+    expect(slug).toMatch(
+      new RegExp(`^${expectedSlug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(-\\d+)?$`),
+    );
     await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible();
     await expect(page.getByText("项目主页", { exact: true })).toBeVisible();
     await expect(page.getByText("这是 Playwright 创建链路的项目介绍正文。")).toBeVisible();

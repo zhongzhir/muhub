@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
 
 export type PublishProjectUpdateFormState = {
@@ -15,6 +17,11 @@ export async function publishProjectUpdate(
   _prev: PublishProjectUpdateFormState,
   formData: FormData,
 ): Promise<PublishProjectUpdateFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ...initialFail, formError: "请先登录后再发布动态。" };
+  }
+
   if (!process.env.DATABASE_URL?.trim()) {
     return {
       ok: false,
@@ -29,11 +36,15 @@ export async function publishProjectUpdate(
 
   const project = await prisma.project.findUnique({
     where: { slug },
-    select: { id: true },
+    select: { id: true, createdById: true, claimedByUserId: true },
   });
 
   if (!project) {
     return { ...initialFail, formError: "项目不存在或已被删除，请返回后重试。" };
+  }
+
+  if (!canManageProject(session.user.id, project)) {
+    return { ...initialFail, formError: "你没有权限为此项目发布动态。" };
   }
 
   const title = String(formData.get("title") ?? "").trim();

@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+import {
+  waitForProjectDetailUrl,
+  waitForProjectSlugAfterCreate,
+} from "./helpers/wait-project-after-create";
 
 test.describe("项目动态", () => {
   test("发布动态后详情页项目动态区显示标题与正文", async ({ page }) => {
@@ -15,15 +19,15 @@ test.describe("项目动态", () => {
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
     await page.getByRole("button", { name: "创建项目" }).click();
-    await page.waitForURL(`**/projects/${projectName}`);
+    const slug = await waitForProjectSlugAfterCreate(page);
 
-    await page.goto(`/dashboard/projects/${encodeURIComponent(projectName)}/updates/new`);
+    await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}/updates/new`);
     await expect(page.getByRole("heading", { name: "发布项目动态" })).toBeVisible();
 
     await page.locator("#title").fill(title);
     await page.locator("#content").fill(body);
     await page.getByRole("button", { name: "发布" }).click();
-    await page.waitForURL(`**/projects/${projectName}`);
+    await waitForProjectDetailUrl(page, slug);
 
     const section = page.getByTestId("project-updates-section");
     await expect(section).toBeVisible();

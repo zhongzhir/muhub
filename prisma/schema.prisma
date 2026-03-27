@@ -58,11 +58,61 @@ enum ProjectSourceKind {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts Account[]
+  sessions Session[]
+
+  createdProjects Project[] @relation("ProjectCreator")
+  claimedProjects Project[] @relation("ProjectClaimer")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/** NextAuth.js / Auth.js OAuth 账户关联 */
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+/** 数据库会话（与 JWT 策略并存时由适配器预留；可留空） */
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Project {
@@ -86,7 +136,12 @@ model Project {
   isPublic     Boolean       @default(true)
   claimStatus  ClaimStatus   @default(UNCLAIMED)
   claimedAt    DateTime?
+  /** 展示用：如 owner/repo，与 GitHub 认领校验一致 */
   claimedBy    String?
+  createdById     String?
+  createdBy       User?   @relation("ProjectCreator", fields: [createdById], references: [id])
+  claimedByUserId String?
+  claimedByUser   User?   @relation("ProjectClaimer", fields: [claimedByUserId], references: [id])
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -95,6 +150,9 @@ model Project {
   updates           ProjectUpdate[]
   githubSnapshots   GithubRepoSnapshot[]
   weeklySummaries   ProjectWeeklySummary[]
+
+  @@index([createdById])
+  @@index([claimedByUserId])
 }
 
 /** AI 多源动态周总结（由定时脚本写入，项目页展示最新一条） */

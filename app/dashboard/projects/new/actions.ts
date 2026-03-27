@@ -3,6 +3,7 @@
 import type { ProjectSourceKind } from "@prisma/client";
 import { Prisma, SocialPlatform } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
 import { parseSocialInput } from "@/lib/social-input";
@@ -43,6 +44,12 @@ export async function createProject(
   _prev: CreateProjectFormState,
   formData: FormData,
 ): Promise<CreateProjectFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ...initialFail, formError: "请先登录后再创建项目。" };
+  }
+  const ownerId = session.user.id;
+
   if (!process.env.DATABASE_URL?.trim()) {
     return {
       ok: false,
@@ -230,6 +237,7 @@ export async function createProject(
         sourceType,
         status: "ACTIVE",
         isPublic: true,
+        createdById: ownerId,
         socialAccounts:
           socialCreates.length > 0
             ? {

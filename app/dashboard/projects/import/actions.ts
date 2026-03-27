@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import {
   buildNewProjectSearchParams,
   fetchGitHubRepoForImport,
@@ -18,6 +19,11 @@ export async function importGitHubRepo(
   _prev: ImportGitHubFormState,
   formData: FormData,
 ): Promise<ImportGitHubFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ...initialFail, formError: "请先登录后再导入仓库。" };
+  }
+
   const repoUrl = String(formData.get("repoUrl") ?? "").trim();
 
   if (!repoUrl) {

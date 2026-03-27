@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { SiteHeader } from "@/components/layout/header";
 import { SiteFooter } from "@/components/footer";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
@@ -96,10 +97,12 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SiteHeader />
-        {children}
-        <SiteFooter />
-        <ServiceWorkerRegister />
+        <AuthSessionProvider>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+          <ServiceWorkerRegister />
+        </AuthSessionProvider>
       </body>
     </html>
   );

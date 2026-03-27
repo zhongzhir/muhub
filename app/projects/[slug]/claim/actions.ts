@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { githubRepoUrlsMatch } from "@/lib/github";
 import { parseRepoUrl } from "@/lib/repo-platform";
 import { prisma } from "@/lib/prisma";
@@ -16,6 +17,12 @@ export async function claimProject(
   _prev: ClaimProjectFormState,
   formData: FormData,
 ): Promise<ClaimProjectFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ...initialFail, formError: "请先登录后再认领项目。" };
+  }
+  const claimerId = session.user.id;
+
   if (!process.env.DATABASE_URL?.trim()) {
     return { ...initialFail, formError: "未配置 DATABASE_URL，无法完成认领。" };
   }
@@ -73,6 +80,7 @@ export async function claimProject(
       claimStatus: "CLAIMED",
       claimedAt: new Date(),
       claimedBy,
+      claimedByUserId: claimerId,
     },
   });
 

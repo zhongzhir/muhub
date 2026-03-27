@@ -2,6 +2,8 @@
 
 import { Prisma, type ProjectStatus, type SocialPlatform } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { canManageProject } from "@/lib/project-permissions";
 import { parseSocialInput } from "@/lib/social-input";
 import { prisma } from "@/lib/prisma";
 
@@ -26,6 +28,11 @@ export async function updateProject(
   _prev: UpdateProjectFormState,
   formData: FormData,
 ): Promise<UpdateProjectFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ...initialFail, formError: "请先登录后再编辑项目。" };
+  }
+
   if (!process.env.DATABASE_URL?.trim()) {
     return {
       ok: false,
@@ -40,11 +47,15 @@ export async function updateProject(
 
   const existing = await prisma.project.findUnique({
     where: { slug },
-    select: { id: true },
+    select: { id: true, createdById: true, claimedByUserId: true },
   });
 
   if (!existing) {
     return { ...initialFail, formError: "项目不存在或已被删除，请返回列表后重试。" };
+  }
+
+  if (!canManageProject(session.user.id, existing)) {
+    return { ...initialFail, formError: "你没有权限编辑此项目。" };
   }
 
   const name = String(formData.get("name") ?? "").trim();

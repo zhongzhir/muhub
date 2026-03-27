@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+import {
+  waitForProjectDetailUrl,
+  waitForProjectSlugAfterCreate,
+} from "./helpers/wait-project-after-create";
 
 test.describe("GitHub 手动刷新快照", () => {
   test("带 githubUrl 的项目可刷新并在详情展示 Stars / Forks 等", async ({ page }) => {
@@ -16,14 +20,14 @@ test.describe("GitHub 手动刷新快照", () => {
     await page.locator("#name").fill(projectName);
     await page.locator("#githubUrl").fill("https://github.com/muhub/e2e-fixture");
     await page.getByRole("button", { name: "创建项目" }).click();
-    await page.waitForURL(`**/projects/${projectName}`);
+    const slug = await waitForProjectSlugAfterCreate(page);
 
     const section = page.getByTestId("github-snapshot-section");
     await expect(section.getByRole("heading", { name: "仓库数据" })).toBeVisible();
     await expect(section.getByText("暂无仓库快照数据")).toBeVisible();
 
     await page.getByTestId("refresh-github-snapshot").click();
-    await page.waitForURL(`**/projects/${projectName}`);
+    await waitForProjectDetailUrl(page, slug);
 
     await expect(section.getByTestId("github-snapshot-repo")).toHaveText("muhub/e2e-fixture");
     await expect(section.getByTestId("github-snapshot-stars")).toContainText("42");

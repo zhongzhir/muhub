@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+import {
+  waitForProjectDetailUrl,
+  waitForProjectSlugAfterCreate,
+} from "./helpers/wait-project-after-create";
 
 test.describe("编辑项目链路", () => {
   test("创建后进入编辑页、修改名称并保存回详情", async ({ page }) => {
@@ -10,9 +14,9 @@ test.describe("编辑项目链路", () => {
     await page.locator("#name").fill(projectName);
     await page.locator("#tagline").fill("原始标语");
     await page.getByRole("button", { name: "创建项目" }).click();
-    await page.waitForURL(`**/projects/${projectName}`);
+    const slug = await waitForProjectSlugAfterCreate(page);
 
-    await page.goto(`/dashboard/projects/${encodeURIComponent(projectName)}/edit`);
+    await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}/edit`);
     await expect(page.getByRole("heading", { name: "编辑项目" })).toBeVisible();
     await expect(page.getByText(projectName)).toBeVisible();
 
@@ -20,7 +24,7 @@ test.describe("编辑项目链路", () => {
     await page.locator("#tagline").fill("修改后的标语");
     await page.getByRole("button", { name: "保存修改" }).click();
 
-    await page.waitForURL(`**/projects/${projectName}`);
+    await waitForProjectDetailUrl(page, slug);
     await expect(page.getByRole("heading", { level: 1, name: "编辑后名称" })).toBeVisible();
     await expect(page.getByText("修改后的标语")).toBeVisible();
   });

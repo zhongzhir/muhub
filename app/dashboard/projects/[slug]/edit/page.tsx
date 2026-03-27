@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { fetchProjectForEdit } from "@/lib/project-edit";
+import { canManageProject } from "@/lib/project-permissions";
+import { prisma } from "@/lib/prisma";
 import { EditProjectForm } from "./edit-project-form";
 
 type PageProps = {
@@ -29,6 +32,33 @@ export default async function EditProjectPage({ params }: PageProps) {
   const initial = await fetchProjectForEdit(slug);
   if (!initial) {
     notFound();
+  }
+
+  const session = await auth();
+  const perm = await prisma.project.findUnique({
+    where: { slug },
+    select: { createdById: true, claimedByUserId: true },
+  });
+  if (!canManageProject(session?.user?.id, perm ?? { createdById: null, claimedByUserId: null })) {
+    return (
+      <div className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+        <div className="mx-auto max-w-lg rounded-lg border border-amber-200 bg-amber-50 px-6 py-8 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+          <p className="font-medium">无法编辑此项目</p>
+          <p className="mt-2">
+            仅项目创建者、认领者可在归属已明确时编辑；其它情况请{" "}
+            <Link href="/auth/signin" className="font-medium underline underline-offset-4">
+              登录
+            </Link>{" "}
+            后确认账号是否匹配。
+          </p>
+          <p className="mt-4">
+            <Link href={`/projects/${slug}`} className="underline underline-offset-4">
+              返回项目页
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("AI Native 第一阶段（UI 与降级）", () => {
   test("演示项目：动态含来源与 AI 摘要徽章，标签区可见", async ({ page }) => {
@@ -27,7 +28,7 @@ test.describe("AI Native 第一阶段（UI 与降级）", () => {
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
     await page.getByRole("button", { name: "创建项目" }).click();
-    await page.waitForURL(`**/projects/ai-降级测-${id}`);
+    await waitForProjectSlugAfterCreate(page);
     await expect(page.getByRole("heading", { name: projectName })).toBeVisible();
   });
 });

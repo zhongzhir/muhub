@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
+import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
 import { PublishUpdateForm } from "./publish-update-form";
 
@@ -31,11 +33,28 @@ export default async function NewProjectUpdatePage({ params }: PageProps) {
 
   const exists = await prisma.project.findUnique({
     where: { slug },
-    select: { slug: true, name: true },
+    select: { slug: true, name: true, createdById: true, claimedByUserId: true },
   });
 
   if (!exists) {
     notFound();
+  }
+
+  const session = await auth();
+  if (!canManageProject(session?.user?.id, exists)) {
+    return (
+      <div className="min-h-screen bg-zinc-50 px-6 py-16 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+        <div className="mx-auto max-w-lg rounded-lg border border-amber-200 bg-amber-50 px-6 py-8 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+          <p className="font-medium">无法发布动态</p>
+          <p className="mt-2">仅项目创建者或认领者可发布动态（归属已明确的项目）。</p>
+          <p className="mt-4">
+            <Link href={`/projects/${slug}`} className="underline underline-offset-4">
+              返回项目页
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
