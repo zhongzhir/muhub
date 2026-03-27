@@ -26,14 +26,14 @@ export default function Hero() {
         </div>
 
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl md:text-5xl">
-          木哈布
+          木哈布 MUHUB
         </h1>
 
-        <p className="mt-3 max-w-lg px-1 text-sm font-semibold leading-snug text-teal-800 sm:text-base dark:text-teal-300/95">
-          AI Native 项目展示与动态聚合平台
-        </p>
+        <h2 className="mt-3 max-w-lg px-1 text-sm font-semibold leading-snug text-teal-800 sm:text-base dark:text-teal-300/95">
+          AI Native 项目展示平台
+        </h2>
 
-        <p className="mt-7 max-w-xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
           把仓库、官网和动态收进一页，让合作方、投资人与用户快速理解「项目在做什么、最近有什么进展」——既是主页，也是拿得出手的分享名片。
         </p>
 

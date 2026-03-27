@@ -73,7 +73,17 @@ export function ProjectDetailHero({
       </h1>
 
       {tagline?.trim() ? (
-        <p className="mt-4 max-w-3xl text-lg leading-snug text-zinc-600 dark:text-zinc-400">{tagline}</p>
+        <>
+          <h2 id="project-tagline-heading" className="sr-only">
+            项目简介
+          </h2>
+          <p
+            className="mt-4 max-w-3xl text-lg leading-snug text-zinc-600 dark:text-zinc-400"
+            aria-labelledby="project-tagline-heading"
+          >
+            {tagline}
+          </p>
+        </>
       ) : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -105,32 +115,40 @@ export function ProjectDetailHero({
         </div>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-zinc-200/80 pt-6 text-sm dark:border-zinc-800">
-        {githubUrl?.trim() ? (
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
-          >
-            {codeHostLinkLabel(githubUrl)} 仓库
-          </a>
-        ) : (
-          <span className="text-zinc-400">未填写代码仓库</span>
-        )}
-        {websiteUrl?.trim() ? (
-          <a
-            href={websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
-          >
-            官网
-          </a>
-        ) : (
-          <span className="text-zinc-400">未填写官网</span>
-        )}
-      </div>
+      <section
+        className="mt-6 border-t border-zinc-200/80 pt-6 dark:border-zinc-800"
+        aria-labelledby="project-primary-links-heading"
+      >
+        <h2 id="project-primary-links-heading" className="sr-only">
+          项目链接
+        </h2>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          {githubUrl?.trim() ? (
+            <a
+              href={githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
+            >
+              {codeHostLinkLabel(githubUrl)} 仓库
+            </a>
+          ) : (
+            <span className="text-zinc-400">未填写代码仓库</span>
+          )}
+          {websiteUrl?.trim() ? (
+            <a
+              href={websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
+            >
+              官网
+            </a>
+          ) : (
+            <span className="text-zinc-400">未填写官网</span>
+          )}
+        </div>
+      </section>
 
       <div className="mt-6 flex flex-wrap gap-3 border-t border-zinc-200/80 pt-6 dark:border-zinc-800">
         <Link href={`/projects/${slug}/share`} className={btnPrimary}>

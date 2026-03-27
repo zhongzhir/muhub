@@ -2,7 +2,9 @@ import Hero from "@/components/home/hero";
 import BetaNotice from "@/components/home/beta-notice";
 import AIImport from "@/components/home/ai-import";
 import RecommendedProjects from "@/components/home/recommended";
+import GeoPlatformIntro from "@/components/home/geo-platform-intro";
 import Features from "@/components/home/features";
+import GeoSeoFootnote from "@/components/home/geo-seo-footnote";
 
 export default function HomePage() {
   return (
@@ -11,7 +13,9 @@ export default function HomePage() {
       <BetaNotice />
       <AIImport />
       <RecommendedProjects />
+      <GeoPlatformIntro />
       <Features />
+      <GeoSeoFootnote />
     </main>
   );
 }

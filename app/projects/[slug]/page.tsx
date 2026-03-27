@@ -16,6 +16,7 @@ import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import { isRecommendedProject } from "@/lib/recommended-projects";
 import { computeProjectHealth } from "@/lib/project-health";
 import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
+import { ProjectJsonLd } from "@/components/project/project-json-ld";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +75,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+      <ProjectJsonLd data={data} slug={slug} />
       <div className="mx-auto max-w-5xl px-6 py-10 md:py-12">
         <ProjectDetailHero
           slug={slug}
@@ -93,27 +95,35 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         />
 
         {data.aiCardSummary?.trim() ? (
-          <div
+          <section
             className="mt-6 rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50/90 to-white px-6 py-5 shadow-sm dark:border-violet-900/40 dark:from-violet-950/35 dark:to-zinc-900 md:px-8"
             data-testid="project-ai-summary"
+            aria-labelledby="project-ai-card-heading"
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
-              AI 项目摘要
-            </p>
+            <h2
+              id="project-ai-card-heading"
+              className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300"
+            >
+              AI 摘要
+            </h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
               {data.aiCardSummary.trim()}
             </p>
-          </div>
+          </section>
         ) : null}
 
         {data.aiWeeklySummary?.summary?.trim() ? (
-          <div
+          <section
             className="mt-6 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 to-white px-6 py-5 shadow-sm dark:border-amber-900/40 dark:from-amber-950/30 dark:to-zinc-900 md:px-8"
             data-testid="project-ai-weekly-summary"
+            aria-labelledby="project-ai-weekly-heading"
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
-              AI Weekly Summary
-            </p>
+            <h2
+              id="project-ai-weekly-heading"
+              className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200"
+            >
+              AI 周期性摘要
+            </h2>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               汇总窗口{" "}
               {data.aiWeeklySummary.startAt.toLocaleString("zh-CN", {
@@ -147,26 +157,51 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <p className="mt-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
               {data.aiWeeklySummary.summary.trim()}
             </p>
-          </div>
+          </section>
         ) : null}
 
         {data.tags && data.tags.length > 0 ? (
-          <div
+          <section
             className="mt-6 flex flex-wrap items-center gap-2"
             data-testid="project-tags"
-            aria-label="项目标签"
+            aria-labelledby="project-tags-heading"
           >
-            <span className="text-xs font-medium text-zinc-500">标签</span>
-            {data.tags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
+            <h2 id="project-tags-heading" className="text-xs font-medium text-zinc-500">
+              项目标签
+            </h2>
+            <ul className="flex flex-wrap items-center gap-2">
+              {data.tags.map((t) => (
+                <li key={t}>
+                  <span className="inline-block rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200">
+                    {t}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
+
+        <section
+          className="mt-6 scroll-mt-8"
+          aria-labelledby="project-tech-stack-heading"
+          data-testid="project-tech-stack-section"
+        >
+          <h2
+            id="project-tech-stack-heading"
+            className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+          >
+            技术栈
+          </h2>
+          {data.tags && data.tags.length > 0 ? (
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+              与项目标签一致的技术与主题关键词：{data.tags.join("、")}。
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+              暂无单独维护的技术栈字段；可在编辑页为项目补充标签，用于标识技术方向与检索。
+            </p>
+          )}
+        </section>
 
         {/* 项目信息源 */}
         <section
