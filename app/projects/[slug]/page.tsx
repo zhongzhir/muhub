@@ -17,6 +17,12 @@ import { isRecommendedProject } from "@/lib/recommended-projects";
 import { computeProjectHealth } from "@/lib/project-health";
 import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
 import { ProjectJsonLd } from "@/components/project/project-json-ld";
+import { ProjectShareActions } from "@/components/project/project-share-actions";
+import {
+  buildProjectShareClipboardText,
+  buildProjectShareSocialLine,
+  projectCanonicalUrl,
+} from "@/lib/share/project-share";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +79,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     })),
   });
 
+  const canonicalProjectUrl = projectCanonicalUrl(slug);
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <ProjectJsonLd data={data} slug={slug} />
@@ -92,6 +100,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           isFeatured={data.isFeatured}
           claimStatus={data.claimStatus}
           health={health}
+        />
+
+        <ProjectShareActions
+          canonicalUrl={canonicalProjectUrl}
+          shareSocialLine={buildProjectShareSocialLine(data)}
+          shareClipboardText={buildProjectShareClipboardText(data, slug)}
         />
 
         {data.aiCardSummary?.trim() ? (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { SiteShareActions } from "@/components/home/site-share-actions";
 
 /** 与 public/brand/muhub_logo_mark.png 源比例一致；展示尺寸由 Tailwind 控制（移动端优先） */
 const MARK_WIDTH = 365;
@@ -61,6 +62,8 @@ export default function Hero() {
             导入项目
           </Link>
         </div>
+
+        <SiteShareActions />
       </div>
     </section>
   );

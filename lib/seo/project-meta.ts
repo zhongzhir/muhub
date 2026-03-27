@@ -52,6 +52,10 @@ export function buildProjectOgImageUrl(data: ProjectPageView): string {
   return resolveOgImageUrl(null);
 }
 
+/**
+ * Open Graph：og:title / og:description / og:url / og:image（绝对 URL）
+ * 由 Next metadata 映射到 meta 标签；图片优先 logoUrl，否则站点默认 og-default。
+ */
 export function buildProjectOpenGraph(data: ProjectPageView, slug: string) {
   const path = `/projects/${slug}`;
   const url = absoluteUrl(path);
