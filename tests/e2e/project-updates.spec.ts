@@ -8,8 +8,10 @@ import {
 test.describe("项目动态", () => {
   test("发布动态后详情页项目动态区显示标题与正文", async ({ page }) => {
     test.skip(
-      !process.env.DATABASE_URL?.trim(),
-      "需要 DATABASE_URL 且已迁移（含 ProjectUpdate 多源字段）",
+      !process.env.DATABASE_URL?.trim() ||
+        !process.env.AUTH_SECRET?.trim() ||
+        !process.env.E2E_TEST_SECRET?.trim(),
+      "需要 DATABASE_URL（已迁移含 ProjectUpdate）、AUTH_SECRET、E2E_TEST_SECRET；见 .env.example",
     );
 
     await loginAsE2EUser(page);

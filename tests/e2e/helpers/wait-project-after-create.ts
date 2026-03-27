@@ -1,5 +1,15 @@
 import type { Page } from "@playwright/test";
 
+/** 将 pathname 转为与 UI/数据库 slug 一致的解码形式（浏览器对非 ASCII 常为 %XX 编码）。 */
+function normalizedDetailPathname(pathname: string): string {
+  const p = pathname.replace(/\/$/, "");
+  try {
+    return decodeURIComponent(p);
+  } catch {
+    return p;
+  }
+}
+
 /**
  * 创建项目表单提交后，等待进入项目详情页并解析真实访问路径 slug。
  * 与生产侧 allocateUniqueSlug 一致：可能为 slugify(名称) 或带 -2/-3 后缀，不能用 raw 名称拼 URL。
@@ -27,11 +37,11 @@ export async function waitForProjectSlugAfterCreate(page: Page): Promise<string>
   return decodeURIComponent(parts[1]!);
 }
 
-/** 等待停留在指定 slug 的项目详情页（pathname 已解码） */
+/** 等待停留在指定 slug 的项目详情页（slug 为解码后的 Unicode，与 url 比较时统一 decode pathname） */
 export async function waitForProjectDetailUrl(page: Page, slug: string): Promise<void> {
   const expectPath = `/projects/${slug}`;
   await page.waitForURL(
-    (url) => url.pathname.replace(/\/$/, "") === expectPath,
+    (url) => normalizedDetailPathname(url.pathname) === expectPath,
     { timeout: 60_000 },
   );
 }
