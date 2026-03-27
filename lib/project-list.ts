@@ -76,3 +76,22 @@ export async function fetchPublicProjects(
     };
   }
 }
+
+/** 供 sitemap 枚举公开项目（仅 ACTIVE + isPublic；失败时返回空，保留静态主路由） */
+export async function fetchPublicProjectSlugsForSitemap(): Promise<
+  { slug: string; updatedAt: Date }[]
+> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return [];
+  }
+  try {
+    return await prisma.project.findMany({
+      where: { isPublic: true, status: "ACTIVE" },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    });
+  } catch (e) {
+    console.error("[fetchPublicProjectSlugsForSitemap]", e);
+    return [];
+  }
+}

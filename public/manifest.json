@@ -1,7 +1,7 @@
 {
   "name": "木哈布",
   "short_name": "木哈布",
-  "description": "AI Native 项目展示与动态聚合",
+  "description": "木哈布 MUHUB 是 AI Native 项目展示与动态聚合平台，帮助创业项目展示进展、聚合公开信息、吸引投资与合作。",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fafafa",

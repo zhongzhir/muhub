@@ -76,12 +76,29 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
         <section aria-label="项目列表">
           {showEmptyAll ? (
             <div className="space-y-8">
-              <p
+              <div
                 data-testid="projects-empty-all"
-                className="rounded-lg border border-dashed border-zinc-300 bg-zinc-100/50 px-6 py-8 text-center text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400"
+                className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-6 py-10 text-center dark:border-zinc-600 dark:bg-zinc-900/40"
               >
-                暂无公开项目
-              </p>
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">暂无项目</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                  你可以先创建项目，或从 GitHub / Gitee 导入一个项目开始。
+                </p>
+                <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <Link
+                    href="/dashboard/projects/new"
+                    className="inline-flex w-full max-w-xs items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white sm:w-auto"
+                  >
+                    创建项目
+                  </Link>
+                  <Link
+                    href="/dashboard/projects/import"
+                    className="inline-flex w-full max-w-xs items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:w-auto"
+                  >
+                    导入项目
+                  </Link>
+                </div>
+              </div>
               <div data-testid="recommended-project-pool" className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
                 <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
                   推荐项目

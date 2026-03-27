@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
-import { loadProjectPageView, sortProjectSocials } from "@/lib/load-project-page-view";
+import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
+import {
+  buildProjectMetaDescription,
+  buildProjectOpenGraph,
+  buildProjectTwitter,
+} from "@/lib/seo/project-meta";
+import { SITE_URL } from "@/lib/seo/site";
 import { socialPlatformLabel } from "@/lib/social-platform";
 import { buildProjectUpdateStreamModel } from "@/lib/project-updates";
 import { computeGithubActivity } from "@/lib/github-activity";
@@ -13,9 +20,31 @@ import { RefreshGithubSnapshotForm } from "./refresh-github-form";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const loaded = await loadProjectPageViewCached(slug);
+  if (!loaded) {
+    return { title: "项目" };
+  }
+  const { data } = loaded;
+  return {
+    title: data.name,
+    description: buildProjectMetaDescription(data),
+    alternates: {
+      canonical: `${SITE_URL}/projects/${slug}`,
+    },
+    openGraph: buildProjectOpenGraph(data, slug),
+    twitter: buildProjectTwitter(data),
+  };
+}
+
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const loaded = await loadProjectPageView(slug);
+  const loaded = await loadProjectPageViewCached(slug);
   if (!loaded) {
     notFound();
   }

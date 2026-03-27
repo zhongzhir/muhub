@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { SocialPlatform } from "@prisma/client";
 import { demoProjectView, type DemoSocial, type ProjectPageView } from "@/lib/demo-project";
 import { mapProjectRowToView } from "@/lib/map-project-row";
@@ -78,3 +79,8 @@ export async function loadProjectPageView(slug: string): Promise<{
     fromDb: Boolean(fromDb),
   };
 }
+
+/**
+ * 与详情页共用数据，便于 generateMetadata 与页面 RSC 在一次请求内去重。
+ */
+export const loadProjectPageViewCached = cache(loadProjectPageView);

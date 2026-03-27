@@ -17,7 +17,8 @@
     "source:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/source_update.ts",
     "summary:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/summary_update.ts",
     "cron:all": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/cron_all.ts",
-    "brand:slice": "node scripts/slice_brand_from_source.mjs"
+    "brand:slice": "node scripts/slice_brand_from_source.mjs",
+    "seo:assets": "node scripts/build-seo-assets.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",
@@ -45,6 +46,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "prisma": "^6.19.2",
+    "png-to-ico": "^2.1.8",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
