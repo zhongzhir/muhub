@@ -1,5 +1,6 @@
 /**
- * 生成 Beta SEO 所需静态资源：默认 OG 图、favicon、Apple Touch Icon。
+ * 生成 Beta SEO 所需静态资源：默认 OG 图、favicon、小尺寸 tab icon。
+ * Apple Touch Icon / PWA 192·512 由 `pnpm pwa:icons` 单独维护，不在此脚本中覆盖。
  * 运行: pnpm seo:assets
  */
 import { writeFileSync } from "fs";
@@ -39,15 +40,10 @@ async function main() {
   const icon16 = await sharp(iconSrc).resize(16, 16, { fit: "cover" }).png().toBuffer();
   writeFileSync(join(publicDir, "icon.png"), icon32);
 
-  await sharp(iconSrc)
-    .resize(180, 180, { fit: "cover" })
-    .png()
-    .toFile(join(publicDir, "apple-touch-icon.png"));
-
   const ico = await pngToIco([icon16, icon32]);
   writeFileSync(join(publicDir, "favicon.ico"), ico);
 
-  console.log("seo:assets → og-default.png, icon.png, apple-touch-icon.png, favicon.ico");
+  console.log("seo:assets → og-default.png, icon.png, favicon.ico");
 }
 
 main().catch((e) => {

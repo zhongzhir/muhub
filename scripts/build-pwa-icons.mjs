@@ -1,6 +1,10 @@
 /**
- * 从品牌 SVG 生成 PWA 尺寸 PNG（192 / 512 / maskable）与 Apple Touch Icon。
- * 运行: pnpm pwa:icons
+ * PWA / Apple Touch 图标 —— 仅本地手动生成，不会在 `pnpm build` 中执行。
+ *
+ * 默认：`public/brand/logo-icon.svg`（与站头/品牌一致的方形图标源，等比居中、白底留白，避免拉伸变形）。
+ * 若团队已有人工导出的 PNG，可将 `sourcePath` 改为该 PNG 路径后再运行。
+ *
+ * 使用：pnpm pwa:icons
  */
 import { mkdirSync } from "fs";
 import { dirname, join } from "path";
@@ -11,36 +15,34 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const publicDir = join(root, "public");
 const pwaDir = join(publicDir, "pwa");
-const svgPath = join(publicDir, "brand", "logo-icon.svg");
 
-async function paddedSquarePng(size, outSegments, innerRatio = 0.82) {
-  const inner = Math.round(size * innerRatio);
-  const pad = Math.round((size - inner) / 2);
-  const iconBuf = await sharp(svgPath).resize(inner, inner).png().toBuffer();
-  const outPath = join(publicDir, ...outSegments);
-  await sharp({
-    create: {
-      width: size,
-      height: size,
-      channels: 4,
+/** 人工确认的品牌方形图标源（SVG 或 PNG） */
+const sourcePath = join(publicDir, "brand", "logo-icon.svg");
+
+/**
+ * 固定边长画布，内容上 contain 居中，不拉伸裁切主体。
+ */
+async function renderSquarePng(size, outFile) {
+  await sharp(sourcePath, { density: 400 })
+    .resize(size, size, {
+      fit: "contain",
+      position: "centre",
       background: { r: 255, g: 255, b: 255, alpha: 1 },
-    },
-  })
-    .composite([{ input: iconBuf, left: pad, top: pad }])
+    })
     .png()
-    .toFile(outPath);
+    .toFile(outFile);
 }
 
 async function main() {
   mkdirSync(pwaDir, { recursive: true });
 
-  await sharp(svgPath).resize(192, 192).png().toFile(join(pwaDir, "icon-192.png"));
-  await sharp(svgPath).resize(512, 512).png().toFile(join(pwaDir, "icon-512.png"));
-  await paddedSquarePng(512, ["pwa", "icon-512-maskable.png"], 0.72);
+  await renderSquarePng(192, join(pwaDir, "icon-192.png"));
+  await renderSquarePng(512, join(pwaDir, "icon-512.png"));
+  await renderSquarePng(180, join(publicDir, "apple-touch-icon.png"));
 
-  await paddedSquarePng(180, ["apple-touch-icon.png"], 0.78);
-
-  console.log("pwa:icons → public/pwa/*.png, public/apple-touch-icon.png");
+  console.log(
+    "pwa:icons（手动）→ public/pwa/icon-192.png, icon-512.png, public/apple-touch-icon.png",
+  );
 }
 
 main().catch((e) => {
