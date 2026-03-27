@@ -1,18 +1,19 @@
 /**
  * 将 App Router 动态段 `[slug]` 与数据库中存的 `Project.slug` 对齐。
- * 少数客户端/测试会对路径二次编码，params 中仍含 %XX 时需再解码一次。
+ * - 少数路径会二次编码（含 %XX）时再解码；
+ * - 与创建时 `slugifyProjectName` 一致使用 NFC，避免 NFD/NFC 导致 findUnique 未命中。
  */
 export function normalizeProjectSlugParam(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return trimmed;
+  let s = raw.trim();
+  if (!s) {
+    return s;
   }
-  if (!/%[0-9A-Fa-f]{2}/.test(trimmed)) {
-    return trimmed;
+  if (/%[0-9A-Fa-f]{2}/.test(s)) {
+    try {
+      s = decodeURIComponent(s);
+    } catch {
+      /* keep decoded segment as-is */
+    }
   }
-  try {
-    return decodeURIComponent(trimmed);
-  } catch {
-    return trimmed;
-  }
+  return s.normalize("NFC");
 }

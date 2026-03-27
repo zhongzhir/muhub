@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
@@ -73,6 +74,7 @@ export async function publishProjectUpdate(
         isAiGenerated: false,
       },
     });
+    revalidatePath(`/projects/${slug}`);
   } catch (e) {
     console.error("[publishProjectUpdate]", e);
     return {

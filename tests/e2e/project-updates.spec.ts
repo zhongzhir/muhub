@@ -38,8 +38,12 @@ test.describe("项目动态", () => {
     await page.getByRole("button", { name: "发布" }).click();
     await waitForProjectDetailUrl(page, slug);
 
+    await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible({
+      timeout: 60_000,
+    });
+
     const section = page.getByTestId("project-updates-section");
-    await expect(section).toBeVisible();
+    await expect(section).toBeVisible({ timeout: 60_000 });
     await expect(section.getByRole("heading", { name: "项目动态" })).toBeVisible();
     await expect(section.getByText(title).first()).toBeVisible();
 

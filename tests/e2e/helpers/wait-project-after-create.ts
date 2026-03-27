@@ -1,12 +1,12 @@
 import type { Page } from "@playwright/test";
 
-/** 将 pathname 转为与 UI/数据库 slug 一致的解码形式（浏览器对非 ASCII 常为 %XX 编码）。 */
+/** 将 pathname 转为与 UI/数据库 slug 一致的解码形式（浏览器对非 ASCII 常为 %XX 编码）；NFC 与 `slugifyProjectName` / `normalizeProjectSlugParam` 一致。 */
 function normalizedDetailPathname(pathname: string): string {
   const p = pathname.replace(/\/$/, "");
   try {
-    return decodeURIComponent(p);
+    return decodeURIComponent(p).normalize("NFC");
   } catch {
-    return p;
+    return p.normalize("NFC");
   }
 }
 
@@ -34,12 +34,16 @@ export async function waitForProjectSlugAfterCreate(page: Page): Promise<string>
   if (parts.length !== 2 || parts[0] !== "projects") {
     throw new Error(`Unexpected path after create: ${p}`);
   }
-  return decodeURIComponent(parts[1]!);
+  try {
+    return decodeURIComponent(parts[1]!).normalize("NFC");
+  } catch {
+    return parts[1]!.normalize("NFC");
+  }
 }
 
 /** 等待停留在指定 slug 的项目详情页（slug 为解码后的 Unicode，与 url 比较时统一 decode pathname） */
 export async function waitForProjectDetailUrl(page: Page, slug: string): Promise<void> {
-  const expectPath = `/projects/${slug}`;
+  const expectPath = `/projects/${slug.normalize("NFC")}`;
   await page.waitForURL(
     (url) => normalizedDetailPathname(url.pathname) === expectPath,
     { timeout: 60_000 },
