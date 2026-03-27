@@ -104,7 +104,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               id="project-ai-card-heading"
               className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300"
             >
-              AI 摘要
+              AI 项目摘要
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
               {data.aiCardSummary.trim()}
