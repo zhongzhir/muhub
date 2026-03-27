@@ -24,6 +24,7 @@ import {
   projectCanonicalUrl,
 } from "@/lib/share/project-share";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const slug = normalizeProjectSlugParam((await params).slug);
   const loaded = await loadProjectPageViewCached(slug);
   if (!loaded) {
     return { title: "项目" };
@@ -50,7 +51,7 @@ export async function generateMetadata({
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const slug = normalizeProjectSlugParam((await params).slug);
   const loaded = await loadProjectPageViewCached(slug);
   if (!loaded) {
     notFound();

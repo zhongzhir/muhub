@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { ClaimProjectForm } from "./claim-project-form";
 
 type PageProps = {
@@ -8,7 +9,7 @@ type PageProps = {
 };
 
 export default async function ClaimProjectPage({ params }: PageProps) {
-  const { slug } = await params;
+  const slug = normalizeProjectSlugParam((await params).slug);
 
   if (!process.env.DATABASE_URL?.trim()) {
     return (

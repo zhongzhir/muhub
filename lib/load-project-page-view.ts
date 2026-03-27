@@ -4,6 +4,7 @@ import { demoProjectView, type DemoSocial, type ProjectPageView } from "@/lib/de
 import { mapProjectRowToView } from "@/lib/map-project-row";
 import { prisma } from "@/lib/prisma";
 import { getRecommendedProjectPageView } from "@/lib/recommended-projects";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
 /** 详情 / 分享统一：动态按时间倒序 */
 function sortProjectUpdatesByTime(updates: ProjectPageView["updates"]): ProjectPageView["updates"] {
@@ -60,10 +61,11 @@ async function loadFromDb(slug: string): Promise<ProjectPageView | null> {
 }
 
 /** 详情页 / 分享页共用的项目视图加载（库优先，demo 兜底） */
-export async function loadProjectPageView(slug: string): Promise<{
+export async function loadProjectPageView(rawSlug: string): Promise<{
   data: ProjectPageView;
   fromDb: boolean;
 } | null> {
+  const slug = normalizeProjectSlugParam(rawSlug);
   const fromDb = await loadFromDb(slug);
   const data: ProjectPageView | null =
     fromDb ??

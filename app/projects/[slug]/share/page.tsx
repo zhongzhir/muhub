@@ -19,6 +19,7 @@ import { ShareProgressSection } from "@/components/project/share-progress-sectio
 import { buildProjectShareSocialLine, projectCanonicalUrl } from "@/lib/share/project-share";
 import { buildWeiboShareUrl } from "@/lib/share/weibo";
 import { CopyLinkButton } from "./copy-link-button";
+import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ type PageProps = {
 };
 
 export default async function ShareProjectPage({ params }: PageProps) {
-  const { slug } = await params;
+  const slug = normalizeProjectSlugParam((await params).slug);
   const loaded = await loadProjectPageView(slug);
   if (!loaded) {
     notFound();
