@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +8,7 @@ export type PublishProjectUpdateFormState = {
   ok: boolean;
   formError?: string;
   fieldErrors?: Partial<Record<string, string>>;
+  redirectPath?: string;
 };
 
 const initialFail: PublishProjectUpdateFormState = { ok: false };
@@ -82,5 +82,5 @@ export async function publishProjectUpdate(
     };
   }
 
-  redirect(`/projects/${slug}`);
+  return { ok: true, redirectPath: `/projects/${slug}` };
 }

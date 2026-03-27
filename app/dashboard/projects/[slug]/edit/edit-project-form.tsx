@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { projectPublicPathPrefix } from "@/lib/seo/site";
 import type { ProjectEditInitial } from "@/lib/project-edit";
 import { updateProject, type UpdateProjectFormState } from "./actions";
@@ -23,6 +24,8 @@ function FieldError({ message }: { message?: string }) {
 export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
   const [state, formAction, pending] = useActionState(updateProject, initialState);
   const pathPrefix = projectPublicPathPrefix();
+
+  useRedirectFromActionState(state.redirectPath);
 
   return (
     <form action={formAction} className="space-y-10">

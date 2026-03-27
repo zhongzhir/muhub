@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import {
   refreshProjectGithubSnapshot,
   type RefreshGithubSnapshotState,
@@ -13,6 +14,8 @@ export function RefreshGithubSnapshotForm({ slug }: { slug: string }) {
     refreshProjectGithubSnapshot,
     initialState,
   );
+
+  useRedirectFromActionState(state.redirectPath);
 
   return (
     <form action={formAction} className="flex flex-col items-stretch gap-2 sm:items-end">

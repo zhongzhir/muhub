@@ -1,11 +1,12 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { syncGithubSnapshotForProjectSlug } from "@/lib/github-sync";
 
-export type RefreshGithubSnapshotState =
-  | { ok: true }
-  | { ok: false; error: string };
+export type RefreshGithubSnapshotState = {
+  ok: boolean;
+  error?: string;
+  redirectPath?: string;
+};
 
 export async function refreshProjectGithubSnapshot(
   _prev: RefreshGithubSnapshotState,
@@ -21,5 +22,5 @@ export async function refreshProjectGithubSnapshot(
     return { ok: false, error: result.message };
   }
 
-  redirect(`/projects/${slug}`);
+  return { ok: true, redirectPath: `/projects/${slug}` };
 }

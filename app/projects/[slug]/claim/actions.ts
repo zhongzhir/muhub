@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { githubRepoUrlsMatch } from "@/lib/github";
 import { parseRepoUrl } from "@/lib/repo-platform";
@@ -9,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 export type ClaimProjectFormState = {
   ok: boolean;
   formError?: string;
+  redirectPath?: string;
 };
 
 const initialFail: ClaimProjectFormState = { ok: false };
@@ -88,5 +88,5 @@ export async function claimProject(
     return { ...initialFail, formError: "该项目已被认领" };
   }
 
-  redirect(`/projects/${slug}`);
+  return { ok: true, redirectPath: `/projects/${slug}` };
 }

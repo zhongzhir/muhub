@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { projectPublicPathPrefix } from "@/lib/seo/site";
 import type { NewProjectPrefill } from "./prefill";
 import { createProject, type CreateProjectFormState } from "./actions";
@@ -32,6 +33,8 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
   const p = prefill ?? emptyPrefill;
   const [state, formAction, pending] = useActionState(createProject, initialState);
   const pathPrefix = projectPublicPathPrefix();
+
+  useRedirectFromActionState(state.redirectPath);
 
   return (
     <form action={formAction} className="space-y-10">

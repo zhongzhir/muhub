@@ -2,7 +2,6 @@
 
 import type { ProjectSourceKind } from "@prisma/client";
 import { Prisma, SocialPlatform } from "@prisma/client";
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
@@ -14,6 +13,8 @@ export type CreateProjectFormState = {
   ok: boolean;
   formError?: string;
   fieldErrors?: Partial<Record<string, string>>;
+  /** 创建成功：客户端 router.push，避免 useActionState 下 redirect 不生效 */
+  redirectPath?: string;
 };
 
 const initialFail: CreateProjectFormState = { ok: false };
@@ -279,5 +280,5 @@ export async function createProject(
     };
   }
 
-  redirect(`/projects/${slug}`);
+  return { ok: true, redirectPath: `/projects/${slug}` };
 }

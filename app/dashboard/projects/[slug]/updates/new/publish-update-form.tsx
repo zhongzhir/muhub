@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { publishProjectUpdate, type PublishProjectUpdateFormState } from "./actions";
 
 const inputClass =
@@ -17,6 +18,8 @@ function FieldError({ message }: { message?: string }) {
 
 export function PublishUpdateForm({ slug }: { slug: string }) {
   const [state, formAction, pending] = useActionState(publishProjectUpdate, initialState);
+
+  useRedirectFromActionState(state.redirectPath);
 
   return (
     <form action={formAction} className="space-y-8">

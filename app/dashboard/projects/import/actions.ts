@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import {
   buildNewProjectSearchParams,
@@ -11,6 +10,7 @@ import {
 export type ImportGitHubFormState = {
   ok: boolean;
   formError?: string;
+  redirectPath?: string;
 };
 
 const initialFail: ImportGitHubFormState = { ok: false };
@@ -45,5 +45,5 @@ export async function importGitHubRepo(
 
   const qs = buildNewProjectSearchParams(result.data);
   qs.set("creationSource", "import");
-  redirect(`/dashboard/projects/new?${qs.toString()}`);
+  return { ok: true, redirectPath: `/dashboard/projects/new?${qs.toString()}` };
 }

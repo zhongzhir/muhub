@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { importGitHubRepo, type ImportGitHubFormState } from "./actions";
 
 const inputClass =
@@ -11,6 +12,8 @@ const initialState: ImportGitHubFormState = { ok: false };
 
 export function ImportGitHubForm() {
   const [state, formAction, pending] = useActionState(importGitHubRepo, initialState);
+
+  useRedirectFromActionState(state.redirectPath);
 
   return (
     <form action={formAction} className="space-y-6">

@@ -1,7 +1,6 @@
 "use server";
 
 import { Prisma, type ProjectStatus, type SocialPlatform } from "@prisma/client";
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
 import { parseSocialInput } from "@/lib/social-input";
@@ -11,6 +10,7 @@ export type UpdateProjectFormState = {
   ok: boolean;
   formError?: string;
   fieldErrors?: Partial<Record<string, string>>;
+  redirectPath?: string;
 };
 
 const initialFail: UpdateProjectFormState = { ok: false };
@@ -143,5 +143,5 @@ export async function updateProject(
     };
   }
 
-  redirect(`/projects/${slug}`);
+  return { ok: true, redirectPath: `/projects/${slug}` };
 }
