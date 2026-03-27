@@ -10,7 +10,7 @@ export function buildHomeShareClipboardText(): string {
   return `${DEFAULT_TITLE}\n${OG_DESCRIPTION}\n${homeCanonicalUrl()}`;
 }
 
-/** X 用短文案（不含链接） */
+/** 微博标题等用的短文案（不含链接） */
 export function buildHomeShareSocialLine(): string {
   return `${DEFAULT_TITLE} — ${OG_DESCRIPTION}`;
 }

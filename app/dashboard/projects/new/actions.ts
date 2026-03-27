@@ -18,6 +18,8 @@ const initialFail: CreateProjectFormState = { ok: false };
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export async function createProject(
   _prev: CreateProjectFormState,
   formData: FormData,
@@ -25,7 +27,9 @@ export async function createProject(
   if (!process.env.DATABASE_URL?.trim()) {
     return {
       ok: false,
-      formError: "未配置 DATABASE_URL，无法写入数据库。请在 .env 中配置 PostgreSQL 连接串并执行迁移。",
+      formError: isProduction
+        ? "创建功能正在配置中\n\n项目创建功能暂时不可用。若你希望抢先试用或申请收录项目，请通过首页或页脚的「反馈建议」联系我们。"
+        : "未配置 DATABASE_URL，无法写入数据库。请在 .env 中配置 PostgreSQL 连接串并执行迁移。",
     };
   }
 
@@ -46,10 +50,10 @@ export async function createProject(
     fieldErrors.name = "请填写项目名称";
   }
   if (!slugInput) {
-    fieldErrors.slug = "请填写 slug";
+    fieldErrors.slug = "请填写项目访问地址（路径后缀）";
   } else if (!SLUG_PATTERN.test(slugInput)) {
     fieldErrors.slug =
-      "slug 仅允许小写字母、数字与短横线（-），不能以短横线开头或结尾，且不能连续出现多个短横线";
+      "地址后缀仅允许小写字母、数字与短横线（-），不能以短横线开头或结尾，且不能连续出现多个短横线";
   }
 
   let githubUrl: string | null = null;
@@ -210,19 +214,22 @@ export async function createProject(
       if (t.includes("slug")) {
         return {
           ...initialFail,
-          fieldErrors: { slug: "该 slug 已被使用，请更换其他标识" },
+          fieldErrors: { slug: "该地址已被使用，请换一个后缀" },
         };
       }
       return {
         ...initialFail,
-        formError: "数据冲突：请检查唯一字段（如 slug）是否与其他项目重复。",
+        formError: isProduction
+          ? "保存失败：数据与其他项目冲突，请调整后重试。"
+          : "数据冲突：请检查唯一字段（如项目访问地址）是否与其他项目重复。",
       };
     }
     console.error("[createProject]", e);
     return {
       ...initialFail,
-      formError:
-        "数据库写入失败，请稍后重试。若持续出现，请确认数据库可连接且已执行 `pnpm exec prisma migrate deploy`。",
+      formError: isProduction
+        ? "保存失败，请稍后重试。若问题持续，可通过首页或页脚的「反馈建议」联系我们。"
+        : "数据库写入失败，请稍后重试。若持续出现，请确认数据库可连接且已执行 `pnpm exec prisma migrate deploy`。",
     };
   }
 

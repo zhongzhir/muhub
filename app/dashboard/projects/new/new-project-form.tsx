@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { projectPublicPathPrefix } from "@/lib/seo/site";
 import type { NewProjectPrefill } from "./prefill";
 import { createProject, type CreateProjectFormState } from "./actions";
 
@@ -30,6 +31,8 @@ const emptyPrefill: NewProjectPrefill = {
 export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
   const p = prefill ?? emptyPrefill;
   const [state, formAction, pending] = useActionState(createProject, initialState);
+  const pathPrefix = projectPublicPathPrefix();
+  const exampleSlug = "muhub";
 
   return (
     <form action={formAction} className="space-y-10">
@@ -39,7 +42,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           role="alert"
           className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200"
         >
-          {state.formError}
+          <p className="whitespace-pre-line">{state.formError}</p>
         </div>
       ) : null}
 
@@ -60,19 +63,34 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         />
         <FieldError message={state.fieldErrors?.name} />
 
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="slug">
-          slug <span className="text-red-500">*</span>
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="project-slug-input">
+          项目访问地址 <span className="text-red-500">*</span>
         </label>
-        <input
-          id="slug"
-          className={inputClass}
-          name="slug"
-          type="text"
-          required
-          autoComplete="off"
-          placeholder="仅小写字母、数字、短横线，如 muhub"
-          defaultValue={p.slug || undefined}
-        />
+        <p id="slug-hint" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          用于生成项目页面链接，例如：{pathPrefix}
+          {exampleSlug}
+        </p>
+        <div
+          className={`mt-1 flex min-w-0 overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus-within:border-zinc-400 dark:focus-within:ring-zinc-400`}
+        >
+          <span
+            className="inline-flex shrink-0 items-center border-r border-zinc-200 bg-zinc-50 px-2.5 py-2 text-xs text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
+            aria-hidden
+          >
+            {pathPrefix}
+          </span>
+          <input
+            id="project-slug-input"
+            className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-sm outline-none dark:text-zinc-100"
+            name="slug"
+            type="text"
+            required
+            autoComplete="off"
+            placeholder="仅小写字母、数字、短横线，如 muhub"
+            defaultValue={p.slug || undefined}
+            aria-describedby="slug-hint"
+          />
+        </div>
         <FieldError message={state.fieldErrors?.slug} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tagline">

@@ -34,7 +34,7 @@ export function buildProjectShareSnippet(data: ProjectPageView): string {
   return "在木哈布查看项目主页、动态与仓库信息";
 }
 
-/** 「项目名 — 摘要」用于 X 等（不含链接） */
+/** 「项目名 — 摘要」用于微博标题等（不含链接） */
 export function buildProjectShareSocialLine(data: ProjectPageView): string {
   const snippet = buildProjectShareSnippet(data);
   const prefix = `${data.name} — `;

@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { buildWeiboShareUrl } from "@/lib/share/weibo";
 
 type Props = {
   canonicalUrl: string;
-  /** 含项目名、摘要，不含 URL，用于 X 等 */
+  /** 微博标题/摘要（不含 URL，与微博分享习惯一致） */
   shareSocialLine: string;
   /** 完整可复制块（多行，含 URL） */
   shareClipboardText: string;
@@ -13,21 +15,48 @@ type Props = {
 const btnClass =
   "inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800";
 
+type CopyKind = "link" | "text";
+
 export function ProjectShareActions({ canonicalUrl, shareSocialLine, shareClipboardText }: Props) {
-  const [copied, setCopied] = useState(false);
+  const weiboHref = buildWeiboShareUrl(canonicalUrl, shareSocialLine);
+  const timers = useRef<{ link?: number; text?: number }>({});
+  const [linkState, setLinkState] = useState<"base" | "ok" | "err">("base");
+  const [textState, setTextState] = useState<"base" | "ok" | "err">("base");
 
-  const onCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(shareClipboardText);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
+  const scheduleReset = useCallback((kind: CopyKind) => {
+    const key = kind === "link" ? "link" : "text";
+    if (timers.current[key]) {
+      window.clearTimeout(timers.current[key]);
     }
-  }, [shareClipboardText]);
+    timers.current[key] = window.setTimeout(() => {
+      if (kind === "link") {
+        setLinkState("base");
+      } else {
+        setTextState("base");
+      }
+    }, 2500);
+  }, []);
 
-  const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareSocialLine)}&url=${encodeURIComponent(canonicalUrl)}`;
-  const linkedInHref = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonicalUrl)}`;
+  const onCopyLink = useCallback(async () => {
+    const ok = await copyTextToClipboard(canonicalUrl);
+    setLinkState(ok ? "ok" : "err");
+    scheduleReset("link");
+  }, [canonicalUrl, scheduleReset]);
+
+  const onCopyText = useCallback(async () => {
+    const ok = await copyTextToClipboard(shareClipboardText);
+    setTextState(ok ? "ok" : "err");
+    scheduleReset("text");
+  }, [shareClipboardText, scheduleReset]);
+
+  const linkLabel =
+    linkState === "ok" ? "已复制链接" : linkState === "err" ? "复制失败，请手动复制" : "复制链接";
+  const textLabel =
+    textState === "ok"
+      ? "已复制分享文案"
+      : textState === "err"
+        ? "复制失败，请手动复制"
+        : "复制分享文案";
 
   return (
     <div
@@ -36,14 +65,14 @@ export function ProjectShareActions({ canonicalUrl, shareSocialLine, shareClipbo
     >
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">分享传播</p>
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className={btnClass} onClick={onCopy}>
-          {copied ? "已复制" : "复制链接"}
+        <button type="button" className={btnClass} onClick={onCopyLink} data-testid="project-share-copy-link">
+          {linkLabel}
         </button>
-        <a className={btnClass} href={xHref} target="_blank" rel="noopener noreferrer">
-          在 X 分享
-        </a>
-        <a className={btnClass} href={linkedInHref} target="_blank" rel="noopener noreferrer">
-          在 LinkedIn 分享
+        <button type="button" className={btnClass} onClick={onCopyText} data-testid="project-share-copy-text">
+          {textLabel}
+        </button>
+        <a className={btnClass} href={weiboHref} target="_blank" rel="noopener noreferrer">
+          分享到微博
         </a>
         <a
           className={`${btnClass} border-dashed`}
@@ -55,8 +84,9 @@ export function ProjectShareActions({ canonicalUrl, shareSocialLine, shareClipbo
         </a>
       </div>
       <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-        链接使用正式域名，便于微信等场景粘贴传播。
+        复制链接或完整文案后，可粘贴到微信会话、文档等；微博将新开页面填写发布内容。
       </p>
+      {/* 二维码：后续可接入轻量方案，避免本轮引入不稳定依赖 */}
     </div>
   );
 }

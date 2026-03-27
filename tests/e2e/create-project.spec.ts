@@ -8,7 +8,7 @@ test.describe("创建项目链路", () => {
     await page.goto("/dashboard/projects/new");
 
     await page.locator("#name").fill(`E2E 项目 ${slug}`);
-    await page.locator("#slug").fill(slug);
+    await page.locator("#project-slug-input").fill(slug);
     await page.locator("#tagline").fill("链路测试标语");
     await page.locator("#description").fill("这是 Playwright 创建链路的项目介绍正文。");
     await page.locator("#githubUrl").fill("https://github.com/octocat/hello-world");

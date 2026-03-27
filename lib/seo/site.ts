@@ -40,6 +40,16 @@ export function absoluteUrl(pathname: string): string {
   return new URL(path, SITE_URL).toString();
 }
 
+/** 创建项目表单展示用：项目页路径前缀（如 www.muhub.cn/projects/） */
+export function projectPublicPathPrefix(): string {
+  try {
+    const u = new URL(SITE_URL);
+    return `${u.host}/projects/`;
+  } catch {
+    return "www.muhub.cn/projects/";
+  }
+}
+
 export function resolveOgImageUrl(image: string | null | undefined): string {
   if (!image?.trim()) {
     return absoluteUrl(DEFAULT_OG_IMAGE_PATH);
