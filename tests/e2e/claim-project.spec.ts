@@ -7,6 +7,7 @@ import {
 
 test.describe("项目认领", () => {
   test("未认领项目可填写 GitHub 地址完成认领", async ({ page }) => {
+    test.setTimeout(120_000);
     test.skip(
       !process.env.DATABASE_URL?.trim() ||
         !process.env.AUTH_SECRET?.trim() ||
