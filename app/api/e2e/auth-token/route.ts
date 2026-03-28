@@ -36,6 +36,22 @@ export async function POST(req: Request) {
     },
   });
 
+  await prisma.account.upsert({
+    where: {
+      provider_providerAccountId: {
+        provider: "github",
+        providerAccountId: "e2e-playwright-fixture-github",
+      },
+    },
+    create: {
+      userId: user.id,
+      type: "oauth",
+      provider: "github",
+      providerAccountId: "e2e-playwright-fixture-github",
+    },
+    update: { userId: user.id },
+  });
+
   const sessionToken = await encode({
     token: {
       sub: user.id,

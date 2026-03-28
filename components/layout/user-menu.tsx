@@ -7,12 +7,16 @@ export function UserMenu({
   name,
   email,
   image,
+  phone,
 }: {
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  phone?: string | null;
 }) {
-  const label = name?.trim() || email?.trim() || "账户";
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  const phoneLabel = digits.length >= 4 ? `用户${digits.slice(-4)}` : null;
+  const label = name?.trim() || phoneLabel || email?.trim() || "账户";
   const initial = label.slice(0, 1).toUpperCase();
 
   return (

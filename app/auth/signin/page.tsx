@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GitHubSignInButton } from "@/components/auth/github-sign-in-button";
+import { PhoneLoginForm } from "@/components/auth/phone-login-form";
 
 function safeCallbackUrl(raw: string | undefined): string {
   if (typeof raw !== "string") {
@@ -19,6 +20,7 @@ export default async function SignInPage({
 }) {
   const sp = await searchParams;
   const callbackUrl = safeCallbackUrl(sp.callbackUrl);
+  const showPhoneLogin = process.env.PHONE_LOGIN_ENABLED !== "false";
 
   return (
     <div className="min-h-[70vh] bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -30,7 +32,11 @@ export default async function SignInPage({
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">登录 MUHUB</h1>
         <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          创建项目、认领仓库、编辑资料与发布动态前，请先使用 GitHub 账号登录。登录后你会回到刚才访问的页面。
+          创建项目、管理资料与发布动态前请先登录。可使用 GitHub
+          {showPhoneLogin ? " 或手机号验证码" : ""}。
+          {showPhoneLogin
+            ? " 认领绑定 GitHub 的公开仓库项目时，目前需使用 GitHub 登录。"
+            : null}
         </p>
 
         {sp.error ? (
@@ -42,13 +48,40 @@ export default async function SignInPage({
           </p>
         ) : null}
 
-        <div className="mt-8 flex flex-col items-stretch">
-          <GitHubSignInButton callbackUrl={callbackUrl} />
-        </div>
+        <section aria-labelledby="github-login-heading" className="mt-8">
+          <h2 id="github-login-heading" className="sr-only">
+            GitHub 登录
+          </h2>
+          <div className="flex flex-col items-stretch">
+            <GitHubSignInButton callbackUrl={callbackUrl} />
+          </div>
+          <p className="mt-4 text-center text-xs text-zinc-500">
+            使用 GitHub 登录即表示授权读取公开资料（头像、用户名等）用于展示。
+          </p>
+        </section>
 
-        <p className="mt-8 text-center text-xs text-zinc-500">
-          继续即表示你授权我们读取 GitHub 公开资料（头像、用户名等），用于展示账号信息。
-        </p>
+        {showPhoneLogin ? (
+          <>
+            <div className="relative my-10" aria-hidden>
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-zinc-200 dark:border-zinc-700" />
+              </div>
+              <div className="relative flex justify-center text-xs font-medium uppercase tracking-wide text-zinc-400">
+                <span className="bg-zinc-50 px-3 dark:bg-zinc-950">或</span>
+              </div>
+            </div>
+
+            <section aria-labelledby="phone-login-heading">
+              <h2 id="phone-login-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                手机号验证码登录
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">仅支持中国大陆 11 位手机号</p>
+              <div className="mt-5">
+                <PhoneLoginForm callbackUrl={callbackUrl} />
+              </div>
+            </section>
+          </>
+        ) : null}
       </div>
     </div>
   );

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
+import { userHasGitHubAccount } from "@/lib/auth/user-has-github";
 import { prisma } from "@/lib/prisma";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { ClaimProjectForm } from "./claim-project-form";
@@ -83,6 +85,10 @@ export default async function ClaimProjectPage({ params }: PageProps) {
     );
   }
 
+  const session = await auth();
+  const githubLinked = session?.user?.id ? await userHasGitHubAccount(session.user.id) : false;
+  const githubClaimBlocked = Boolean(session?.user?.id) && !githubLinked;
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <div className="mx-auto max-w-xl px-6 py-12">
@@ -95,7 +101,23 @@ export default async function ClaimProjectPage({ params }: PageProps) {
           </Link>
         </p>
         <h1 className="mb-8 text-2xl font-semibold tracking-tight">认领项目</h1>
-        <ClaimProjectForm slug={slug} projectName={project.name} hintGithubUrl={project.githubUrl} />
+
+        {githubClaimBlocked ? (
+          <p
+            role="status"
+            className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+          >
+            认领 GitHub 公开仓库项目前，请先使用 GitHub 登录或绑定 GitHub
+            账号。手机号登录可用于创建与管理项目；绑定功能即将开放。
+          </p>
+        ) : null}
+
+        <ClaimProjectForm
+          slug={slug}
+          projectName={project.name}
+          hintGithubUrl={project.githubUrl}
+          githubClaimBlocked={githubClaimBlocked}
+        />
       </div>
     </div>
   );

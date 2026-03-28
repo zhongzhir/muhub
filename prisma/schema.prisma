@@ -63,6 +63,8 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  /** 手机号登录展示与查询；身份以 Account(provider=phone) 为准 */
+  phone         String?   @unique
 
   accounts Account[]
   sessions Session[]
@@ -113,6 +115,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/** 手机号验证码（仅存储 hash；用于登录等场景扩展 purpose） */
+model PhoneVerificationCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  purpose    String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, purpose, createdAt])
 }
 
 model Project {

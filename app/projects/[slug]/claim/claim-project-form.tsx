@@ -4,7 +4,6 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { claimProject, type ClaimProjectFormState } from "./actions";
 
-
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
 
@@ -14,9 +13,16 @@ type Props = {
   slug: string;
   projectName: string;
   hintGithubUrl: string;
+  /** 未关联 GitHub 账户时为 true，禁止提交 */
+  githubClaimBlocked?: boolean;
 };
 
-export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
+export function ClaimProjectForm({
+  slug,
+  projectName,
+  hintGithubUrl,
+  githubClaimBlocked = false,
+}: Props) {
   const [state, formAction, pending] = useActionState(claimProject, initialState);
 
   return (
@@ -50,7 +56,8 @@ export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
           data-testid="repo-url-input"
           name="repoUrl"
           type="url"
-          required
+          required={!githubClaimBlocked}
+          disabled={githubClaimBlocked}
           autoComplete="off"
           placeholder={hintGithubUrl}
           aria-label="代码仓库链接"
@@ -61,7 +68,7 @@ export function ClaimProjectForm({ slug, projectName, hintGithubUrl }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || githubClaimBlocked}
           className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
         >
           {pending ? "提交中…" : "认领项目"}

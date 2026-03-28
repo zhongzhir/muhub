@@ -57,7 +57,7 @@ export async function SiteHeader() {
               >
                 我的项目
               </Link>
-              <UserMenu name={user.name} email={user.email} image={user.image} />
+              <UserMenu name={user.name} email={user.email} image={user.image} phone={user.phone} />
             </>
           ) : (
             <Link
