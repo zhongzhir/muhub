@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
+import { prisma } from "@/lib/prisma";
+import { canManageProject } from "@/lib/project-permissions";
 import {
   buildProjectMetaDescription,
   buildProjectOpenGraph,
@@ -13,7 +16,6 @@ import { socialPlatformLabel } from "@/lib/social-platform";
 import { buildProjectUpdateStreamModel } from "@/lib/project-updates";
 import { computeGithubActivity } from "@/lib/github-activity";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
-import { computeProjectHealth } from "@/lib/project-health";
 import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
 import { ProjectJsonLd } from "@/components/project/project-json-ld";
 import { ProjectShareActions } from "@/components/project/project-share-actions";
@@ -57,12 +59,23 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   }
 
   const { data, fromDb } = loaded;
+  const session = await auth();
+  let canManage = false;
+  if (fromDb && process.env.DATABASE_URL?.trim()) {
+    const owners = await prisma.project.findUnique({
+      where: { slug },
+      select: { createdById: true, claimedByUserId: true },
+    });
+    if (owners) {
+      canManage = canManageProject(session?.user?.id, owners);
+    }
+  }
+
   const socials = sortProjectSocials(data.socials);
 
   const hasDescription = Boolean(data.description.trim());
   const descriptionBody = hasDescription ? data.description.trim() : null;
 
-  const health = computeProjectHealth(data.githubSnapshot);
   const sourceItems = getProjectSources({
     legacyGithubUrl: data.githubUrl,
     legacyWebsiteUrl: data.websiteUrl,
@@ -85,13 +98,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           slug={slug}
           name={data.name}
           tagline={data.tagline}
-          status={data.status}
           createdAt={data.createdAt}
-          fromDb={fromDb}
-          sourceType={data.sourceType}
-          isFeatured={data.isFeatured}
-          claimStatus={data.claimStatus}
-          health={health}
+          canManage={canManage}
         />
 
         <ProjectShareActions

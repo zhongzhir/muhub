@@ -38,8 +38,7 @@ test.describe("项目认领", () => {
       timeout: 60_000,
     });
 
-    const claimed = page.getByTestId("project-claimed-label");
-    await expect(claimed).toHaveText("已认领", { timeout: 60_000 });
+    await expect(page.getByRole("link", { name: "编辑项目" })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("claim-project-button")).toHaveCount(0);
   });
 });

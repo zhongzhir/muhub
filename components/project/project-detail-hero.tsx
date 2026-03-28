@@ -1,25 +1,14 @@
 import Link from "next/link";
-import type { ClaimStatus, ProjectStatus } from "@prisma/client";
-import { ProjectBadgeStrip } from "@/components/project/project-badge-strip";
-import { buildProjectBadgeGroups } from "@/lib/project-badges";
-import type { ProjectHealthBadge } from "@/lib/project-health";
-import { projectHealthBadgeClass } from "@/lib/project-health";
 import { projectPublicPathPrefix } from "@/lib/seo/site";
-
-const HERO_HIDDEN_LIFECYCLE_KEYS = new Set(["life-active", "life-unclaimed"]);
+import { formatListDate } from "@/lib/format-date";
 
 export type ProjectDetailHeroProps = {
   slug: string;
   name: string;
   tagline: string | undefined;
-  status: ProjectStatus;
   createdAt: Date;
-  fromDb: boolean;
-  sourceType?: string | null;
-  isFeatured?: boolean;
-  claimStatus: ClaimStatus;
-  /** 基于仓库快照的健康度（无快照则不展示） */
-  health?: ProjectHealthBadge | null;
+  /** 库内项目且当前用户可管理时展示编辑/发布动态 */
+  canManage: boolean;
 };
 
 const btnBase =
@@ -31,29 +20,11 @@ export function ProjectDetailHero({
   slug,
   name,
   tagline,
-  status,
   createdAt,
-  fromDb,
-  sourceType,
-  isFeatured,
-  claimStatus,
-  health,
+  canManage,
 }: ProjectDetailHeroProps) {
   const pathPrefix = projectPublicPathPrefix();
-  const groups = buildProjectBadgeGroups({
-    slug,
-    fromDb,
-    sourceType,
-    isFeatured,
-    claimStatus,
-    status,
-  });
-  const { source } = groups;
-  const lifecycleForHero = groups.lifecycle
-    .filter((b) => !HERO_HIDDEN_LIFECYCLE_KEYS.has(b.key))
-    .map((b) =>
-      b.key === "life-claimed" ? { ...b, testId: "project-claimed-label" as const } : b,
-    );
+  const publicPath = `${pathPrefix}${slug}`;
 
   return (
     <section
@@ -83,43 +54,32 @@ export function ProjectDetailHero({
         </>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <ProjectBadgeStrip source={source} lifecycle={lifecycleForHero} theme="light" />
-        {health ? (
-          <span
-            data-testid="project-health-badge"
-            className={projectHealthBadgeClass(health.variant)}
-          >
-            {health.label}
-          </span>
-        ) : null}
-      </div>
+      <dl className="mt-6 grid gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <div className="flex flex-wrap gap-x-2">
+          <dt className="text-zinc-500">项目访问地址</dt>
+          <dd className="break-all font-mono text-zinc-800 dark:text-zinc-200">{publicPath}</dd>
+        </div>
+        <div className="flex flex-wrap gap-x-2">
+          <dt className="text-zinc-500">创建时间</dt>
+          <dd>{formatListDate(createdAt)}</dd>
+        </div>
+      </dl>
 
       <div className="mt-6 flex flex-wrap gap-2 border-t border-zinc-200/80 pt-6 sm:gap-3 dark:border-zinc-800">
         <Link href={`/projects/${slug}/share`} className={btnPrimary}>
           分享项目
         </Link>
-        {fromDb ? (
+        {canManage ? (
           <Link href={`/dashboard/projects/${slug}/edit`} className={btnSecondary}>
             编辑项目
           </Link>
         ) : null}
-        {fromDb ? (
+        {canManage ? (
           <Link href={`/dashboard/projects/${slug}/updates/new`} className={btnSecondary}>
             发布动态
           </Link>
         ) : null}
       </div>
-
-      <p className="mt-6 max-w-full text-xs leading-relaxed text-zinc-500 [overflow-wrap:anywhere]">
-        <span className="text-zinc-600 dark:text-zinc-400">木哈布项目页</span>{" "}
-        <span className="font-mono text-zinc-700 dark:text-zinc-300">
-          {pathPrefix}
-          {slug}
-        </span>
-        <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
-        创建于 {createdAt.toLocaleString("zh-CN")}
-      </p>
 
       <div className="mt-4">
         <Link

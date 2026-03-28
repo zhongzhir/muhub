@@ -14,7 +14,7 @@ test.describe("项目广场 /projects", () => {
     const card = page.getByTestId("project-card").first();
     await expect(emptyAll.or(card)).toBeVisible();
     if (await card.isVisible()) {
-      await expect(card.getByTestId("project-badges")).toBeVisible();
+      await expect(card.getByRole("link", { name: "查看项目" })).toBeVisible();
     }
   });
 

@@ -8,6 +8,7 @@ export type ProjectListItem = {
   createdAt: Date;
   status: ProjectStatus;
   githubUrl: string | null;
+  websiteUrl: string | null;
   socialCount: number;
   sourceType: string | null;
   claimStatus: ClaimStatus;
@@ -46,6 +47,7 @@ export async function fetchPublicProjects(
         createdAt: true,
         status: true,
         githubUrl: true,
+        websiteUrl: true,
         sourceType: true,
         claimStatus: true,
         isFeatured: true,
@@ -61,6 +63,7 @@ export async function fetchPublicProjects(
         createdAt: r.createdAt,
         status: r.status,
         githubUrl: r.githubUrl,
+        websiteUrl: r.websiteUrl,
         socialCount: r._count.socialAccounts,
         sourceType: r.sourceType,
         claimStatus: r.claimStatus,

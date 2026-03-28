@@ -80,7 +80,7 @@ export default async function DashboardPage() {
             <ul className="grid gap-4 sm:grid-cols-2">
               {projects.map((p) => (
                 <li key={p.id}>
-                  <ProjectCard project={p} hideUnclaimedLifecycle />
+                  <ProjectCard project={p} />
                 </li>
               ))}
             </ul>

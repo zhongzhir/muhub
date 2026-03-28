@@ -12,6 +12,7 @@ function mapMyProjectRow(r: {
   createdAt: Date;
   status: ProjectStatus;
   githubUrl: string | null;
+  websiteUrl: string | null;
   sourceType: string | null;
   claimStatus: ClaimStatus;
   isFeatured: boolean;
@@ -25,6 +26,7 @@ function mapMyProjectRow(r: {
     createdAt: r.createdAt,
     status: r.status,
     githubUrl: r.githubUrl,
+    websiteUrl: r.websiteUrl,
     socialCount: r._count.socialAccounts,
     sourceType: r.sourceType,
     claimStatus: r.claimStatus,
@@ -40,6 +42,7 @@ const myProjectSelect = {
   createdAt: true,
   status: true,
   githubUrl: true,
+  websiteUrl: true,
   sourceType: true,
   claimStatus: true,
   isFeatured: true,
