@@ -13,7 +13,6 @@ import { socialPlatformLabel } from "@/lib/social-platform";
 import { buildProjectUpdateStreamModel } from "@/lib/project-updates";
 import { computeGithubActivity } from "@/lib/github-activity";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
-import { isRecommendedProject } from "@/lib/recommended-projects";
 import { computeProjectHealth } from "@/lib/project-health";
 import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
 import { ProjectJsonLd } from "@/components/project/project-json-ld";
@@ -63,10 +62,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const hasDescription = Boolean(data.description.trim());
   const descriptionBody = hasDescription ? data.description.trim() : null;
 
-  const showClaimCta = Boolean(
-    fromDb && data.claimStatus === "UNCLAIMED" && data.githubUrl?.trim() && parseRepoUrl(data.githubUrl),
-  );
-  const showRecommendedClaim = Boolean(!fromDb && isRecommendedProject(slug));
   const health = computeProjectHealth(data.githubSnapshot);
   const sourceItems = getProjectSources({
     legacyGithubUrl: data.githubUrl,
@@ -92,11 +87,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           tagline={data.tagline}
           status={data.status}
           createdAt={data.createdAt}
-          githubUrl={data.githubUrl}
-          websiteUrl={data.websiteUrl}
           fromDb={fromDb}
-          showClaimCta={showClaimCta}
-          showRecommendedClaim={showRecommendedClaim}
           sourceType={data.sourceType}
           isFeatured={data.isFeatured}
           claimStatus={data.claimStatus}

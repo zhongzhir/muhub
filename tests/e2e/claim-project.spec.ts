@@ -25,9 +25,7 @@ test.describe("项目认领", () => {
     await page.getByRole("button", { name: "创建项目" }).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 
-    await expect(page.getByTestId("claim-project-button")).toBeVisible();
-
-    await page.getByTestId("claim-project-button").click();
+    await page.goto(`/projects/${slug}/claim`);
     await expect(page.getByRole("heading", { name: "认领项目" })).toBeVisible();
 
     await page.getByTestId("repo-url-input").fill(github);

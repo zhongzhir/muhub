@@ -2,10 +2,11 @@ import Link from "next/link";
 import type { ClaimStatus, ProjectStatus } from "@prisma/client";
 import { ProjectBadgeStrip } from "@/components/project/project-badge-strip";
 import { buildProjectBadgeGroups } from "@/lib/project-badges";
-import { codeHostLinkLabel } from "@/lib/repo-platform";
 import type { ProjectHealthBadge } from "@/lib/project-health";
 import { projectHealthBadgeClass } from "@/lib/project-health";
 import { projectPublicPathPrefix } from "@/lib/seo/site";
+
+const HERO_HIDDEN_LIFECYCLE_KEYS = new Set(["life-active", "life-unclaimed"]);
 
 export type ProjectDetailHeroProps = {
   slug: string;
@@ -13,11 +14,7 @@ export type ProjectDetailHeroProps = {
   tagline: string | undefined;
   status: ProjectStatus;
   createdAt: Date;
-  githubUrl: string | undefined;
-  websiteUrl: string | undefined;
   fromDb: boolean;
-  showClaimCta: boolean;
-  showRecommendedClaim: boolean;
   sourceType?: string | null;
   isFeatured?: boolean;
   claimStatus: ClaimStatus;
@@ -36,11 +33,7 @@ export function ProjectDetailHero({
   tagline,
   status,
   createdAt,
-  githubUrl,
-  websiteUrl,
   fromDb,
-  showClaimCta,
-  showRecommendedClaim,
   sourceType,
   isFeatured,
   claimStatus,
@@ -56,9 +49,11 @@ export function ProjectDetailHero({
     status,
   });
   const { source } = groups;
-  const lifecycleForHero = groups.lifecycle.map((b) =>
-    b.key === "life-claimed" ? { ...b, testId: "project-claimed-label" as const } : b,
-  );
+  const lifecycleForHero = groups.lifecycle
+    .filter((b) => !HERO_HIDDEN_LIFECYCLE_KEYS.has(b.key))
+    .map((b) =>
+      b.key === "life-claimed" ? { ...b, testId: "project-claimed-label" as const } : b,
+    );
 
   return (
     <section
@@ -100,59 +95,7 @@ export function ProjectDetailHero({
         ) : null}
       </div>
 
-      {showRecommendedClaim ? (
-        <div
-          data-testid="recommended-project-hint"
-          className="mt-5 rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-950/25"
-        >
-          <p className="text-sm font-medium text-amber-950 dark:text-amber-100">这是推荐项目</p>
-          <p className="mt-0.5 text-sm text-amber-900/85 dark:text-amber-200/85">认领后可编辑管理</p>
-          <Link
-            href={`/dashboard/projects/new?from=recommended&slug=${encodeURIComponent(slug)}`}
-            data-testid="claim-recommended-button"
-            className={`${btnPrimary} mt-3`}
-          >
-            认领项目
-          </Link>
-        </div>
-      ) : null}
-
-      <section
-        className="mt-6 border-t border-zinc-200/80 pt-6 dark:border-zinc-800"
-        aria-labelledby="project-primary-links-heading"
-      >
-        <h2 id="project-primary-links-heading" className="sr-only">
-          项目链接
-        </h2>
-        <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-          {githubUrl?.trim() ? (
-            <a
-              href={githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
-            >
-              {codeHostLinkLabel(githubUrl)} 仓库
-            </a>
-          ) : (
-            <span className="text-zinc-400">未填写代码仓库</span>
-          )}
-          {websiteUrl?.trim() ? (
-            <a
-              href={websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400"
-            >
-              官网
-            </a>
-          ) : (
-            <span className="text-zinc-400">未填写官网</span>
-          )}
-        </div>
-      </section>
-
-      <div className="mt-6 flex flex-wrap gap-3 border-t border-zinc-200/80 pt-6 dark:border-zinc-800">
+      <div className="mt-6 flex flex-wrap gap-2 border-t border-zinc-200/80 pt-6 sm:gap-3 dark:border-zinc-800">
         <Link href={`/projects/${slug}/share`} className={btnPrimary}>
           分享项目
         </Link>
@@ -164,15 +107,6 @@ export function ProjectDetailHero({
         {fromDb ? (
           <Link href={`/dashboard/projects/${slug}/updates/new`} className={btnSecondary}>
             发布动态
-          </Link>
-        ) : null}
-        {showClaimCta ? (
-          <Link
-            href={`/projects/${slug}/claim`}
-            data-testid="claim-project-button"
-            className={btnPrimary}
-          >
-            认领该项目
           </Link>
         ) : null}
       </div>
