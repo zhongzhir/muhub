@@ -109,5 +109,5 @@ export async function claimProject(
   }
 
   revalidatePath(`/projects/${slug}`, "page");
-  redirect(`/projects/${slug}`);
+  redirect(`/projects/${encodeURIComponent(slug)}`);
 }
