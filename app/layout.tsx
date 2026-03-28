@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     description: OG_DESCRIPTION,
     images: [absoluteUrl("/og-default.png")],
   },
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "MUHUB",
@@ -82,10 +82,10 @@ export const metadata: Metadata = {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png", sizes: "32x32" },
-      { url: "/pwa/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/pwa/icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

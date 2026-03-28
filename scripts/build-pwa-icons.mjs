@@ -15,6 +15,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const publicDir = join(root, "public");
 const pwaDir = join(publicDir, "pwa");
+const iconsDir = join(publicDir, "icons");
 
 /** 人工确认的品牌方形图标源（SVG 或 PNG） */
 const sourcePath = join(publicDir, "brand", "logo-icon.svg");
@@ -35,13 +36,17 @@ async function renderSquarePng(size, outFile) {
 
 async function main() {
   mkdirSync(pwaDir, { recursive: true });
+  mkdirSync(iconsDir, { recursive: true });
 
   await renderSquarePng(192, join(pwaDir, "icon-192.png"));
   await renderSquarePng(512, join(pwaDir, "icon-512.png"));
+  await renderSquarePng(192, join(iconsDir, "icon-192.png"));
+  await renderSquarePng(512, join(iconsDir, "icon-512.png"));
+  await renderSquarePng(180, join(iconsDir, "apple-touch-icon.png"));
   await renderSquarePng(180, join(publicDir, "apple-touch-icon.png"));
 
   console.log(
-    "pwa:icons（手动）→ public/pwa/icon-192.png, icon-512.png, public/apple-touch-icon.png",
+    "pwa:icons → public/icons/*（manifest），public/pwa/*（兼容），public/apple-touch-icon.png",
   );
 }
 
