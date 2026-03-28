@@ -85,5 +85,5 @@ export async function publishProjectUpdate(
     };
   }
 
-  return { ok: true, redirectPath: `/projects/${slug}` };
+  return { ok: true, redirectPath: `/projects/${slug}?published=1#project-updates` };
 }

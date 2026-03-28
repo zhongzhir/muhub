@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
+import { ProjectActions } from "@/components/project/project-actions";
+import { ProjectUpdates } from "@/components/project/project-updates";
+import { ProjectPublishedAck } from "@/components/project/project-published-ack";
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
 import { prisma } from "@/lib/prisma";
 import { canManageProject } from "@/lib/project-permissions";
@@ -13,15 +15,14 @@ import {
 } from "@/lib/seo/project-meta";
 import { SITE_URL } from "@/lib/seo/site";
 import { socialPlatformLabel } from "@/lib/social-platform";
-import { buildProjectUpdateStreamModel } from "@/lib/project-updates";
 import { computeGithubActivity } from "@/lib/github-activity";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import { getProjectSources, mapSourceEmoji } from "@/lib/project-sources";
 import { ProjectJsonLd } from "@/components/project/project-json-ld";
-import { ProjectShareActions } from "@/components/project/project-share-actions";
 import {
   buildProjectShareClipboardText,
   buildProjectShareSocialLine,
+  buildProjectShareSnippet,
   projectCanonicalUrl,
 } from "@/lib/share/project-share";
 import { RefreshGithubSnapshotForm } from "./refresh-github-form";
@@ -51,8 +52,16 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ProjectPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ published?: string }>;
+}) {
   const slug = normalizeProjectSlugParam((await params).slug);
+  const sp = await searchParams;
+  const showPublishedAck = sp.published === "1";
   const loaded = await loadProjectPageViewCached(slug);
   if (!loaded) {
     notFound();
@@ -102,11 +111,21 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           canManage={canManage}
         />
 
-        <ProjectShareActions
+        <ProjectPublishedAck show={showPublishedAck} />
+
+        <ProjectActions
+          slug={slug}
+          name={data.name}
+          tagline={data.tagline}
+          shareSnippet={buildProjectShareSnippet(data)}
           canonicalUrl={canonicalProjectUrl}
           shareSocialLine={buildProjectShareSocialLine(data)}
           shareClipboardText={buildProjectShareClipboardText(data, slug)}
+          fromDb={fromDb}
+          canManage={canManage}
         />
+
+        <ProjectUpdates slug={slug} updates={data.updates} fromDb={fromDb} canManage={canManage} />
 
         {data.aiCardSummary?.trim() ? (
           <section
@@ -406,117 +425,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               </>
             )}
           </div>
-        </section>
-
-        {/* 项目动态 */}
-        <section
-          className="mt-14 scroll-mt-8"
-          aria-labelledby="project-updates-heading"
-          data-testid="project-updates-section"
-        >
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2
-              id="project-updates-heading"
-              className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
-            >
-              项目动态
-            </h2>
-            {fromDb ? (
-              <Link
-                href={`/dashboard/projects/${slug}/updates/new`}
-                className="inline-flex rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
-              >
-                发布动态
-              </Link>
-            ) : null}
-          </div>
-          <p className="mb-4 text-xs text-zinc-500">
-            多源动态：手动发布、仓库、官方与 AI 等来源统一展示；当前按发布时间倒序（最新在前）。
-          </p>
-          <ul className="relative space-y-0 before:absolute before:left-[11px] before:top-3 before:h-[calc(100%-1.5rem)] before:w-px before:bg-zinc-200 dark:before:bg-zinc-700 sm:before:left-[13px]">
-            {data.updates.length === 0 ? (
-              <li className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
-                暂无项目动态
-              </li>
-            ) : (
-              data.updates.map((u, i) => {
-                const displayAt = u.createdAt ?? u.occurredAt;
-                const stream = buildProjectUpdateStreamModel({
-                  sourceType: u.sourceType,
-                  sourceLabel: u.sourceLabel,
-                  isAiGenerated: u.isAiGenerated,
-                });
-                return (
-                  <li
-                    key={u.id ?? `update-${u.title}-${displayAt.toISOString()}-${i}`}
-                    data-testid="project-update-item"
-                    className="relative border-b border-zinc-100 py-6 pl-9 last:border-b-0 dark:border-zinc-800/80 sm:pl-10"
-                  >
-                    <span
-                      className="absolute left-0 top-8 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-zinc-200 text-[10px] shadow-sm dark:border-zinc-900 dark:bg-zinc-700"
-                      aria-hidden
-                    />
-                    <div className="flex flex-wrap items-center gap-2 gap-y-1">
-                      <span
-                        data-testid="project-update-source-badge"
-                        className={stream.badgeClass}
-                      >
-                        {stream.primaryLabel}
-                      </span>
-                      {stream.aiAugment ? (
-                        <span
-                          data-testid="project-update-ai-badge"
-                          className={stream.aiAugment.className}
-                        >
-                          {stream.aiAugment.label}
-                        </span>
-                      ) : null}
-                      <time
-                        className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
-                        dateTime={displayAt.toISOString()}
-                      >
-                        {displayAt.toLocaleString("zh-CN")}
-                      </time>
-                    </div>
-                    <h3 className="mt-3 text-lg font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
-                      {u.title}
-                    </h3>
-                    {u.content?.trim() ? (
-                      <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                        {u.content}
-                      </p>
-                    ) : null}
-                    {u.summary?.trim() ? (
-                      <p
-                        className={`mt-3 text-sm leading-relaxed ${
-                          u.isAiGenerated
-                            ? "border-l-2 border-amber-400/80 pl-3 text-zinc-700 dark:border-amber-500/60 dark:text-zinc-300"
-                            : "text-zinc-600 dark:text-zinc-400"
-                        }`}
-                        data-testid={u.isAiGenerated ? "project-update-ai-summary" : undefined}
-                      >
-                        {u.isAiGenerated ? (
-                          <span className="font-semibold text-amber-900 dark:text-amber-200">AI 摘要：</span>
-                        ) : null}
-                        {u.summary}
-                      </p>
-                    ) : null}
-                    {u.sourceUrl ? (
-                      <a
-                        href={u.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                      >
-                        查看来源
-                        <span aria-hidden>↗</span>
-                      </a>
-                    ) : null}
-                  </li>
-                );
-              })
-            )}
-          </ul>
         </section>
 
         {/* 社媒 */}
