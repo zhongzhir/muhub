@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
 import {
-  waitForProjectDetailUrl,
+  waitForDashboardProjectUrl,
   waitForProjectSlugAfterCreate,
 } from "./helpers/wait-project-after-create";
 
@@ -25,12 +25,15 @@ test.describe("GitHub 手动刷新快照", () => {
     await page.getByRole("button", { name: "创建项目" }).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 
+    await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}`);
+    await waitForDashboardProjectUrl(page, slug);
+
     const section = page.getByTestId("github-snapshot-section");
     await expect(section.getByRole("heading", { name: "仓库数据" })).toBeVisible();
     await expect(section.getByText("暂无仓库快照数据")).toBeVisible();
 
     await page.getByTestId("refresh-github-snapshot").click();
-    await waitForProjectDetailUrl(page, slug);
+    await waitForDashboardProjectUrl(page, slug);
 
     await expect(section.getByTestId("github-snapshot-repo")).toHaveText("muhub/e2e-fixture");
     await expect(section.getByTestId("github-snapshot-stars")).toContainText("42");

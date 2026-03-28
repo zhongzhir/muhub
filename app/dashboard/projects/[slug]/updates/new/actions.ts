@@ -76,6 +76,7 @@ export async function publishProjectUpdate(
       },
     });
     revalidatePath(`/projects/${slug}`, "page");
+    revalidatePath(`/dashboard/projects/${slug}`, "page");
   } catch (e) {
     console.error("[publishProjectUpdate]", e);
     return {
@@ -85,5 +86,8 @@ export async function publishProjectUpdate(
     };
   }
 
-  return { ok: true, redirectPath: `/projects/${slug}?published=1#project-updates` };
+  return {
+    ok: true,
+    redirectPath: `/dashboard/projects/${encodeURIComponent(slug)}?published=1#project-updates`,
+  };
 }

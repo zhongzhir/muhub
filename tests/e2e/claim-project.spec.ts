@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
 import {
+  waitForDashboardProjectUrl,
   waitForProjectDetailUrl,
   waitForProjectSlugAfterCreate,
 } from "./helpers/wait-project-after-create";
@@ -38,6 +39,8 @@ test.describe("项目认领", () => {
       timeout: 60_000,
     });
 
+    await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}`);
+    await waitForDashboardProjectUrl(page, slug);
     await expect(page.getByRole("link", { name: "编辑项目" })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId("claim-project-button")).toHaveCount(0);
   });

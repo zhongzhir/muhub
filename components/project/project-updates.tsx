@@ -8,6 +8,8 @@ export type ProjectUpdatesProps = {
   updates: DemoUpdate[];
   fromDb: boolean;
   canManage: boolean;
+  /** 管理页：在标题行展示「发布动态」入口 */
+  showHeaderPublishLink?: boolean;
 };
 
 function updateKindLabel(sourceType: ProjectUpdateSourceType): string | null {
@@ -29,7 +31,13 @@ function truncateText(text: string, maxChars: number): string {
   return `${t.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 }
 
-export function ProjectUpdates({ slug, updates, fromDb, canManage }: ProjectUpdatesProps) {
+export function ProjectUpdates({
+  slug,
+  updates,
+  fromDb,
+  canManage,
+  showHeaderPublishLink = false,
+}: ProjectUpdatesProps) {
   const showPublishCta = fromDb && canManage;
   const count = updates.length;
 
@@ -40,7 +48,7 @@ export function ProjectUpdates({ slug, updates, fromDb, canManage }: ProjectUpda
       aria-labelledby="project-updates-heading"
       data-testid="project-updates-section"
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
           <h2
             id="project-updates-heading"
@@ -54,6 +62,14 @@ export function ProjectUpdates({ slug, updates, fromDb, canManage }: ProjectUpda
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">进展与公告集中展示在此，便于对外沟通</p>
           )}
         </div>
+        {showHeaderPublishLink && showPublishCta ? (
+          <Link
+            href={`/dashboard/projects/${slug}/updates/new`}
+            className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          >
+            发布动态
+          </Link>
+        ) : null}
       </div>
 
       {count === 0 ? (

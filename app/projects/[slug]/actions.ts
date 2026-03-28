@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { syncGithubSnapshotForProjectSlug } from "@/lib/github-sync";
 
 export type RefreshGithubSnapshotState = {
@@ -22,5 +23,11 @@ export async function refreshProjectGithubSnapshot(
     return { ok: false, error: result.message };
   }
 
-  return { ok: true, redirectPath: `/projects/${slug}` };
+  revalidatePath(`/projects/${slug}`, "page");
+  revalidatePath(`/dashboard/projects/${slug}`, "page");
+
+  return {
+    ok: true,
+    redirectPath: `/dashboard/projects/${encodeURIComponent(slug)}`,
+  };
 }

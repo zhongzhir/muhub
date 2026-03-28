@@ -32,7 +32,7 @@ export default async function DashboardPage() {
           </Link>
           <span className="mx-2 text-zinc-300">·</span>
           <Link href="/projects" className="underline-offset-4 hover:underline">
-            浏览项目
+            项目广场
           </Link>
         </p>
 

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/auth";
+import { CreateProjectMenu } from "@/components/layout/create-project-menu";
 import { UserMenu } from "@/components/layout/user-menu";
 
 /** 与 public/brand/muhub_logo_horizontal.png 源文件比例一致 */
@@ -35,22 +36,11 @@ export async function SiteHeader() {
             href="/projects"
             className="rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 sm:px-2.5 sm:text-sm dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
           >
-            浏览项目
+            项目广场
           </Link>
           {user ? (
             <>
-              <Link
-                href="/dashboard/projects/new"
-                className="rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 sm:px-2.5 sm:text-sm dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
-              >
-                创建项目
-              </Link>
-              <Link
-                href="/dashboard/projects/import"
-                className="rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 sm:px-2.5 sm:text-sm dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
-              >
-                导入项目
-              </Link>
+              <CreateProjectMenu />
               <Link
                 href="/dashboard"
                 className="rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 sm:px-2.5 sm:text-sm dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"

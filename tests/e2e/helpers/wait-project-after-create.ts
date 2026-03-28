@@ -49,3 +49,12 @@ export async function waitForProjectDetailUrl(page: Page, slug: string): Promise
     { timeout: 60_000 },
   );
 }
+
+/** 等待项目管理页 `/dashboard/projects/[slug]` */
+export async function waitForDashboardProjectUrl(page: Page, slug: string): Promise<void> {
+  const expectPath = `/dashboard/projects/${slug.normalize("NFC")}`;
+  await page.waitForURL(
+    (url) => normalizedDetailPathname(url.pathname) === expectPath,
+    { timeout: 60_000 },
+  );
+}

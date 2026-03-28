@@ -47,7 +47,7 @@ export default function Hero() {
             href="/projects"
             className="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-8 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
           >
-            浏览项目
+            项目广场
           </Link>
           <Link
             href="/dashboard/projects/new"

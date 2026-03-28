@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
 import {
-  waitForProjectDetailUrl,
+  waitForDashboardProjectUrl,
   waitForProjectSlugAfterCreate,
 } from "./helpers/wait-project-after-create";
 
@@ -36,7 +36,7 @@ test.describe("项目动态", () => {
     await page.locator("#title").fill(title);
     await page.locator("#content").fill(body);
     await page.getByRole("button", { name: "发布" }).click();
-    await waitForProjectDetailUrl(page, slug);
+    await waitForDashboardProjectUrl(page, slug);
 
     const heading1 = page.getByRole("heading", { level: 1, name: projectName });
     await expect(heading1).toBeVisible({ timeout: 60_000 });
