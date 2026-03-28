@@ -15,7 +15,8 @@ const publicDir = join(root, "public");
 const brand = join(publicDir, "brand");
 
 const markPath = join(brand, "muhub_logo_mark.png");
-const iconSrc = join(brand, "muhub_logo_icon_192.png");
+/** 与站点 / manifest 一致，由 `public/icons/icon-192.png` 缩放生成 tab icon 与 favicon.ico */
+const iconSrc = join(publicDir, "icons", "icon-192.png");
 
 async function main() {
   const ogWide = sharp({
