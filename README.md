@@ -68,6 +68,14 @@ Next.js 15 全栈应用：**AI Native 项目展示与多源动态聚合**（Pris
 - **实现**：**`app/projects/[slug]/share/page.tsx`**、**`lib/share-project-view.ts`**（`buildShareHighlightParagraphs`、`buildShareProgressModel` 等）、**`components/project/share-highlight-section.tsx`**、**`components/project/share-progress-section.tsx`**。
 - **回归**：**`tests/e2e/share-project.spec.ts`** 与 **`docs/runbooks/regression.md`**「分享名片页」。
 
+## V1.2 / V1.2.1：项目分享弹窗（详情与 Dashboard）
+
+- **入口**：公开详情 **`/projects/[slug]`**（`ProjectHeroPublicActions`）与工作台 **`/dashboard/projects/[slug]`**（`ProjectWorkspace`）的 **「分享项目」**，打开 **`ProjectShareDialog`**（`data-testid="project-share-panel"`）。**不替代**整页 **`/projects/[slug]/share`**（名片页仍用于对外长版与截图）。
+- **V1.2**：三种复制文案模板（**简短 / 社群 / 英文**，`lib/share/project-share-templates.ts`）；**复制链接**、**复制文案**、**Twitter / X**（`intent/tweet`）；弹窗内 **`ProjectShareCard`** 为 UI 级预览（非服务端出图）。
+- **V1.2.1（2026-03-28，仅前端）**：预览区上方说明「分享效果预览」；复制成功后区分 **链接 / 文案** 的轻量 **inline** 反馈；**本设备** **`localStorage`** 累计 **复制链接 / 复制文案 / 打开 Twitter**（键前缀 **`muhub:project-share:v1:`**，按项目 `slug` 或规范化 URL 隔离），底部弱化展示并标明本地视角；操作顺序为 **预览 → 文案风格 → 当前将复制正文 → 操作按钮**；无新依赖、不改数据库与 API。
+- **实现**：**`components/project/project-share-dialog.tsx`**、**`components/project/project-share-card.tsx`**、**`lib/share/project-share-templates.ts`**、**`lib/share/project-share-local-metrics.ts`**；页面侧见 **`app/projects/[slug]/page.tsx`**、**`app/dashboard/projects/[slug]/page.tsx`**。
+- **说明全文**：[`docs/architecture/project-share-dialog.md`](docs/architecture/project-share-dialog.md)。
+
 ## V1.1 第 7 轮：项目动态
 
 - **`/dashboard/projects/[slug]/updates/new`（发布项目动态）**：填写 **标题**、**内容**，点击 **「发布」** 写入 **`ProjectUpdate`**（`sourceType = MANUAL`，字段 **`title` / `content` / `createdAt`**；历史来源仍可保留 **`summary`** 等）。
@@ -325,6 +333,7 @@ pnpm test:e2e
 
 ## 文档
 
+- [项目分享弹窗（详情 / Dashboard）](docs/architecture/project-share-dialog.md)
 - [本地与环境搭建](docs/runbooks/dev-setup.md)
 - [回归测试说明](docs/runbooks/regression.md)
 - [冷启动种子导入](docs/runbooks/seed-import.md)

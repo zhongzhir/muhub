@@ -14,11 +14,7 @@ import {
 import { SITE_URL } from "@/lib/seo/site";
 import { getProjectSources } from "@/lib/project-sources";
 import { ProjectJsonLd } from "@/components/project/project-json-ld";
-import {
-  buildProjectShareClipboardText,
-  buildProjectShareSnippet,
-  projectCanonicalUrl,
-} from "@/lib/share/project-share";
+import { buildProjectShareSnippet, projectCanonicalUrl } from "@/lib/share/project-share";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
@@ -86,7 +82,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   const canonicalProjectUrl = projectCanonicalUrl(slug);
   const shareSnippet = buildProjectShareSnippet(data);
-  const shareClipboardText = buildProjectShareClipboardText(data, slug);
+  const descriptionForShare = data.description.trim() || undefined;
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -104,7 +100,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               tagline={data.tagline}
               shareSnippet={shareSnippet}
               canonicalUrl={canonicalProjectUrl}
-              shareClipboardText={shareClipboardText}
+              description={descriptionForShare}
               showManageLink={showManageLink}
             />
           }

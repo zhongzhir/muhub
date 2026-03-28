@@ -10,7 +10,7 @@ export type ProjectHeroPublicActionsProps = {
   tagline: string | undefined;
   shareSnippet: string;
   canonicalUrl: string;
-  shareClipboardText: string;
+  description?: string;
   /** 当前用户可管理该项目时显示「进入管理」 */
   showManageLink: boolean;
 };
@@ -27,7 +27,7 @@ export function ProjectHeroPublicActions({
   tagline,
   shareSnippet,
   canonicalUrl,
-  shareClipboardText,
+  description,
   showManageLink,
 }: ProjectHeroPublicActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
@@ -52,11 +52,12 @@ export function ProjectHeroPublicActions({
       <ProjectShareDialog
         open={shareOpen}
         onOpenChange={setShareOpen}
+        slug={slug}
         name={name}
         tagline={tagline}
         shareSnippet={shareSnippet}
         canonicalUrl={canonicalUrl}
-        shareClipboardText={shareClipboardText}
+        description={description}
       />
     </div>
   );

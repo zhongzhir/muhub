@@ -11,11 +11,7 @@ import { RefreshGithubSnapshotForm } from "@/app/projects/[slug]/refresh-github-
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
-import {
-  buildProjectShareClipboardText,
-  buildProjectShareSnippet,
-  projectCanonicalUrl,
-} from "@/lib/share/project-share";
+import { buildProjectShareSnippet, projectCanonicalUrl } from "@/lib/share/project-share";
 import { getProjectSources } from "@/lib/project-sources";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
@@ -92,7 +88,7 @@ export default async function DashboardProjectManagePage({
 
   const canonicalProjectUrl = projectCanonicalUrl(slug);
   const shareSnippet = buildProjectShareSnippet(data);
-  const shareClipboardText = buildProjectShareClipboardText(data, slug);
+  const descriptionForShare = data.description.trim() || undefined;
 
   const githubRefreshSlot =
     fromDb && data.githubUrl?.trim() ? <RefreshGithubSnapshotForm slug={slug} /> : null;
@@ -120,7 +116,7 @@ export default async function DashboardProjectManagePage({
           tagline={data.tagline}
           shareSnippet={shareSnippet}
           canonicalUrl={canonicalProjectUrl}
-          shareClipboardText={shareClipboardText}
+          description={descriptionForShare}
         />
 
         <ProjectUpdates

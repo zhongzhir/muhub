@@ -72,6 +72,14 @@
 8. **数据库项目**：已认领时头图区有 **「已认领项目」**；推荐 slug 且非库数据时有 **「推荐项目」**。
 9. 自动化：**`share-project.spec.ts`**。
 
+## 分享弹窗（`ProjectShareDialog`）如何抽查
+
+1. 在 **`/projects/demo`**（或任意库内 **`/projects/<slug>`**）点击 **「分享项目」**，应出现 **`project-share-panel`**。
+2. 可见 **分享效果预览** 文案与 **`project-share-card`**；切换 **简短 / 社群 / 英文** 时，**当前将复制的文案** 区域随之变化。
+3. **复制链接** / **复制文案**：成功时出现绿色 **inline** 状态区（链接与文案副文案不同）；失败时出现手动复制区（与剪贴板权限相关）。
+4. **Twitter / X**：打开新标签且 **`project-share-twitter`** 可点；本机 **localStorage** 计数在底部弱提示中变化（仅本设备维度，非全站统计）。
+5. Dashboard **`/dashboard/projects/<slug>`** 同样应从工作台打开同一弹窗（有库时）。
+
 ## 认领如何回归
 
 1. 创建或编辑项目，确保 **`githubUrl`** 已填且 **`claimStatus`** 为未认领。

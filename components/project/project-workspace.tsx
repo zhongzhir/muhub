@@ -12,7 +12,7 @@ export type ProjectWorkspaceProps = {
   tagline: string | undefined;
   shareSnippet: string;
   canonicalUrl: string;
-  shareClipboardText: string;
+  description?: string;
 };
 
 const cardBtn =
@@ -27,7 +27,7 @@ export function ProjectWorkspace({
   tagline,
   shareSnippet,
   canonicalUrl,
-  shareClipboardText,
+  description,
 }: ProjectWorkspaceProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const timers = useRef<{ link?: number }>({});
@@ -130,11 +130,12 @@ export function ProjectWorkspace({
       <ProjectShareDialog
         open={shareOpen}
         onOpenChange={setShareOpen}
+        slug={slug}
         name={name}
         tagline={tagline}
         shareSnippet={shareSnippet}
         canonicalUrl={canonicalUrl}
-        shareClipboardText={shareClipboardText}
+        description={description}
       />
     </>
   );
