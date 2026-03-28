@@ -39,7 +39,7 @@ export default async function DashboardPage() {
         <header className="mb-10">
           <h1 className="text-3xl font-semibold tracking-tight">我的项目</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-            这里汇总你创建与认领的项目，你可以继续维护项目资料与动态。
+            这里汇总你创建与认领的项目。使用「管理项目」进入工作台维护资料与动态；「查看项目」打开对外公开展示页。
           </p>
         </header>
 

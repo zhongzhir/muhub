@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
-import { ProjectPublicShareBar } from "@/components/project/project-public-share-bar";
+import { ProjectHeroPublicActions } from "@/components/project/project-hero-public-actions";
 import { ProjectUpdates } from "@/components/project/project-updates";
 import { ProjectDetailInfoSections } from "@/components/project/project-detail-info-sections";
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
@@ -19,6 +20,8 @@ import {
   projectCanonicalUrl,
 } from "@/lib/share/project-share";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
+import { canManageProject } from "@/lib/project-permissions";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +55,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   }
 
   const { data, fromDb } = loaded;
+  const session = await auth();
+  let showManageLink = false;
+  if (fromDb && process.env.DATABASE_URL?.trim()) {
+    const owners = await prisma.project.findUnique({
+      where: { slug },
+      select: { createdById: true, claimedByUserId: true },
+    });
+    if (owners) {
+      showManageLink = canManageProject(session?.user?.id, owners);
+    }
+  }
+
   const socials = sortProjectSocials(data.socials);
 
   const hasDescription = Boolean(data.description.trim());
@@ -70,6 +85,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   });
 
   const canonicalProjectUrl = projectCanonicalUrl(slug);
+  const shareSnippet = buildProjectShareSnippet(data);
+  const shareClipboardText = buildProjectShareClipboardText(data, slug);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -80,14 +97,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           name={data.name}
           tagline={data.tagline}
           createdAt={data.createdAt}
-        />
-
-        <ProjectPublicShareBar
-          name={data.name}
-          tagline={data.tagline}
-          shareSnippet={buildProjectShareSnippet(data)}
-          canonicalUrl={canonicalProjectUrl}
-          shareClipboardText={buildProjectShareClipboardText(data, slug)}
+          actions={
+            <ProjectHeroPublicActions
+              slug={slug}
+              name={data.name}
+              tagline={data.tagline}
+              shareSnippet={shareSnippet}
+              canonicalUrl={canonicalProjectUrl}
+              shareClipboardText={shareClipboardText}
+              showManageLink={showManageLink}
+            />
+          }
         />
 
         <ProjectUpdates slug={slug} updates={data.updates} fromDb={fromDb} canManage={false} />
