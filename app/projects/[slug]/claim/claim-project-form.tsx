@@ -74,7 +74,7 @@ export function ClaimProjectForm({
           {pending ? "提交中…" : "认领项目"}
         </button>
         <Link
-          href={`/projects/${slug}`}
+          href={`/projects/${encodeURIComponent(slug)}`}
           className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
         >
           返回项目页

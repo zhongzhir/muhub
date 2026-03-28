@@ -52,10 +52,13 @@ export default async function ClaimProjectPage({ params }: PageProps) {
             该项目未绑定代码仓库地址，无法通过仓库认领。请先编辑项目补充 GitHub / Gitee URL。
           </p>
           <p className="mt-6 flex flex-wrap gap-4 text-sm">
-            <Link href={`/projects/${slug}`} className="underline underline-offset-4">
+            <Link href={`/projects/${encodeURIComponent(slug)}`} className="underline underline-offset-4">
               返回项目页
             </Link>
-            <Link href={`/dashboard/projects/${slug}/edit`} className="underline underline-offset-4">
+            <Link
+              href={`/dashboard/projects/${encodeURIComponent(slug)}/edit`}
+              className="underline underline-offset-4"
+            >
               编辑项目
             </Link>
           </p>
@@ -76,7 +79,7 @@ export default async function ClaimProjectPage({ params }: PageProps) {
             该项目已被认领
           </p>
           <p className="mt-6">
-            <Link href={`/projects/${slug}`} className="text-sm underline underline-offset-4">
+            <Link href={`/projects/${encodeURIComponent(slug)}`} className="text-sm underline underline-offset-4">
               返回项目页
             </Link>
           </p>
@@ -96,7 +99,7 @@ export default async function ClaimProjectPage({ params }: PageProps) {
           <Link href="/" className="underline-offset-4 hover:underline">
             返回首页
           </Link>
-          <Link href={`/projects/${slug}`} className="underline-offset-4 hover:underline">
+          <Link href={`/projects/${encodeURIComponent(slug)}`} className="underline-offset-4 hover:underline">
             返回项目页
           </Link>
         </p>
