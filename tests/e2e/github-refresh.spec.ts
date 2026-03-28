@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
+import { getCreateProjectSubmitButton } from "./helpers/new-project-form";
 import {
   waitForDashboardProjectUrl,
   waitForProjectSlugAfterCreate,
@@ -22,7 +23,7 @@ test.describe("GitHub 手动刷新快照", () => {
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
     await page.locator("#githubUrl").fill("https://github.com/muhub/e2e-fixture");
-    await page.getByRole("button", { name: "创建项目" }).click();
+    await getCreateProjectSubmitButton(page).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 
     await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}`);

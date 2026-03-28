@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
+import { getCreateProjectSubmitButton } from "./helpers/new-project-form";
 import {
   waitForDashboardProjectUrl,
   waitForProjectSlugAfterCreate,
@@ -23,7 +24,7 @@ test.describe("项目动态", () => {
 
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
-    await page.getByRole("button", { name: "创建项目" }).click();
+    await getCreateProjectSubmitButton(page).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 
     // 与产品一致：从详情页「发布动态」进入，避免 goto 手工 encode 与 Next Link 不一致导致查库/权限异常

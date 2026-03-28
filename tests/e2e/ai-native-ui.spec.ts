@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
+import { getCreateProjectSubmitButton } from "./helpers/new-project-form";
 import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("AI Native 第一阶段（UI 与降级）", () => {
@@ -30,7 +31,7 @@ test.describe("AI Native 第一阶段（UI 与降级）", () => {
     const projectName = `AI 降级测-${id}`;
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
-    await page.getByRole("button", { name: "创建项目" }).click();
+    await getCreateProjectSubmitButton(page).click();
     await waitForProjectSlugAfterCreate(page);
     await expect(page.getByRole("heading", { name: projectName })).toBeVisible();
   });

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { slugifyProjectName } from "@/lib/project-slug";
 import { loginAsE2EUser } from "./helpers/auth";
+import { getCreateProjectSubmitButton } from "./helpers/new-project-form";
 import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("创建项目链路", () => {
@@ -23,7 +24,7 @@ test.describe("创建项目链路", () => {
     await page.locator("#weibo").fill("@e2e-weibo");
     await page.locator("#wechat_official").fill("E2E 公众号");
 
-    await page.getByRole("button", { name: "创建项目" }).click();
+    await getCreateProjectSubmitButton(page).click();
 
     const slug = await waitForProjectSlugAfterCreate(page);
     expect(slug).toMatch(

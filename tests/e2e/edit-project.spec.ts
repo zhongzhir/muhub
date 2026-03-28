@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
+import { getCreateProjectSubmitButton } from "./helpers/new-project-form";
 import {
   waitForProjectDetailUrl,
   waitForProjectSlugAfterCreate,
@@ -16,7 +17,7 @@ test.describe("编辑项目链路", () => {
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
     await page.locator("#tagline").fill("原始标语");
-    await page.getByRole("button", { name: "创建项目" }).click();
+    await getCreateProjectSubmitButton(page).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 
     await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}/edit`);
