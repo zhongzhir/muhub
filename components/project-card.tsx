@@ -5,7 +5,14 @@ import { buildProjectBadgeGroups } from "@/lib/project-badges";
 import { formatListDate } from "@/lib/format-date";
 import { codeHostLinkLabel } from "@/lib/repo-platform";
 
-export function ProjectCard({ project }: { project: ProjectListItem }) {
+export function ProjectCard({
+  project,
+  hideUnclaimedLifecycle,
+}: {
+  project: ProjectListItem;
+  /** 仪表盘等场景不展示「未认领」生命周期角标 */
+  hideUnclaimedLifecycle?: boolean;
+}) {
   const taglineDisplay = project.tagline?.trim() ? project.tagline : "暂无简介";
   const { source, lifecycle } = buildProjectBadgeGroups({
     slug: project.slug,
@@ -15,6 +22,9 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
     claimStatus: project.claimStatus,
     status: project.status,
   });
+  const lifecycleForStrip = hideUnclaimedLifecycle
+    ? lifecycle.filter((b) => b.key !== "life-unclaimed")
+    : lifecycle;
 
   return (
     <article
@@ -29,7 +39,7 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{taglineDisplay}</p>
         </div>
 
-        <ProjectBadgeStrip source={source} lifecycle={lifecycle} theme="light" />
+        <ProjectBadgeStrip source={source} lifecycle={lifecycleForStrip} theme="light" />
 
         <dl className="grid gap-1 text-sm text-zinc-600 dark:text-zinc-400">
           <div className="flex flex-wrap gap-x-2">

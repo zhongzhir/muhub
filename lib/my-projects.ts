@@ -2,9 +2,10 @@ import type { ClaimStatus, ProjectStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListItem } from "@/lib/project-list";
 
-export type MyProjectRow = ProjectListItem;
+export type MyProjectRow = ProjectListItem & { id: string };
 
 function mapMyProjectRow(r: {
+  id: string;
   slug: string;
   name: string;
   tagline: string | null;
@@ -17,6 +18,7 @@ function mapMyProjectRow(r: {
   _count: { socialAccounts: number };
 }): MyProjectRow {
   return {
+    id: r.id,
     slug: r.slug,
     name: r.name,
     tagline: r.tagline,
@@ -31,6 +33,7 @@ function mapMyProjectRow(r: {
 }
 
 const myProjectSelect = {
+  id: true,
   slug: true,
   name: true,
   tagline: true,
@@ -53,6 +56,33 @@ export async function fetchMyCreatedProjects(userId: string): Promise<MyProjectR
     select: myProjectSelect,
   });
   return rows.map(mapMyProjectRow);
+}
+
+/**
+ * 合并「创建」与「认领」列表：先按 id 去重，再按 slug 兜底去重；稳定按创建时间倒序。
+ * 同一项目在两侧各出现一次时只保留一条（优先保留 created 列表中的那条）。
+ */
+export function mergeMyProjectRows(created: MyProjectRow[], claimed: MyProjectRow[]): MyProjectRow[] {
+  const byId = new Map<string, MyProjectRow>();
+  for (const p of created) {
+    byId.set(p.id, p);
+  }
+  for (const p of claimed) {
+    if (!byId.has(p.id)) {
+      byId.set(p.id, p);
+    }
+  }
+  const seenSlug = new Set<string>();
+  const out: MyProjectRow[] = [];
+  for (const p of byId.values()) {
+    if (seenSlug.has(p.slug)) {
+      continue;
+    }
+    seenSlug.add(p.slug);
+    out.push(p);
+  }
+  out.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return out;
 }
 
 export async function fetchMyClaimedProjects(userId: string): Promise<MyProjectRow[]> {
