@@ -19,7 +19,8 @@
     "cron:all": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/cron_all.ts",
     "brand:slice": "node scripts/slice_brand_from_source.mjs",
     "seo:assets": "node scripts/build-seo-assets.mjs",
-    "pwa:icons": "node scripts/build-pwa-icons.mjs"
+    "pwa:icons": "node scripts/build-pwa-icons.mjs",
+    "growth": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-growth.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
