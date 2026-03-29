@@ -49,7 +49,15 @@ export function CreateProjectMenu() {
             手动创建项目
           </Link>
           <Link href="/dashboard/projects/import" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-            导入项目
+            从 GitHub 导入
+          </Link>
+          <Link
+            href="/dashboard/import-project"
+            role="menuitem"
+            className={itemClass}
+            onClick={() => setOpen(false)}
+          >
+            导入外部项目（运营）
           </Link>
         </div>
       ) : null}

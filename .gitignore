@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# V1.1 Growth：本地待导入队列（可选落盘，不提交实际数据）
+data/pending-external-imports.json

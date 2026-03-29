@@ -26,13 +26,17 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <div className="mx-auto max-w-4xl px-6 py-12">
-        <p className="mb-6 text-sm text-zinc-500">
+        <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500">
           <Link href="/" className="underline-offset-4 hover:underline">
             返回首页
           </Link>
-          <span className="mx-2 text-zinc-300">·</span>
+          <span className="text-zinc-300">·</span>
           <Link href="/projects" className="underline-offset-4 hover:underline">
             项目广场
+          </Link>
+          <span className="text-zinc-300">·</span>
+          <Link href="/dashboard/import-project" className="underline-offset-4 hover:underline">
+            导入外部项目
           </Link>
         </p>
 

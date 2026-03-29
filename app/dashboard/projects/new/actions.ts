@@ -7,6 +7,7 @@ import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
 import { parseSocialInput } from "@/lib/social-input";
 import { prisma } from "@/lib/prisma";
+import { getProjectSourceById } from "@/agents/sources/source-registry";
 import { fallbackSlugBase, isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 
 export type CreateProjectFormState = {
@@ -15,6 +16,8 @@ export type CreateProjectFormState = {
   fieldErrors?: Partial<Record<string, string>>;
   /** 创建成功：客户端 router.push，避免 useActionState 下 redirect 不生效 */
   redirectPath?: string;
+  /** 创建成功时带回 slug，供导入页等展示管理链接（不写库） */
+  createdSlug?: string;
 };
 
 const initialFail: CreateProjectFormState = { ok: false };
@@ -63,7 +66,7 @@ export async function createProject(
   const name = String(formData.get("name") ?? "").trim();
   const slugOverrideRaw = String(formData.get("slugOverride") ?? "").trim();
   const tagline = String(formData.get("tagline") ?? "").trim() || null;
-  const description = String(formData.get("description") ?? "").trim() || null;
+  let description = String(formData.get("description") ?? "").trim() || null;
   const githubUrlRaw = String(formData.get("githubUrl") ?? "").trim();
   const giteeUrlRaw = String(formData.get("giteeUrl") ?? "").trim();
   const websiteUrlRaw = String(formData.get("websiteUrl") ?? "").trim();
@@ -152,6 +155,35 @@ export async function createProject(
     return { ...initialFail, fieldErrors };
   }
 
+  const tagsRaw = String(formData.get("tags") ?? "").trim();
+  const tags = tagsRaw
+    ? tagsRaw
+        .split(/[,，]/)
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .slice(0, 64)
+    : [];
+
+  const growthSourceId = String(formData.get("growthSourceId") ?? "").trim();
+  const importNotes = String(formData.get("importNotes") ?? "").trim();
+
+  const metaLines: string[] = [];
+  if (growthSourceId) {
+    const growthSrc = getProjectSourceById(growthSourceId);
+    metaLines.push(
+      growthSrc
+        ? `【增长来源】${growthSrc.name}（${growthSourceId}）`
+        : `【增长来源】${growthSourceId}`,
+    );
+  }
+  if (importNotes) {
+    metaLines.push(`【运营备注】${importNotes}`);
+  }
+  if (metaLines.length > 0) {
+    const meta = metaLines.join("\n");
+    description = description ? `${description}\n\n${meta}` : meta;
+  }
+
   let slug: string;
   try {
     slug = await allocateUniqueSlug(baseSlug ?? fallbackSlugBase());
@@ -233,6 +265,7 @@ export async function createProject(
         slug,
         tagline,
         description,
+        tags,
         githubUrl,
         websiteUrl,
         sourceType,
@@ -280,5 +313,5 @@ export async function createProject(
     };
   }
 
-  return { ok: true, redirectPath: `/projects/${slug}` };
+  return { ok: true, redirectPath: `/projects/${slug}`, createdSlug: slug };
 }
