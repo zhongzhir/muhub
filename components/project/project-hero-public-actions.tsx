@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { ProjectEngagementPublic } from "@/lib/project-engagement";
+import { ProjectEngagementBar } from "@/components/project/project-engagement-bar";
 import { ProjectShareDialog } from "@/components/project/project-share-dialog";
 
 export type ProjectHeroPublicActionsProps = {
@@ -13,6 +15,14 @@ export type ProjectHeroPublicActionsProps = {
   description?: string;
   /** 当前用户可管理该项目时显示「进入管理」 */
   showManageLink: boolean;
+  /** 点赞/关注（仅正式库项目可交互） */
+  engagement?: {
+    projectId: string | null;
+    interactive: boolean;
+    viewerLoggedIn: boolean;
+    initial: ProjectEngagementPublic;
+    signInCallbackPath: string;
+  };
 };
 
 const shareBtnClass =
@@ -29,14 +39,25 @@ export function ProjectHeroPublicActions({
   canonicalUrl,
   description,
   showManageLink,
+  engagement,
 }: ProjectHeroPublicActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
 
   return (
     <div
-      className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:flex-col lg:items-end"
+      className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:flex-col lg:items-end"
       data-testid="project-hero-public-actions"
     >
+      {engagement ? (
+        <ProjectEngagementBar
+          slug={slug}
+          projectId={engagement.projectId}
+          interactive={engagement.interactive}
+          viewerLoggedIn={engagement.viewerLoggedIn}
+          initial={engagement.initial}
+          signInCallbackPath={engagement.signInCallbackPath}
+        />
+      ) : null}
       <button type="button" className={shareBtnClass} onClick={() => setShareOpen(true)}>
         分享项目
       </button>

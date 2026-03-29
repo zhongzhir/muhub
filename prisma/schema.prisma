@@ -71,6 +71,10 @@ model User {
 
   createdProjects Project[] @relation("ProjectCreator")
   claimedProjects Project[] @relation("ProjectClaimer")
+  /** 用户点赞的项目（热度信号；唯一约束在 ProjectLike） */
+  projectLikes   ProjectLike[]
+  /** 用户关注的项目；后续站内更新提醒 / 邮件订阅等可基于此查询 */
+  projectFollows ProjectFollow[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -165,9 +169,42 @@ model Project {
   updates           ProjectUpdate[]
   githubSnapshots   GithubRepoSnapshot[]
   weeklySummaries   ProjectWeeklySummary[]
+  likes             ProjectLike[]
+  followers         ProjectFollow[]
 
   @@index([createdById])
   @@index([claimedByUserId])
+}
+
+/** 项目点赞（每用户每项目至多一条） */
+model ProjectLike {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+/**
+ * 关注项目（每用户每项目至多一条）。
+ * 未来可扩展：站内动态提醒、邮件订阅、用户「已关注项目」列表等，请通过本表查询而非一次性逻辑。
+ */
+model ProjectFollow {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
 }
 
 /** AI 多源动态周总结（由定时脚本写入，项目页展示最新一条） */

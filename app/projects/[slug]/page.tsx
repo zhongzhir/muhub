@@ -16,6 +16,7 @@ import { getProjectSources } from "@/lib/project-sources";
 import { ProjectJsonLd } from "@/components/project/project-json-ld";
 import { buildProjectShareSnippet, projectCanonicalUrl } from "@/lib/share/project-share";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
+import { getProjectEngagementForSlug } from "@/lib/project-engagement";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
 
@@ -84,6 +85,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const shareSnippet = buildProjectShareSnippet(data);
   const descriptionForShare = data.description.trim() || undefined;
 
+  const { projectId, engagement } = await getProjectEngagementForSlug(slug, session?.user?.id);
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <ProjectJsonLd data={data} slug={slug} />
@@ -102,6 +105,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               canonicalUrl={canonicalProjectUrl}
               description={descriptionForShare}
               showManageLink={showManageLink}
+              engagement={{
+                projectId,
+                interactive: fromDb && Boolean(projectId),
+                viewerLoggedIn: Boolean(session?.user?.id),
+                initial: engagement,
+                signInCallbackPath: `/projects/${slug}`,
+              }}
             />
           }
         />
