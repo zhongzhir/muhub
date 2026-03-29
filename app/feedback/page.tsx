@@ -33,17 +33,17 @@ export default function FeedbackPage() {
             你可以这样反馈
           </h2>
           <ul className="mt-4 list-inside list-disc space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            <li>
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">邮件（占位）</strong>
-              ：正式支持邮箱上线后将更新在本页；此前可优先通过公开代码仓库的工单留言。
+            <li className="pl-0">
+              <strong className="font-medium text-zinc-700 dark:text-zinc-300">邮件</strong>
+              ：3957410054@qq.com
+              <br />
+              <span className="mt-1 block text-zinc-600 dark:text-zinc-400">
+                如在使用过程中遇到问题、发现 Bug 或有产品建议，欢迎随时通过邮件联系我们。
+              </span>
             </li>
             <li>
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">代码仓库工单（占位）</strong>
-              ：若仓库已公开，可通过工单与讨论区提交可复现步骤与期望行为；链接待运营侧同步至此页。
-            </li>
-            <li>
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">产品内路径</strong>
-              ：创建或编辑项目时遇到流程问题，可一并写在反馈里，便于我们对照场景迭代。
+              <strong className="font-medium text-zinc-700 dark:text-zinc-300">产品路径反馈</strong>
+              ：创建或编辑项目时遇到流程问题，可一并写在反馈里，便于我们对照复现与优化。
             </li>
           </ul>
         </section>

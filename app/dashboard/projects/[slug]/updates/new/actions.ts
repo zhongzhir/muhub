@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
+import { createAndFanOutUpdatePostedNotification } from "@/lib/project-notifications";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
 export type PublishProjectUpdateFormState = {
@@ -38,7 +39,7 @@ export async function publishProjectUpdate(
 
   const project = await prisma.project.findUnique({
     where: { slug },
-    select: { id: true, createdById: true, claimedByUserId: true },
+    select: { id: true, name: true, createdById: true, claimedByUserId: true },
   });
 
   if (!project) {
@@ -65,7 +66,7 @@ export async function publishProjectUpdate(
   }
 
   try {
-    await prisma.projectUpdate.create({
+    const created = await prisma.projectUpdate.create({
       data: {
         projectId: project.id,
         sourceType: "MANUAL",
@@ -74,9 +75,22 @@ export async function publishProjectUpdate(
         content,
         isAiGenerated: false,
       },
+      select: { id: true },
     });
+    try {
+      await createAndFanOutUpdatePostedNotification({
+        projectId: project.id,
+        projectSlug: slug,
+        projectName: project.name,
+        sourceUpdateId: created.id,
+        updateTitle: title,
+      });
+    } catch (notifyErr) {
+      console.error("[publishProjectUpdate] fan-out notifications", notifyErr);
+    }
     revalidatePath(`/projects/${slug}`, "page");
     revalidatePath(`/dashboard/projects/${slug}`, "page");
+    revalidatePath("/dashboard", "page");
   } catch (e) {
     console.error("[publishProjectUpdate]", e);
     return {

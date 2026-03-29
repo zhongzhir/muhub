@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
 import { ProjectHeroPublicActions } from "@/components/project/project-hero-public-actions";
 import { ProjectUpdates } from "@/components/project/project-updates";
+import { ProjectInterpretationSection } from "@/components/project/project-interpretation-section";
 import { ProjectDetailInfoSections } from "@/components/project/project-detail-info-sections";
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
 import {
@@ -17,6 +18,7 @@ import { ProjectJsonLd } from "@/components/project/project-json-ld";
 import { buildProjectShareSnippet, projectCanonicalUrl } from "@/lib/share/project-share";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { getProjectEngagementForSlug } from "@/lib/project-engagement";
+import { getProjectInterpretation } from "@/lib/project-interpretation";
 import { canManageProject } from "@/lib/project-permissions";
 import { prisma } from "@/lib/prisma";
 
@@ -86,6 +88,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const descriptionForShare = data.description.trim() || undefined;
 
   const { projectId, engagement } = await getProjectEngagementForSlug(slug, session?.user?.id);
+  const interpretation = getProjectInterpretation(data);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -117,6 +120,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         />
 
         <ProjectUpdates slug={slug} updates={data.updates} fromDb={fromDb} canManage={false} />
+
+        <ProjectInterpretationSection interpretation={interpretation} />
 
         <ProjectDetailInfoSections
           data={data}

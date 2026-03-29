@@ -47,6 +47,11 @@ enum ClaimStatus {
   CLAIMED
 }
 
+/** 项目侧通知事件类型（站内轻通知 V1；后续可扩展 PR 同步等） */
+enum ProjectNotificationEventType {
+  UPDATE_POSTED
+}
+
 /** 项目外部信息源（与 Project.githubUrl / websiteUrl 并存，逐步收敛至此表） */
 enum ProjectSourceKind {
   GITHUB
@@ -75,6 +80,8 @@ model User {
   projectLikes   ProjectLike[]
   /** 用户关注的项目；后续站内更新提醒 / 邮件订阅等可基于此查询 */
   projectFollows ProjectFollow[]
+  /** 站内轻通知收件箱（关注项目动态等） */
+  userNotifications UserNotification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -171,6 +178,8 @@ model Project {
   weeklySummaries   ProjectWeeklySummary[]
   likes             ProjectLike[]
   followers         ProjectFollow[]
+  notificationEvents  ProjectNotificationEvent[]
+  userInboxNotifications UserNotification[]
 
   @@index([createdById])
   @@index([claimedByUserId])
@@ -262,7 +271,45 @@ model ProjectUpdate {
   isAiGenerated Boolean               @default(false)
   occurredAt  DateTime?
   createdAt   DateTime                @default(now())
+  /** 由本条动态触发的站内通知事件（可空：动态删除时事件保留但脱钩） */
+  notificationEvents ProjectNotificationEvent[]
 
+  @@index([projectId])
+}
+
+/** 项目侧「可通知」事件一条；向所有关注用户 fan-out 为 UserNotification */
+model ProjectNotificationEvent {
+  id               String                        @id @default(cuid())
+  projectId        String
+  type             ProjectNotificationEventType
+  title            String
+  message          String                        @db.Text
+  sourceUpdateId   String?
+  project          Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceUpdate     ProjectUpdate?                @relation(fields: [sourceUpdateId], references: [id], onDelete: SetNull)
+  createdAt        DateTime                      @default(now())
+  recipientRecords UserNotification[]
+
+  @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([sourceUpdateId])
+}
+
+/** 用户收件箱：一条对应一个 ProjectNotificationEvent，读状态独立 */
+model UserNotification {
+  id                        String                   @id @default(cuid())
+  userId                    String
+  projectNotificationEventId String
+  projectId                 String
+  readAt                    DateTime?
+  createdAt                 DateTime                 @default(now())
+  user                      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event                     ProjectNotificationEvent @relation(fields: [projectNotificationEventId], references: [id], onDelete: Cascade)
+  project                   Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectNotificationEventId])
+  @@index([userId])
+  @@index([userId, readAt])
   @@index([projectId])
 }
 

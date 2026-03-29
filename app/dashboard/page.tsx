@@ -2,11 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ProjectCard } from "@/components/project-card";
+import { FollowingUpdatesPanel } from "@/components/notifications/following-updates-panel";
 import {
   fetchMyClaimedProjects,
   fetchMyCreatedProjects,
   mergeMyProjectRows,
 } from "@/lib/my-projects";
+import { getRecentFollowingUpdateNotificationsForUser } from "@/lib/project-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,16 @@ export default async function DashboardPage() {
     fetchMyClaimedProjects(userId),
   ]);
   const projects = mergeMyProjectRows(created, claimed);
+  const notifRows = await getRecentFollowingUpdateNotificationsForUser(userId, 8);
+  const notificationsForPanel = notifRows.map((n) => ({
+    id: n.id,
+    projectSlug: n.projectSlug,
+    projectName: n.projectName,
+    eventTitle: n.eventTitle,
+    message: n.message,
+    createdAtIso: n.createdAt.toISOString(),
+    readAtIso: n.readAt ? n.readAt.toISOString() : null,
+  }));
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -37,6 +49,10 @@ export default async function DashboardPage() {
           <span className="text-zinc-300">·</span>
           <Link href="/dashboard/import-project" className="underline-offset-4 hover:underline">
             导入外部项目
+          </Link>
+          <span className="text-zinc-300">·</span>
+          <Link href="/dashboard/following" className="underline-offset-4 hover:underline">
+            我关注的项目
           </Link>
           <span className="text-zinc-300">·</span>
           <Link
@@ -62,6 +78,8 @@ export default async function DashboardPage() {
             这里汇总你创建与认领的项目。使用「管理项目」进入工作台维护资料与动态；「查看项目」打开对外公开展示页。
           </p>
         </header>
+
+        <FollowingUpdatesPanel notifications={notificationsForPanel} />
 
         <section aria-labelledby="my-projects-list-heading">
           <h2 id="my-projects-list-heading" className="sr-only">

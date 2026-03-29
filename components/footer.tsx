@@ -8,7 +8,7 @@ export function SiteFooter() {
         © 木哈布 MUHUB
         <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
         <Link href="/feedback" className="underline-offset-4 hover:underline">
-          反馈建议
+          反馈与建议
         </Link>
       </p>
       <PwaInstallButton />
