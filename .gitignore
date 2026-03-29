@@ -45,3 +45,9 @@ next-env.d.ts
 
 # V1.1 Growth：本地待导入队列（可选落盘，不提交实际数据）
 data/pending-external-imports.json
+
+# V1.2 Content Agent：本地草稿（可迁移 DB）
+data/content-drafts.json
+
+# V1.3 Growth：内容资产包（可迁移 DB）
+data/content-bundles.json

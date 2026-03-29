@@ -38,6 +38,22 @@ export default async function DashboardPage() {
           <Link href="/dashboard/import-project" className="underline-offset-4 hover:underline">
             导入外部项目
           </Link>
+          <span className="text-zinc-300">·</span>
+          <Link
+            href="/dashboard/content-drafts"
+            className="text-zinc-400 underline-offset-4 hover:underline dark:text-zinc-500"
+            title="内部运营：内容草稿"
+          >
+            内容草稿
+          </Link>
+          <span className="text-zinc-300">·</span>
+          <Link
+            href="/dashboard/growth"
+            className="text-zinc-400 underline-offset-4 hover:underline dark:text-zinc-500"
+            title="内部运营：增长中心 / 资产包"
+          >
+            增长中心
+          </Link>
         </p>
 
         <header className="mb-10">

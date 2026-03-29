@@ -20,7 +20,9 @@
     "brand:slice": "node scripts/slice_brand_from_source.mjs",
     "seo:assets": "node scripts/build-seo-assets.mjs",
     "pwa:icons": "node scripts/build-pwa-icons.mjs",
-    "growth": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-growth.ts"
+    "growth": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-growth.ts",
+    "content:generation": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-content-agent.ts",
+    "growth:launch": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-launch-content.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
