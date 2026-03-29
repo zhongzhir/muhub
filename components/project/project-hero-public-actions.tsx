@@ -25,11 +25,8 @@ export type ProjectHeroPublicActionsProps = {
   };
 };
 
-const shareBtnClass =
-  "inline-flex w-full items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 shadow-sm transition hover:border-zinc-400 hover:bg-zinc-50 sm:w-auto dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800";
-
-const manageLinkClass =
-  "inline-flex w-full items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-medium text-zinc-600 underline-offset-4 transition hover:bg-zinc-100/80 hover:text-zinc-900 hover:underline sm:w-auto dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200";
+const inlineActionClass =
+  "inline-flex max-w-full shrink-0 items-baseline gap-1 rounded-md px-1 py-0.5 text-sm text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200";
 
 export function ProjectHeroPublicActions({
   slug,
@@ -44,32 +41,36 @@ export function ProjectHeroPublicActions({
   const [shareOpen, setShareOpen] = useState(false);
 
   return (
-    <div
-      className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:flex-col lg:items-end"
-      data-testid="project-hero-public-actions"
-    >
-      {engagement ? (
-        <ProjectEngagementBar
-          slug={slug}
-          projectId={engagement.projectId}
-          interactive={engagement.interactive}
-          viewerLoggedIn={engagement.viewerLoggedIn}
-          initial={engagement.initial}
-          signInCallbackPath={engagement.signInCallbackPath}
-        />
-      ) : null}
-      <button type="button" className={shareBtnClass} onClick={() => setShareOpen(true)}>
-        分享项目
-      </button>
-      {showManageLink ? (
-        <Link
-          href={`/dashboard/projects/${encodeURIComponent(slug)}`}
-          className={manageLinkClass}
-          data-testid="project-hero-enter-manage"
-        >
-          进入管理
-        </Link>
-      ) : null}
+    <>
+      <div
+        className="flex flex-wrap items-baseline gap-x-4 gap-y-2"
+        data-testid="project-hero-public-actions"
+      >
+        {engagement ? (
+          <ProjectEngagementBar
+            slug={slug}
+            projectId={engagement.projectId}
+            interactive={engagement.interactive}
+            viewerLoggedIn={engagement.viewerLoggedIn}
+            initial={engagement.initial}
+            signInCallbackPath={engagement.signInCallbackPath}
+          />
+        ) : null}
+        <button type="button" className={inlineActionClass} onClick={() => setShareOpen(true)}>
+          <span aria-hidden>📤</span>
+          分享
+        </button>
+        {showManageLink ? (
+          <Link
+            href={`/dashboard/projects/${encodeURIComponent(slug)}`}
+            className={inlineActionClass}
+            data-testid="project-hero-enter-manage"
+          >
+            <span aria-hidden>⚙️</span>
+            管理
+          </Link>
+        ) : null}
+      </div>
       <ProjectShareDialog
         open={shareOpen}
         onOpenChange={setShareOpen}
@@ -80,6 +81,6 @@ export function ProjectHeroPublicActions({
         canonicalUrl={canonicalUrl}
         description={description}
       />
-    </div>
+    </>
   );
 }
