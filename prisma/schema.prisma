@@ -52,6 +52,13 @@ enum ProjectNotificationEventType {
   UPDATE_POSTED
 }
 
+/** 自动发现候选项目状态：仅人工确认后再进入广场 */
+enum DiscoveredProjectCandidateStatus {
+  pending
+  imported
+  discarded
+}
+
 /** 项目外部信息源（与 Project.githubUrl / websiteUrl 并存，逐步收敛至此表） */
 enum ProjectSourceKind {
   GITHUB
@@ -85,6 +92,31 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/** GitHub 等来源自动发现的待导入项目（不入广场直至人工导入） */
+model DiscoveredProjectCandidate {
+  id           String                           @id @default(cuid())
+  source       String
+  sourceId     String
+  sourceUrl    String
+  name         String
+  description  String?                          @db.Text
+  ownerName    String
+  repoUrl      String
+  homepageUrl  String?
+  stars        Int                              @default(0)
+  primaryLanguage String?
+  lastPushedAt DateTime?
+  /** V1 启发式「可能与中国团队相关」，非精准识别 */
+  isChineseRelated Boolean                       @default(false)
+  status       DiscoveredProjectCandidateStatus  @default(pending)
+  rawPayload   Json?
+  discoveredAt DateTime                         @default(now())
+  updatedAt    DateTime                         @updatedAt
+
+  @@unique([source, sourceId])
+  @@index([status, discoveredAt(sort: Desc)])
 }
 
 /** NextAuth.js / Auth.js OAuth 账户关联 */

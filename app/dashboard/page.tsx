@@ -54,6 +54,10 @@ export default async function DashboardPage() {
           <Link href="/dashboard/following" className="underline-offset-4 hover:underline">
             我关注的项目
           </Link>
+          <span className="text-zinc-300">·</span>
+          <Link href="/dashboard/discovery" className="text-zinc-400 underline-offset-4 hover:underline dark:text-zinc-500">
+            自动发现
+          </Link>
         </p>
 
         <header className="mb-10">
