@@ -41,7 +41,7 @@ if (
 ) {
   const origin = authOrigin.replace(/\/$/, "");
   console.info(
-    `[auth] GitHub OAuth：请在 https://github.com/settings/developers 中该应用的「Authorization callback URL」添加（与当前环境完全一致）：\n` +
+    `[auth] GitHub OAuth：请在 https://github.com/settings/developers 中「OAuth App」的「Authorization callback URL」添加（逐字一致；www 与无 www 为两条不同 URL）：\n` +
       `    ${origin}/api/auth/callback/github`,
   );
 }

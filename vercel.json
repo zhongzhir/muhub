@@ -1,3 +1,11 @@
 {
-  "installCommand": "pnpm install"
+  "installCommand": "pnpm install",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "muhub.cn" }],
+      "destination": "https://www.muhub.cn/:path*",
+      "permanent": true
+    }
+  ]
 }
