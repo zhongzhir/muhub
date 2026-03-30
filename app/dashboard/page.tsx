@@ -47,35 +47,19 @@ export default async function DashboardPage() {
             项目广场
           </Link>
           <span className="text-zinc-300">·</span>
-          <Link href="/dashboard/import-project" className="underline-offset-4 hover:underline">
-            导入外部项目
+          <Link href="/dashboard/projects/new" className="underline-offset-4 hover:underline">
+            创建项目
           </Link>
           <span className="text-zinc-300">·</span>
           <Link href="/dashboard/following" className="underline-offset-4 hover:underline">
             我关注的项目
-          </Link>
-          <span className="text-zinc-300">·</span>
-          <Link
-            href="/dashboard/content-drafts"
-            className="text-zinc-400 underline-offset-4 hover:underline dark:text-zinc-500"
-            title="内部运营：内容草稿"
-          >
-            内容草稿
-          </Link>
-          <span className="text-zinc-300">·</span>
-          <Link
-            href="/dashboard/growth"
-            className="text-zinc-400 underline-offset-4 hover:underline dark:text-zinc-500"
-            title="内部运营：增长中心 / 资产包"
-          >
-            增长中心
           </Link>
         </p>
 
         <header className="mb-10">
           <h1 className="text-3xl font-semibold tracking-tight">我的项目</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-            这里汇总你创建与认领的项目。使用「管理项目」进入工作台维护资料与动态；「查看项目」打开对外公开展示页。
+            这里汇总你创建的项目。使用「管理项目」进入工作台维护资料与动态；「查看项目」打开对外公开展示页。
           </p>
         </header>
 

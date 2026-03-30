@@ -29,16 +29,13 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
 
         <header className="mb-10">
           <h1 className="text-3xl font-semibold tracking-tight">项目广场</h1>
-          <p className="mt-2 max-w-2xl text-zinc-600 dark:text-zinc-400">
-            浏览木哈布上公开展示的创业项目（仅展示标记为公开的项目）。
-          </p>
-          <p className="mt-3 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-            希望将你的项目收录到广场供他人浏览？
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <span className="font-medium text-zinc-800 dark:text-zinc-200">浏览公开展示的项目。希望展示你的项目？</span>{" "}
             <Link
               href="/dashboard/projects/new"
-              className="ml-1 font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+              className="font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
             >
-              申请收录：创建并设为公开
+              创建项目
             </Link>
           </p>
         </header>
@@ -139,7 +136,7 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
             <ul className="grid gap-6 sm:grid-cols-2">
               {items.map((p) => (
                 <li key={p.slug}>
-                  <ProjectCard project={p} />
+                  <ProjectCard project={p} variant="plaza" />
                 </li>
               ))}
             </ul>

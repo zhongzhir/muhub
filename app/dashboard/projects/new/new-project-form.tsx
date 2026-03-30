@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
-import { projectPublicPathPrefix } from "@/lib/seo/site";
 import type { NewProjectPrefill } from "./prefill";
 import { createProject, type CreateProjectFormState } from "./actions";
+import { prefillProjectFromImportUrl } from "./import-prefill-actions";
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
@@ -24,15 +25,49 @@ const emptyPrefill: NewProjectPrefill = {
   name: "",
   tagline: "",
   slug: "",
+  description: "",
   githubUrl: "",
+  giteeUrl: "",
   websiteUrl: "",
   creationSource: "manual",
 };
 
+function buildPrefillQuery(fields: NewProjectPrefill): string {
+  const q = new URLSearchParams();
+  if (fields.name) {
+    q.set("name", fields.name);
+  }
+  if (fields.tagline) {
+    q.set("tagline", fields.tagline);
+  }
+  if (fields.description) {
+    q.set("description", fields.description);
+  }
+  if (fields.slug) {
+    q.set("slug", fields.slug);
+  }
+  if (fields.githubUrl) {
+    q.set("githubUrl", fields.githubUrl);
+  }
+  if (fields.giteeUrl) {
+    q.set("giteeUrl", fields.giteeUrl);
+  }
+  if (fields.websiteUrl) {
+    q.set("websiteUrl", fields.websiteUrl);
+  }
+  if (fields.creationSource) {
+    q.set("creationSource", fields.creationSource);
+  }
+  return q.toString();
+}
+
 export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
   const p = prefill ?? emptyPrefill;
   const [state, formAction, pending] = useActionState(createProject, initialState);
-  const pathPrefix = projectPublicPathPrefix();
+  const router = useRouter();
+  const [importUrl, setImportUrl] = useState("");
+  const [importHint, setImportHint] = useState<string | null>(null);
+  const [importPending, startImportTransition] = useTransition();
 
   useRedirectFromActionState(state.redirectPath);
 
@@ -66,36 +101,69 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.name} />
         <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           保存后系统会根据<strong className="font-medium text-zinc-600 dark:text-zinc-300">项目名称</strong>
-          自动生成页面地址（支持中文）；若与他人重复，会自动加上「-2」「-3」等后缀。此地址用于木哈布站内项目页，不是
-          GitHub 仓库链接。
+          自动生成页面地址（支持中文）；若与其它项目命名冲突，会自动加上「-2」「-3」等后缀。
         </p>
 
-        <details className="mt-2 rounded-lg border border-zinc-200/90 bg-zinc-50/60 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900/35">
-          <summary className="cursor-pointer select-none text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            高级选项：自定义访问地址（可选）
-          </summary>
-          <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            默认无需填写。若填写，将优先使用该路径（经校验与去重）。前缀为{" "}
-            <span className="font-mono text-[11px] text-zinc-600 dark:text-zinc-400">{pathPrefix}</span>
+        <fieldset className="space-y-3 rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-3 dark:border-zinc-700 dark:bg-zinc-900/35">
+          <legend className={sectionTitle}>导入</legend>
+          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            输入 GitHub / Gitee / 官网等链接，系统会尽量预填项目信息。目前优先支持{" "}
+            <strong className="font-medium text-zinc-600 dark:text-zinc-300">代码仓库</strong>{" "}
+            链接，其他来源将逐步支持。
           </p>
-          <label className="mt-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400" htmlFor="project-slug-override">
-            自定义路径段
+          <label className="sr-only" htmlFor="import-source-url">
+            导入来源链接
           </label>
-          <input
-            id="project-slug-override"
-            className={inputClass}
-            name="slugOverride"
-            type="text"
-            autoComplete="off"
-            placeholder="留空则根据项目名称自动生成"
-            defaultValue={p.slug || undefined}
-            aria-describedby="slug-override-hint"
-          />
-          <p id="slug-override-hint" className="sr-only">
-            可选。可与中文、英文小写、数字及短横线组合。
-          </p>
-          <FieldError message={state.fieldErrors?.slugOverride} />
-        </details>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+            <input
+              id="import-source-url"
+              className={inputClass}
+              type="url"
+              inputMode="url"
+              autoComplete="off"
+              placeholder="https://github.com/owner/repo 或 Gitee 仓库地址"
+              value={importUrl}
+              disabled={importPending}
+              onChange={(e) => {
+                setImportUrl(e.target.value);
+                setImportHint(null);
+              }}
+            />
+            <button
+              type="button"
+              disabled={importPending}
+              className="shrink-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:w-auto sm:self-start"
+              onClick={() => {
+                setImportHint(null);
+                startImportTransition(async () => {
+                  const res = await prefillProjectFromImportUrl(importUrl);
+                  if (!res.ok) {
+                    setImportHint(res.message);
+                    return;
+                  }
+                  const qs = buildPrefillQuery({
+                    name: res.fields.name,
+                    tagline: res.fields.tagline,
+                    description: res.fields.description,
+                    slug: "",
+                    githubUrl: res.fields.githubUrl,
+                    giteeUrl: res.fields.giteeUrl,
+                    websiteUrl: res.fields.websiteUrl,
+                    creationSource: res.fields.creationSource,
+                  });
+                  router.replace(`/dashboard/projects/new?${qs}`);
+                });
+              }}
+            >
+              {importPending ? "解析中…" : "解析并预填"}
+            </button>
+          </div>
+          {importHint ? (
+            <p role="status" className="text-xs text-amber-800 dark:text-amber-200/90">
+              {importHint}
+            </p>
+          ) : null}
+        </fieldset>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tagline">
           一句话介绍
@@ -119,6 +187,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           name="description"
           rows={5}
           placeholder="支持多行描述（可选）"
+          defaultValue={p.description || undefined}
         />
       </fieldset>
 
@@ -148,6 +217,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           type="url"
           autoComplete="off"
           placeholder="https://gitee.com/org/repo"
+          defaultValue={p.giteeUrl || undefined}
         />
         <FieldError message={state.fieldErrors?.giteeUrl} />
 

@@ -4,7 +4,9 @@ export type NewProjectPrefill = {
   name: string;
   tagline: string;
   slug: string;
+  description: string;
   githubUrl: string;
+  giteeUrl: string;
   websiteUrl: string;
   /** import → 写库 `sourceType=import`，否则 manual */
   creationSource: string;
@@ -38,7 +40,9 @@ export function resolveNewProjectPrefill(
         name: rec.name,
         tagline: rec.tagline,
         slug: rec.slug,
+        description: "",
         githubUrl: `https://github.com/${rec.github}`,
+        giteeUrl: "",
         websiteUrl: "",
         creationSource: pickSearchParam(sp, "creationSource").trim() || "manual",
       };
@@ -53,7 +57,9 @@ export function resolveNewProjectPrefill(
     name: pickSearchParam(sp, "name"),
     tagline: pickSearchParam(sp, "tagline"),
     slug: pickSearchParam(sp, "slug"),
+    description: pickSearchParam(sp, "description"),
     githubUrl: githubUrlParam || githubFromImport,
+    giteeUrl: pickSearchParam(sp, "giteeUrl"),
     websiteUrl: pickSearchParam(sp, "websiteUrl"),
     creationSource: creationSource || "manual",
   };

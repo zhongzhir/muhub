@@ -9,7 +9,18 @@ const triggerClass =
 const itemClass =
   "block w-full px-3 py-2.5 text-left text-sm text-zinc-800 transition hover:bg-zinc-50 dark:text-zinc-100 dark:hover:bg-zinc-800/80";
 
-export function CreateProjectMenu() {
+export type CreateProjectMenuProps = {
+  /** 未登录时跳转登录后再进入对应流程 */
+  authenticated: boolean;
+};
+
+export function CreateProjectMenu({ authenticated }: CreateProjectMenuProps) {
+  const manualHref = authenticated
+    ? "/dashboard/projects/new"
+    : "/auth/signin?callbackUrl=/dashboard/projects/new";
+  const githubImportHref = authenticated
+    ? "/dashboard/projects/import"
+    : "/auth/signin?callbackUrl=/dashboard/projects/import";
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -45,19 +56,11 @@ export function CreateProjectMenu() {
           role="menu"
           className="absolute right-0 z-50 mt-1 min-w-[11rem] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
         >
-          <Link href="/dashboard/projects/new" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-            手动创建项目
+          <Link href={manualHref} role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+            手动创建
           </Link>
-          <Link href="/dashboard/projects/import" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+          <Link href={githubImportHref} role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
             从 GitHub 导入
-          </Link>
-          <Link
-            href="/dashboard/import-project"
-            role="menuitem"
-            className={itemClass}
-            onClick={() => setOpen(false)}
-          >
-            导入外部项目（运营）
           </Link>
         </div>
       ) : null}

@@ -42,9 +42,9 @@ export async function SiteHeader() {
           >
             项目广场
           </Link>
+          <CreateProjectMenu authenticated={Boolean(user)} />
           {user ? (
             <>
-              <CreateProjectMenu />
               <Link
                 href="/dashboard"
                 className="rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 sm:px-2.5 sm:text-sm dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"

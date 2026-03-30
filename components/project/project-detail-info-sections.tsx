@@ -113,28 +113,6 @@ export function ProjectDetailInfoSections({
       ) : null}
 
       <section
-        className="mt-6 scroll-mt-8"
-        aria-labelledby="project-tech-stack-heading"
-        data-testid="project-tech-stack-section"
-      >
-        <h2
-          id="project-tech-stack-heading"
-          className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
-        >
-          技术栈
-        </h2>
-        {data.tags && data.tags.length > 0 ? (
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-            与项目标签一致的技术与主题关键词：{data.tags.join("、")}。
-          </p>
-        ) : (
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            暂无单独维护的技术栈字段；可在编辑页为项目补充标签，用于标识技术方向与检索。
-          </p>
-        )}
-      </section>
-
-      <section
         className="mt-12 scroll-mt-8"
         aria-labelledby="project-sources-heading"
         data-testid="project-sources-section"
@@ -191,9 +169,18 @@ export function ProjectDetailInfoSections({
 
       <section className="mt-12 scroll-mt-8" aria-labelledby="repo-data-heading" data-testid="github-snapshot-section">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 id="repo-data-heading" className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            仓库数据
-          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id="repo-data-heading" className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              代码仓库数据
+            </h2>
+            <span
+              className="inline-flex h-5 min-w-[1.25rem] cursor-help items-center justify-center rounded-full border border-zinc-300 px-1 text-[11px] font-semibold leading-none text-zinc-500 dark:border-zinc-600 dark:text-zinc-400"
+              title="代码仓库数据用于展示项目公开代码仓库的基础活跃情况，例如最近更新、公开信息完整度等。这些数据只反映公开仓库侧信号，不等同于项目整体运营情况。"
+              aria-label="代码仓库数据说明"
+            >
+              ?
+            </span>
+          </div>
           {githubRefreshSlot}
         </div>
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-8">
@@ -311,6 +298,15 @@ export function ProjectDetailInfoSections({
               </dl>
             </>
           )}
+        </div>
+      </section>
+
+      <section className="mt-12 scroll-mt-8" aria-labelledby="ops-data-heading" data-testid="project-ops-data-section">
+        <h2 id="ops-data-heading" className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          运营数据
+        </h2>
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 md:p-8">
+          暂无运营数据
         </div>
       </section>
 

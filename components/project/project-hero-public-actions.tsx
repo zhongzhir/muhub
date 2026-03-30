@@ -15,6 +15,8 @@ export type ProjectHeroPublicActionsProps = {
   description?: string;
   /** 当前用户可管理该项目时显示「进入管理」 */
   showManageLink: boolean;
+  /** 对外认领入口（例如非管理者可见） */
+  claimHref?: string;
   /** 点赞/关注（仅正式库项目可交互） */
   engagement?: {
     projectId: string | null;
@@ -36,6 +38,7 @@ export function ProjectHeroPublicActions({
   canonicalUrl,
   description,
   showManageLink,
+  claimHref,
   engagement,
 }: ProjectHeroPublicActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
@@ -68,6 +71,12 @@ export function ProjectHeroPublicActions({
           >
             <span aria-hidden>⚙️</span>
             管理
+          </Link>
+        ) : null}
+        {claimHref ? (
+          <Link href={claimHref} className={inlineActionClass} data-testid="project-hero-claim">
+            <span aria-hidden>📋</span>
+            认领
           </Link>
         ) : null}
       </div>

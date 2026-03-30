@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ProjectUpdateSourceType } from "@prisma/client";
 import type { DemoUpdate } from "@/lib/demo-project";
 import { buildProjectUpdateStreamModel } from "@/lib/project-updates";
 
@@ -10,17 +9,9 @@ export type ProjectUpdatesProps = {
   canManage: boolean;
   /** 管理页：在标题行展示「发布动态」入口 */
   showHeaderPublishLink?: boolean;
+  /** 对外详情页：弱化来源标签，仅保留「最新动态」与时间 */
+  presentation?: "full" | "public";
 };
-
-function updateKindLabel(sourceType: ProjectUpdateSourceType): string | null {
-  if (sourceType === "MANUAL") {
-    return "动态";
-  }
-  if (sourceType === "OFFICIAL") {
-    return "公告";
-  }
-  return null;
-}
 
 /** 列表与摘要预览用文字截断，避免极长空状态撑版 */
 function truncateText(text: string, maxChars: number): string {
@@ -37,9 +28,11 @@ export function ProjectUpdates({
   fromDb,
   canManage,
   showHeaderPublishLink = false,
+  presentation = "full",
 }: ProjectUpdatesProps) {
   const showPublishCta = fromDb && canManage;
   const count = updates.length;
+  const isPublic = presentation === "public";
 
   return (
     <section
@@ -54,13 +47,14 @@ export function ProjectUpdates({
             id="project-updates-heading"
             className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
           >
-            项目动态
+            {isPublic ? "最新动态" : "项目动态"}
           </h2>
-          {count > 0 ? (
+          {!isPublic && count > 0 ? (
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">共 {count} 条 · 按发布时间倒序</p>
-          ) : (
+          ) : null}
+          {!isPublic && count === 0 ? (
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">进展与公告集中展示在此，便于对外沟通</p>
-          )}
+          ) : null}
         </div>
         {showHeaderPublishLink && showPublishCta ? (
           <Link
@@ -100,7 +94,6 @@ export function ProjectUpdates({
               sourceLabel: u.sourceLabel,
               isAiGenerated: u.isAiGenerated,
             });
-            const kind = updateKindLabel(u.sourceType);
             const isFirst = i === 0;
             const contentMax = isFirst ? 480 : 300;
             const summaryMax = isFirst ? 360 : 220;
@@ -115,32 +108,45 @@ export function ProjectUpdates({
                     : "border-l-2 border-zinc-200 pl-5 dark:border-zinc-700"
                 }`}
               >
-                {isFirst ? (
-                  <span className="mb-4 inline-flex items-center rounded-full bg-zinc-900 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white dark:bg-zinc-100 dark:text-zinc-900">
-                    最新动态
-                  </span>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-2 gap-y-1">
-                  <span data-testid="project-update-source-badge" className={stream.badgeClass}>
-                    {stream.primaryLabel}
-                  </span>
-                  {stream.aiAugment ? (
-                    <span data-testid="project-update-ai-badge" className={stream.aiAugment.className}>
-                      {stream.aiAugment.label}
-                    </span>
-                  ) : null}
-                  {kind ? (
-                    <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                      {kind}
-                    </span>
-                  ) : null}
-                  <time
-                    className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
-                    dateTime={displayAt.toISOString()}
-                  >
-                    {displayAt.toLocaleString("zh-CN")}
-                  </time>
-                </div>
+                {isPublic ? (
+                  <div className="mb-4 flex flex-wrap items-center gap-2 gap-y-1">
+                    {isFirst ? (
+                      <span className="inline-flex items-center rounded-full bg-zinc-900 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white dark:bg-zinc-100 dark:text-zinc-900">
+                        最新动态
+                      </span>
+                    ) : null}
+                    <time
+                      className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
+                      dateTime={displayAt.toISOString()}
+                    >
+                      {displayAt.toLocaleString("zh-CN")}
+                    </time>
+                  </div>
+                ) : (
+                  <>
+                    {isFirst ? (
+                      <span className="mb-4 inline-flex items-center rounded-full bg-zinc-900 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white dark:bg-zinc-100 dark:text-zinc-900">
+                        最新动态
+                      </span>
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-2 gap-y-1">
+                      <span data-testid="project-update-source-badge" className={stream.badgeClass}>
+                        {stream.primaryLabel}
+                      </span>
+                      {stream.aiAugment ? (
+                        <span data-testid="project-update-ai-badge" className={stream.aiAugment.className}>
+                          {stream.aiAugment.label}
+                        </span>
+                      ) : null}
+                      <time
+                        className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
+                        dateTime={displayAt.toISOString()}
+                      >
+                        {displayAt.toLocaleString("zh-CN")}
+                      </time>
+                    </div>
+                  </>
+                )}
                 <h3 className="mt-3 text-lg font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
                   {u.title}
                 </h3>

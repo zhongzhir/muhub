@@ -186,6 +186,12 @@ export function githubRepoUrlsMatch(stored: string | null | undefined, input: st
 
 type GiteeApiRepo = {
   full_name?: string;
+  name?: string;
+  description?: string | null;
+  html_url?: string;
+  homepage?: string | null;
+  /** 部分响应字段名为 homepage_url */
+  homepage_url?: string | null;
   stargazers_count?: number;
   forks_count?: number;
   default_branch?: string | null;
