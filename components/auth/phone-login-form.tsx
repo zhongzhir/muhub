@@ -29,16 +29,42 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
     setHint(null);
     setSending(true);
     try {
-      await fetch("/api/auth/phone/send-code", {
+      const res = await fetch("/api/auth/phone/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: phone.trim() }),
       });
-      setHint("验证码已发送。开发环境请查看运行服务的终端日志；生产环境将发送至手机短信。");
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        devCode?: string;
+      };
+
+      if (!data.ok) {
+        const msg =
+          data.error === "invalid_phone"
+            ? "请输入正确的 11 位中国大陆手机号"
+            : data.error === "rate_limited_cooldown"
+              ? "发送过于频繁，请 60 秒后再试"
+              : data.error === "rate_limited_daily"
+                ? "该号码 24 小时内发送次数已达上限"
+                : data.error === "disabled"
+                  ? "手机号登录未启用"
+                  : data.error === "no_database"
+                    ? "服务未就绪，请稍后再试"
+                    : "验证码发送失败，请稍后重试";
+        setError(msg);
+        return;
+      }
+
+      let msg = "验证码已发送。开发环境请查看服务端日志。";
+      if (typeof data.devCode === "string" && process.env.NODE_ENV !== "production") {
+        msg += ` （调试 devCode：${data.devCode}）`;
+      }
+      setHint(msg);
       setCooldown(SEND_COOLDOWN_SEC);
     } catch {
-      setHint("若未收到验证码，请稍后再试。");
-      setCooldown(SEND_COOLDOWN_SEC);
+      setError("网络异常，请稍后再试");
     } finally {
       setSending(false);
     }
@@ -60,7 +86,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
         redirect: false,
       });
       if (!res?.ok || res.error) {
-        setError("验证码错误或已过期，请重新获取");
+        setError("验证码错误、已过期或校验次数超限，请重新获取验证码");
         setLoggingIn(false);
         return;
       }

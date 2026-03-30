@@ -75,7 +75,16 @@ export default async function SignInPage({
               <h2 id="phone-login-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 手机号验证码登录
               </h2>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">仅支持中国大陆 11 位手机号</p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                仅支持中国大陆 11 位手机号。亦可前往{" "}
+                <Link
+                  href={`/auth/phone?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                  className="font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                >
+                  手机号登录专页
+                </Link>
+                。
+              </p>
               <div className="mt-5">
                 <PhoneLoginForm callbackUrl={callbackUrl} />
               </div>

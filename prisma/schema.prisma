@@ -130,13 +130,15 @@ model VerificationToken {
 
 /** 手机号验证码（仅存储 hash；用于登录等场景扩展 purpose） */
 model PhoneVerificationCode {
-  id         String    @id @default(cuid())
-  phone      String
-  codeHash   String
-  purpose    String
-  expiresAt  DateTime
-  consumedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(cuid())
+  phone          String
+  codeHash       String
+  purpose        String
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  /** 校验失败次数；达到上限后视为作废（需重新获取验证码） */
+  verifyAttempts Int       @default(0)
+  createdAt      DateTime  @default(now())
 
   @@index([phone, purpose, createdAt])
 }

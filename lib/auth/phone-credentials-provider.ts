@@ -5,6 +5,7 @@ import {
   isValidMainlandMobile,
   normalizeMainlandPhone,
   PHONE_CODE_PURPOSE_LOGIN,
+  PHONE_VERIFY_MAX_ATTEMPTS,
 } from "@/lib/auth/phone-code";
 
 export function phoneCredentialsProvider() {
@@ -32,6 +33,7 @@ export function phoneCredentialsProvider() {
           purpose: PHONE_CODE_PURPOSE_LOGIN,
           consumedAt: null,
           expiresAt: { gt: now },
+          verifyAttempts: { lt: PHONE_VERIFY_MAX_ATTEMPTS },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -42,6 +44,16 @@ export function phoneCredentialsProvider() {
 
       const expectedHash = hashPhoneVerificationCode(phone, rawCode);
       if (candidate.codeHash !== expectedHash) {
+        const bumped = await prisma.phoneVerificationCode.update({
+          where: { id: candidate.id },
+          data: { verifyAttempts: { increment: 1 } },
+        });
+        if (bumped.verifyAttempts >= PHONE_VERIFY_MAX_ATTEMPTS) {
+          await prisma.phoneVerificationCode.update({
+            where: { id: candidate.id },
+            data: { consumedAt: now },
+          });
+        }
         return null;
       }
 
