@@ -28,7 +28,7 @@ test.describe("项目认领", () => {
     await getCreateProjectSubmitButton(page).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 
-    await page.goto(`/projects/${slug}/claim`);
+    await page.goto(`/projects/${encodeURIComponent(slug)}/claim`);
     await expect(page.getByRole("heading", { name: "认领项目" })).toBeVisible();
 
     await page.getByTestId("repo-url-input").fill(github);

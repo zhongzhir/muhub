@@ -4,11 +4,10 @@ import { getCreateProjectSubmitButton } from "./helpers/new-project-form";
 import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("AI Native 第一阶段（UI 与降级）", () => {
-  test("演示项目：动态含来源与 AI 摘要徽章，标签区可见", async ({ page }) => {
+  test("演示项目：最新动态与 AI 摘要正文、标签区可见（公开页不展示来源徽标）", async ({ page }) => {
     await page.goto("/projects/demo");
     const section = page.getByTestId("project-updates-section");
-    await expect(section.getByTestId("project-update-source-badge").first()).toBeVisible();
-    await expect(section.getByTestId("project-update-ai-badge").first()).toBeVisible();
+    await expect(section.getByRole("heading", { name: "最新动态" })).toBeVisible();
     await expect(section.getByTestId("project-update-ai-summary").first()).toBeVisible();
     await expect(page.getByTestId("project-tags")).toBeVisible();
   });

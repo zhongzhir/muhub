@@ -19,10 +19,10 @@ test.describe("木哈布 回归", () => {
     await expect(page.getByTestId("project-sources-section")).toBeVisible();
     const section = page.getByTestId("project-updates-section");
     await expect(section).toBeVisible();
-    await expect(section.getByRole("heading", { name: "项目动态" })).toBeVisible();
+    await expect(section.getByRole("heading", { name: "最新动态" })).toBeVisible();
     const itemCount = await section.getByTestId("project-update-item").count();
     if (itemCount > 0) {
-      await expect(section.getByTestId("project-update-source-badge").first()).toBeVisible();
+      await expect(section.getByTestId("project-update-item").first()).toBeVisible();
     }
   });
 });
