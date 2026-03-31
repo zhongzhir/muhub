@@ -1,4 +1,4 @@
-import type { ClaimStatus, ProjectStatus } from "@prisma/client";
+import type { ClaimStatus, ProjectSourceKind, ProjectStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListItem } from "@/lib/project-list";
 
@@ -16,8 +16,13 @@ function mapMyProjectRow(r: {
   sourceType: string | null;
   claimStatus: ClaimStatus;
   isFeatured: boolean;
+  sources: { kind: ProjectSourceKind }[];
   _count: { socialAccounts: number };
 }): MyProjectRow {
+  const kindSet = new Set<ProjectSourceKind>();
+  for (const s of r.sources) {
+    kindSet.add(s.kind);
+  }
   return {
     id: r.id,
     slug: r.slug,
@@ -28,6 +33,7 @@ function mapMyProjectRow(r: {
     githubUrl: r.githubUrl,
     websiteUrl: r.websiteUrl,
     socialCount: r._count.socialAccounts,
+    sourceKinds: [...kindSet],
     sourceType: r.sourceType,
     claimStatus: r.claimStatus,
     isFeatured: r.isFeatured,
@@ -46,6 +52,7 @@ const myProjectSelect = {
   sourceType: true,
   claimStatus: true,
   isFeatured: true,
+  sources: { select: { kind: true } },
   _count: { select: { socialAccounts: true } },
 } as const;
 

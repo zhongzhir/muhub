@@ -1,4 +1,4 @@
-import type { ClaimStatus, Prisma, ProjectStatus } from "@prisma/client";
+import type { ClaimStatus, Prisma, ProjectSourceKind, ProjectStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type ProjectListItem = {
@@ -10,6 +10,8 @@ export type ProjectListItem = {
   githubUrl: string | null;
   websiteUrl: string | null;
   socialCount: number;
+  /** 去重后的信息源类型，用于广场卡片标签 */
+  sourceKinds: ProjectSourceKind[];
   sourceType: string | null;
   claimStatus: ClaimStatus;
   isFeatured: boolean;
@@ -51,24 +53,32 @@ export async function fetchPublicProjects(
         sourceType: true,
         claimStatus: true,
         isFeatured: true,
+        sources: { select: { kind: true } },
         _count: { select: { socialAccounts: true } },
       },
     });
 
     return {
-      items: rows.map((r) => ({
-        slug: r.slug,
-        name: r.name,
-        tagline: r.tagline,
-        createdAt: r.createdAt,
-        status: r.status,
-        githubUrl: r.githubUrl,
-        websiteUrl: r.websiteUrl,
-        socialCount: r._count.socialAccounts,
-        sourceType: r.sourceType,
-        claimStatus: r.claimStatus,
-        isFeatured: r.isFeatured,
-      })),
+      items: rows.map((r) => {
+        const kindSet = new Set<ProjectSourceKind>();
+        for (const s of r.sources) {
+          kindSet.add(s.kind);
+        }
+        return {
+          slug: r.slug,
+          name: r.name,
+          tagline: r.tagline,
+          createdAt: r.createdAt,
+          status: r.status,
+          githubUrl: r.githubUrl,
+          websiteUrl: r.websiteUrl,
+          socialCount: r._count.socialAccounts,
+          sourceKinds: [...kindSet],
+          sourceType: r.sourceType,
+          claimStatus: r.claimStatus,
+          isFeatured: r.isFeatured,
+        };
+      }),
       error: null,
     };
   } catch (e) {

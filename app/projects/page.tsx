@@ -135,7 +135,7 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
           {items.length > 0 ? (
             <ul className="grid gap-6 sm:grid-cols-2">
               {items.map((p) => (
-                <li key={p.slug}>
+                <li key={p.slug} className="h-full">
                   <ProjectCard project={p} variant="plaza" />
                 </li>
               ))}

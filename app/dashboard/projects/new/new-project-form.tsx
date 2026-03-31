@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import type { ProjectSourceKind } from "@prisma/client";
+import { useActionState, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import type { NewProjectPrefill } from "./prefill";
 import { createProject, type CreateProjectFormState } from "./actions";
 import { prefillProjectFromImportUrl } from "./import-prefill-actions";
+import { detectSourceUrlKind } from "@/lib/project-detect-source";
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
@@ -31,6 +33,28 @@ const emptyPrefill: NewProjectPrefill = {
   websiteUrl: "",
   creationSource: "manual",
 };
+
+const EXTRA_SOURCE_OPTIONS: { value: ProjectSourceKind; label: string }[] = [
+  { value: "GITHUB", label: "GitHub" },
+  { value: "GITEE", label: "Gitee" },
+  { value: "WEBSITE", label: "官网" },
+  { value: "WECHAT", label: "公众号" },
+  { value: "XIAOHONGSHU", label: "小红书" },
+  { value: "DOUYIN", label: "抖音" },
+  { value: "ZHIHU", label: "知乎" },
+  { value: "BILIBILI", label: "B站" },
+  { value: "TWITTER", label: "X / Twitter" },
+  { value: "DISCORD", label: "Discord" },
+  { value: "DOCS", label: "文档" },
+  { value: "BLOG", label: "博客" },
+  { value: "OTHER", label: "其它" },
+];
+
+function makeExtraRowKey(): string {
+  return `es-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+type ExtraSourceRowState = { key: string; kind: ProjectSourceKind; url: string };
 
 function buildPrefillQuery(fields: NewProjectPrefill): string {
   const q = new URLSearchParams();
@@ -68,12 +92,42 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
   const [importUrl, setImportUrl] = useState("");
   const [importHint, setImportHint] = useState<string | null>(null);
   const [importPending, startImportTransition] = useTransition();
+  const [extraRows, setExtraRows] = useState<ExtraSourceRowState[]>(() =>
+    (p.extraSources ?? []).map((s) => ({
+      key: makeExtraRowKey(),
+      kind: s.kind,
+      url: s.url,
+    })),
+  );
+
+  const extraSourcesJson = useMemo(() => {
+    const rows: { kind: ProjectSourceKind; url: string }[] = [];
+    for (const r of extraRows) {
+      const t = r.url.trim();
+      if (!t) {
+        continue;
+      }
+      let href: string;
+      try {
+        href = new URL(t).href;
+      } catch {
+        try {
+          href = new URL(`https://${t}`).href;
+        } catch {
+          continue;
+        }
+      }
+      rows.push({ kind: r.kind, url: href });
+    }
+    return JSON.stringify(rows);
+  }, [extraRows]);
 
   useRedirectFromActionState(state.redirectPath);
 
   return (
     <form action={formAction} className="space-y-10">
       <input type="hidden" name="creationSource" value={p.creationSource || "manual"} />
+      <input type="hidden" name="extraSourcesJson" value={extraSourcesJson} />
       {state.formError ? (
         <div
           role="alert"
@@ -273,6 +327,112 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           placeholder="https://x.com/…"
         />
         <FieldError message={state.fieldErrors?.twitterUrl} />
+      </fieldset>
+
+      <fieldset className="space-y-4">
+        <legend className={sectionTitle}>项目来源（可多条）</legend>
+        <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          除上方主仓库与官网外，可补充公众号、小红书、文档等链接；提交时写入「信息源」。在输入框失焦时会按链接自动修正类型。
+        </p>
+        <div className="space-y-3">
+          {extraRows.map((row) => (
+            <div
+              key={row.key}
+              className="flex flex-col gap-2 rounded-lg border border-zinc-200/90 bg-zinc-50/40 p-3 dark:border-zinc-700 dark:bg-zinc-900/25 sm:flex-row sm:items-end"
+            >
+              <div className="min-w-0 flex-1">
+                <label
+                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                  htmlFor={`extra-kind-${row.key}`}
+                >
+                  来源类型
+                </label>
+                <select
+                  id={`extra-kind-${row.key}`}
+                  className={`${inputClass} cursor-pointer`}
+                  value={row.kind}
+                  onChange={(e) => {
+                    const kind = e.target.value as ProjectSourceKind;
+                    setExtraRows((prev) =>
+                      prev.map((r) => (r.key === row.key ? { ...r, kind } : r)),
+                    );
+                  }}
+                >
+                  {EXTRA_SOURCE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="min-w-0 flex-[2]">
+                <label
+                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                  htmlFor={`extra-url-${row.key}`}
+                >
+                  链接
+                </label>
+                <input
+                  id={`extra-url-${row.key}`}
+                  className={inputClass}
+                  type="url"
+                  inputMode="url"
+                  autoComplete="off"
+                  placeholder="https://…"
+                  value={row.url}
+                  onChange={(e) =>
+                    setExtraRows((prev) =>
+                      prev.map((r) => (r.key === row.key ? { ...r, url: e.target.value } : r)),
+                    )
+                  }
+                  onBlur={() => {
+                    const t = row.url.trim();
+                    if (!t) {
+                      return;
+                    }
+                    let href: string;
+                    try {
+                      href = new URL(t).href;
+                    } catch {
+                      try {
+                        href = new URL(`https://${t}`).href;
+                      } catch {
+                        return;
+                      }
+                    }
+                    const inferred = detectSourceUrlKind(href);
+                    setExtraRows((prev) =>
+                      prev.map((r) =>
+                        r.key === row.key ? { ...r, url: href, kind: inferred } : r,
+                      ),
+                    );
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 sm:mb-0"
+                onClick={() =>
+                  setExtraRows((prev) => prev.filter((r) => r.key !== row.key))
+                }
+              >
+                删除
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="inline-flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+            onClick={() =>
+              setExtraRows((prev) => [
+                ...prev,
+                { key: makeExtraRowKey(), kind: "WEBSITE", url: "" },
+              ])
+            }
+          >
+            添加来源
+          </button>
+        </div>
       </fieldset>
 
       <fieldset className="space-y-4">

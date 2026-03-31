@@ -1,8 +1,66 @@
 /**
  * 将 GitHub Search API 条目规范化为候选结构，并做 V1 中国相关启发式（非精准，可后续强化）。
+ * 从 homepage / 描述等抽取外链写入 rawPayload.suggestedSources，导入项目时可预填为 ProjectSource。
  */
 
+import type { ProjectSourceKind } from "@prisma/client";
 import type { GithubRepoSearchItem } from "@/agents/discovery/github-search";
+import { detectSourceUrlKind } from "@/lib/project-detect-source";
+import { normalizeSourceUrl } from "@/lib/project-sources";
+
+const URL_IN_TEXT_RE = /\bhttps?:\/\/[^\s\]>)"'）】\],;，。！？]+/gi;
+
+/** 从正文提取 http 链接（Search API 无 README，仅存描述/topics） */
+function extractHttpUrlsFromText(text: string): string[] {
+  const m = text.match(URL_IN_TEXT_RE);
+  if (!m) {
+    return [];
+  }
+  const cleaned = m.map((u) => u.replace(/[.,;:!?，。！？)}\\\]]+$/u, "").trim());
+  return [...new Set(cleaned)].filter(Boolean);
+}
+
+function buildSuggestedSources(item: GithubRepoSearchItem): Array<{
+  kind: ProjectSourceKind;
+  url: string;
+}> {
+  const out: Array<{ kind: ProjectSourceKind; url: string }> = [];
+  const seen = new Set<string>();
+  const repoNorm = item.html_url ? normalizeSourceUrl(item.html_url) : "";
+
+  const add = (raw: string) => {
+    const t = raw.trim();
+    if (!t) {
+      return;
+    }
+    let href: string;
+    try {
+      href = new URL(t).href;
+    } catch {
+      return;
+    }
+    const key = normalizeSourceUrl(href);
+    if (seen.has(key)) {
+      return;
+    }
+    if (repoNorm && key === repoNorm) {
+      return;
+    }
+    seen.add(key);
+    out.push({ kind: detectSourceUrlKind(href), url: href });
+  };
+
+  if (item.homepage?.trim()) {
+    add(item.homepage.trim());
+  }
+
+  const blob = [item.description ?? "", (item.topics ?? []).join(" ")].join("\n");
+  for (const u of extractHttpUrlsFromText(blob)) {
+    add(u);
+  }
+
+  return out;
+}
 
 export type NormalizedDiscoveryCandidate = {
   source: string;
@@ -80,6 +138,7 @@ export function normalizeGithubSearchItem(
     githubId: item.id,
     full_name: full,
     topics: (item.topics ?? []).slice(0, 12),
+    suggestedSources: buildSuggestedSources(item),
   };
 
   return {

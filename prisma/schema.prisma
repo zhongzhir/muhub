@@ -67,6 +67,13 @@ enum ProjectSourceKind {
   DOCS
   BLOG
   TWITTER
+  WECHAT
+  XIAOHONGSHU
+  DOUYIN
+  ZHIHU
+  BILIBILI
+  DISCORD
+  OTHER
 }
 
 model User {

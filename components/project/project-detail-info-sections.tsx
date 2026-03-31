@@ -3,7 +3,7 @@ import { computeGithubActivity } from "@/lib/github-activity";
 import type { ProjectPageView } from "@/lib/demo-project";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import type { ProjectSourceDisplayItem } from "@/lib/project-sources";
-import { mapSourceEmoji } from "@/lib/project-sources";
+import { mapSourceEmoji, mapSourceLabel } from "@/lib/project-sources";
 import { socialPlatformLabel } from "@/lib/social-platform";
 
 type Props = {
@@ -109,6 +109,46 @@ export function ProjectDetailInfoSections({
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {sourceItems.length > 0 ? (
+        <section
+          className="mt-12 scroll-mt-8"
+          aria-labelledby="project-ops-info-heading"
+          data-testid="project-ops-info-section"
+        >
+          <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
+              <h2
+                id="project-ops-info-heading"
+                className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+              >
+                运营信息
+              </h2>
+            </div>
+            <div className="space-y-2 px-6 py-4 text-sm">
+              {sourceItems.map((s) => (
+                <div
+                  key={s.id ? s.id : `${s.kind}-${s.url}`}
+                  className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-zinc-100 pb-2 last:border-b-0 last:pb-0 dark:border-zinc-800/80"
+                >
+                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                    {mapSourceLabel(s.kind)}
+                  </span>
+                  <span className="text-zinc-400">·</span>
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                  >
+                    {s.url}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       ) : null}
 

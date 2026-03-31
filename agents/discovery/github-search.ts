@@ -39,15 +39,48 @@ export type FetchGithubSearchResult =
   | { ok: true; items: GithubRepoSearchItem[] }
   | { ok: false; error: string; status?: number };
 
+function formatGithubSearchErrorBody(raw: string): string {
+  const t = raw.trim();
+  if (!t) {
+    return "(empty)";
+  }
+  try {
+    const j = JSON.parse(t) as {
+      message?: string;
+      errors?: unknown;
+      documentation_url?: string;
+    };
+    const chunks: string[] = [];
+    if (typeof j.message === "string" && j.message) {
+      chunks.push(j.message);
+    }
+    if (j.errors !== undefined) {
+      chunks.push(
+        typeof j.errors === "string"
+          ? j.errors
+          : JSON.stringify(j.errors),
+      );
+    }
+    if (chunks.length > 0) {
+      return chunks.join(" | ");
+    }
+  } catch {
+    /* 非 JSON，回退原文 */
+  }
+  return t.length > 4000 ? `${t.slice(0, 4000)}…` : t;
+}
+
 export async function fetchGithubSearchRepositories(
   q: string,
   options: { sort: "updated" | "stars"; perPage: number },
 ): Promise<FetchGithubSearchResult> {
+  const perPage = Math.min(100, Math.max(1, options.perPage));
+  const order = "desc";
   const params = new URLSearchParams({
     q,
     sort: options.sort,
-    order: options.sort === "stars" ? "desc" : "desc",
-    per_page: String(Math.min(100, Math.max(1, options.perPage))),
+    order,
+    per_page: String(perPage),
   });
 
   const url = `https://api.github.com/search/repositories?${params.toString()}`;
@@ -58,27 +91,46 @@ export async function fetchGithubSearchRepositories(
     );
   }
 
+  console.info(`[discovery] github search q=${q}`);
+  console.info(`[discovery] github search url=${url}`);
+  console.info(
+    `[discovery] github search sort=${options.sort} order=${order} per_page=${perPage}`,
+  );
+
   try {
     const res = await fetch(url, { headers: githubHeaders(), cache: "no-store" });
     const remaining = res.headers.get("x-ratelimit-remaining");
     const reset = res.headers.get("x-ratelimit-reset");
     if (remaining != null) {
-      console.info(`[discovery] GitHub rate limit remaining=${remaining} reset=${reset ?? "?"}`);
-    }
-
-    if (res.status === 403) {
-      const text = await res.text().catch(() => "");
-      return {
-        ok: false,
-        error: `GitHub API 403（可能触发速率限制）${text ? `: ${text.slice(0, 200)}` : ""}`,
-        status: 403,
-      };
+      console.info(
+        `[discovery] GitHub rate limit remaining=${remaining} reset=${reset ?? "?"}`,
+      );
     }
 
     if (!res.ok) {
+      const text = await res.text().catch(() => "");
+
+      if (res.status === 422) {
+        console.error(
+          `[discovery] github search 422 body=${formatGithubSearchErrorBody(text)}`,
+        );
+      }
+
+      if (res.status === 403) {
+        return {
+          ok: false,
+          error: `GitHub API 403（可能触发速率限制）${text ? `: ${text.slice(0, 200)}` : ""}`,
+          status: 403,
+        };
+      }
+
+      const detail = formatGithubSearchErrorBody(text);
       return {
         ok: false,
-        error: `GitHub search failed: HTTP ${res.status}`,
+        error:
+          detail && detail !== "(empty)"
+            ? `GitHub search failed: HTTP ${res.status} — ${detail.slice(0, 500)}`
+            : `GitHub search failed: HTTP ${res.status}`,
         status: res.status,
       };
     }

@@ -9,6 +9,7 @@ import { parseSocialInput } from "@/lib/social-input";
 import { prisma } from "@/lib/prisma";
 import { getProjectSourceById } from "@/agents/sources/source-registry";
 import { fallbackSlugBase, isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
+import { parseProjectSourceRowsJson } from "@/app/dashboard/projects/new/prefill";
 
 export type CreateProjectFormState = {
   ok: boolean;
@@ -247,6 +248,11 @@ export async function createProject(
   }
   if (twitterUrl) {
     projectSourceRows.push({ kind: "TWITTER", url: twitterUrl, isPrimary: false });
+  }
+
+  const extraSourcesJson = String(formData.get("extraSourcesJson") ?? "").trim();
+  for (const row of parseProjectSourceRowsJson(extraSourcesJson)) {
+    projectSourceRows.push({ kind: row.kind, url: row.url, isPrimary: false });
   }
 
   const dedupedSources: typeof projectSourceRows = [];

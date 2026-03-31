@@ -20,6 +20,13 @@ const KIND_ORDER: ProjectSourceKind[] = [
   "DOCS",
   "BLOG",
   "TWITTER",
+  "WECHAT",
+  "XIAOHONGSHU",
+  "DOUYIN",
+  "ZHIHU",
+  "BILIBILI",
+  "DISCORD",
+  "OTHER",
 ];
 
 const LABELS: Record<ProjectSourceKind, string> = {
@@ -29,6 +36,13 @@ const LABELS: Record<ProjectSourceKind, string> = {
   DOCS: "文档",
   BLOG: "博客",
   TWITTER: "X / Twitter",
+  WECHAT: "公众号",
+  XIAOHONGSHU: "小红书",
+  DOUYIN: "抖音",
+  ZHIHU: "知乎",
+  BILIBILI: "B站",
+  DISCORD: "Discord",
+  OTHER: "其它",
 };
 
 /** 归一化 URL 比较 */
@@ -66,6 +80,19 @@ export function mapSourceEmoji(kind: ProjectSourceKind): string {
       return "📝";
     case "TWITTER":
       return "𝕏";
+    case "WECHAT":
+      return "💬";
+    case "XIAOHONGSHU":
+      return "📕";
+    case "DOUYIN":
+      return "🎵";
+    case "ZHIHU":
+      return "知";
+    case "BILIBILI":
+      return "▶";
+    case "DISCORD":
+      return "🎮";
+    case "OTHER":
     default:
       return "🔗";
   }
@@ -99,6 +126,30 @@ export function normalizeSourceType(raw: string): ProjectSourceKind | null {
     case "x":
     case "social":
       return "TWITTER";
+    case "wechat":
+    case "weixin":
+    case "gongzhonghao":
+    case "公众号":
+      return "WECHAT";
+    case "xiaohongshu":
+    case "xhs":
+    case "小红书":
+      return "XIAOHONGSHU";
+    case "douyin":
+    case "tiktok_cn":
+    case "抖音":
+      return "DOUYIN";
+    case "zhihu":
+    case "知乎":
+      return "ZHIHU";
+    case "bilibili":
+    case "b站":
+      return "BILIBILI";
+    case "discord":
+      return "DISCORD";
+    case "other":
+    case "其它":
+      return "OTHER";
     default:
       return null;
   }

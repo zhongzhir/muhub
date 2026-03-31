@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { NewProjectForm } from "./new-project-form";
-import { resolveNewProjectPrefill } from "./prefill";
+import { resolveNewProjectPrefillAsync } from "./prefill";
 
 export default async function NewProjectPage({
   searchParams,
@@ -8,7 +8,7 @@ export default async function NewProjectPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const prefill = resolveNewProjectPrefill(sp);
+  const prefill = await resolveNewProjectPrefillAsync(sp);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
