@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { userHasGitHubAccount } from "@/lib/auth/user-has-github";
 import { githubRepoUrlsMatch } from "@/lib/github";
 import { parseRepoUrl } from "@/lib/repo-platform";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
@@ -50,8 +51,8 @@ export async function claimProject(
 
   let project;
   try {
-    project = await prisma.project.findUnique({
-      where: { slug },
+    project = await prisma.project.findFirst({
+      where: { slug, ...PROJECT_ACTIVE_FILTER },
       select: {
         id: true,
         githubUrl: true,
@@ -92,7 +93,11 @@ export async function claimProject(
   let updated;
   try {
     updated = await prisma.project.updateMany({
-      where: { id: project.id, claimStatus: "UNCLAIMED" },
+      where: {
+        id: project.id,
+        claimStatus: "UNCLAIMED",
+        ...PROJECT_ACTIVE_FILTER,
+      },
       data: {
         claimStatus: "CLAIMED",
         claimedAt: new Date(),

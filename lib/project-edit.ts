@@ -1,4 +1,5 @@
 import type { ProjectStatus, SocialPlatform } from "@prisma/client";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 /** 编辑表单支持的四个社媒平台（与创建页一致） */
@@ -38,8 +39,8 @@ export async function fetchProjectForEdit(slug: string): Promise<ProjectEditInit
     return null;
   }
 
-  const row = await prisma.project.findUnique({
-    where: { slug },
+  const row = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     include: { socialAccounts: true },
   });
 

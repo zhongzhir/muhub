@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { fetchProjectForEdit } from "@/lib/project-edit";
 import { canManageProject } from "@/lib/project-permissions";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
+import { DeleteProjectButton } from "./delete-project-button";
 import { EditProjectForm } from "./edit-project-form";
 
 type PageProps = {
@@ -36,8 +38,8 @@ export default async function EditProjectPage({ params }: PageProps) {
   }
 
   const session = await auth();
-  const perm = await prisma.project.findUnique({
-    where: { slug },
+  const perm = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: { createdById: true, claimedByUserId: true },
   });
   if (!canManageProject(session?.user?.id, perm ?? { createdById: null, claimedByUserId: null })) {
@@ -78,6 +80,7 @@ export default async function EditProjectPage({ params }: PageProps) {
         </p>
         <h1 className="mb-8 text-2xl font-semibold tracking-tight">编辑项目</h1>
         <EditProjectForm initial={initial} />
+        <DeleteProjectButton slug={slug} />
       </div>
     </div>
   );

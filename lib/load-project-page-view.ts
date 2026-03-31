@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import type { SocialPlatform } from "@prisma/client";
 import { demoProjectView, type DemoSocial, type ProjectPageView } from "@/lib/demo-project";
 import { mapProjectRowToView } from "@/lib/map-project-row";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { getRecommendedProjectPageView } from "@/lib/recommended-projects";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
@@ -41,8 +42,8 @@ async function loadFromDb(slug: string): Promise<ProjectPageView | null> {
     return null;
   }
   try {
-    const row = await prisma.project.findUnique({
-      where: { slug },
+    const row = await prisma.project.findFirst({
+      where: { slug, ...PROJECT_ACTIVE_FILTER },
       include: {
         socialAccounts: true,
         sources: { orderBy: { createdAt: "asc" } },

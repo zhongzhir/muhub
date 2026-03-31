@@ -10,6 +10,7 @@ import { ProjectWorkspace } from "@/components/project/project-workspace";
 import { RefreshGithubSnapshotForm } from "@/app/projects/[slug]/refresh-github-form";
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
 import { canManageProject } from "@/lib/project-permissions";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { buildProjectShareSnippet, projectCanonicalUrl } from "@/lib/share/project-share";
 import { getProjectSources } from "@/lib/project-sources";
@@ -58,8 +59,8 @@ export default async function DashboardProjectManagePage({
 
   let canManage = false;
   if (fromDb && process.env.DATABASE_URL?.trim()) {
-    const owners = await prisma.project.findUnique({
-      where: { slug },
+    const owners = await prisma.project.findFirst({
+      where: { slug, ...PROJECT_ACTIVE_FILTER },
       select: { createdById: true, claimedByUserId: true },
     });
     if (owners) {

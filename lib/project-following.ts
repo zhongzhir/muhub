@@ -1,3 +1,4 @@
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -104,7 +105,7 @@ export async function getFollowingProjectsForUser(userId: string): Promise<Follo
   }
 
   const rows = await prisma.projectFollow.findMany({
-    where: { userId },
+    where: { userId, project: PROJECT_ACTIVE_FILTER },
     orderBy: { createdAt: "desc" },
     include: {
       project: {

@@ -5,6 +5,7 @@
  */
 
 import { fetchProjectSourceUpdates } from "@/lib/source-fetch/fetch-source";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 async function main(): Promise<void> {
@@ -16,6 +17,7 @@ async function main(): Promise<void> {
   const projects = await prisma.project.findMany({
     where: {
       status: "ACTIVE",
+      ...PROJECT_ACTIVE_FILTER,
       sources: {
         some: { kind: { in: ["WEBSITE", "BLOG", "DOCS"] } },
       },

@@ -18,6 +18,7 @@ import { buildProjectShareSnippet, projectCanonicalUrl } from "@/lib/share/proje
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { getProjectEngagementForSlug } from "@/lib/project-engagement";
 import { canManageProject } from "@/lib/project-permissions";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -55,8 +56,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const session = await auth();
   let showManageLink = false;
   if (fromDb && process.env.DATABASE_URL?.trim()) {
-    const owners = await prisma.project.findUnique({
-      where: { slug },
+    const owners = await prisma.project.findFirst({
+      where: { slug, ...PROJECT_ACTIVE_FILTER },
       select: { createdById: true, claimedByUserId: true },
     });
     if (owners) {

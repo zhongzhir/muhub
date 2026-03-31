@@ -11,6 +11,7 @@ import {
 import { createReleaseProjectUpdate } from "@/lib/github-release-update";
 import type { GithubSnapshotPayload } from "@/lib/github-sync";
 import { fetchLiveRepoSnapshotForUrl } from "@/lib/github-sync";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
@@ -157,6 +158,7 @@ export async function checkProjectUpdates(
       NOT: { githubUrl: "" },
       status: "ACTIVE",
       githubSnapshots: { some: {} },
+      ...PROJECT_ACTIVE_FILTER,
     },
     orderBy: { updatedAt: "desc" },
     take: limit,
@@ -261,7 +263,7 @@ export async function refreshProjectAiCardSummaries(
   }
 
   const rows = await prisma.project.findMany({
-    where: { aiCardSummary: null },
+    where: { aiCardSummary: null, ...PROJECT_ACTIVE_FILTER },
     take: Math.min(80, limit * 3),
     select: {
       id: true,

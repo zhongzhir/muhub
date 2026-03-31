@@ -1,4 +1,5 @@
 import type { ClaimStatus, Prisma, ProjectSourceKind, ProjectStatus } from "@prisma/client";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 export type ProjectListItem = {
@@ -27,6 +28,7 @@ export async function fetchPublicProjects(
   const query = typeof q === "string" ? q.trim() : "";
   const where: Prisma.ProjectWhereInput = {
     isPublic: true,
+    ...PROJECT_ACTIVE_FILTER,
     ...(query
       ? {
           OR: [
@@ -99,7 +101,7 @@ export async function fetchPublicProjectSlugsForSitemap(): Promise<
   }
   try {
     return await prisma.project.findMany({
-      where: { isPublic: true, status: "ACTIVE" },
+      where: { isPublic: true, status: "ACTIVE", ...PROJECT_ACTIVE_FILTER },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
     });

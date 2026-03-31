@@ -1,4 +1,5 @@
 import { generateProjectDescription, generateProjectTags, isAiConfigured } from "@/lib/ai/project-ai";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 function eligibleSourceForDescription(sourceType: string | null | undefined): boolean {
@@ -19,8 +20,8 @@ export async function enrichProjectWithAi(slug: string): Promise<void> {
     return;
   }
 
-  const project = await prisma.project.findUnique({
-    where: { slug },
+  const project = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: {
       id: true,
       name: true,

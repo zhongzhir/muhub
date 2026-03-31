@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { PublishUpdateForm } from "./publish-update-form";
@@ -32,8 +33,8 @@ export default async function NewProjectUpdatePage({ params }: PageProps) {
     );
   }
 
-  const exists = await prisma.project.findUnique({
-    where: { slug },
+  const exists = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: { slug: true, name: true, createdById: true, claimedByUserId: true },
   });
 

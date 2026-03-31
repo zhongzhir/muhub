@@ -211,6 +211,8 @@ model Project {
   claimedByUser   User?   @relation("ProjectClaimer", fields: [claimedByUserId], references: [id])
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  /** 非空表示已软删除；广场与详情不显；slug 仍占用直至恢复或未来硬删 */
+  deletedAt    DateTime?
 
   socialAccounts    ProjectSocialAccount[]
   sources           ProjectSource[]
@@ -224,6 +226,7 @@ model Project {
 
   @@index([createdById])
   @@index([claimedByUserId])
+  @@index([deletedAt])
 }
 
 /** 项目点赞（每用户每项目至多一条） */

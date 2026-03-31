@@ -5,6 +5,7 @@
  */
 
 import { generateProjectWeeklySummary } from "@/lib/ai/project-summary";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 async function main(): Promise<void> {
@@ -14,7 +15,7 @@ async function main(): Promise<void> {
   }
 
   const projects = await prisma.project.findMany({
-    where: { status: "ACTIVE" },
+    where: { status: "ACTIVE", ...PROJECT_ACTIVE_FILTER },
     select: { id: true, slug: true },
     orderBy: { updatedAt: "desc" },
   });

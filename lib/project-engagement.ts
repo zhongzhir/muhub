@@ -1,3 +1,4 @@
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 export type ProjectEngagementPublic = {
@@ -24,8 +25,8 @@ export async function getProjectEngagementForSlug(
   }
 
   try {
-    const row = await prisma.project.findUnique({
-      where: { slug },
+    const row = await prisma.project.findFirst({
+      where: { slug, ...PROJECT_ACTIVE_FILTER },
       select: {
         id: true,
         _count: {
@@ -87,10 +88,11 @@ export async function getProjectEngagementSnapshot(
   const row = await prisma.project.findUnique({
     where: { id: projectId },
     select: {
+      deletedAt: true,
       _count: { select: { likes: true, followers: true } },
     },
   });
-  if (!row) {
+  if (!row || row.deletedAt) {
     return empty;
   }
   const [likeRow, followRow] = await Promise.all([
@@ -120,7 +122,7 @@ export async function getFollowedProjectIdsForUser(userId: string): Promise<stri
     return [];
   }
   const rows = await prisma.projectFollow.findMany({
-    where: { userId },
+    where: { userId, project: PROJECT_ACTIVE_FILTER },
     select: { projectId: true },
     orderBy: { createdAt: "desc" },
   });

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { userHasGitHubAccount } from "@/lib/auth/user-has-github";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { ClaimProjectForm } from "./claim-project-form";
@@ -29,8 +30,8 @@ export default async function ClaimProjectPage({ params }: PageProps) {
     );
   }
 
-  const project = await prisma.project.findUnique({
-    where: { slug },
+  const project = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: {
       slug: true,
       name: true,

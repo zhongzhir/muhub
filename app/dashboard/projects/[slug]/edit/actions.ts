@@ -4,6 +4,7 @@ import { Prisma, type ProjectStatus, type SocialPlatform } from "@prisma/client"
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
 import { parseSocialInput } from "@/lib/social-input";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 export type UpdateProjectFormState = {
@@ -45,8 +46,8 @@ export async function updateProject(
     return { ...initialFail, formError: "无法定位当前项目，请从项目页重新进入编辑。" };
   }
 
-  const existing = await prisma.project.findUnique({
-    where: { slug },
+  const existing = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: { id: true, createdById: true, claimedByUserId: true },
   });
 

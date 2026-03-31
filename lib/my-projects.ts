@@ -1,4 +1,5 @@
 import type { ClaimStatus, ProjectSourceKind, ProjectStatus } from "@prisma/client";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListItem } from "@/lib/project-list";
 
@@ -61,7 +62,7 @@ export async function fetchMyCreatedProjects(userId: string): Promise<MyProjectR
     return [];
   }
   const rows = await prisma.project.findMany({
-    where: { createdById: userId },
+    where: { createdById: userId, ...PROJECT_ACTIVE_FILTER },
     orderBy: { createdAt: "desc" },
     select: myProjectSelect,
   });
@@ -100,7 +101,11 @@ export async function fetchMyClaimedProjects(userId: string): Promise<MyProjectR
     return [];
   }
   const rows = await prisma.project.findMany({
-    where: { claimedByUserId: userId, claimStatus: "CLAIMED" },
+    where: {
+      claimedByUserId: userId,
+      claimStatus: "CLAIMED",
+      ...PROJECT_ACTIVE_FILTER,
+    },
     orderBy: { claimedAt: "desc" },
     select: myProjectSelect,
   });

@@ -3,6 +3,7 @@
  * 后续可扩展：邮件、推送、会员权益、合作与众筹进展等，尽量复用 ProjectNotificationEvent / UserNotification。
  */
 
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 export type DashboardFollowingNotificationRow = {
@@ -89,7 +90,7 @@ export async function getRecentFollowingUpdateNotificationsForUser(
 
   try {
     const rows = await prisma.userNotification.findMany({
-      where: { userId },
+      where: { userId, project: PROJECT_ACTIVE_FILTER },
       orderBy: { createdAt: "desc" },
       take,
       include: {

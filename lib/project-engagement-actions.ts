@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { getProjectEngagementSnapshot } from "@/lib/project-engagement";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 
@@ -21,8 +22,8 @@ async function resolveProjectOrError(slug: string) {
   if (!process.env.DATABASE_URL?.trim()) {
     return { error: "互动功能需要数据库连接。", project: null as null };
   }
-  const project = await prisma.project.findUnique({
-    where: { slug: normalized },
+  const project = await prisma.project.findFirst({
+    where: { slug: normalized, ...PROJECT_ACTIVE_FILTER },
     select: { id: true },
   });
   if (!project) {

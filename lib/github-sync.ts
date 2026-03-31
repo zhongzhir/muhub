@@ -6,6 +6,7 @@
 import { fetchGitHubLatestRelease, fetchGiteeRepoApi } from "@/lib/github";
 import { createReleaseProjectUpdate } from "@/lib/github-release-update";
 import { parseRepoUrl } from "@/lib/repo-platform";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 const E2E_FIXTURE_OWNER = "muhub";
@@ -291,8 +292,8 @@ export async function syncGithubSnapshotForProjectSlug(
     return { ok: false, message: "未配置数据库，无法刷新。" };
   }
 
-  const project = await prisma.project.findUnique({
-    where: { slug },
+  const project = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: { id: true, githubUrl: true },
   });
 

@@ -3,6 +3,7 @@
  */
 
 import { generateProjectWeeklySummaryAi, isAiConfigured } from "@/lib/ai/project-ai";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { updateSourceTypeLabel } from "@/lib/update-source";
 
@@ -51,8 +52,8 @@ export async function generateProjectWeeklySummary(
     return { ok: false, reason: "openai_not_configured" };
   }
 
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ...PROJECT_ACTIVE_FILTER },
     select: { id: true, name: true },
   });
   if (!project) {

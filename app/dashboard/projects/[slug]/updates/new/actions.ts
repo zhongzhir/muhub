@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { canManageProject } from "@/lib/project-permissions";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { createAndFanOutUpdatePostedNotification } from "@/lib/project-notifications";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
@@ -37,8 +38,8 @@ export async function publishProjectUpdate(
     return { ...initialFail, formError: "无法定位当前项目，请从项目页重新进入发布动态。" };
   }
 
-  const project = await prisma.project.findUnique({
-    where: { slug },
+  const project = await prisma.project.findFirst({
+    where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: { id: true, name: true, createdById: true, claimedByUserId: true },
   });
 
