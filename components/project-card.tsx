@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ProjectVisibilityStatus } from "@prisma/client";
 import type { ProjectListItem } from "@/lib/project-list";
 import { formatListDate } from "@/lib/format-date";
 import { codeHostLinkLabel, parseRepoUrl } from "@/lib/repo-platform";
@@ -34,6 +35,29 @@ function buildPlazaSourceTags(project: ProjectListItem): string[] {
   }
 
   return [...seen].sort((a, b) => a.localeCompare(b, "zh-CN"));
+}
+
+function visibilityPill(v: ProjectVisibilityStatus): { text: string; className: string } {
+  switch (v) {
+    case "PUBLISHED":
+      return {
+        text: "已公开",
+        className:
+          "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
+      };
+    case "HIDDEN":
+      return {
+        text: "已隐藏",
+        className:
+          "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100",
+      };
+    default:
+      return {
+        text: "草稿",
+        className:
+          "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-300",
+      };
+  }
 }
 
 function ProjectLinks({
@@ -131,10 +155,17 @@ export function ProjectCard({
           isPlaza ? "relative z-10 pointer-events-none" : ""
         }`}
       >
-        <div className="mb-2">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold tracking-tight text-zinc-900 line-clamp-2 dark:text-zinc-50">
             {project.name}
           </h3>
+          {!isPlaza && project.visibilityStatus ? (
+            <span
+              className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${visibilityPill(project.visibilityStatus).className}`}
+            >
+              {visibilityPill(project.visibilityStatus).text}
+            </span>
+          ) : null}
         </div>
 
         <p className="mb-3 text-sm text-zinc-600 line-clamp-3 dark:text-zinc-400">{desc}</p>

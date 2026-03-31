@@ -21,8 +21,7 @@ export function DeleteProjectButton({ slug }: { slug: string }) {
         危险操作
       </h2>
       <p className="mt-2 text-xs leading-relaxed text-red-800/90 dark:text-red-200/85">
-        删除后项目将从广场与详情中隐藏，数据仍保留，后续可通过数据库恢复（<code className="rounded bg-red-100/80 px-1 dark:bg-red-900/50">deletedAt</code>{" "}
-        置空）。
+        删除为软删除：数据仍保留在库中，后续可通过恢复接口或运营处理找回。
       </p>
       {error ? (
         <p className="mt-3 text-sm text-red-700 dark:text-red-300" role="alert">
@@ -36,7 +35,7 @@ export function DeleteProjectButton({ slug }: { slug: string }) {
         onClick={() => {
           if (
             !window.confirm(
-              "确定删除项目？\n\n该操作为软删除，数据可恢复；项目将从公开列表中消失。",
+              "确定删除这个项目？\n\n删除后项目将不会在广场和公开页显示，但数据会先保留，后续可恢复。",
             )
           ) {
             return;
@@ -48,7 +47,7 @@ export function DeleteProjectButton({ slug }: { slug: string }) {
               setError(r.error ?? "删除失败，请稍后重试。");
               return;
             }
-            router.push("/projects");
+            router.push("/dashboard");
             router.refresh();
           });
         }}

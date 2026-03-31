@@ -168,17 +168,10 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
       </fieldset>
 
       <fieldset className="space-y-4">
-        <legend className={sectionTitle}>可见性与状态</legend>
-        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          <input
-            type="checkbox"
-            name="isPublic"
-            value="true"
-            defaultChecked={initial.isPublic}
-            className="h-4 w-4 rounded border-zinc-300"
-          />
-          在项目广场公开展示
-        </label>
+        <legend className={sectionTitle}>运营状态</legend>
+        <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          是否在广场对外公开请在下方「发布设置」中操作（公开 / 隐藏），此处仅影响项目生命周期标签。
+        </p>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="status">
           项目状态

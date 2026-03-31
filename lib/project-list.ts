@@ -1,5 +1,11 @@
-import type { ClaimStatus, Prisma, ProjectSourceKind, ProjectStatus } from "@prisma/client";
-import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
+import type {
+  ClaimStatus,
+  Prisma,
+  ProjectSourceKind,
+  ProjectStatus,
+  ProjectVisibilityStatus,
+} from "@prisma/client";
+import { PROJECT_PLAZA_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
 export type ProjectListItem = {
@@ -16,6 +22,7 @@ export type ProjectListItem = {
   sourceType: string | null;
   claimStatus: ClaimStatus;
   isFeatured: boolean;
+  visibilityStatus?: ProjectVisibilityStatus;
 };
 
 export async function fetchPublicProjects(
@@ -27,8 +34,7 @@ export async function fetchPublicProjects(
 
   const query = typeof q === "string" ? q.trim() : "";
   const where: Prisma.ProjectWhereInput = {
-    isPublic: true,
-    ...PROJECT_ACTIVE_FILTER,
+    ...PROJECT_PLAZA_FILTER,
     ...(query
       ? {
           OR: [
@@ -92,7 +98,7 @@ export async function fetchPublicProjects(
   }
 }
 
-/** 供 sitemap 枚举公开项目（仅 ACTIVE + isPublic；失败时返回空，保留静态主路由） */
+/** 供 sitemap：与广场一致（已公开且未删除） */
 export async function fetchPublicProjectSlugsForSitemap(): Promise<
   { slug: string; updatedAt: Date }[]
 > {
@@ -101,7 +107,7 @@ export async function fetchPublicProjectSlugsForSitemap(): Promise<
   }
   try {
     return await prisma.project.findMany({
-      where: { isPublic: true, status: "ACTIVE", ...PROJECT_ACTIVE_FILTER },
+      where: { ...PROJECT_PLAZA_FILTER },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
     });

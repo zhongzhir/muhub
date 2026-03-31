@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizeProjectSlugParam } from "@/lib/route-slug";
 import { DeleteProjectButton } from "./delete-project-button";
 import { EditProjectForm } from "./edit-project-form";
+import { ProjectVisibilityPanel } from "./project-visibility-panel";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -80,6 +81,7 @@ export default async function EditProjectPage({ params }: PageProps) {
         </p>
         <h1 className="mb-8 text-2xl font-semibold tracking-tight">编辑项目</h1>
         <EditProjectForm initial={initial} />
+        <ProjectVisibilityPanel slug={slug} visibilityStatus={initial.visibilityStatus} />
         <DeleteProjectButton slug={slug} />
       </div>
     </div>

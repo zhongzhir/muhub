@@ -1,4 +1,4 @@
-import type { ProjectStatus, SocialPlatform } from "@prisma/client";
+import type { ProjectStatus, ProjectVisibilityStatus, SocialPlatform } from "@prisma/client";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
@@ -17,7 +17,7 @@ export type ProjectEditInitial = {
   description: string;
   githubUrl: string;
   websiteUrl: string;
-  isPublic: boolean;
+  visibilityStatus: ProjectVisibilityStatus;
   status: ProjectStatus;
   weibo: string;
   wechat_official: string;
@@ -68,7 +68,7 @@ export async function fetchProjectForEdit(slug: string): Promise<ProjectEditInit
     description: row.description ?? "",
     githubUrl: row.githubUrl ?? "",
     websiteUrl: row.websiteUrl ?? "",
-    isPublic: row.isPublic,
+    visibilityStatus: row.visibilityStatus,
     status: row.status,
     weibo: pick("WEIBO"),
     wechat_official: pick("WECHAT_OFFICIAL"),

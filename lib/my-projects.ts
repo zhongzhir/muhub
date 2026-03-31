@@ -1,4 +1,4 @@
-import type { ClaimStatus, ProjectSourceKind, ProjectStatus } from "@prisma/client";
+import type { ClaimStatus, ProjectSourceKind, ProjectStatus, ProjectVisibilityStatus } from "@prisma/client";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListItem } from "@/lib/project-list";
@@ -12,6 +12,7 @@ function mapMyProjectRow(r: {
   tagline: string | null;
   createdAt: Date;
   status: ProjectStatus;
+  visibilityStatus: ProjectVisibilityStatus;
   githubUrl: string | null;
   websiteUrl: string | null;
   sourceType: string | null;
@@ -31,6 +32,7 @@ function mapMyProjectRow(r: {
     tagline: r.tagline,
     createdAt: r.createdAt,
     status: r.status,
+    visibilityStatus: r.visibilityStatus,
     githubUrl: r.githubUrl,
     websiteUrl: r.websiteUrl,
     socialCount: r._count.socialAccounts,
@@ -48,6 +50,7 @@ const myProjectSelect = {
   tagline: true,
   createdAt: true,
   status: true,
+  visibilityStatus: true,
   githubUrl: true,
   websiteUrl: true,
   sourceType: true,

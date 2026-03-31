@@ -133,6 +133,7 @@ async function main(): Promise<void> {
             sourceType,
             status: "ACTIVE",
             isPublic: true,
+            visibilityStatus: "PUBLISHED",
             claimStatus: "UNCLAIMED",
             sources: { create: sourceCreates },
           },

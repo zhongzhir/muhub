@@ -24,7 +24,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const slug = normalizeProjectSlugParam((await params).slug);
-  const loaded = await loadProjectPageViewCached(slug);
+  const session = await auth();
+  const loaded = await loadProjectPageViewCached(slug, session?.user?.id);
   if (!loaded) {
     return { title: "项目管理" };
   }
@@ -50,7 +51,7 @@ export default async function DashboardProjectManagePage({
   const sp = await searchParams;
   const showPublishedAck = sp.published === "1";
 
-  const loaded = await loadProjectPageViewCached(slug);
+  const loaded = await loadProjectPageViewCached(slug, session.user.id);
   if (!loaded) {
     notFound();
   }

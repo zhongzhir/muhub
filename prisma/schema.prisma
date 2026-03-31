@@ -13,6 +13,13 @@ enum ProjectStatus {
   ARCHIVED
 }
 
+/** 广场与对外匿名可见语义（与 isPublic 双轨兼容，查询以本字段为准） */
+enum ProjectVisibilityStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+}
+
 enum SocialPlatform {
   WECHAT_OFFICIAL
   WECHAT_CHANNELS
@@ -200,8 +207,10 @@ model Project {
   /** 数据来源占位，如 seed、manual */
   sourceType   String?
   status       ProjectStatus @default(ACTIVE)
-  isPublic     Boolean       @default(true)
-  claimStatus  ClaimStatus   @default(UNCLAIMED)
+  /** 历史字段；发布/隐藏动作与 visibilityStatus 同步 */
+  isPublic     Boolean                 @default(false)
+  visibilityStatus ProjectVisibilityStatus @default(DRAFT)
+  claimStatus  ClaimStatus             @default(UNCLAIMED)
   claimedAt    DateTime?
   /** 展示用：如 owner/repo，与 GitHub 认领校验一致 */
   claimedBy    String?

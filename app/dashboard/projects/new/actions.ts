@@ -276,7 +276,8 @@ export async function createProject(
         websiteUrl,
         sourceType,
         status: "ACTIVE",
-        isPublic: true,
+        isPublic: false,
+        visibilityStatus: "DRAFT",
         createdById: ownerId,
         socialAccounts:
           socialCreates.length > 0

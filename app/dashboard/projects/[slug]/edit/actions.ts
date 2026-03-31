@@ -98,7 +98,6 @@ export async function updateProject(
     return { ...initialFail, fieldErrors };
   }
 
-  const isPublic = formData.get("isPublic") === "true";
   const status = statusRaw as ProjectStatus;
 
   try {
@@ -111,7 +110,6 @@ export async function updateProject(
           description,
           githubUrl,
           websiteUrl,
-          isPublic,
           status,
         },
       });

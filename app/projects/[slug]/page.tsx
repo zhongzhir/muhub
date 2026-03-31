@@ -29,12 +29,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const slug = normalizeProjectSlugParam((await params).slug);
-  const loaded = await loadProjectPageViewCached(slug);
+  const session = await auth();
+  const loaded = await loadProjectPageViewCached(slug, session?.user?.id);
   if (!loaded) {
     return { title: "项目" };
   }
-  const { data } = loaded;
-  return {
+  const { data, access } = loaded;
+  const base = {
     title: data.name,
     description: buildProjectMetaDescription(data),
     alternates: {
@@ -43,17 +44,21 @@ export async function generateMetadata({
     openGraph: buildProjectOpenGraph(data, slug),
     twitter: buildProjectTwitter(data),
   };
+  if (access === "manager_preview") {
+    return { ...base, robots: { index: false, follow: false } };
+  }
+  return base;
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const slug = normalizeProjectSlugParam((await params).slug);
-  const loaded = await loadProjectPageViewCached(slug);
+  const session = await auth();
+  const loaded = await loadProjectPageViewCached(slug, session?.user?.id);
   if (!loaded) {
     notFound();
   }
 
   const { data, fromDb } = loaded;
-  const session = await auth();
   let showManageLink = false;
   if (fromDb && process.env.DATABASE_URL?.trim()) {
     const owners = await prisma.project.findFirst({
