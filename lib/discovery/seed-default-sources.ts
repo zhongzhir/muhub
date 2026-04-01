@@ -50,6 +50,14 @@ const TEST_INSTITUTION_CONFIG: Prisma.InputJsonValue = {
   region: "demo",
 };
 
+/** 深圳市人工智能产业协会：会员动态 / 资讯列表（article_feed，首页由通用链式解析抽取线索） */
+const SZAICX_MEMBER_FEED_CONFIG: Prisma.InputJsonValue = {
+  mode: "article_feed",
+  url: "https://www.szaicx.com/",
+  id: "szaicx-member-feed",
+  name: "深圳市人工智能产业协会会员动态",
+};
+
 /** 手工种子：无需抓取外网，便于调试 institution 写入与 metadata */
 const TEST_INSTITUTION_MANUAL_SEED_CONFIG: Prisma.InputJsonValue = {
   id: "test-manual-seed",
@@ -136,6 +144,16 @@ export async function ensureDiscoveryDefaultSources(): Promise<void> {
       institutionName: "测试机构（manual_seed）",
       institutionType: "demo",
       institutionRegion: "local",
+    },
+    {
+      key: "szaicx-member-feed",
+      name: "深圳AI产业协会 · 会员动态",
+      type: DiscoverySourceType.INSTITUTION,
+      subtype: "article_feed",
+      configJson: SZAICX_MEMBER_FEED_CONFIG,
+      institutionName: "深圳市人工智能产业协会",
+      institutionType: "协会",
+      institutionRegion: "深圳",
     },
   ];
 
