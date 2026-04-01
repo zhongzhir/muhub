@@ -331,6 +331,16 @@ pnpm test:e2e
 | `/api/health` | 健康检查 JSON `{ "status": "ok" }` |
 | `/api/ai/project` | POST/GET：`githubUrl` → 项目整合 JSON（[AI API 文档](docs/architecture/ai-api.md)） |
 
+## Docs
+
+**Discovery Engine V2** 文档根目录：**[docs/](docs/)**（候选池、来源、审核优先级、导入流与阶段总结）。
+
+- [Discovery 架构与数据流](docs/discovery/discovery-architecture.md)
+- [Discovery 来源与去重](docs/discovery/discovery-sources.md)
+- [审核优先级 reviewPriority](docs/discovery/review-priority.md)
+- [候选 → Project 导入流](docs/project/project-import-flow.md)
+- [Discovery V2 阶段总结 / 路线](docs/roadmap/discovery-v2-summary.md)
+
 ## 文档
 
 - [项目分享弹窗（详情 / Dashboard）](docs/architecture/project-share-dialog.md)
