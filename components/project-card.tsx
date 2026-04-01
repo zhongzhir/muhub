@@ -168,6 +168,38 @@ export function ProjectCard({
           ) : null}
         </div>
 
+        {isPlaza &&
+        (project.primaryCategory ||
+          project.plazaTags.length > 0 ||
+          project.isAiRelated ||
+          project.isChineseTool) ? (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5" data-testid="project-plaza-discovery-meta">
+            {project.primaryCategory?.trim() ? (
+              <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-900 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
+                {project.primaryCategory.trim()}
+              </span>
+            ) : null}
+            {project.plazaTags.map((t) => (
+              <span
+                key={t}
+                className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+              >
+                #{t}
+              </span>
+            ))}
+            {project.isAiRelated ? (
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-900 dark:border-sky-800 dark:bg-sky-950/35 dark:text-sky-200">
+                AI
+              </span>
+            ) : null}
+            {project.isChineseTool ? (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-200">
+                中文
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
         <p className="mb-3 text-sm text-zinc-600 line-clamp-3 dark:text-zinc-400">{desc}</p>
 
         <div className="text-xs text-zinc-500 space-y-1 dark:text-zinc-400">

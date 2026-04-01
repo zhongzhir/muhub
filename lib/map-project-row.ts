@@ -1,11 +1,13 @@
 import type {
   GithubRepoSnapshot,
   Project,
+  ProjectExternalLink,
   ProjectSocialAccount,
   ProjectSource,
   ProjectUpdate,
   ProjectWeeklySummary,
 } from "@prisma/client";
+import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
 import type { ProjectPageView } from "@/lib/demo-project";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
@@ -15,6 +17,7 @@ export type ProjectWithRelations = Project & {
   updates: ProjectUpdate[];
   githubSnapshots: GithubRepoSnapshot[];
   weeklySummaries: ProjectWeeklySummary[];
+  externalLinks: ProjectExternalLink[];
 };
 
 export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView {
@@ -47,6 +50,34 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
 
   const latestWeekly = row.weeklySummaries[0];
 
+  const extOrder = [
+    "website",
+    "github",
+    "docs",
+    "twitter",
+    "youtube",
+    "discord",
+    "blog",
+    "telegram",
+  ];
+  const externalLinks = [...row.externalLinks]
+    .filter((e) => Boolean(e.url?.trim()))
+    .sort((a, b) => {
+      if (a.isPrimary !== b.isPrimary) {
+        return a.isPrimary ? -1 : 1;
+      }
+      const ia = extOrder.indexOf(a.platform.toLowerCase());
+      const ib = extOrder.indexOf(b.platform.toLowerCase());
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.url.localeCompare(b.url);
+    })
+    .map((e) => ({
+      platform: e.platform,
+      url: e.url,
+      label: e.label ?? undefined,
+      isPrimary: e.isPrimary,
+      source: e.source ?? null,
+    }));
+
   return {
     slug: row.slug,
     name: row.name,
@@ -54,6 +85,11 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     tagline: row.tagline ?? undefined,
     description: row.description ?? "",
     tags: row.tags?.length ? [...row.tags] : [],
+    categories: stringArrayFromJson(row.categoriesJson),
+    primaryCategory: row.primaryCategory ?? undefined,
+    isAiRelated: row.isAiRelated ?? undefined,
+    isChineseTool: row.isChineseTool ?? undefined,
+    externalLinks,
     aiCardSummary: row.aiCardSummary ?? undefined,
     aiWeeklySummary: latestWeekly
       ? {
@@ -98,5 +134,6 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
       label: s.label ?? undefined,
       isPrimary: s.isPrimary,
     })),
+    fromDiscovery: Boolean(row.importedFromCandidateId),
   };
 }

@@ -64,6 +64,22 @@ export type ProjectPageView = {
   description: string;
   /** AI/导入生成的轻量标签 */
   tags?: string[];
+  /** Discovery 分类写入的类目（JSON 同步） */
+  categories?: string[];
+  /** 广场筛选/卡片主类型 */
+  primaryCategory?: string | null;
+  isAiRelated?: boolean | null;
+  isChineseTool?: boolean | null;
+  /** ProjectExternalLink 聚合（详情「外部链接」） */
+  externalLinks?: Array<{
+    platform: string;
+    url: string;
+    label?: string;
+    isPrimary: boolean;
+    source?: string | null;
+  }>;
+  /** 经 Discovery 候选审核导入 */
+  fromDiscovery?: boolean;
   /** 运营脚本生成的详情页摘要卡 */
   aiCardSummary?: string | null;
   /** 最新一条 AI 多源周总结（库内） */

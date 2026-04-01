@@ -44,7 +44,8 @@ const projectInclude = {
   updates: { orderBy: { createdAt: "desc" as const }, take: 20 },
   githubSnapshots: { orderBy: { fetchedAt: "desc" as const }, take: 1 },
   weeklySummaries: { orderBy: { createdAt: "desc" as const }, take: 1 },
-} as const;
+  externalLinks: true,
+};
 
 async function loadPublishedFromDb(slug: string) {
   return prisma.project.findFirst({

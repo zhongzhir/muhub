@@ -1,22 +1,121 @@
 import Link from "next/link";
+import { PlazaDiscoveryBlocks } from "@/components/plaza-discovery-blocks";
 import { ProjectCard } from "@/components/project-card";
 import { RecommendedProjectCard } from "@/components/recommended-project-card";
-import { fetchPublicProjects } from "@/lib/project-list";
+import { PRIMARY_TYPE_ORDER } from "@/lib/discovery/classification/keyword-rules";
+import {
+  fetchPlazaSpotlights,
+  fetchPublicProjects,
+  type PlazaSortMode,
+} from "@/lib/project-list";
 import { recommendedProjects } from "@/lib/recommended-projects";
 
 export const dynamic = "force-dynamic";
 
-type PageProps = {
-  searchParams: Promise<{ q?: string }>;
-};
+function parseBoolQuery(v: string | string[] | undefined): boolean | undefined {
+  const s = Array.isArray(v) ? v[0] : v;
+  if (s === "1" || s === "true") {
+    return true;
+  }
+  if (s === "0" || s === "false") {
+    return false;
+  }
+  return undefined;
+}
 
-export default async function ProjectsListPage({ searchParams }: PageProps) {
-  const { q } = await searchParams;
-  const searchTerm = typeof q === "string" ? q.trim() : "";
-  const { items, error } = await fetchPublicProjects(q);
+function parseSort(raw: string | string[] | undefined): PlazaSortMode {
+  const s = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? "";
+  if (s === "updated" || s === "github" || s === "recommended") {
+    return s;
+  }
+  return "new";
+}
 
-  const showEmptyAll = !error && items.length === 0 && !searchTerm;
-  const showEmptySearch = !error && items.length === 0 && Boolean(searchTerm);
+type SearchParams = Record<string, string | string[] | undefined>;
+
+export default async function ProjectsListPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const sp = await searchParams;
+  const searchTerm = typeof sp.q === "string" ? sp.q.trim() : "";
+  const category = typeof sp.category === "string" ? sp.category.trim() : "";
+  const tag = typeof sp.tag === "string" ? sp.tag.trim() : "";
+  const ai = parseBoolQuery(sp.ai);
+  const zh = parseBoolQuery(sp.zh);
+  const hw = parseBoolQuery(sp.hw);
+  const hd = parseBoolQuery(sp.hd);
+  const hg = parseBoolQuery(sp.hg);
+  const sort = parseSort(sp.sort);
+
+  const { items, error } = await fetchPublicProjects({
+    q: searchTerm || undefined,
+    category: category || undefined,
+    tag: tag || undefined,
+    isAiRelated: ai,
+    isChineseTool: zh,
+    hasWebsite: hw,
+    hasDocs: hd,
+    hasGitHub: hg,
+    sort,
+  });
+
+  const hasListFilters =
+    Boolean(searchTerm) ||
+    Boolean(category) ||
+    Boolean(tag) ||
+    ai != null ||
+    zh != null ||
+    hw != null ||
+    hd != null ||
+    hg != null;
+
+  const showEmptyAll = !error && items.length === 0 && !hasListFilters;
+  const showEmptySearch = !error && items.length === 0 && hasListFilters;
+
+  const spotlights =
+    !error && !hasListFilters ? await fetchPlazaSpotlights() : null;
+
+  const filterQuery = new URLSearchParams();
+  if (searchTerm) {
+    filterQuery.set("q", searchTerm);
+  }
+  if (category) {
+    filterQuery.set("category", category);
+  }
+  if (tag) {
+    filterQuery.set("tag", tag);
+  }
+  if (ai === true) {
+    filterQuery.set("ai", "1");
+  } else if (ai === false) {
+    filterQuery.set("ai", "0");
+  }
+  if (zh === true) {
+    filterQuery.set("zh", "1");
+  } else if (zh === false) {
+    filterQuery.set("zh", "0");
+  }
+  if (hw === true) {
+    filterQuery.set("hw", "1");
+  } else if (hw === false) {
+    filterQuery.set("hw", "0");
+  }
+  if (hd === true) {
+    filterQuery.set("hd", "1");
+  } else if (hd === false) {
+    filterQuery.set("hd", "0");
+  }
+  if (hg === true) {
+    filterQuery.set("hg", "1");
+  } else if (hg === false) {
+    filterQuery.set("hg", "0");
+  }
+  if (sort !== "new") {
+    filterQuery.set("sort", sort);
+  }
+  const filterQS = filterQuery.toString();
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -40,32 +139,152 @@ export default async function ProjectsListPage({ searchParams }: PageProps) {
           </p>
         </header>
 
-        <section className="mb-10">
-          <form action="/projects" method="get" className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <label htmlFor="projects-search" className="sr-only">
-                搜索项目
-              </label>
-              <input
-                id="projects-search"
-                name="q"
-                type="search"
-                defaultValue={searchTerm}
-                placeholder="按名称、页面路径或一句话介绍搜索"
-                aria-label="搜索项目"
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400"
-              />
+        {spotlights ? (
+          <PlazaDiscoveryBlocks
+            hotAgents={spotlights.hotAgents}
+            chineseAi={spotlights.chineseAi}
+            recentDiscovered={spotlights.recentDiscovered}
+            wellFilled={spotlights.wellFilled}
+          />
+        ) : null}
+
+        <section className="mb-10 space-y-4">
+          <form
+            action="/projects"
+            method="get"
+            className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/50"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="flex-1">
+                <label htmlFor="projects-search" className="sr-only">
+                  搜索项目
+                </label>
+                <input
+                  id="projects-search"
+                  name="q"
+                  type="search"
+                  defaultValue={searchTerm}
+                  placeholder="按名称、页面路径或一句话介绍搜索"
+                  aria-label="搜索项目"
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400"
+                />
+              </div>
+              <button
+                type="submit"
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              >
+                搜索
+              </button>
             </div>
-            <button
-              type="submit"
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-            >
-              搜索
-            </button>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                排序
+                <select
+                  name="sort"
+                  defaultValue={sort}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                >
+                  <option value="new">最新收录</option>
+                  <option value="updated">最近更新</option>
+                  <option value="github">GitHub 热度（快照星标）</option>
+                  <option value="recommended">推荐（完整度+AI 等规则）</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                主类型
+                <select
+                  name="category"
+                  defaultValue={category}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                >
+                  <option value="">全部</option>
+                  {PRIMARY_TYPE_ORDER.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                标签（精确匹配一项）
+                <input
+                  name="tag"
+                  type="text"
+                  defaultValue={tag}
+                  placeholder="如 LLM"
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                AI 相关
+                <select
+                  name="ai"
+                  defaultValue={ai === true ? "1" : ai === false ? "0" : ""}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                >
+                  <option value="">不限</option>
+                  <option value="1">是</option>
+                  <option value="0">否</option>
+                </select>
+              </label>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                中文工具
+                <select
+                  name="zh"
+                  defaultValue={zh === true ? "1" : zh === false ? "0" : ""}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                >
+                  <option value="">不限</option>
+                  <option value="1">是</option>
+                  <option value="0">否</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                含官网
+                <select
+                  name="hw"
+                  defaultValue={hw === true ? "1" : hw === false ? "0" : ""}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                >
+                  <option value="">不限</option>
+                  <option value="1">是</option>
+                  <option value="0">否</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                含文档
+                <select
+                  name="hd"
+                  defaultValue={hd === true ? "1" : hd === false ? "0" : ""}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                >
+                  <option value="">不限</option>
+                  <option value="1">是</option>
+                  <option value="0">否</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                含 GitHub
+                <select
+                  name="hg"
+                  defaultValue={hg === true ? "1" : hg === false ? "0" : ""}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                >
+                  <option value="">不限</option>
+                  <option value="1">是</option>
+                  <option value="0">否</option>
+                </select>
+              </label>
+            </div>
           </form>
-          {searchTerm ? (
-            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-              当前搜索：<span className="font-medium text-zinc-900 dark:text-zinc-100">{searchTerm}</span>
+          {filterQS ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              已应用筛选或排序。
+              <Link href="/projects" className="ml-2 underline">
+                清除
+              </Link>
             </p>
           ) : null}
         </section>

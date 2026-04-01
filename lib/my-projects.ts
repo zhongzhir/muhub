@@ -11,6 +11,7 @@ function mapMyProjectRow(r: {
   name: string;
   tagline: string | null;
   createdAt: Date;
+  updatedAt: Date;
   status: ProjectStatus;
   visibilityStatus: ProjectVisibilityStatus;
   githubUrl: string | null;
@@ -18,19 +19,26 @@ function mapMyProjectRow(r: {
   sourceType: string | null;
   claimStatus: ClaimStatus;
   isFeatured: boolean;
+  primaryCategory: string | null;
+  tags: string[];
+  isAiRelated: boolean | null;
+  isChineseTool: boolean | null;
   sources: { kind: ProjectSourceKind }[];
   _count: { socialAccounts: number };
+  githubSnapshots: { stars: number }[];
 }): MyProjectRow {
   const kindSet = new Set<ProjectSourceKind>();
   for (const s of r.sources) {
     kindSet.add(s.kind);
   }
+  const stars = r.githubSnapshots[0]?.stars;
   return {
     id: r.id,
     slug: r.slug,
     name: r.name,
     tagline: r.tagline,
     createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
     status: r.status,
     visibilityStatus: r.visibilityStatus,
     githubUrl: r.githubUrl,
@@ -40,6 +48,11 @@ function mapMyProjectRow(r: {
     sourceType: r.sourceType,
     claimStatus: r.claimStatus,
     isFeatured: r.isFeatured,
+    primaryCategory: r.primaryCategory,
+    plazaTags: [...r.tags].slice(0, 3),
+    isAiRelated: r.isAiRelated,
+    isChineseTool: r.isChineseTool,
+    githubStars: stars !== undefined ? stars : null,
   };
 }
 
@@ -49,6 +62,7 @@ const myProjectSelect = {
   name: true,
   tagline: true,
   createdAt: true,
+  updatedAt: true,
   status: true,
   visibilityStatus: true,
   githubUrl: true,
@@ -56,8 +70,13 @@ const myProjectSelect = {
   sourceType: true,
   claimStatus: true,
   isFeatured: true,
+  primaryCategory: true,
+  tags: true,
+  isAiRelated: true,
+  isChineseTool: true,
   sources: { select: { kind: true } },
   _count: { select: { socialAccounts: true } },
+  githubSnapshots: { orderBy: { fetchedAt: "desc" as const }, take: 1, select: { stars: true } },
 } as const;
 
 export async function fetchMyCreatedProjects(userId: string): Promise<MyProjectRow[]> {

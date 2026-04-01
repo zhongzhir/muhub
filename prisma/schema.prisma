@@ -83,6 +83,68 @@ enum ProjectSourceKind {
   OTHER
 }
 
+/** Discovery V2：抓取来源开关 */
+enum DiscoverySourceStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+/** Discovery V2：单次任务运行状态 */
+enum DiscoveryRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+/** Discovery V2：候选补全状态（后续可接 enrichment 流水线） */
+enum DiscoveryEnrichmentStatus {
+  PENDING
+  OK
+  FAILED
+}
+
+/** Discovery V2：单次 Enrichment 任务状态 */
+enum DiscoveryEnrichmentJobStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+/** Discovery V2：规则分类流水线状态（候选侧建议值；ACCEPTED 表示已合并入 tags/categories） */
+enum DiscoveryClassificationStatus {
+  PENDING
+  DONE
+  FAILED
+  ACCEPTED
+}
+
+/** Discovery V2：单次分类任务状态 */
+enum DiscoveryClassificationJobStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+/** Discovery V2：人工审核状态 */
+enum DiscoveryReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  /** 运营忽略：不参与待办，可与 REJECTED 区分用途 */
+  IGNORED
+  MERGED
+}
+
+/** Discovery V2：是否已导入正式 Project */
+enum DiscoveryImportStatus {
+  PENDING
+  IMPORTED
+  SKIPPED
+  FAILED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -103,9 +165,240 @@ model User {
   projectFollows ProjectFollow[]
   /** 站内轻通知收件箱（关注项目动态等） */
   userNotifications UserNotification[]
+  /** Discovery V2：审核记录的审核人 */
+  discoveryCandidateReviews DiscoveryCandidate[] @relation("DiscoveryCandidateReviewer")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/** Discovery V2：可配置的抓取来源（GitHub Topic / Trending 等） */
+model DiscoverySource {
+  id              String                @id @default(cuid())
+  key             String                @unique
+  name            String
+  type            String
+  subtype         String?
+  status          DiscoverySourceStatus @default(ACTIVE)
+  configJson      Json?
+  scheduleCron    String?
+  lastRunAt       DateTime?
+  lastSuccessAt   DateTime?
+  lastErrorAt     DateTime?
+  lastErrorMessage String?              @db.Text
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  runs       DiscoveryRun[]
+  candidates DiscoveryCandidate[]
+
+  @@index([type, status])
+}
+
+/** Discovery V2：单次抓取审计日志 */
+model DiscoveryRun {
+  id                    String             @id @default(cuid())
+  sourceId              String
+  source                DiscoverySource      @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  status                DiscoveryRunStatus   @default(RUNNING)
+  startedAt             DateTime           @default(now())
+  finishedAt            DateTime?
+  fetchedCount          Int                @default(0)
+  parsedCount           Int                @default(0)
+  newCandidateCount     Int                @default(0)
+  updatedCandidateCount Int                @default(0)
+  importedProjectCount  Int                @default(0)
+  skippedCount          Int                @default(0)
+  logJson               Json?
+  errorMessage          String?            @db.Text
+  createdAt             DateTime           @default(now())
+
+  candidates DiscoveryCandidate[]
+
+  @@index([sourceId, startedAt(sort: Desc)])
+}
+
+/** Discovery V2：候选池（不入广场直至审核导入） */
+model DiscoveryCandidate {
+  id               String                    @id @default(cuid())
+  sourceId         String
+  source           DiscoverySource           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  discoveryRunId   String?
+  discoveryRun     DiscoveryRun?             @relation(fields: [discoveryRunId], references: [id], onDelete: SetNull)
+
+  externalType     String
+  externalId       String?
+  externalUrl      String?
+  sourceKey        String?
+  normalizedKey    String?                   @unique
+  dedupeHash       String?                   @unique
+
+  title            String
+  slugCandidate    String?
+  summary          String?                   @db.Text
+  descriptionRaw   String?                   @db.Text
+  website          String?
+  repoUrl          String?
+  docsUrl          String?
+  twitterUrl       String?
+  wechatUrl       String?
+  douyinUrl        String?
+  xiaohongshuUrl  String?
+  youtubeUrl      String?
+
+  language           String?
+  openSourceLicense String?
+  stars             Int                      @default(0)
+  forks             Int                      @default(0)
+  watchers          Int                      @default(0)
+  issues            Int                      @default(0)
+  lastCommitAt      DateTime?
+  repoCreatedAt     DateTime?
+  repoUpdatedAt     DateTime?
+
+  ownerName      String?
+  ownerUrl       String?
+  avatarUrl      String?
+
+  categoriesJson  Json?
+  tagsJson        Json?
+  metadataJson    Json?
+  rawPayloadJson  Json?
+
+  /** 规则分类 V1：建议主类型（单值） */
+  suggestedType               String?
+  /** 规则分类 V1：建议标签（string[]） */
+  suggestedTagsJson           Json?
+  classificationStatus        DiscoveryClassificationStatus  @default(PENDING)
+  classificationScore         Float?
+  /** 可读依据，如 matched topic: llm */
+  classificationEvidenceJson  Json?
+  isAiRelated                 Boolean?
+  isChineseTool               Boolean?
+
+  enrichmentStatus DiscoveryEnrichmentStatus @default(PENDING)
+  reviewStatus     DiscoveryReviewStatus     @default(PENDING)
+  importStatus     DiscoveryImportStatus     @default(PENDING)
+
+  matchedProjectId String?
+  matchedProject   Project?                  @relation("DiscoveryCandidateMatchedProject", fields: [matchedProjectId], references: [id], onDelete: SetNull)
+
+  score             Float?
+  qualityScore      Float?
+  popularityScore   Float?
+  freshnessScore    Float?
+
+  /** 后台审核排序用规则分（可解释因子见 reviewPrioritySignals） */
+  reviewPriorityScore   Float                       @default(0)
+  reviewPrioritySignals Json?
+
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  reviewedById String?
+  reviewedBy    User?    @relation("DiscoveryCandidateReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+  reviewNote    String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /** 若本候选通过「新建 Project」导入，对应 Project 上的回溯字段指向本条 */
+  importedAsOriginProject Project? @relation("ImportedProjectFromCandidate")
+
+  enrichmentJobs       DiscoveryEnrichmentJob[]
+  enrichmentLinks      DiscoveryEnrichmentLink[]
+  classificationJobs   DiscoveryClassificationJob[]
+
+  @@index([sourceId, lastSeenAt(sort: Desc)])
+  @@index([suggestedType])
+  @@index([isAiRelated])
+  @@index([isChineseTool])
+  @@index([classificationStatus])
+  @@index([reviewStatus, importStatus])
+  @@index([reviewStatus, reviewPriorityScore(sort: Desc)])
+  @@index([repoUrl])
+  @@index([matchedProjectId])
+}
+
+/** Discovery V2：候选 Enrichment 任务（审计；不落原始 HTML） */
+model DiscoveryEnrichmentJob {
+  id             String                       @id @default(cuid())
+  candidateId    String
+  candidate      DiscoveryCandidate           @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  source         String                       @default("enrichment-v1")
+  status         DiscoveryEnrichmentJobStatus @default(RUNNING)
+  startedAt      DateTime                     @default(now())
+  finishedAt     DateTime?
+  extractedCount Int                          @default(0)
+  errorMessage   String?                      @db.Text
+  logJson        Json?
+  createdAt      DateTime                     @default(now())
+
+  links DiscoveryEnrichmentLink[]
+
+  @@index([candidateId, startedAt(sort: Desc)])
+}
+
+/** Discovery V2：单次规则分类任务（审计日志） */
+model DiscoveryClassificationJob {
+  id           String                           @id @default(cuid())
+  candidateId  String
+  candidate    DiscoveryCandidate               @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  status       DiscoveryClassificationJobStatus @default(RUNNING)
+  startedAt    DateTime                         @default(now())
+  finishedAt   DateTime?
+  errorMessage String?                          @db.Text
+  logJson      Json?
+  createdAt    DateTime                         @default(now())
+
+  @@index([candidateId, startedAt(sort: Desc)])
+}
+
+/** Discovery V2：Enrichment 抽取的外链（需人工 Accept 后写回候选字段） */
+model DiscoveryEnrichmentLink {
+  id            String   @id @default(cuid())
+  candidateId   String
+  candidate     DiscoveryCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId         String?
+  job           DiscoveryEnrichmentJob? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  platform      String
+  url           String
+  normalizedUrl String
+  host          String?
+  source        String
+  confidence    Float
+  isPrimary     Boolean  @default(false)
+  isAccepted    Boolean  @default(false)
+  evidenceText  String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateId, normalizedUrl])
+  @@index([candidateId])
+  @@index([jobId])
+}
+
+/** Discovery V2：项目外链（与 ProjectSource 并存；审核导入时写入） */
+model ProjectExternalLink {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  platform  String
+  url       String
+  label     String?
+  isPrimary Boolean  @default(false)
+  isVerified Boolean @default(false)
+  source    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([platform, projectId])
 }
 
 /** GitHub 等来源自动发现的待导入项目（不入广场直至人工导入） */
@@ -197,6 +490,13 @@ model Project {
   description String?
   /** AI 等处写入的轻量标签（导入项目等） */
   tags        String[]      @default([])
+  /** Discovery 分类接受后的类目列表（JSON string[]，与候选 categoriesJson 对齐） */
+  categoriesJson Json?
+  /** 主类型/首类目，便于广场筛选与卡片展示（导入时由 categoriesJson[0] 写入） */
+  primaryCategory String?
+  /** Discovery 规则分类接受后写入；仅 null 时由导入合并补齐，不强行覆盖 false */
+  isAiRelated     Boolean?
+  isChineseTool   Boolean?
   /** 运营脚本 / AI 生成的详情页摘要卡（hero 下） */
   aiCardSummary String?
   logoUrl     String?
@@ -223,6 +523,16 @@ model Project {
   /** 非空表示已软删除；广场与详情不显；slug 仍占用直至恢复或未来硬删 */
   deletedAt    DateTime?
 
+  /** Discovery V2：溯源（人工审核导入后写入） */
+  discoverySource           String?
+  discoverySourceId         String?
+  discoveredAt              DateTime?
+  importedFromCandidateId   String?         @unique
+  importedFromCandidate     DiscoveryCandidate? @relation("ImportedProjectFromCandidate", fields: [importedFromCandidateId], references: [id], onDelete: SetNull)
+
+  externalLinks ProjectExternalLink[]
+  discoveryMatches DiscoveryCandidate[] @relation("DiscoveryCandidateMatchedProject")
+
   socialAccounts    ProjectSocialAccount[]
   sources           ProjectSource[]
   updates           ProjectUpdate[]
@@ -236,6 +546,9 @@ model Project {
   @@index([createdById])
   @@index([claimedByUserId])
   @@index([deletedAt])
+  @@index([primaryCategory])
+  @@index([isAiRelated])
+  @@index([isChineseTool])
 }
 
 /** 项目点赞（每用户每项目至多一条） */

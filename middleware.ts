@@ -13,11 +13,14 @@ export default NextAuth({
       if (/^\/projects\/[^/]+\/claim\/?$/.test(path)) {
         return !!auth?.user;
       }
+      if (path.startsWith("/admin")) {
+        return !!auth?.user;
+      }
       return true;
     },
   },
 }).auth;
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/projects/:slug/claim"],
+  matcher: ["/dashboard/:path*", "/projects/:slug/claim", "/admin/:path*"],
 };

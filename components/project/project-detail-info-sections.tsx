@@ -6,6 +6,59 @@ import type { ProjectSourceDisplayItem } from "@/lib/project-sources";
 import { mapSourceEmoji, mapSourceLabel } from "@/lib/project-sources";
 import { socialPlatformLabel } from "@/lib/social-platform";
 
+function externalPlatformHeading(platform: string): string {
+  const p = platform.toLowerCase();
+  const m: Record<string, string> = {
+    website: "官网",
+    github: "GitHub",
+    docs: "文档",
+    twitter: "X / Twitter",
+    youtube: "YouTube",
+    discord: "Discord / 社区",
+    blog: "博客",
+    telegram: "Telegram",
+    producthunt: "Product Hunt",
+  };
+  return m[p] ?? platform;
+}
+
+const EXT_PLATFORM_ORDER = [
+  "website",
+  "github",
+  "docs",
+  "producthunt",
+  "twitter",
+  "youtube",
+  "discord",
+  "blog",
+  "telegram",
+];
+
+function groupExternalLinks(links: NonNullable<ProjectPageView["externalLinks"]>) {
+  const map = new Map<string, NonNullable<ProjectPageView["externalLinks"]>>();
+  for (const L of links) {
+    const k = L.platform.toLowerCase();
+    if (!map.has(k)) {
+      map.set(k, []);
+    }
+    map.get(k)!.push(L);
+  }
+  const out: { heading: string; items: NonNullable<ProjectPageView["externalLinks"]> }[] =
+    [];
+  for (const p of EXT_PLATFORM_ORDER) {
+    const items = map.get(p);
+    if (items?.length) {
+      out.push({ heading: externalPlatformHeading(p), items });
+    }
+  }
+  for (const [p, items] of map) {
+    if (!EXT_PLATFORM_ORDER.includes(p) && items.length) {
+      out.push({ heading: externalPlatformHeading(p), items });
+    }
+  }
+  return out;
+}
+
 type Props = {
   data: ProjectPageView;
   socials: ProjectPageView["socials"];
@@ -91,24 +144,119 @@ export function ProjectDetailInfoSections({
         </section>
       ) : null}
 
-      {data.tags && data.tags.length > 0 ? (
-        <section
-          className="mt-6 flex flex-wrap items-center gap-2"
-          data-testid="project-tags"
-          aria-labelledby="project-tags-heading"
+      {data.fromDiscovery ? (
+        <p
+          className="mt-6 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400"
+          data-testid="project-discovery-attribution"
         >
-          <h2 id="project-tags-heading" className="text-xs font-medium text-zinc-500">
-            项目标签
+          本项目由站内自动发现候选经人工审核整理后入库；外链与类型信息可能随运营补全更新。
+        </p>
+      ) : null}
+
+      {(data.tags?.length ||
+        data.primaryCategory?.trim() ||
+        (data.categories && data.categories.length > 0) ||
+        data.isAiRelated ||
+        data.isChineseTool) ? (
+        <section
+          className="mt-6 rounded-xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900/50"
+          data-testid="project-type-tags-block"
+          aria-labelledby="project-type-tags-heading"
+        >
+          <h2
+            id="project-type-tags-heading"
+            className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-200"
+          >
+            类型与标签
           </h2>
-          <ul className="flex flex-wrap items-center gap-2">
-            {data.tags.map((t) => (
-              <li key={t}>
-                <span className="inline-block rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200">
-                  {t}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {data.primaryCategory?.trim() ? (
+              <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-900 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
+                主类型 · {data.primaryCategory.trim()}
+              </span>
+            ) : null}
+            {(data.categories ?? [])
+              .filter((c) => c !== data.primaryCategory)
+              .map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+                >
+                  {c}
                 </span>
-              </li>
+              ))}
+            {(data.tags ?? []).map((t) => (
+              <span
+                key={t}
+                className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+              >
+                #{t}
+              </span>
             ))}
-          </ul>
+            {data.isAiRelated ? (
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-900 dark:border-sky-800 dark:bg-sky-950/35 dark:text-sky-200">
+                AI 相关
+              </span>
+            ) : null}
+            {data.isChineseTool ? (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-200">
+                中文工具
+              </span>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {data.externalLinks && data.externalLinks.length > 0 ? (
+        <section
+          className="mt-8 scroll-mt-8"
+          aria-labelledby="project-external-links-heading"
+          data-testid="project-external-links-section"
+        >
+          <h2
+            id="project-external-links-heading"
+            className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+          >
+            外部链接
+          </h2>
+          <div className="space-y-6">
+            {groupExternalLinks(data.externalLinks).map((group) => (
+              <div key={group.heading}>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  {group.heading}
+                </h3>
+                <ul className="grid gap-2 sm:grid-cols-2">
+                  {group.items.map((link, i) => (
+                    <li key={`${link.platform}-${link.url}-${i}`}>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col rounded-xl border border-zinc-200 bg-white p-3 text-sm shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/80"
+                      >
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {link.label?.trim() || externalPlatformHeading(link.platform)}
+                          {link.isPrimary ? (
+                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
+                              主链
+                            </span>
+                          ) : null}
+                        </span>
+                        {link.source === "discovery_enrichment" ? (
+                          <span className="mt-0.5 text-[10px] text-zinc-500">
+                            来自 Discovery 补全
+                          </span>
+                        ) : null}
+                        <span className="mt-1 break-all text-xs text-blue-600 dark:text-blue-400">
+                          {link.url}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </section>
       ) : null}
 
