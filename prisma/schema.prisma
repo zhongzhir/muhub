@@ -90,6 +90,13 @@ enum DiscoverySourceStatus {
   DISABLED
 }
 
+/** Discovery V3：来源平台类型（写入 DiscoverySource.type） */
+enum DiscoverySourceType {
+  GITHUB
+  PRODUCTHUNT
+  INSTITUTION
+}
+
 /** Discovery V2：单次任务运行状态 */
 enum DiscoveryRunStatus {
   RUNNING
@@ -177,8 +184,14 @@ model DiscoverySource {
   id              String                @id @default(cuid())
   key             String                @unique
   name            String
-  type            String
+  type            DiscoverySourceType
   subtype         String?
+  /** 机构类来源：运营可读名称（园区 / 孵化器挂牌名等） */
+  institutionName   String?
+  /** 机构类来源：产业园 / 孵化器 / 开发区等 */
+  institutionType   String?
+  /** 机构类来源：省市区等粗粒度地域 */
+  institutionRegion String?
   status          DiscoverySourceStatus @default(ACTIVE)
   configJson      Json?
   scheduleCron    String?

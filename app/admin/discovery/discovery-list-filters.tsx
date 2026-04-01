@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { DISCOVERY_SOURCE_TYPES } from "@/lib/discovery/candidate-list-query";
 
 const REVIEW = ["PENDING", "APPROVED", "REJECTED", "IGNORED", "MERGED"] as const;
 const IMPORT = ["PENDING", "IMPORTED", "SKIPPED", "FAILED"] as const;
@@ -20,6 +21,7 @@ export function DiscoveryListFilters(props: {
   const reviewStatus = cur.get("reviewStatus") ?? "";
   const importStatus = cur.get("importStatus") ?? "";
   const sourceKey = cur.get("sourceKey") ?? "";
+  const sourceType = cur.get("sourceType") ?? "";
   const externalType = cur.get("externalType") ?? "";
   const [extType, setExtType] = useState(externalType);
 
@@ -79,6 +81,21 @@ export function DiscoveryListFilters(props: {
           {sources.map((s) => (
             <option key={s.key} value={s.key}>
               {s.name} ({s.key})
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex items-center gap-2">
+        <span className="text-zinc-500">来源类型</span>
+        <select
+          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-900"
+          value={sourceType}
+          onChange={(e) => navigate({ sourceType: e.target.value || undefined })}
+        >
+          <option value="">全部</option>
+          {DISCOVERY_SOURCE_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
             </option>
           ))}
         </select>

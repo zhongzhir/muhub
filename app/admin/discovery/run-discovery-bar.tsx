@@ -60,6 +60,14 @@ export function RunDiscoveryBar() {
         >
           Product Hunt AI
         </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => run("test-institution")}
+          className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-950 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100"
+        >
+          机构目录（test-institution）
+        </button>
       </div>
       {message ? (
         <p className="mt-3 whitespace-pre-wrap text-xs text-zinc-600 dark:text-zinc-400">{message}</p>

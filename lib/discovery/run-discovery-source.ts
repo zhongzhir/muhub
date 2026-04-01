@@ -13,6 +13,7 @@ import { fetchProductHuntFeatured } from "@/lib/discovery/producthunt/fetch-feat
 import { fetchProductHuntTopicPosts } from "@/lib/discovery/producthunt/fetch-ai-products";
 import { mapProductHuntItemToCandidatePayload } from "@/lib/discovery/producthunt/map-producthunt-item";
 import { upsertProductHuntDiscoveryCandidate } from "@/lib/discovery/upsert-producthunt-candidate";
+import { runInstitutionDiscovery } from "@/lib/discovery/institution/run-institution-discovery";
 import type { Prisma } from "@prisma/client";
 
 export type RunDiscoverySourceSummary = {
@@ -152,6 +153,40 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
   }
 
   try {
+    if (source.type === "INSTITUTION") {
+      const inst = await runInstitutionDiscovery({
+        db: prisma,
+        source,
+        runId: run.id,
+        key,
+        logs,
+      });
+      fetchedCount = inst.fetchedCount;
+      parsedCount = inst.parsedCount;
+      newCandidateCount = inst.newCandidateCount;
+      updatedCandidateCount = inst.updatedCandidateCount;
+      await finalizeDiscoveryRun({
+        runId: run.id,
+        sourceId: source.id,
+        status: "SUCCESS",
+        logs: [...logs, `[${key}] INSTITUTION done parsed=${parsedCount}`],
+        fetchedCount,
+        parsedCount,
+        newCandidateCount,
+        updatedCandidateCount,
+        errorMessage: null,
+      });
+      return {
+        runId: run.id,
+        ok: true,
+        logs,
+        fetchedCount,
+        parsedCount,
+        newCandidateCount,
+        updatedCandidateCount,
+      };
+    }
+
     if (source.type === "GITHUB" && source.subtype === "topic") {
       const config = source.configJson as {
         topics?: string[];

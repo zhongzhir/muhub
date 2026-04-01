@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { DiscoverySourceType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_TOPICS_CONFIG: Prisma.InputJsonValue = {
@@ -39,6 +40,15 @@ const DEFAULT_PRODUCTHUNT_AI_CONFIG: Prisma.InputJsonValue = {
   order: "RANKING",
 };
 
+/** E2E / 开发：机构目录占位（example.com 列表解析可为 0 条） */
+const TEST_INSTITUTION_CONFIG: Prisma.InputJsonValue = {
+  id: "test-institution",
+  name: "测试产业园（占位）",
+  url: "https://example.com/projects",
+  type: "incubator",
+  region: "demo",
+};
+
 /**
  * 首次部署时插入默认来源；不覆盖运营已在后台改过配置的行。
  */
@@ -50,37 +60,50 @@ export async function ensureDiscoveryDefaultSources(): Promise<void> {
   const rows: Array<{
     key: string;
     name: string;
-    type: string;
+    type: DiscoverySourceType;
     subtype: string;
     configJson: Prisma.InputJsonValue;
+    institutionName?: string;
+    institutionType?: string;
+    institutionRegion?: string;
   }> = [
     {
       key: "github-topics",
       name: "GitHub Topics",
-      type: "GITHUB",
+      type: DiscoverySourceType.GITHUB,
       subtype: "topic",
       configJson: DEFAULT_TOPICS_CONFIG,
     },
     {
       key: "github-trending",
       name: "GitHub Trending",
-      type: "GITHUB",
+      type: DiscoverySourceType.GITHUB,
       subtype: "trending",
       configJson: DEFAULT_TRENDING_CONFIG,
     },
     {
       key: "producthunt-featured",
       name: "Product Hunt · 榜单",
-      type: "PRODUCTHUNT",
+      type: DiscoverySourceType.PRODUCTHUNT,
       subtype: "featured",
       configJson: DEFAULT_PRODUCTHUNT_FEATURED_CONFIG,
     },
     {
       key: "producthunt-ai",
       name: "Product Hunt · AI 主题",
-      type: "PRODUCTHUNT",
+      type: DiscoverySourceType.PRODUCTHUNT,
       subtype: "topic",
       configJson: DEFAULT_PRODUCTHUNT_AI_CONFIG,
+    },
+    {
+      key: "test-institution",
+      name: "测试机构目录（test-institution）",
+      type: DiscoverySourceType.INSTITUTION,
+      subtype: "directory",
+      configJson: TEST_INSTITUTION_CONFIG,
+      institutionName: "测试产业园（占位）",
+      institutionType: "incubator",
+      institutionRegion: "demo",
     },
   ];
 
@@ -100,6 +123,9 @@ export async function ensureDiscoveryDefaultSources(): Promise<void> {
         subtype: r.subtype,
         status: "ACTIVE",
         configJson: r.configJson,
+        institutionName: r.institutionName ?? null,
+        institutionType: r.institutionType ?? null,
+        institutionRegion: r.institutionRegion ?? null,
       },
     });
   }

@@ -2,6 +2,7 @@ import type {
   DiscoveryClassificationStatus,
   DiscoveryImportStatus,
   DiscoveryReviewStatus,
+  DiscoverySourceType,
   Prisma,
 } from "@prisma/client";
 import { Prisma as PrismaRuntime } from "@prisma/client";
@@ -32,6 +33,8 @@ export const DISCOVERY_CLASSIFICATION_STATUSES: DiscoveryClassificationStatus[] 
   "FAILED",
   "ACCEPTED",
 ];
+
+export const DISCOVERY_SOURCE_TYPES: DiscoverySourceType[] = ["GITHUB", "PRODUCTHUNT", "INSTITUTION"];
 
 export type DiscoveryCandidateSortField =
   | "score"
@@ -78,6 +81,11 @@ export function discoveryCandidateWhereFromSearchParams(
   const sourceKey = sp.get("sourceKey")?.trim();
   if (sourceKey) {
     parts.push({ source: { key: sourceKey } });
+  }
+
+  const sourceType = sp.get("sourceType")?.trim();
+  if (sourceType && DISCOVERY_SOURCE_TYPES.includes(sourceType as DiscoverySourceType)) {
+    parts.push({ source: { type: sourceType as DiscoverySourceType } });
   }
 
   const rs = sp.get("reviewStatus")?.trim();
