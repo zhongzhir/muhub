@@ -61,15 +61,18 @@ export default async function ProjectsListPage({
     sort,
   });
 
-  const hasListFilters =
-    Boolean(searchTerm) ||
+  const hasNonSearchFilters =
     Boolean(category) ||
     Boolean(tag) ||
     ai != null ||
     zh != null ||
     hw != null ||
     hd != null ||
-    hg != null;
+    hg != null ||
+    sort !== "new";
+
+  const hasListFilters =
+    Boolean(searchTerm) || hasNonSearchFilters;
 
   const showEmptyAll = !error && items.length === 0 && !hasListFilters;
   const showEmptySearch = !error && items.length === 0 && hasListFilters;
@@ -281,7 +284,14 @@ export default async function ProjectsListPage({
           </form>
           {filterQS ? (
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              已应用筛选或排序。
+              {searchTerm ? (
+                <>
+                  当前搜索：
+                  <span className="font-medium text-zinc-800 dark:text-zinc-200">{searchTerm}</span>
+                </>
+              ) : null}
+              {searchTerm && hasNonSearchFilters ? <span className="mx-1 text-zinc-400">·</span> : null}
+              {hasNonSearchFilters ? <>已应用筛选或排序。</> : null}
               <Link href="/projects" className="ml-2 underline">
                 清除
               </Link>

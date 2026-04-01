@@ -160,7 +160,7 @@ export function ProjectDetailInfoSections({
         data.isChineseTool) ? (
         <section
           className="mt-6 rounded-xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900/50"
-          data-testid="project-type-tags-block"
+          data-testid="project-tags"
           aria-labelledby="project-type-tags-heading"
         >
           <h2

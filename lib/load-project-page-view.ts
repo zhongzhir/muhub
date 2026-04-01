@@ -61,6 +61,26 @@ async function loadActiveByIdFromDb(id: string) {
   });
 }
 
+/** 库内 `demo` 若缺少类型/标签区数据，叠内置演示标签，避免广场 E2E 与无库模式不一致 */
+function withDemoSlugPresentationFallback(slug: string, data: ProjectPageView): ProjectPageView {
+  if (slug !== demoProjectView.slug) {
+    return data;
+  }
+  const hasTypeTagsBlock =
+    (data.tags?.length ?? 0) > 0 ||
+    Boolean(data.primaryCategory?.trim()) ||
+    (data.categories?.length ?? 0) > 0 ||
+    Boolean(data.isAiRelated) ||
+    Boolean(data.isChineseTool);
+  if (hasTypeTagsBlock) {
+    return data;
+  }
+  return {
+    ...data,
+    tags: demoProjectView.tags?.length ? [...demoProjectView.tags] : data.tags,
+  };
+}
+
 /** 详情页 / 分享页 / 管理预览：库优先；已删除不占 demo 位；未公开仅管理者可见 */
 export async function loadProjectPageView(
   rawSlug: string,
@@ -105,7 +125,10 @@ export async function loadProjectPageView(
       if (stub.visibilityStatus === "PUBLISHED") {
         const row = await loadPublishedFromDb(slug);
         if (row) {
-          const data = mapProjectRowToView(row);
+          const data = withDemoSlugPresentationFallback(
+            slug,
+            mapProjectRowToView(row),
+          );
           return {
             data: { ...data, updates: sortProjectUpdatesByTime(data.updates) },
             fromDb: true,
@@ -116,7 +139,10 @@ export async function loadProjectPageView(
       if (canManageProject(viewerUserId ?? undefined, stub)) {
         const row = await loadActiveByIdFromDb(stub.id);
         if (row) {
-          const data = mapProjectRowToView(row);
+          const data = withDemoSlugPresentationFallback(
+            slug,
+            mapProjectRowToView(row),
+          );
           return {
             data: { ...data, updates: sortProjectUpdatesByTime(data.updates) },
             fromDb: true,

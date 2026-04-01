@@ -11,7 +11,8 @@ import {
 export function phoneCredentialsProvider() {
   return Credentials({
     id: "phone-login",
-    name: "手机号登录",
+    /** ASCII：避免 Edge / Auth 中间件在 Set-Cookie / Header 路径触发 ByteString（非 Latin-1）错误 */
+    name: "phone",
     credentials: {
       phone: { label: "手机号", type: "text" },
       code: { label: "验证码", type: "text" },
