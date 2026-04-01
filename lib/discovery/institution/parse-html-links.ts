@@ -1,10 +1,4 @@
-import type { InstitutionSourceConfig } from "@/lib/discovery/institution/institution-source";
-
-export type ParsedInstitutionProject = {
-  name: string;
-  description?: string;
-  url: string;
-};
+import type { InstitutionParsedItem } from "@/lib/discovery/institution/types";
 
 const SKIP_HOST_SUBSTR = [
   "facebook.com",
@@ -30,10 +24,19 @@ function stripTags(raw: string): string {
   return raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-/**
- * 启发式解析机构项目列表页 HTML：提取带可读标题的外链条目（相对 URL 会按 listUrl 解析）
- */
-export function parseInstitutionProjects(html: string, listUrl: string): ParsedInstitutionProject[] {
+type ParseHtmlLinksOptions = {
+  /** 写入每条 metadata，便于区分 parser 场景 */
+  entryKind?: string;
+  maxItems?: number;
+};
+
+/** 从 HTML 提取外链条目（相对 URL 按 listUrl 解析） */
+export function parseHtmlLinkItems(
+  html: string,
+  listUrl: string,
+  options?: ParseHtmlLinksOptions,
+): InstitutionParsedItem[] {
+  const maxItems = options?.maxItems ?? 200;
   const base = (() => {
     try {
       return new URL(listUrl);
@@ -42,10 +45,9 @@ export function parseInstitutionProjects(html: string, listUrl: string): ParsedI
     }
   })();
 
-  const re =
-    /<a\s+[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  const re = /<a\s+[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
   const seen = new Set<string>();
-  const out: ParsedInstitutionProject[] = [];
+  const out: InstitutionParsedItem[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
     const hrefRaw = m[1]?.trim();
@@ -64,8 +66,8 @@ export function parseInstitutionProjects(html: string, listUrl: string): ParsedI
     if (shouldSkipHref(absolute)) {
       continue;
     }
-    const name = stripTags(m[2] ?? "");
-    if (name.length < 2 || name.length > 200) {
+    const title = stripTags(m[2] ?? "");
+    if (title.length < 2 || title.length > 200) {
       continue;
     }
     const norm = absolute.split("#")[0]!;
@@ -73,19 +75,16 @@ export function parseInstitutionProjects(html: string, listUrl: string): ParsedI
       continue;
     }
     seen.add(norm);
-    out.push({ name, url: norm });
-    if (out.length >= 200) {
+    out.push({
+      title,
+      summary: undefined,
+      website: norm,
+      externalUrl: norm,
+      metadata: options?.entryKind ? { entryKind: options.entryKind } : undefined,
+    });
+    if (out.length >= maxItems) {
       break;
     }
   }
   return out;
-}
-
-/** 从 configJson 解析 listUrl（InstitutionSourceConfig.url） */
-export function listUrlFromInstitutionConfig(
-  config: InstitutionSourceConfig | null | undefined,
-  fallbackDiscoverySourceUrl?: string | null,
-): string | null {
-  const u = config?.url?.trim() || fallbackDiscoverySourceUrl?.trim();
-  return u || null;
 }

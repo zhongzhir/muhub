@@ -68,6 +68,14 @@ export function RunDiscoveryBar() {
         >
           机构目录（test-institution）
         </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => run("test-institution-manual-seed")}
+          className="rounded-lg border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-900 disabled:opacity-50 dark:border-emerald-900 dark:text-emerald-200"
+        >
+          manual_seed 测试
+        </button>
       </div>
       {message ? (
         <p className="mt-3 whitespace-pre-wrap text-xs text-zinc-600 dark:text-zinc-400">{message}</p>

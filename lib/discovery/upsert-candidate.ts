@@ -267,15 +267,37 @@ export async function upsertInstitutionDiscoveryCandidate(
     website: string;
     institutionMeta: InstitutionCandidateMeta;
     listUrl: string;
+    sourceMode: string;
+    adapterKey: string;
+    rawInstitutionFields?: Record<string, unknown>;
+    externalUrl?: string;
+    sourceTitle?: string;
+    sourceUrl?: string;
   },
 ): Promise<{ created: boolean }> {
-  const { sourceId, sourceKey, runId, name, description, website, institutionMeta, listUrl } = args;
+  const {
+    sourceId,
+    sourceKey,
+    runId,
+    name,
+    description,
+    website,
+    institutionMeta,
+    listUrl,
+    sourceMode,
+    adapterKey,
+    rawInstitutionFields,
+    externalUrl: externalUrlArg,
+    sourceTitle,
+    sourceUrl,
+  } = args;
 
   const externalType = "INSTITUTION";
   const normUrl = website.split("#")[0]!.trim();
   const normalizedKey = `institution:${sourceKey}:${normUrl.toLowerCase()}`;
   const dedupeHash = discoveryDedupeHashFromNormalizedKey(normalizedKey);
   const externalId = dedupeHash.slice(0, 32);
+  const externalUrlNorm = (externalUrlArg?.trim() || normUrl).split("#")[0]!.trim();
 
   let slugBase = slugifyProjectName(name);
   if (!slugBase || !isValidProjectSlug(slugBase)) {
@@ -286,12 +308,21 @@ export async function upsertInstitutionDiscoveryCandidate(
     institutionName: institutionMeta.institutionName,
     institutionType: institutionMeta.institutionType,
     institutionRegion: institutionMeta.institutionRegion,
+    sourceMode,
     sourceListUrl: listUrl,
+    adapterKey,
+    rawInstitutionFields: rawInstitutionFields ?? {},
+    ...(sourceTitle ? { clueSourceTitle: sourceTitle } : {}),
+    ...(sourceUrl ? { clueSourceUrl: sourceUrl } : {}),
   };
 
   const rawPayloadJson = {
     institutionListingUrl: listUrl,
     scrapedName: name,
+    sourceMode,
+    adapterKey,
+    ...(sourceTitle ? { sourceTitle } : {}),
+    ...(sourceUrl ? { sourceUrl } : {}),
   };
 
   const scored = scoreDiscoveryCandidate({
@@ -333,7 +364,7 @@ export async function upsertInstitutionDiscoveryCandidate(
         discoveryRunId: runId,
         externalType,
         externalId,
-        externalUrl: normUrl,
+        externalUrl: externalUrlNorm,
         sourceKey,
         normalizedKey,
         dedupeHash,
@@ -374,7 +405,7 @@ export async function upsertInstitutionDiscoveryCandidate(
         sourceKey,
         lastSeenAt: new Date(),
         website: normUrl,
-        externalUrl: normUrl,
+        externalUrl: externalUrlNorm,
         metadataJson: mergedMeta as Prisma.InputJsonValue,
         rawPayloadJson: mergedRaw as Prisma.InputJsonValue,
         ...baseScores,
@@ -391,7 +422,7 @@ export async function upsertInstitutionDiscoveryCandidate(
       discoveryRunId: runId,
       externalType,
       externalId,
-      externalUrl: normUrl,
+      externalUrl: externalUrlNorm,
       sourceKey,
       normalizedKey,
       dedupeHash,

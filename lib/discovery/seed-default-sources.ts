@@ -45,8 +45,30 @@ const TEST_INSTITUTION_CONFIG: Prisma.InputJsonValue = {
   id: "test-institution",
   name: "测试产业园（占位）",
   url: "https://example.com/projects",
+  mode: "website_list",
   type: "incubator",
   region: "demo",
+};
+
+/** 手工种子：无需抓取外网，便于调试 institution 写入与 metadata */
+const TEST_INSTITUTION_MANUAL_SEED_CONFIG: Prisma.InputJsonValue = {
+  id: "test-manual-seed",
+  name: "测试机构（manual_seed）",
+  url: "",
+  mode: "manual_seed",
+  type: "demo",
+  region: "local",
+  seedItems: [
+    {
+      title: "种子项目 Alpha",
+      summary: "用于验证 manual_seed adapter",
+      website: "https://example.com/alpha",
+    },
+    {
+      title: "种子项目 Beta",
+      website: "https://example.com/beta",
+    },
+  ],
 };
 
 /**
@@ -104,6 +126,16 @@ export async function ensureDiscoveryDefaultSources(): Promise<void> {
       institutionName: "测试产业园（占位）",
       institutionType: "incubator",
       institutionRegion: "demo",
+    },
+    {
+      key: "test-institution-manual-seed",
+      name: "测试机构 · manual_seed",
+      type: DiscoverySourceType.INSTITUTION,
+      subtype: "manual_seed",
+      configJson: TEST_INSTITUTION_MANUAL_SEED_CONFIG,
+      institutionName: "测试机构（manual_seed）",
+      institutionType: "demo",
+      institutionRegion: "local",
     },
   ];
 
