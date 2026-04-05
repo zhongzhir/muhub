@@ -57,6 +57,24 @@ export function filterSiteContentByKeyword(items: SiteContent[], keyword: string
   return items.filter((i) => i.title.includes(k) || (i.summary?.includes(k) ?? false))
 }
 
+/**
+ * 仅保留 `relatedProjectIds` 与用户订阅项目 slug 有交集的条目。
+ * 不改变相对顺序（输入应为已按 publishedAt DESC，如 `readSiteContentLatestFirst`）。
+ */
+export function filterSiteContentBySubscribedProjectSlugs(
+  items: SiteContent[],
+  projectSlugs: string[],
+): SiteContent[] {
+  if (projectSlugs.length === 0) {
+    return []
+  }
+  const slugSet = new Set(projectSlugs.map((s) => s.trim()).filter((s) => s.length > 0))
+  if (slugSet.size === 0) {
+    return []
+  }
+  return items.filter((item) => item.relatedProjectIds?.some((id) => slugSet.has(id)) ?? false)
+}
+
 /** Tab + 可选搜索词 → /content 链接（切换分类时保留 q） */
 export function buildContentStreamHref(tab: ContentStreamTabId, q?: string): string {
   const params = new URLSearchParams()
