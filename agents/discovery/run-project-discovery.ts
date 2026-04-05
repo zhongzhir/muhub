@@ -1,3 +1,7 @@
+/**
+ * Discovery Layer — 项目发现：多任务 GitHub 搜索 → 规范化 → 写入发现候选池。
+ * 与 Discovery V2（DiscoverySource / lib/discovery）同属发现链路；分层见 docs/agent-system-layering-v1.md。
+ */
 import { GITHUB_DISCOVERY_SEARCH_TASKS } from "@/agents/discovery/github-filters";
 import { fetchGithubSearchRepositories } from "@/agents/discovery/github-search";
 import {

@@ -1,3 +1,7 @@
+/**
+ * 编排入口（如 CLI `pnpm growth`）：当前串联 Sources 注册表、Discovery 处理器与 Import 占位。
+ * 概念上 Orchestrator / Growth 分层见 docs/agent-system-layering-v1.md；文件名保留历史语义。
+ */
 import { importProjects } from "../import/project-import-agent"
 import { getEnabledProjectSources } from "../sources/source-registry"
 import type { DiscoveredProject } from "../types"

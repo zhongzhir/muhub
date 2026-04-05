@@ -1,6 +1,8 @@
 /**
  * Content Agent V1.2：统一入口与各类草稿生成。
  * 当前为模板 + 规则拼装；后续可在本层接入 LLM，输出仍收敛为 ContentDraft。
+ *
+ * 分层角色：Content Layer（内容生产）。整体说明见 docs/agent-system-layering-v1.md。
  */
 
 import { randomBytes } from "crypto"
