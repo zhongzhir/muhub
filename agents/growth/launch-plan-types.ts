@@ -40,6 +40,8 @@ export type SiteContent = {
   publishedAt: string
   createdAt: string
   launchPlanId?: string
+  /** 站内项目 slug，用于项目详情页关联展示（Content V2） */
+  relatedProjectIds?: string[]
 }
 
 export function newLaunchPlanId(): string {

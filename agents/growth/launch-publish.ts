@@ -3,6 +3,7 @@
  */
 
 import { getContentDraftById } from "@/agents/content/content-draft-store"
+import type { ContentDraft } from "@/agents/content/content-types"
 
 import { getLaunchCandidateById } from "./content-handoff-store"
 import type { ContentLaunchCandidate } from "./launch-candidate"
@@ -16,6 +17,18 @@ export class LaunchPublishError extends Error {
     super(message)
     this.name = "LaunchPublishError"
   }
+}
+
+/** Spotlight / 项目更新汇总类稿件：从草稿 slug 写入关联项目 */
+function relatedProjectIdsForPublish(draft: ContentDraft, contentType: SiteContent["contentType"]): string[] | undefined {
+  if (contentType !== "project-spotlight" && contentType !== "project-roundup") {
+    return undefined
+  }
+  const slugs = (draft.sourceProjectSlugs ?? []).filter(
+    (s): s is string => typeof s === "string" && s.trim().length > 0,
+  )
+  const unique = [...new Set(slugs.map((s) => s.trim()))]
+  return unique.length ? unique : undefined
 }
 
 /** 由已 handoff 的 LaunchCandidate 创建计划（draft） */
@@ -97,6 +110,7 @@ export async function publishLaunchPlan(planId: string): Promise<PublishLaunchPl
   }
 
   const now = new Date().toISOString()
+  const relatedProjectIds = relatedProjectIdsForPublish(draft, plan.contentType)
   const siteContent: SiteContent = {
     id: newSiteContentId(),
     title: plan.title,
@@ -107,6 +121,7 @@ export async function publishLaunchPlan(planId: string): Promise<PublishLaunchPl
     publishedAt: now,
     createdAt: now,
     launchPlanId: plan.id,
+    ...(relatedProjectIds?.length ? { relatedProjectIds } : {}),
   }
 
   await appendSiteContent(siteContent)

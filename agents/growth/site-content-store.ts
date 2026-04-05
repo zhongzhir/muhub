@@ -33,6 +33,14 @@ function coerceSite(raw: unknown): SiteContent | null {
   ) {
     return null
   }
+  let relatedProjectIds: string[] | undefined
+  if (Array.isArray(o.relatedProjectIds)) {
+    const ids = o.relatedProjectIds.filter((x): x is string => typeof x === "string" && x.length > 0)
+    if (ids.length) {
+      relatedProjectIds = [...new Set(ids)]
+    }
+  }
+
   return {
     id: o.id,
     title: o.title,
@@ -43,6 +51,7 @@ function coerceSite(raw: unknown): SiteContent | null {
     publishedAt: o.publishedAt,
     createdAt: o.createdAt,
     launchPlanId: typeof o.launchPlanId === "string" ? o.launchPlanId : undefined,
+    relatedProjectIds,
   }
 }
 
@@ -69,6 +78,18 @@ export async function readAllSiteContent(): Promise<SiteContent[]> {
 export async function readSiteContentLatestFirst(): Promise<SiteContent[]> {
   const list = await readAllSiteContent()
   return [...list].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+}
+
+/** 与项目 slug 关联的站内内容（publishedAt DESC） */
+export async function readSiteContentForProjectSlug(projectSlug: string): Promise<SiteContent[]> {
+  const normalized = projectSlug.trim()
+  if (!normalized) {
+    return []
+  }
+  const list = await readAllSiteContent()
+  return list
+    .filter((row) => row.relatedProjectIds?.includes(normalized))
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
 }
 
 export async function appendSiteContent(row: SiteContent): Promise<void> {
