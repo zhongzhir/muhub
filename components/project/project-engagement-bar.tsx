@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useCallback, useState, useTransition } from "react";
 import type { ProjectEngagementPublic } from "@/lib/project-engagement";
+import { toggleProjectLike } from "@/lib/project-engagement-actions";
 import {
-  toggleProjectFollow,
-  toggleProjectLike,
-} from "@/lib/project-engagement-actions";
+  followContentSubscription,
+  unfollowContentSubscription,
+} from "@/lib/content/subscription-actions";
 
 export type ProjectEngagementBarProps = {
   slug: string;
@@ -57,11 +58,13 @@ export function ProjectEngagementBar({
   const onFollow = () => {
     setHint(null);
     if (interactive && projectId && !viewerLoggedIn) {
-      setHint("请先登录后再关注项目。");
+      setHint("请先登录后再订阅项目。");
       return;
     }
     startTransition(async () => {
-      const res = await toggleProjectFollow(slug);
+      const res = eng.viewerHasFollowed
+        ? await unfollowContentSubscription(slug)
+        : await followContentSubscription(slug);
       if (!res.ok) {
         setHint(res.error);
         return;
@@ -107,17 +110,18 @@ export function ProjectEngagementBar({
           type="button"
           className={`${actionBtn} ${followedCls}`}
           disabled={!interactive || isPending || !projectId}
-          title={!interactive ? "当前页面为演示或未连接数据库，无法关注" : undefined}
+          title={!interactive ? "当前页面为演示或未连接数据库，无法订阅" : undefined}
+          data-testid="project-follow-subscribe"
           onClick={() => {
             if (!interactive || !projectId) {
-              setHint("当前项目不支持关注（演示数据或未连接数据库）。");
+              setHint("当前项目不支持订阅（演示数据或未连接数据库）。");
               return;
             }
             onFollow();
           }}
         >
           <span aria-hidden>⭐</span>
-          <span>{eng.viewerHasFollowed ? "已关注" : "关注"}</span>
+          <span>{eng.viewerHasFollowed ? "Unfollow" : "Follow Project"}</span>
           <span className="tabular-nums">{eng.followCount}</span>
         </button>
       </span>

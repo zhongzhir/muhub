@@ -10,6 +10,9 @@ export default NextAuth({
       if (path.startsWith("/dashboard")) {
         return !!auth?.user;
       }
+      if (path.startsWith("/me")) {
+        return !!auth?.user;
+      }
       if (/^\/projects\/[^/]+\/claim\/?$/.test(path)) {
         return !!auth?.user;
       }
@@ -22,5 +25,5 @@ export default NextAuth({
 }).auth;
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/projects/:slug/claim", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/me/:path*", "/projects/:slug/claim", "/admin/:path*"],
 };

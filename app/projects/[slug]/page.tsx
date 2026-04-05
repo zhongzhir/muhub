@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
@@ -132,6 +133,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             />
           }
         />
+
+        {session?.user?.id ? (
+          <p className="-mt-2 mb-8 text-right text-xs text-zinc-500 dark:text-zinc-400">
+            <Link href="/me/subscriptions" className="underline-offset-2 hover:underline">
+              我的项目订阅
+            </Link>
+          </p>
+        ) : null}
 
         <ProjectUpdates
           slug={slug}
