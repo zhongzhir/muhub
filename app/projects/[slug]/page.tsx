@@ -22,6 +22,8 @@ import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { readSiteContentForProjectSlug } from "@/agents/growth/site-content-store";
 import { ProjectRelatedContent } from "@/components/content/project-related-content";
+import { ProjectTimeline } from "@/components/content/project-timeline";
+import { buildProjectTimelineItems } from "@/lib/content/project-timeline";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +97,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   const { projectId, engagement } = await getProjectEngagementForSlug(slug, session?.user?.id);
   const relatedSiteContent = await readSiteContentForProjectSlug(slug);
+  const timelineItems = buildProjectTimelineItems(slug, data.updates, relatedSiteContent);
   const claimHref =
     fromDb && process.env.DATABASE_URL?.trim() && !showManageLink
       ? `/projects/${encodeURIComponent(slug)}/claim`
@@ -137,6 +140,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           canManage={false}
           presentation="public"
         />
+
+        <ProjectTimeline items={timelineItems} />
 
         <ProjectRelatedContent items={relatedSiteContent} />
 
