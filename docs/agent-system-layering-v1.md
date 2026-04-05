@@ -213,6 +213,7 @@ sources / discovery(content) → content → growth
 ## 相关文档
 
 - [内容生产发布智能体 V1（Content Agent）](./content-agent-v1.md)
+- [Content → Growth Handoff V1](./content-to-growth-handoff-v1.md)
 - [Discovery V2 架构与数据流](./discovery/discovery-architecture.md)
 - [Discovery 数据来源与接入](./discovery/discovery-sources.md)
 - [项目导入流程](./project/project-import-flow.md)

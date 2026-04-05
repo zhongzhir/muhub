@@ -52,5 +52,9 @@ data/content-drafts.json
 # Content Agent V1：编排层资产包（与 growth 的 content-bundles 分立）
 data/content-agent-bundles.json
 
+# Handoff V1：上线候选与 growth intake 审计占位
+data/content-launch-candidates.json
+data/growth-launch-intake-stub.json
+
 # V1.3 Growth：内容资产包（可迁移 DB）
 data/content-bundles.json

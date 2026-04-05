@@ -1,7 +1,7 @@
 # MUHUB 内容生产发布智能体 V1 — 设计文档
 
 > **版本**：V1（设计基线，供实现与评审对照）  
-> **关联**：[智能体体系分层说明 V1](./agent-system-layering-v1.md)  
+> **关联**：[智能体体系分层说明 V1](./agent-system-layering-v1.md) · [Content → Growth Handoff V1](./content-to-growth-handoff-v1.md)  
 > **状态**：文档契约；本文不替代代码中的具体类型名与存储路径，实现时以保持向后兼容为前提渐进对齐。
 
 ---
@@ -295,6 +295,7 @@ V1 质检以**可自动化规则 + 人工抽检**为主。
 | `agents/content/content-draft-store.ts` | 草稿本地存储。 |
 | `agents/growth/content-bundle.ts` | `ContentBundle` 与从 draft 组装逻辑。 |
 | `agents/growth/content-bundle-store.ts` | Bundle 本地存储。 |
+| [content-to-growth-handoff-v1.md](./content-to-growth-handoff-v1.md) | `ContentAgentBundle` → `ContentLaunchCandidate` → Growth 最小消费。 |
 
 ---
 
