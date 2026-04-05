@@ -81,6 +81,15 @@ export async function readSiteContentLatestFirst(): Promise<SiteContent[]> {
 }
 
 /** 与项目 slug 关联的站内内容（publishedAt DESC） */
+export async function getSiteContentById(id: string): Promise<SiteContent | null> {
+  const needle = id.trim()
+  if (!needle) {
+    return null
+  }
+  const list = await readAllSiteContent()
+  return list.find((row) => row.id === needle) ?? null
+}
+
 export async function readSiteContentForProjectSlug(projectSlug: string): Promise<SiteContent[]> {
   const normalized = projectSlug.trim()
   if (!normalized) {

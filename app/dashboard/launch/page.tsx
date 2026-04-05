@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 import { readLaunchPlansLatestFirst } from "@/agents/growth/launch-plan-store"
 import { auth } from "@/auth"
 
+import { ExternalPostGenerator } from "@/components/growth/external-post-generator"
+
 import {
   approveLaunchPlanAction,
   publishLaunchPlanAction,
@@ -129,6 +131,9 @@ export default async function LaunchDashboardPage() {
                         发布到站内
                       </button>
                     </form>
+                  ) : null}
+                  {p.status === "published" && p.siteContentId ? (
+                    <ExternalPostGenerator siteContentId={p.siteContentId} />
                   ) : null}
                 </div>
               </li>
