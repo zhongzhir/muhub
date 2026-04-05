@@ -42,6 +42,10 @@ export default async function GrowthCenterPage() {
           <Link href="/dashboard/content-drafts" className="underline-offset-4 hover:underline">
             内容草稿
           </Link>
+          <span className="text-zinc-300">·</span>
+          <Link href="/dashboard/launch" className="underline-offset-4 hover:underline">
+            Launch 发布
+          </Link>
         </p>
 
         <header className="mb-8">

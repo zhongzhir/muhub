@@ -58,6 +58,10 @@ export default async function DashboardPage() {
           <Link href="/dashboard/discovery" className="text-zinc-400 underline-offset-4 hover:underline dark:text-zinc-500">
             自动发现
           </Link>
+          <span className="text-zinc-300">·</span>
+          <Link href="/dashboard/launch" className="text-zinc-400 underline-offset-4 hover:underline dark:text-zinc-500">
+            Launch
+          </Link>
         </p>
 
         <header className="mb-10 border-b border-zinc-200/70 pb-8 dark:border-zinc-800/80">

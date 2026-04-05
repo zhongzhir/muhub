@@ -24,6 +24,7 @@
     "content:generation": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-content-agent.ts",
     "content:pipeline": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-content-pipeline-demo.ts",
     "handoff:demo": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-content-handoff-demo.ts",
+    "launch:demo": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-launch-demo.ts",
     "growth:launch": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-launch-content.ts",
     "discovery:run": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-project-discovery.ts"
   },

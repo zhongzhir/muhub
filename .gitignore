@@ -56,5 +56,9 @@ data/content-agent-bundles.json
 data/content-launch-candidates.json
 data/growth-launch-intake-stub.json
 
+# Launch V1：站内发布计划与已发布内容快照
+data/launch-plans.json
+data/site-content.json
+
 # V1.3 Growth：内容资产包（可迁移 DB）
 data/content-bundles.json
