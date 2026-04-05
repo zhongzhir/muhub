@@ -22,6 +22,7 @@
     "pwa:icons": "node scripts/build-pwa-icons.mjs",
     "growth": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-growth.ts",
     "content:generation": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-content-agent.ts",
+    "content:pipeline": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-content-pipeline-demo.ts",
     "growth:launch": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-launch-content.ts",
     "discovery:run": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-project-discovery.ts"
   },

@@ -102,6 +102,10 @@ export default async function ContentDraftsPage() {
                     {channelLabel(d.channel)}
                   </span>
                   <span className="text-zinc-400">id: {d.id}</span>
+                  <span className="rounded-md bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">状态：{d.status}</span>
+                  {typeof d.qualityScore === "number" ? (
+                    <span className="text-zinc-400">质检分：{d.qualityScore}</span>
+                  ) : null}
                 </p>
                 {d.summary ? (
                   <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">

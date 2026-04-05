@@ -14,6 +14,11 @@ const SITE_NAME = "MUHUB"
 /** 站内项目列表路径，避免硬编码域名 */
 const PROJECTS_PATH = "/projects"
 
+/** 标准行动号召单行，供草稿 cta 字段与正文尾部复用 */
+export function defaultMuHubCta(): string {
+  return `欢迎到 ${SITE_NAME} 项目广场浏览更多资料与动态：${PROJECTS_PATH}`
+}
+
 export function formatProjectOneLiner(p: ContentProjectInput): string {
   const parts: string[] = [p.name]
   if (p.tagline?.trim()) {
@@ -53,11 +58,7 @@ function roundupTitle(theme: ColdStartRoundupThemeId, count: number): string {
 }
 
 function ctaBlock(): string {
-  return [
-    "——",
-    `欢迎到 ${SITE_NAME} 项目广场浏览更多资料与动态：${PROJECTS_PATH}`,
-    "（本文为运营草稿，发布前请按渠道规范校对与调整。）",
-  ].join("\n")
+  return ["——", defaultMuHubCta(), "（本文为运营草稿，发布前请按渠道规范校对与调整。）"].join("\n")
 }
 
 /** project-roundup：导语 + 分项 + CTA */
@@ -194,6 +195,104 @@ export function buildProjectSpotlightBody(p: ContentProjectInput): {
 
   const summary = formatProjectOneLiner(p).slice(0, 200)
   return { title, summary, body }
+}
+
+/** 多项目「更新」汇总：强调近期变更与样本边界，不单篇深挖 */
+export function buildProjectUpdateRoundupBody(
+  projects: ContentProjectInput[],
+  opts?: { windowNote?: string },
+): { title: string; summary: string; body: string } {
+  const n = projects.length
+  const title = `项目更新摘要 · 本期 ${n} 则（样本稿）`
+  const window = opts?.windowNote?.trim() || "本期时间窗由运营指定；若未填请以实际上线批次为准。"
+  const intro = [
+    "【说明】以下为基于当前录入的项目简介与标签拼装的内部摘要稿，用于周报或社群短讯。不构成投资建议，投放前请核对各项目官网与仓库最新状态。",
+    "",
+    `时间窗：${window}`,
+  ].join("\n")
+
+  const bullets = projects
+    .map((p, i) => {
+      const lines: string[] = [`【${i + 1}】${p.name}`]
+      if (p.tagline?.trim()) {
+        lines.push(`定位：${p.tagline.trim()}`)
+      }
+      if (p.description?.trim()) {
+        lines.push(p.description.trim().split(/\n+/)[0]!.slice(0, 240))
+      }
+      const links: string[] = []
+      if (p.websiteUrl?.trim()) {
+        links.push(`官网：${p.websiteUrl.trim()}`)
+      }
+      if (p.githubUrl?.trim()) {
+        links.push(`仓库：${p.githubUrl.trim()}`)
+      }
+      if (p.tags?.length) {
+        lines.push(`标签：${p.tags.slice(0, 8).join("、")}`)
+      }
+      if (links.length) {
+        lines.push(links.join(" ｜ "))
+      }
+      return lines.join("\n")
+    })
+    .join("\n\n")
+
+  const body = [intro, "", bullets, "", ctaBlock()].join("\n")
+  const summary = `共 ${n} 个项目要点；${projects
+    .map((p) => p.name)
+    .slice(0, 4)
+    .join("、")}${n > 4 ? "…" : ""}`.slice(0, 200)
+  return { title, summary, body }
+}
+
+/** 周报 / Digest：在周汇总模板上叠加栏目说明与标题钩子 */
+export function buildWeeklyDigestBody(
+  projects: ContentProjectInput[],
+  opts?: { digestTitle?: string; theme?: ColdStartRoundupThemeId },
+): { title: string; summary: string; body: string } {
+  const theme = opts?.theme ?? "weekly-cn-ai-opensource"
+  const base = buildProjectRoundupBody(projects, theme)
+  const title = opts?.digestTitle?.trim() || `周报 Digest · ${base.title}`
+  const introExtra =
+    "【周报体例】本节为固定栏目初稿，侧重「可转述事实 + 可追溯链接」。若某条信息偏旧，请在发布前更新或删除该条。"
+  const body = [introExtra, "", base.body].join("\n")
+  return { title, summary: base.summary, body }
+}
+
+/** 手工主题：以运营命题为主，可挂靠少量项目样本 */
+export function buildManualTopicBody(
+  opts: { title: string; summary: string; narrativeHint?: string; projects?: ContentProjectInput[] },
+): { title: string; summary: string; body: string } {
+  const projects = opts.projects ?? []
+  const narrative =
+    opts.narrativeHint?.trim() ||
+    "（可在此补充本轮命题：读者是谁、希望传递的事实边界、需要避免的结论类型。）"
+  const sample =
+    projects.length > 0
+      ? projects
+          .map((p, i) => {
+            const line = formatProjectOneLiner(p)
+            return `· 样本 ${i + 1}：${line}`
+          })
+          .join("\n")
+      : "· 当前未挂载具体项目样本；若命题与站内项目相关，请补充 projectRefs 后再生成一版。"
+
+  const body = [
+    `【手工主题】${opts.title}`,
+    "",
+    "【本篇想讲清楚的事】",
+    narrative,
+    "",
+    "【摘要】",
+    opts.summary.trim(),
+    "",
+    "【可选样本列表（事实引用用）】",
+    sample,
+    "",
+    ctaBlock(),
+  ].join("\n")
+
+  return { title: opts.title.trim(), summary: opts.summary.trim().slice(0, 200), body }
 }
 
 /** social-post：多版本结构；V1.2 实现 recommend 为默认完整版，其余走精简规则 */

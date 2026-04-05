@@ -49,5 +49,8 @@ data/pending-external-imports.json
 # V1.2 Content Agent：本地草稿（可迁移 DB）
 data/content-drafts.json
 
+# Content Agent V1：编排层资产包（与 growth 的 content-bundles 分立）
+data/content-agent-bundles.json
+
 # V1.3 Growth：内容资产包（可迁移 DB）
 data/content-bundles.json
