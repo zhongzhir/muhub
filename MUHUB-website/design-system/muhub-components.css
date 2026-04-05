@@ -1,0 +1,655 @@
+/* MUHUB视觉系统 - 组件样式 */
+/* 基于Frontend Design技能的组件设计 */
+
+/* ===== 基础重置 ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans), var(--font-cn-sans);
+  font-size: 16px;
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--muhub-gradient-bg);
+  color: var(--muhub-neutral-900);
+  min-height: 100vh;
+}
+
+/* ===== 按钮组件 ===== */
+.muhub-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-weight: var(--font-medium);
+  font-size: var(--text-base);
+  line-height: var(--leading-none);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  user-select: none;
+  text-decoration: none;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.muhub-btn:focus {
+  outline: 2px solid var(--muhub-primary);
+  outline-offset: 2px;
+}
+
+.muhub-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 主按钮 */
+.muhub-btn--primary {
+  background: var(--muhub-gradient-primary);
+  color: white;
+  border-color: transparent;
+  box-shadow: var(--shadow-primary);
+}
+
+.muhub-btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), var(--shadow-primary);
+}
+
+.muhub-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* 次要按钮 */
+.muhub-btn--secondary {
+  background: transparent;
+  color: var(--muhub-primary);
+  border-color: var(--muhub-primary);
+}
+
+.muhub-btn--secondary:hover:not(:disabled) {
+  background: var(--muhub-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 幽灵按钮 */
+.muhub-btn--ghost {
+  background: transparent;
+  color: var(--muhub-neutral-700);
+  border-color: var(--muhub-neutral-300);
+}
+
+.muhub-btn--ghost:hover:not(:disabled) {
+  background: var(--muhub-neutral-100);
+  border-color: var(--muhub-neutral-400);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 链接按钮 */
+.muhub-btn--link {
+  background: transparent;
+  color: var(--muhub-primary);
+  border-color: transparent;
+  padding: var(--space-2) var(--space-3);
+}
+
+.muhub-btn--link:hover:not(:disabled) {
+  text-decoration: underline;
+  background: var(--muhub-primary-50);
+}
+
+/* 按钮尺寸 */
+.muhub-btn--sm {
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-4);
+}
+
+.muhub-btn--lg {
+  font-size: var(--text-lg);
+  padding: var(--space-4) var(--space-8);
+}
+
+.muhub-btn--xl {
+  font-size: var(--text-xl);
+  padding: var(--space-5) var(--space-10);
+  border-radius: var(--radius-xl);
+}
+
+/* 按钮组 */
+.muhub-btn-group {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.muhub-btn-group .muhub-btn {
+  border-radius: 0;
+}
+
+.muhub-btn-group .muhub-btn:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+}
+
+.muhub-btn-group .muhub-btn:last-child {
+  border-top-right-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+/* ===== 卡片组件 ===== */
+.muhub-card {
+  background: var(--muhub-gradient-card);
+  border: 1px solid var(--muhub-neutral-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.muhub-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--muhub-gradient-primary);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.muhub-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--muhub-neutral-300);
+}
+
+.muhub-card:hover::before {
+  opacity: 1;
+}
+
+/* 卡片变体 */
+.muhub-card--glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur) var(--backdrop-saturate);
+  border: 1px solid var(--glass-border);
+}
+
+.muhub-card--bordered {
+  border-width: 2px;
+  border-color: var(--muhub-primary-200);
+}
+
+.muhub-card--shadowless {
+  box-shadow: none;
+}
+
+.muhub-card--shadowless:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 卡片内容区域 */
+.muhub-card__header {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--muhub-neutral-200);
+}
+
+.muhub-card__title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--muhub-neutral-900);
+  margin: 0;
+}
+
+.muhub-card__subtitle {
+  font-size: var(--text-sm);
+  color: var(--muhub-neutral-500);
+  margin-top: var(--space-1);
+}
+
+.muhub-card__body {
+  margin-bottom: var(--space-4);
+}
+
+.muhub-card__footer {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--muhub-neutral-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ===== 表单组件 ===== */
+.muhub-form-group {
+  margin-bottom: var(--space-4);
+}
+
+.muhub-form-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--muhub-neutral-700);
+  margin-bottom: var(--space-2);
+}
+
+.muhub-form-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--text-base);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--muhub-neutral-300);
+  border-radius: var(--radius-lg);
+  background: white;
+  color: var(--muhub-neutral-900);
+  transition: all var(--transition-base);
+}
+
+.muhub-form-input:focus {
+  outline: none;
+  border-color: var(--muhub-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.muhub-form-input::placeholder {
+  color: var(--muhub-neutral-400);
+}
+
+.muhub-form-input:disabled {
+  background: var(--muhub-neutral-100);
+  color: var(--muhub-neutral-500);
+  cursor: not-allowed;
+}
+
+/* 输入框变体 */
+.muhub-form-input--error {
+  border-color: var(--muhub-error);
+}
+
+.muhub-form-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.muhub-form-input--success {
+  border-color: var(--muhub-success);
+}
+
+.muhub-form-input--success:focus {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* 表单帮助文本 */
+.muhub-form-help {
+  font-size: var(--text-sm);
+  color: var(--muhub-neutral-500);
+  margin-top: var(--space-2);
+}
+
+.muhub-form-error {
+  font-size: var(--text-sm);
+  color: var(--muhub-error);
+  margin-top: var(--space-2);
+}
+
+/* 复选框和单选框 */
+.muhub-checkbox,
+.muhub-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.muhub-checkbox input,
+.muhub-radio input {
+  width: var(--space-5);
+  height: var(--space-5);
+  accent-color: var(--muhub-primary);
+}
+
+.muhub-checkbox__label,
+.muhub-radio__label {
+  font-size: var(--text-base);
+  color: var(--muhub-neutral-700);
+}
+
+/* ===== 导航组件 ===== */
+.muhub-nav {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-6);
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur) var(--backdrop-saturate);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-40);
+}
+
+.muhub-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--muhub-neutral-900);
+}
+
+.muhub-nav__logo {
+  height: 32px;
+  width: auto;
+}
+
+.muhub-nav__menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.muhub-nav__item {
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none;
+  color: var(--muhub-neutral-700);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+}
+
+.muhub-nav__item:hover {
+  background: var(--muhub-neutral-100);
+  color: var(--muhub-primary);
+}
+
+.muhub-nav__item--active {
+  background: var(--muhub-primary);
+  color: white;
+}
+
+.muhub-nav__item--active:hover {
+  background: var(--muhub-primary-dark);
+  color: white;
+}
+
+/* 移动端导航 */
+@media (max-width: 768px) {
+  .muhub-nav__menu {
+    display: none;
+  }
+  
+  .muhub-nav__mobile-toggle {
+    display: block;
+    margin-left: auto;
+  }
+}
+
+/* ===== 徽章组件 ===== */
+.muhub-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.muhub-badge--primary {
+  background: var(--muhub-primary-100);
+  color: var(--muhub-primary-700);
+}
+
+.muhub-badge--secondary {
+  background: var(--muhub-secondary-100);
+  color: var(--muhub-secondary-700);
+}
+
+.muhub-badge--success {
+  background: var(--muhub-success-50);
+  color: var(--muhub-success-700);
+}
+
+.muhub-badge--warning {
+  background: var(--muhub-warning-50);
+  color: var(--muhub-warning-700);
+}
+
+.muhub-badge--error {
+  background: var(--muhub-error-50);
+  color: var(--muhub-error-700);
+}
+
+.muhub-badge--info {
+  background: var(--muhub-info-50);
+  color: var(--muhub-info-700);
+}
+
+/* ===== 提示组件 ===== */
+.muhub-alert {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid;
+  margin-bottom: var(--space-4);
+}
+
+.muhub-alert--info {
+  background: var(--muhub-info-50);
+  border-left-color: var(--muhub-info);
+  color: var(--muhub-info-700);
+}
+
+.muhub-alert--success {
+  background: var(--muhub-success-50);
+  border-left-color: var(--muhub-success);
+  color: var(--muhub-success-700);
+}
+
+.muhub-alert--warning {
+  background: var(--muhub-warning-50);
+  border-left-color: var(--muhub-warning);
+  color: var(--muhub-warning-700);
+}
+
+.muhub-alert--error {
+  background: var(--muhub-error-50);
+  border-left-color: var(--muhub-error);
+  color: var(--muhub-error-700);
+}
+
+.muhub-alert__title {
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--space-2);
+}
+
+.muhub-alert__content {
+  font-size: var(--text-sm);
+}
+
+/* ===== 加载组件 ===== */
+.muhub-spinner {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--muhub-neutral-200);
+  border-top-color: var(--muhub-primary);
+  border-radius: 50%;
+  animation: muhub-spin 1s linear infinite;
+}
+
+@keyframes muhub-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.muhub-spinner--sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.muhub-spinner--lg {
+  width: 3rem;
+  height: 3rem;
+  border-width: 4px;
+}
+
+/* ===== 工具提示 ===== */
+.muhub-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.muhub-tooltip__content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-3);
+  background: var(--muhub-neutral-800);
+  color: white;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-base);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-base);
+  z-index: var(--z-50);
+  margin-bottom: var(--space-2);
+}
+
+.muhub-tooltip__content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--muhub-neutral-800);
+}
+
+.muhub-tooltip:hover .muhub-tooltip__content {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== 响应式工具类 ===== */
+@media (min-width: 768px) {
+  .md\:flex {
+    display: flex;
+  }
+  
+  .md\:hidden {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .lg\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ===== 工具类 ===== */
+.muhub-container {
+  width: 100%;
+  max-width: var(--container-xl);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.muhub-grid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.muhub-flex {
+  display: flex;
+}
+
+.muhub-items-center {
+  align-items: center;
+}
+
+.muhub-justify-between {
+  justify-content: space-between;
+}
+
+.muhub-gap-4 {
+  gap: var(--space-4);
+}
+
+.muhub-gap-6 {
+  gap: var(--space-6);
+}
+
+.muhub-gap-8 {
+  gap: var(--space-8);
+}
+
+.muhub-mt-4 {
+  margin-top: var(--space-4);
+}
+
+.muhub-mt-6 {
+  margin-top: var(--space-6);
+}
+
+.muhub-mt-8 {
+  margin-top: var(--space-8);
+}
+
+.muhub-mb-4 {
+  margin-bottom: var(--space-4);
+}
+
+.muhub-mb-6 {
+  margin-bottom: var(--space-6);
+}
+
+.muhub-mb-8 {
+  margin-bottom: var(--space-8);
+}
+
+.muhub-p-4 {
+  padding: var(--space-4);
+}
+
+.muhub-p-6 {
+  padding: var(--space-6);
+}
+
+.muhub-p-8 {
+  padding: var(--space-8);
+}
+
+.muhub-text-center {

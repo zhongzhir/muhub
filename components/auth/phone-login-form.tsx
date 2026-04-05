@@ -98,8 +98,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
     }
   }, [callbackUrl, code, phone, router]);
 
-  const inputClass =
-    "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
+  const inputClass = "muhub-input mt-1";
 
   return (
     <div className="space-y-4">
@@ -140,7 +139,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
           type="button"
           disabled={sending || cooldown > 0}
           onClick={() => void sendCode()}
-          className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          className="muhub-btn-outline shrink-0"
         >
           {cooldown > 0 ? `${cooldown} 秒后可重发` : sending ? "发送中…" : "发送验证码"}
         </button>
@@ -161,7 +160,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
         type="button"
         disabled={loggingIn}
         onClick={() => void login()}
-        className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+        className="muhub-btn-primary w-full px-5 py-3 disabled:opacity-60"
       >
         {loggingIn ? "登录中…" : "手机号登录"}
       </button>

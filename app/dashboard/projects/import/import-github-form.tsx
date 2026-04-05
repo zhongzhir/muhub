@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { importGitHubRepo, type ImportGitHubFormState } from "./actions";
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
+const inputClass = "muhub-input mt-1";
 
 const initialState: ImportGitHubFormState = { ok: false };
 
@@ -47,17 +46,10 @@ export function ImportGitHubForm() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-        >
+        <button type="submit" disabled={pending} className="muhub-btn-primary px-4 py-3 disabled:opacity-60">
           {pending ? "导入中…" : "导入项目"}
         </button>
-        <Link
-          href="/dashboard/projects/new"
-          className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
-        >
+        <Link href="/dashboard/projects/new" className="muhub-btn-secondary px-4 py-3">
           手动创建项目
         </Link>
       </div>

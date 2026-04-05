@@ -12,6 +12,43 @@ import { recommendedProjects } from "@/lib/recommended-projects";
 
 export const dynamic = "force-dynamic";
 
+function EmptyProjectsIllustration({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 7.5V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-5.5L12 4.5H6A2.5 2.5 0 0 0 3 7.5Z" />
+      <path d="M12 11v6M9 14h6" opacity="0.4" />
+    </svg>
+  );
+}
+
+function EmptySearchIllustration({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5 21 21" />
+      <path d="M7 10.5h7" opacity="0.35" />
+    </svg>
+  );
+}
+
 function parseBoolQuery(v: string | string[] | undefined): boolean | undefined {
   const s = Array.isArray(v) ? v[0] : v;
   if (s === "1" || s === "true") {
@@ -129,13 +166,13 @@ export default async function ProjectsListPage({
           </Link>
         </p>
 
-        <header className="mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight">项目广场</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            <span className="font-medium text-zinc-800 dark:text-zinc-200">浏览公开展示的项目。希望展示你的项目？</span>{" "}
+        <header className="mb-12 space-y-3 border-b border-zinc-200/75 pb-10 dark:border-zinc-800/80">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">项目广场</h1>
+          <p className="max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <span className="font-semibold text-zinc-800 dark:text-zinc-200">浏览公开展示的项目。希望展示你的项目？</span>{" "}
             <Link
               href="/dashboard/projects/new"
-              className="font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+              className="font-medium text-teal-700 underline-offset-2 hover:underline dark:text-teal-400"
             >
               创建项目
             </Link>
@@ -151,13 +188,17 @@ export default async function ProjectsListPage({
           />
         ) : null}
 
-        <section className="mb-10 space-y-4">
-          <form
-            action="/projects"
-            method="get"
-            className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/50"
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <section className="mb-12 space-y-5" aria-labelledby="projects-filters-heading">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <h2
+              id="projects-filters-heading"
+              className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+            >
+              搜索与筛选
+            </h2>
+          </div>
+          <form action="/projects" method="get" className="muhub-card flex flex-col gap-5 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
               <div className="flex-1">
                 <label htmlFor="projects-search" className="sr-only">
                   搜索项目
@@ -169,23 +210,20 @@ export default async function ProjectsListPage({
                   defaultValue={searchTerm}
                   placeholder="按名称、页面路径或一句话介绍搜索"
                   aria-label="搜索项目"
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400"
+                  className="muhub-input"
                 />
               </div>
-              <button
-                type="submit"
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-              >
+              <button type="submit" className="muhub-btn-primary px-4 py-2 font-medium">
                 搜索
               </button>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 排序
                 <select
                   name="sort"
                   defaultValue={sort}
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 >
                   <option value="new">最新收录</option>
                   <option value="updated">最近更新</option>
@@ -193,12 +231,12 @@ export default async function ProjectsListPage({
                   <option value="recommended">推荐（完整度+AI 等规则）</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 主类型
                 <select
                   name="category"
                   defaultValue={category}
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 >
                   <option value="">全部</option>
                   {PRIMARY_TYPE_ORDER.map((t) => (
@@ -208,22 +246,22 @@ export default async function ProjectsListPage({
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 标签（精确匹配一项）
                 <input
                   name="tag"
                   type="text"
                   defaultValue={tag}
                   placeholder="如 LLM"
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 AI 相关
                 <select
                   name="ai"
                   defaultValue={ai === true ? "1" : ai === false ? "0" : ""}
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 >
                   <option value="">不限</option>
                   <option value="1">是</option>
@@ -231,49 +269,49 @@ export default async function ProjectsListPage({
                 </select>
               </label>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 中文工具
                 <select
                   name="zh"
                   defaultValue={zh === true ? "1" : zh === false ? "0" : ""}
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 >
                   <option value="">不限</option>
                   <option value="1">是</option>
                   <option value="0">否</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 含官网
                 <select
                   name="hw"
                   defaultValue={hw === true ? "1" : hw === false ? "0" : ""}
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 >
                   <option value="">不限</option>
                   <option value="1">是</option>
                   <option value="0">否</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 含文档
                 <select
                   name="hd"
                   defaultValue={hd === true ? "1" : hd === false ? "0" : ""}
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 >
                   <option value="">不限</option>
                   <option value="1">是</option>
                   <option value="0">否</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 含 GitHub
                 <select
                   name="hg"
                   defaultValue={hg === true ? "1" : hg === false ? "0" : ""}
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="muhub-input px-2 py-1.5"
                 >
                   <option value="">不限</option>
                   <option value="1">是</option>
@@ -310,38 +348,34 @@ export default async function ProjectsListPage({
 
         <section aria-label="项目列表">
           {showEmptyAll ? (
-            <div className="space-y-8">
+            <div className="space-y-10">
               <div
                 data-testid="projects-empty-all"
-                className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-6 py-10 text-center dark:border-zinc-600 dark:bg-zinc-900/40"
+                className="rounded-xl border border-dashed border-zinc-300/90 bg-zinc-50/70 px-6 py-12 text-center dark:border-zinc-600 dark:bg-zinc-900/35"
               >
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">暂无项目</h2>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                <EmptyProjectsIllustration className="mx-auto mb-5 h-14 w-14 text-zinc-400 dark:text-zinc-600" />
+                <h2 className="text-lg font-bold text-zinc-950 dark:text-zinc-50">暂无项目</h2>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                   你可以先创建项目，或从 GitHub / Gitee 导入一个项目开始。
                 </p>
                 <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <Link
-                    href="/dashboard/projects/new"
-                    className="inline-flex w-full max-w-xs items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white sm:w-auto"
-                  >
+                  <Link href="/dashboard/projects/new" className="muhub-btn-primary w-full max-w-xs px-5 py-2.5 sm:w-auto">
                     创建项目
                   </Link>
                   <Link
                     href="/dashboard/projects/import"
-                    className="inline-flex w-full max-w-xs items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:w-auto"
+                    className="muhub-btn-secondary w-full max-w-xs px-5 py-2.5 font-semibold sm:w-auto"
                   >
                     导入项目
                   </Link>
                 </div>
               </div>
-              <div data-testid="recommended-project-pool" className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                  推荐项目
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <div data-testid="recommended-project-pool" className="muhub-card p-6 sm:p-8">
+                <h2 className="text-lg font-bold tracking-tight text-zinc-950 dark:text-zinc-50">推荐项目</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                   冷启动示例：浏览下方知名开源项目（点击卡片进入示例详情页）。
                 </p>
-                <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+                <ul className="mt-8 grid gap-5 sm:grid-cols-2 sm:gap-6">
                   {recommendedProjects.map((p) => (
                     <li key={p.slug}>
                       <RecommendedProjectCard project={p} />
@@ -353,16 +387,17 @@ export default async function ProjectsListPage({
           ) : null}
 
           {showEmptySearch ? (
-            <p
+            <div
               data-testid="projects-empty-search"
-              className="rounded-lg border border-dashed border-zinc-300 bg-zinc-100/50 px-6 py-12 text-center text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400"
+              className="flex flex-col items-center rounded-xl border border-dashed border-zinc-300/90 bg-zinc-50/60 px-6 py-14 text-center dark:border-zinc-600 dark:bg-zinc-900/35"
             >
-              没有找到匹配的项目
-            </p>
+              <EmptySearchIllustration className="mb-4 h-11 w-11 text-zinc-400 dark:text-zinc-600" />
+              <p className="text-sm font-medium leading-relaxed text-zinc-700 dark:text-zinc-300">没有找到匹配的项目</p>
+            </div>
           ) : null}
 
           {items.length > 0 ? (
-            <ul className="grid gap-6 sm:grid-cols-2">
+            <ul className="grid gap-7 sm:grid-cols-2 sm:gap-8">
               {items.map((p) => (
                 <li key={p.slug} className="h-full">
                   <ProjectCard project={p} variant="plaza" />

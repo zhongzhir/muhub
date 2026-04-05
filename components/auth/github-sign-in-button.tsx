@@ -15,7 +15,7 @@ export function GitHubSignInButton({
       onClick={() => signIn("github", { callbackUrl })}
       className={
         className ??
-        "inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-lg bg-zinc-900 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+        "muhub-btn-primary w-full max-w-sm px-5 py-3"
       }
     >
       <GitHubMark className="h-5 w-5" aria-hidden />

@@ -11,26 +11,22 @@ function MiniList({
   empty: string;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        {title}
-      </h3>
+    <div className="muhub-card p-4 sm:p-5">
+      <h3 className="muhub-form-legend mb-0 text-left">{title}</h3>
       {items.length === 0 ? (
-        <p className="mt-2 text-xs text-zinc-500">{empty}</p>
+        <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{empty}</p>
       ) : (
-        <ul className="mt-2 space-y-1.5">
+        <ul className="mt-3 space-y-2">
           {items.map((p) => (
-            <li key={p.slug}>
+            <li key={p.slug} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <Link
                 href={`/projects/${encodeURIComponent(p.slug)}`}
-                className="text-sm font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
+                className="text-sm font-semibold text-teal-800 underline-offset-2 hover:underline dark:text-teal-300"
               >
                 {p.name}
               </Link>
               {p.primaryCategory?.trim() ? (
-                <span className="ml-2 text-[10px] text-violet-600 dark:text-violet-400">
-                  {p.primaryCategory}
-                </span>
+                <span className="muhub-badge muhub-badge--category">{p.primaryCategory}</span>
               ) : null}
             </li>
           ))}
@@ -50,7 +46,7 @@ export function PlazaDiscoveryBlocks(props: {
   return (
     <section
       aria-label="发现精选"
-      className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+      className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       data-testid="plaza-discovery-blocks"
     >
       <MiniList title="热门 AI Agent" items={hotAgents} empty="暂无匹配公开项目" />

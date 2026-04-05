@@ -80,13 +80,13 @@ export function ProjectDetailInfoSections({
     <>
       {data.aiCardSummary?.trim() ? (
         <section
-          className="mt-6 rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50/90 to-white px-6 py-5 shadow-sm dark:border-violet-900/40 dark:from-violet-950/35 dark:to-zinc-900 md:px-8"
+          className="muhub-prose-panel muhub-prose-panel--accent-secondary mt-8 md:px-8"
           data-testid="project-ai-summary"
           aria-labelledby="project-ai-card-heading"
         >
           <h2
             id="project-ai-card-heading"
-            className="text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300"
+            className="muhub-form-legend text-left text-[var(--muhub-secondary-700)] dark:text-[var(--muhub-secondary-300)]"
           >
             AI 项目摘要
           </h2>
@@ -98,13 +98,13 @@ export function ProjectDetailInfoSections({
 
       {data.aiWeeklySummary?.summary?.trim() ? (
         <section
-          className="mt-6 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 to-white px-6 py-5 shadow-sm dark:border-amber-900/40 dark:from-amber-950/30 dark:to-zinc-900 md:px-8"
+          className="muhub-prose-panel muhub-prose-panel--accent-warning mt-8 md:px-8"
           data-testid="project-ai-weekly-summary"
           aria-labelledby="project-ai-weekly-heading"
         >
           <h2
             id="project-ai-weekly-heading"
-            className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200"
+            className="muhub-form-legend text-left text-[var(--muhub-warning-700)] dark:text-[var(--muhub-warning-300)]"
           >
             AI 周期性摘要
           </h2>
@@ -159,49 +159,39 @@ export function ProjectDetailInfoSections({
         data.isAiRelated ||
         data.isChineseTool) ? (
         <section
-          className="mt-6 rounded-xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900/50"
+          className="muhub-card mt-8 px-5 py-5 sm:px-6"
           data-testid="project-tags"
           aria-labelledby="project-type-tags-heading"
         >
           <h2
             id="project-type-tags-heading"
-            className="text-sm font-semibold tracking-tight text-zinc-800 dark:text-zinc-200"
+            className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100"
           >
             类型与标签
           </h2>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             {data.primaryCategory?.trim() ? (
-              <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-900 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
+              <span className="muhub-badge muhub-badge--category">
                 主类型 · {data.primaryCategory.trim()}
               </span>
             ) : null}
             {(data.categories ?? [])
               .filter((c) => c !== data.primaryCategory)
               .map((c) => (
-                <span
-                  key={c}
-                  className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
-                >
+                <span key={c} className="muhub-badge muhub-badge--neutral text-xs">
                   {c}
                 </span>
               ))}
             {(data.tags ?? []).map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
-              >
+              <span key={t} className="muhub-badge muhub-badge--neutral text-xs font-medium">
                 #{t}
               </span>
             ))}
             {data.isAiRelated ? (
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-900 dark:border-sky-800 dark:bg-sky-950/35 dark:text-sky-200">
-                AI 相关
-              </span>
+              <span className="muhub-badge muhub-badge--sky text-xs">AI 相关</span>
             ) : null}
             {data.isChineseTool ? (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-200">
-                中文工具
-              </span>
+              <span className="muhub-badge muhub-badge--amber text-xs">中文工具</span>
             ) : null}
           </div>
         </section>
@@ -209,35 +199,30 @@ export function ProjectDetailInfoSections({
 
       {data.externalLinks && data.externalLinks.length > 0 ? (
         <section
-          className="mt-8 scroll-mt-8"
+          className="mt-10 scroll-mt-8"
           aria-labelledby="project-external-links-heading"
           data-testid="project-external-links-section"
         >
-          <h2
-            id="project-external-links-heading"
-            className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
-          >
+          <h2 id="project-external-links-heading" className="muhub-page-section-title">
             外部链接
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-8">
             {groupExternalLinks(data.externalLinks).map((group) => (
               <div key={group.heading}>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  {group.heading}
-                </h3>
-                <ul className="grid gap-2 sm:grid-cols-2">
+                <h3 className="muhub-form-legend mb-3 text-left">{group.heading}</h3>
+                <ul className="grid gap-3 sm:grid-cols-2">
                   {group.items.map((link, i) => (
                     <li key={`${link.platform}-${link.url}-${i}`}>
                       <a
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex flex-col rounded-xl border border-zinc-200 bg-white p-3 text-sm shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/80"
+                        className="muhub-card muhub-card--interactive flex flex-col p-3.5 text-sm"
                       >
                         <span className="font-medium text-zinc-900 dark:text-zinc-100">
                           {link.label?.trim() || externalPlatformHeading(link.platform)}
                           {link.isPrimary ? (
-                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
+                            <span className="muhub-badge muhub-badge--amber ml-2 align-middle text-[10px]">
                               主链
                             </span>
                           ) : null}
@@ -266,16 +251,16 @@ export function ProjectDetailInfoSections({
           aria-labelledby="project-ops-info-heading"
           data-testid="project-ops-info-section"
         >
-          <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="muhub-card overflow-hidden">
             <div className="border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
               <h2
                 id="project-ops-info-heading"
-                className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+                className="text-lg font-bold tracking-tight text-zinc-950 dark:text-zinc-50"
               >
                 运营信息
               </h2>
             </div>
-            <div className="space-y-2 px-6 py-4 text-sm">
+            <div className="space-y-2.5 px-6 py-5 text-sm">
               {sourceItems.map((s) => (
                 <div
                   key={s.id ? s.id : `${s.kind}-${s.url}`}
@@ -305,10 +290,7 @@ export function ProjectDetailInfoSections({
         aria-labelledby="project-sources-heading"
         data-testid="project-sources-section"
       >
-        <h2
-          id="project-sources-heading"
-          className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
-        >
+        <h2 id="project-sources-heading" className="muhub-page-section-title">
           项目信息源
         </h2>
         {sourceItems.length === 0 ? (
@@ -316,7 +298,7 @@ export function ProjectDetailInfoSections({
             暂无信息源。在创建或编辑项目时补充仓库、官网、文档等链接后将在此展示。
           </p>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="grid gap-4 sm:grid-cols-2">
             {sourceItems.map((s) => (
               <li key={s.id ? `${s.id}` : `${s.kind}-${s.url}`}>
                 <a
@@ -324,7 +306,7 @@ export function ProjectDetailInfoSections({
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid="project-source-link"
-                  className="flex h-full flex-col rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/80"
+                  className="muhub-card muhub-card--interactive flex h-full flex-col p-4"
                 >
                   <div className="flex items-start gap-3">
                     <span
@@ -337,7 +319,7 @@ export function ProjectDetailInfoSections({
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold text-zinc-900 dark:text-zinc-50">{s.categoryLabel}</span>
                         {s.isPrimary ? (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
+                          <span className="muhub-badge muhub-badge--amber text-[10px] uppercase tracking-wide">
                             主源
                           </span>
                         ) : null}
@@ -356,9 +338,9 @@ export function ProjectDetailInfoSections({
       </section>
 
       <section className="mt-12 scroll-mt-8" aria-labelledby="repo-data-heading" data-testid="github-snapshot-section">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 id="repo-data-heading" className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <h2 id="repo-data-heading" className="muhub-page-section-title mb-0">
               代码仓库数据
             </h2>
             <span
@@ -371,7 +353,7 @@ export function ProjectDetailInfoSections({
           </div>
           {githubRefreshSlot}
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:p-8">
+        <div className="muhub-card p-6 md:p-8">
           {!data.githubSnapshot ? (
             <div>
               <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">暂无仓库快照数据</p>
@@ -410,7 +392,7 @@ export function ProjectDetailInfoSections({
               <p className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
                 <span
                   data-testid="github-snapshot-activity"
-                  className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900 dark:bg-emerald-900/35 dark:text-emerald-200"
+                  className="muhub-badge muhub-badge--success px-3 py-1 text-xs font-semibold"
                 >
                   {computeGithubActivity(data.githubSnapshot).label}
                 </span>
@@ -490,16 +472,16 @@ export function ProjectDetailInfoSections({
       </section>
 
       <section className="mt-12 scroll-mt-8" aria-labelledby="ops-data-heading" data-testid="project-ops-data-section">
-        <h2 id="ops-data-heading" className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 id="ops-data-heading" className="muhub-page-section-title">
           运营数据
         </h2>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 md:p-8">
+        <div className="muhub-card p-6 text-sm text-zinc-500 dark:text-zinc-400 md:p-8">
           暂无运营数据
         </div>
       </section>
 
       <section className="mt-14 scroll-mt-8" aria-labelledby="social-heading">
-        <h2 id="social-heading" className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 id="social-heading" className="muhub-page-section-title">
           社媒
         </h2>
         {socials.length === 0 ? (
@@ -533,11 +515,11 @@ export function ProjectDetailInfoSections({
       </section>
 
       <section className="mt-14 scroll-mt-8 pb-8" aria-labelledby="about-heading">
-        <h2 id="about-heading" className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 id="about-heading" className="muhub-page-section-title">
           项目介绍
         </h2>
         {descriptionBody ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-800 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 md:p-8">
+          <div className="muhub-card p-6 text-zinc-800 dark:text-zinc-200 md:p-8">
             <p className="whitespace-pre-wrap leading-relaxed">{descriptionBody}</p>
           </div>
         ) : (

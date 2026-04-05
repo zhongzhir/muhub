@@ -7,17 +7,17 @@ export function RecommendedProjectCard({ project }: { project: RecommendedProjec
   return (
     <article
       data-testid="recommended-project-card"
-      className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="flex flex-col p-5 muhub-card muhub-card--interactive transition-colors"
     >
       <Link
         href={`/projects/${project.slug}`}
-        className="flex flex-1 flex-col rounded-lg outline-none ring-zinc-400 focus-visible:ring-2"
+        className="flex flex-1 flex-col rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40"
       >
-        <h3 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h3 className="text-lg font-bold leading-snug tracking-tight text-zinc-950 sm:text-xl dark:text-zinc-50">
           {project.name}
         </h3>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{project.tagline}</p>
-        <span className="mt-3 inline-flex text-sm font-medium text-zinc-900 underline-offset-4 dark:text-zinc-100">
+        <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{project.tagline}</p>
+        <span className="mt-4 inline-flex text-sm font-semibold text-teal-800 underline-offset-4 dark:text-teal-300">
           查看详情 →
         </span>
       </Link>

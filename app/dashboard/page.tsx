@@ -60,9 +60,9 @@ export default async function DashboardPage() {
           </Link>
         </p>
 
-        <header className="mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight">我的项目</h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+        <header className="mb-10 border-b border-zinc-200/70 pb-8 dark:border-zinc-800/80">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">我的项目</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             这里汇总你创建的项目。使用「管理项目」进入工作台维护资料与动态；「查看项目」打开对外公开展示页。
           </p>
         </header>
@@ -75,20 +75,20 @@ export default async function DashboardPage() {
           </h2>
           {projects.length === 0 ? (
             <div
-              className="rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-10 text-center dark:border-zinc-600 dark:bg-zinc-900/40"
+              className="muhub-card border-dashed border-zinc-300/90 px-6 py-10 text-center dark:border-zinc-600"
               data-testid="dashboard-empty"
             >
-              <p className="text-base font-medium text-zinc-800 dark:text-zinc-200">还没有项目</p>
+              <p className="text-base font-semibold text-zinc-800 dark:text-zinc-200">还没有项目</p>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href="/dashboard/projects/new"
-                  className="inline-flex w-full max-w-xs items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white sm:w-auto"
+                  className="muhub-btn-primary w-full max-w-xs px-5 py-2.5 sm:w-auto"
                 >
                   创建项目
                 </Link>
                 <Link
                   href="/dashboard/projects/import"
-                  className="inline-flex w-full max-w-xs items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:w-auto"
+                  className="muhub-btn-secondary w-full max-w-xs px-5 py-2.5 font-semibold sm:w-auto"
                 >
                   从 GitHub 导入
                 </Link>
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
               <p className="mt-6">
                 <Link
                   href="/projects"
-                  className="text-sm font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                  className="text-sm font-medium text-teal-700 underline-offset-2 hover:underline dark:text-teal-400"
                 >
                   去项目广场
                 </Link>

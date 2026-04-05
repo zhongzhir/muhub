@@ -40,11 +40,7 @@ export function UserMenu({
           {initial}
         </span>
       )}
-      <button
-        type="button"
-        onClick={() => signOut({ callbackUrl: "/" })}
-        className="rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 sm:px-2.5 sm:text-sm dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
-      >
+      <button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="muhub-nav-link">
         退出
       </button>
     </div>

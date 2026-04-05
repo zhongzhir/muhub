@@ -42,20 +42,17 @@ function visibilityPill(v: ProjectVisibilityStatus): { text: string; className: 
     case "PUBLISHED":
       return {
         text: "已公开",
-        className:
-          "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
+        className: "muhub-badge muhub-badge--success",
       };
     case "HIDDEN":
       return {
         text: "已隐藏",
-        className:
-          "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100",
+        className: "muhub-badge muhub-badge--warning",
       };
     default:
       return {
         text: "草稿",
-        className:
-          "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-300",
+        className: "muhub-badge muhub-badge--muted",
       };
   }
 }
@@ -75,18 +72,13 @@ function ProjectLinks({
       {tags.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {tags.map((t) => (
-            <span
-              key={t}
-              className="inline-flex rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
-            >
+            <span key={t} className="muhub-badge muhub-badge--neutral">
               {t}
             </span>
           ))}
         </div>
       ) : (
-        <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-          外链
-        </p>
+        <p className="muhub-meta-label text-zinc-400 dark:text-zinc-500">外链</p>
       )}
       <div className="flex flex-col gap-1.5 text-xs text-zinc-500 dark:text-zinc-500">
         {project.githubUrl ? (
@@ -130,8 +122,8 @@ export function ProjectCard({
   const publicHref = `/projects/${encodeURIComponent(project.slug)}`;
   const isPlaza = variant === "plaza";
 
-  const shellClass = `relative flex h-full flex-col rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 ${
-    isPlaza ? "transition hover:border-zinc-300/90 hover:shadow dark:hover:border-zinc-600" : ""
+  const shellClass = `relative flex h-full flex-col muhub-card ${
+    isPlaza ? "muhub-card--interactive" : ""
   }`;
 
   return (
@@ -156,13 +148,11 @@ export function ProjectCard({
         }`}
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-semibold tracking-tight text-zinc-900 line-clamp-2 dark:text-zinc-50">
+          <h3 className="text-lg font-bold leading-snug tracking-tight text-zinc-950 line-clamp-2 sm:text-xl dark:text-zinc-50">
             {project.name}
           </h3>
           {!isPlaza && project.visibilityStatus ? (
-            <span
-              className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${visibilityPill(project.visibilityStatus).className}`}
-            >
+            <span className={`shrink-0 ${visibilityPill(project.visibilityStatus).className}`}>
               {visibilityPill(project.visibilityStatus).text}
             </span>
           ) : null}
@@ -175,46 +165,35 @@ export function ProjectCard({
           project.isChineseTool) ? (
           <div className="mb-2 flex flex-wrap items-center gap-1.5" data-testid="project-plaza-discovery-meta">
             {project.primaryCategory?.trim() ? (
-              <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-900 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200">
-                {project.primaryCategory.trim()}
-              </span>
+              <span className="muhub-badge muhub-badge--category">{project.primaryCategory.trim()}</span>
             ) : null}
             {project.plazaTags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
-              >
+              <span key={t} className="muhub-badge muhub-badge--neutral">
                 #{t}
               </span>
             ))}
-            {project.isAiRelated ? (
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-900 dark:border-sky-800 dark:bg-sky-950/35 dark:text-sky-200">
-                AI
-              </span>
-            ) : null}
-            {project.isChineseTool ? (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/35 dark:text-amber-200">
-                中文
-              </span>
-            ) : null}
+            {project.isAiRelated ? <span className="muhub-badge muhub-badge--sky">AI</span> : null}
+            {project.isChineseTool ? <span className="muhub-badge muhub-badge--amber">中文</span> : null}
           </div>
         ) : null}
 
-        <p className="mb-3 text-sm text-zinc-600 line-clamp-3 dark:text-zinc-400">{desc}</p>
+        <p className="mb-4 text-sm leading-relaxed text-zinc-600 line-clamp-3 dark:text-zinc-400">{desc}</p>
 
-        <div className="text-xs text-zinc-500 space-y-1 dark:text-zinc-400">
-          <div className="flex flex-wrap gap-x-2">
-            <span className="shrink-0 text-zinc-500 dark:text-zinc-500">页面路径</span>
-            <span className="break-all font-mono text-sm text-zinc-800 dark:text-zinc-200">
-              {project.slug}
-            </span>
+        <div className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="muhub-meta-label shrink-0">页面路径</span>
+            <span className="break-all font-mono text-sm text-zinc-800 dark:text-zinc-200">{project.slug}</span>
           </div>
           <div className="flex flex-wrap gap-x-2">
-            <span className="text-zinc-500 dark:text-zinc-500">创建时间</span>
-            <span>{formatListDate(project.createdAt)}</span>
+            <span className="muhub-meta-label">创建时间</span>
+            <span className="tabular-nums">{formatListDate(project.createdAt)}</span>
           </div>
           <div className="flex flex-wrap gap-x-2">
-            <span className="text-zinc-500 dark:text-zinc-500">社媒</span>
+            <span className="muhub-meta-label">最近更新</span>
+            <span className="tabular-nums">{formatListDate(project.updatedAt)}</span>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <span className="muhub-meta-label">社媒</span>
             <span>{project.socialCount > 0 ? `${project.socialCount} 个账号` : "无"}</span>
           </div>
         </div>
@@ -228,14 +207,14 @@ export function ProjectCard({
         <div className="relative z-10 mt-auto grid gap-2 border-t border-zinc-100 px-5 pb-5 pt-4 sm:grid-cols-2 dark:border-zinc-800">
           <Link
             href={dashHref}
-            className="inline-flex min-h-[2.5rem] items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            className="muhub-btn-primary min-h-[2.5rem] w-full text-center"
             data-testid="project-card-manage"
           >
             管理项目
           </Link>
           <Link
             href={publicHref}
-            className="inline-flex min-h-[2.5rem] items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-center text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+            className="muhub-btn-secondary min-h-[2.5rem] w-full text-center font-medium"
             data-testid="project-card-public"
           >
             查看项目

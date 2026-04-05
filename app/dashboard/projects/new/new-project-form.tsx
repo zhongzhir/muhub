@@ -9,10 +9,9 @@ import { createProject, type CreateProjectFormState } from "./actions";
 import { prefillProjectFromImportUrl } from "./import-prefill-actions";
 import { detectSourceUrlKind } from "@/lib/project-detect-source";
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
+const inputClass = "muhub-input mt-1";
 
-const sectionTitle = "text-sm font-semibold text-zinc-800 dark:text-zinc-200";
+const sectionTitle = "muhub-form-legend";
 
 const initialState: CreateProjectFormState = { ok: false };
 
@@ -125,7 +124,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
   useRedirectFromActionState(state.redirectPath);
 
   return (
-    <form action={formAction} className="space-y-10">
+    <form action={formAction} className="space-y-8">
       <input type="hidden" name="creationSource" value={p.creationSource || "manual"} />
       <input type="hidden" name="extraSourcesJson" value={extraSourcesJson} />
       {state.formError ? (
@@ -137,7 +136,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         </div>
       ) : null}
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>基础信息</legend>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="name">
           项目名称 <span className="text-red-500">*</span>
@@ -158,7 +157,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           自动生成页面地址（支持中文）；若与其它项目命名冲突，会自动加上「-2」「-3」等后缀。
         </p>
 
-        <fieldset className="space-y-3 rounded-lg border border-zinc-200/90 bg-zinc-50/50 px-3 py-3 dark:border-zinc-700 dark:bg-zinc-900/35">
+        <fieldset className="muhub-card space-y-3 p-4 sm:p-5">
           <legend className={sectionTitle}>导入</legend>
           <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             输入 GitHub / Gitee / 官网等链接，系统会尽量预填项目信息。目前优先支持{" "}
@@ -186,7 +185,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
             <button
               type="button"
               disabled={importPending}
-              className="shrink-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:w-auto sm:self-start"
+              className="muhub-btn-outline shrink-0 px-4 py-2 sm:w-auto sm:self-start"
               onClick={() => {
                 setImportHint(null);
                 startImportTransition(async () => {
@@ -245,7 +244,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         />
       </fieldset>
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>项目链接</legend>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="githubUrl">
           GitHub 仓库链接
@@ -329,7 +328,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.twitterUrl} />
       </fieldset>
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>项目来源（可多条）</legend>
         <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           除上方主仓库与官网外，可补充公众号、小红书、文档等链接；提交时写入「信息源」。在输入框失焦时会按链接自动修正类型。
@@ -338,7 +337,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           {extraRows.map((row) => (
             <div
               key={row.key}
-              className="flex flex-col gap-2 rounded-lg border border-zinc-200/90 bg-zinc-50/40 p-3 dark:border-zinc-700 dark:bg-zinc-900/25 sm:flex-row sm:items-end"
+              className="muhub-card flex flex-col gap-2 p-3 sm:flex-row sm:items-end"
             >
               <div className="min-w-0 flex-1">
                 <label
@@ -409,9 +408,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
                   }}
                 />
               </div>
-              <button
-                type="button"
-                className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 sm:mb-0"
+              <button type="button" className="muhub-btn-outline shrink-0 px-3 py-2 sm:mb-0"
                 onClick={() =>
                   setExtraRows((prev) => prev.filter((r) => r.key !== row.key))
                 }
@@ -420,9 +417,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            className="inline-flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          <button type="button" className="muhub-btn-outline inline-flex items-center px-3 py-2"
             onClick={() =>
               setExtraRows((prev) => [
                 ...prev,
@@ -435,7 +430,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         </div>
       </fieldset>
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>社媒信息</legend>
         <p className="text-xs text-zinc-500">
           可填写账号名或完整链接；以 http(s) 开头的输入会保存为链接。
@@ -470,7 +465,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white sm:w-auto"
+        className="muhub-btn-primary inline-flex w-full px-4 py-3 disabled:opacity-60 sm:w-auto"
       >
         {pending ? "提交中…" : "创建项目"}
       </button>

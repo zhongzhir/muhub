@@ -8,8 +8,7 @@ import {
   type ImportExternalProjectState,
 } from "@/app/dashboard/import-project/actions";
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
+const inputClass = "muhub-input mt-1";
 
 const initialState: ImportExternalProjectState = { ok: false };
 
@@ -39,16 +38,10 @@ export function ImportExternalProjectForm({
             已写入 MUHUB 数据库，并进入与「从 GitHub 导入」一致的 sourceType 流程（import）。
           </p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Link
-              href={`/projects/${state.slug}`}
-              className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-            >
+            <Link href={`/projects/${state.slug}`} className="muhub-btn-primary px-4 py-2">
               查看公开页
             </Link>
-            <Link
-              href={`/dashboard/projects/${state.slug}`}
-              className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
-            >
+            <Link href={`/dashboard/projects/${state.slug}`} className="muhub-btn-secondary px-4 py-2">
               进入管理页
             </Link>
             <Link
@@ -95,8 +88,8 @@ export function ImportExternalProjectForm({
         </div>
       ) : null}
 
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">项目信息</legend>
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
+        <legend className="muhub-form-legend">项目信息</legend>
         <div>
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="imp-name">
             项目名称 <span className="text-red-500">*</span>
@@ -164,8 +157,8 @@ export function ImportExternalProjectForm({
         </div>
       </fieldset>
 
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">导入方式</legend>
+      <fieldset className="muhub-card space-y-3 p-5 sm:p-6">
+        <legend className="muhub-form-legend">导入方式</legend>
         <label className="flex cursor-pointer items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
           <input
             type="checkbox"
@@ -184,16 +177,16 @@ export function ImportExternalProjectForm({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white sm:w-auto"
+        className="muhub-btn-primary inline-flex w-full px-5 py-2.5 disabled:opacity-60 sm:w-auto"
       >
         {pending ? "提交中…" : "提交导入"}
       </button>
 
       <section
         aria-labelledby="future-import-heading"
-        className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-5 dark:border-zinc-600 dark:bg-zinc-900/40"
+        className="rounded-xl border border-dashed border-zinc-300/90 bg-zinc-50/80 px-4 py-5 dark:border-zinc-600 dark:bg-zinc-900/40"
       >
-        <h2 id="future-import-heading" className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+        <h2 id="future-import-heading" className="muhub-form-legend normal-case tracking-normal text-zinc-800 dark:text-zinc-200">
           更多导入方式（即将推出）
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">

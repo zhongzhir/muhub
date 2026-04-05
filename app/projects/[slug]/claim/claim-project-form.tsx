@@ -4,8 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { claimProject, type ClaimProjectFormState } from "./actions";
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
+const inputClass = "muhub-input mt-1";
 
 const initialState: ClaimProjectFormState = { ok: false };
 
@@ -26,7 +25,7 @@ export function ClaimProjectForm({
   const [state, formAction, pending] = useActionState(claimProject, initialState);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="muhub-card space-y-6 p-5 sm:p-6">
       <input type="hidden" name="slug" value={slug} />
 
       {state.formError ? (
@@ -69,14 +68,11 @@ export function ClaimProjectForm({
         <button
           type="submit"
           disabled={pending || githubClaimBlocked}
-          className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+          className="muhub-btn-primary px-4 py-3 disabled:opacity-60"
         >
           {pending ? "提交中…" : "认领项目"}
         </button>
-        <Link
-          href={`/projects/${encodeURIComponent(slug)}`}
-          className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
-        >
+        <Link href={`/projects/${encodeURIComponent(slug)}`} className="muhub-btn-secondary px-4 py-3">
           返回项目页
         </Link>
       </div>

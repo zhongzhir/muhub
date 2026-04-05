@@ -4,8 +4,7 @@ import { useActionState } from "react";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { publishProjectUpdate, type PublishProjectUpdateFormState } from "./actions";
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
+const inputClass = "muhub-input mt-1";
 
 const initialState: PublishProjectUpdateFormState = { ok: false };
 
@@ -22,7 +21,7 @@ export function PublishUpdateForm({ slug }: { slug: string }) {
   useRedirectFromActionState(state.redirectPath);
 
   return (
-    <form action={formAction} className="space-y-8">
+    <form action={formAction} className="muhub-card space-y-6 p-5 sm:p-6">
       <input type="hidden" name="slug" value={slug} />
 
       {state.formError ? (
@@ -65,11 +64,7 @@ export function PublishUpdateForm({ slug }: { slug: string }) {
         <FieldError message={state.fieldErrors?.content} />
       </div>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-      >
+      <button type="submit" disabled={pending} className="muhub-btn-primary px-4 py-2.5 disabled:opacity-60">
         {pending ? "发布中…" : "发布"}
       </button>
     </form>

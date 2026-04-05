@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-const triggerClass =
-  "inline-flex items-center rounded-md px-2 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100/90 hover:text-zinc-900 sm:px-2.5 sm:text-sm dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100";
+const triggerClass = "muhub-nav-link muhub-nav-link--strong inline-flex items-center gap-0.5";
 
-const itemClass =
-  "block w-full px-3 py-2.5 text-left text-sm text-zinc-800 transition hover:bg-zinc-50 dark:text-zinc-100 dark:hover:bg-zinc-800/80";
+const itemClass = "muhub-menu-item";
 
 export type CreateProjectMenuProps = {
   /** 未登录时跳转登录后再进入对应流程 */
@@ -52,10 +50,7 @@ export function CreateProjectMenu({ authenticated }: CreateProjectMenuProps) {
         </span>
       </button>
       {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 z-50 mt-1 min-w-[11rem] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
-        >
+        <div role="menu" className="muhub-menu-panel absolute right-0 z-50 mt-1 min-w-[11rem]">
           <Link href={manualHref} role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
             手动创建
           </Link>

@@ -7,10 +7,9 @@ import { projectPublicPathPrefix } from "@/lib/seo/site";
 import type { ProjectEditInitial } from "@/lib/project-edit";
 import { updateProject, type UpdateProjectFormState } from "./actions";
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:border-zinc-400";
+const inputClass = "muhub-input mt-1";
 
-const sectionTitle = "text-sm font-semibold text-zinc-800 dark:text-zinc-200";
+const sectionTitle = "muhub-form-legend";
 
 const initialState: UpdateProjectFormState = { ok: false };
 
@@ -28,7 +27,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
   useRedirectFromActionState(state.redirectPath);
 
   return (
-    <form action={formAction} className="space-y-10">
+    <form action={formAction} className="space-y-8">
       <input type="hidden" name="slug" value={initial.slug} />
 
       {state.formError ? (
@@ -40,7 +39,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         </div>
       ) : null}
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>基础信息</legend>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="name">
           项目名称 <span className="text-red-500">*</span>
@@ -60,7 +59,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         <p id="edit-slug-hint" className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           这是你在木哈布上的项目页面地址，不是 GitHub 仓库地址。创建后不可修改。
         </p>
-        <div className="mt-1 flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm dark:border-zinc-600 dark:bg-zinc-900 sm:flex-row">
+        <div className="mt-1 flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-300/90 bg-white shadow-sm dark:border-zinc-600 dark:bg-zinc-900 sm:flex-row">
           <span
             className="inline-flex items-center border-zinc-200 bg-zinc-50 px-2.5 py-2 text-[11px] leading-snug text-zinc-600 [overflow-wrap:anywhere] break-all border-b sm:border-b-0 sm:border-r dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
             aria-hidden
@@ -100,7 +99,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         />
       </fieldset>
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>项目链接</legend>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="githubUrl">
           GitHub 仓库链接
@@ -129,7 +128,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         <FieldError message={state.fieldErrors?.websiteUrl} />
       </fieldset>
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>社媒信息</legend>
         <p className="text-xs text-zinc-500">
           可填写账号名或完整链接；留空并保存将移除对应平台记录。
@@ -167,7 +166,7 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         />
       </fieldset>
 
-      <fieldset className="space-y-4">
+      <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>运营状态</legend>
         <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           是否在广场对外公开请在下方「发布设置」中操作（公开 / 隐藏），此处仅影响项目生命周期标签。
@@ -191,17 +190,10 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
       </fieldset>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <button
-          type="submit"
-          disabled={pending}
-          className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-        >
+        <button type="submit" disabled={pending} className="muhub-btn-primary px-4 py-3 disabled:opacity-60">
           {pending ? "保存中…" : "保存修改"}
         </button>
-        <Link
-          href={`/projects/${initial.slug}`}
-          className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
-        >
+        <Link href={`/projects/${initial.slug}`} className="muhub-btn-secondary px-4 py-3">
           返回项目页
         </Link>
       </div>

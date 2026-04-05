@@ -1,26 +1,636 @@
 @import "tailwindcss";
+@import "../MUHUB-website/design-system/muhub-variables.css";
 
+/**
+ * Phase 1: bridge Tailwind zinc-950 (no MUHUB token) to a stable anchor
+ * that tracks light/dark surfaces.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --muhub-zinc-950: #09090b;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --muhub-zinc-950: #0a0a0a;
   }
 }
 
+@theme inline {
+  /* Semantic surfaces (rarely used in codebase; kept for Tailwind conventions) */
+  --color-background: var(--muhub-neutral-50);
+  --color-foreground: var(--muhub-neutral-900);
+
+  /**
+   * Geist stays primary; MUHUB CN stack improves Chinese fallback without new font files.
+   * --font-cn-sans is defined in muhub-variables.css
+   */
+  --font-sans: var(--font-geist-sans), var(--font-cn-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  /* zinc → MUHUB neutrals (existing classes adopt new grayscale without TSX edits) */
+  --color-zinc-50: var(--muhub-neutral-50);
+  --color-zinc-100: var(--muhub-neutral-100);
+  --color-zinc-200: var(--muhub-neutral-200);
+  --color-zinc-300: var(--muhub-neutral-300);
+  --color-zinc-400: var(--muhub-neutral-400);
+  --color-zinc-500: var(--muhub-neutral-500);
+  --color-zinc-600: var(--muhub-neutral-600);
+  --color-zinc-700: var(--muhub-neutral-700);
+  --color-zinc-800: var(--muhub-neutral-800);
+  --color-zinc-900: var(--muhub-neutral-900);
+  --color-zinc-950: var(--muhub-zinc-950);
+
+  /* teal → brand primary (legacy accent/teal + focus rings retarget to MUHUB blue) */
+  --color-teal-50: var(--muhub-primary-50);
+  --color-teal-100: var(--muhub-primary-100);
+  --color-teal-200: var(--muhub-primary-200);
+  --color-teal-300: var(--muhub-primary-300);
+  --color-teal-400: var(--muhub-primary-400);
+  --color-teal-500: var(--muhub-primary-500);
+  --color-teal-600: var(--muhub-primary-600);
+  --color-teal-700: var(--muhub-primary-700);
+  --color-teal-800: var(--muhub-primary-800);
+  --color-teal-900: var(--muhub-primary-900);
+  --color-teal-950: var(--muhub-primary-900);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  background: var(--muhub-gradient-bg);
+  color: var(--muhub-neutral-900);
+  font-family: var(--font-geist-sans), var(--font-cn-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--muhub-primary-400) 32%, var(--muhub-neutral-100));
+  color: var(--muhub-neutral-900);
+}
+
+@media (prefers-color-scheme: dark) {
+  ::selection {
+    background-color: color-mix(in srgb, var(--muhub-primary-500) 38%, var(--muhub-neutral-800));
+    color: var(--muhub-neutral-900);
+  }
+}
+
+/* ========== Phase 2: component surfaces (scoped utilities, no global reset) ========== */
+
+@layer components {
+  /** Sticky top bar: glass + token borders */
+  .muhub-site-header {
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--backdrop-blur) var(--backdrop-saturate);
+    -webkit-backdrop-filter: var(--backdrop-blur) var(--backdrop-saturate);
+  }
+
+  /** Header / toolbar text controls — calm hover tint toward brand */
+  .muhub-nav-link {
+    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--font-medium);
+    color: var(--muhub-neutral-700);
+    transition: background-color var(--transition-fast), color var(--transition-fast),
+      border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .muhub-nav-link:hover {
+    background-color: color-mix(in srgb, var(--muhub-primary-600) 9%, var(--muhub-neutral-100));
+    color: var(--muhub-primary-700);
+  }
+
+  .muhub-nav-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--muhub-primary-600) 38%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-nav-link {
+      color: var(--muhub-neutral-600);
+    }
+    .muhub-nav-link:hover {
+      background-color: color-mix(in srgb, var(--muhub-primary-500) 12%, var(--muhub-neutral-200));
+      color: var(--muhub-primary-300);
+    }
+    .muhub-nav-link:focus-visible {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--muhub-primary-400) 45%, transparent);
+    }
+  }
+
+  @media (min-width: 640px) {
+    .muhub-nav-link {
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+    }
+  }
+
+  .muhub-nav-link--strong {
+    font-weight: var(--font-semibold);
+    color: var(--muhub-neutral-800);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-nav-link--strong {
+      color: var(--muhub-neutral-500);
+    }
+  }
+
+  /** Guest login: light emphasis without looking like a loud marketing CTA */
+  .muhub-nav-link--cta {
+    border: 1px solid color-mix(in srgb, var(--muhub-neutral-300) 85%, transparent);
+    background-color: color-mix(in srgb, var(--muhub-neutral-50) 55%, transparent);
+  }
+
+  .muhub-nav-link--cta:hover {
+    border-color: color-mix(in srgb, var(--muhub-primary-500) 35%, var(--muhub-neutral-300));
+    background-color: color-mix(in srgb, var(--muhub-primary-600) 8%, var(--muhub-neutral-100));
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-nav-link--cta {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 80%, transparent);
+      background-color: color-mix(in srgb, var(--muhub-neutral-200) 22%, transparent);
+    }
+    .muhub-nav-link--cta:hover {
+      border-color: color-mix(in srgb, var(--muhub-primary-500) 40%, var(--muhub-neutral-600));
+      background-color: color-mix(in srgb, var(--muhub-primary-500) 10%, var(--muhub-neutral-200));
+    }
+  }
+
+  .muhub-menu-panel {
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--muhub-neutral-300) 72%, transparent);
+    background-color: color-mix(in srgb, white 94%, var(--muhub-neutral-50));
+    padding: var(--space-1) 0;
+    box-shadow: var(--shadow-lg);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-menu-panel {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 75%, transparent);
+      background-color: color-mix(in srgb, var(--muhub-neutral-100) 94%, var(--muhub-neutral-50));
+    }
+  }
+
+  .muhub-menu-item {
+    display: block;
+    width: 100%;
+    padding: var(--space-3) var(--space-3);
+    text-align: left;
+    font-size: var(--text-sm);
+    color: var(--muhub-neutral-800);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+
+  .muhub-menu-item:hover {
+    background-color: color-mix(in srgb, var(--muhub-primary-600) 7%, var(--muhub-neutral-100));
+    color: var(--muhub-primary-800);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-menu-item {
+      color: var(--muhub-neutral-700);
+    }
+    .muhub-menu-item:hover {
+      background-color: color-mix(in srgb, var(--muhub-primary-500) 10%, var(--muhub-neutral-200));
+      color: var(--muhub-primary-200);
+    }
+  }
+
+  /** Primary action — solid brand, no heavy gradient */
+  .muhub-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border-radius: var(--radius-xl);
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-tight);
+    color: white;
+    background-color: var(--muhub-primary-600);
+    border: 1px solid color-mix(in srgb, var(--muhub-primary-700) 55%, transparent);
+    box-shadow: var(--shadow-sm);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast),
+      box-shadow var(--transition-fast), filter var(--transition-fast);
+  }
+
+  .muhub-btn-primary:hover:not(:disabled) {
+    background-color: var(--muhub-primary-700);
+    border-color: color-mix(in srgb, var(--muhub-primary-800) 60%, transparent);
+  }
+
+  .muhub-btn-primary:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-sm), 0 0 0 3px color-mix(in srgb, var(--muhub-primary-500) 32%, transparent);
+  }
+
+  .muhub-btn-primary:disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-btn-primary {
+      border-color: color-mix(in srgb, var(--muhub-primary-500) 70%, transparent);
+    }
+  }
+
+  /** Outline / secondary — brand-tinted border, restrained fill */
+  .muhub-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border-radius: var(--radius-xl);
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-tight);
+    color: var(--muhub-primary-800);
+    background-color: color-mix(in srgb, white 88%, var(--muhub-primary-50));
+    border: 1px solid color-mix(in srgb, var(--muhub-primary-600) 28%, var(--muhub-neutral-300));
+    box-shadow: var(--shadow-sm);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast),
+      color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .muhub-btn-secondary:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--muhub-primary-50) 75%, white);
+    border-color: color-mix(in srgb, var(--muhub-primary-600) 45%, var(--muhub-neutral-300));
+  }
+
+  .muhub-btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-sm), 0 0 0 3px color-mix(in srgb, var(--muhub-primary-500) 28%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-btn-secondary {
+      color: var(--muhub-primary-200);
+      background-color: color-mix(in srgb, var(--muhub-neutral-100) 88%, var(--muhub-primary-900));
+      border-color: color-mix(in srgb, var(--muhub-primary-500) 38%, var(--muhub-neutral-600));
+    }
+    .muhub-btn-secondary:hover:not(:disabled) {
+      background-color: color-mix(in srgb, var(--muhub-neutral-200) 55%, var(--muhub-primary-900));
+      border-color: color-mix(in srgb, var(--muhub-primary-400) 48%, var(--muhub-neutral-600));
+    }
+  }
+
+  /** Neutral outline — sends code, tertiary actions */
+  .muhub-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-tight);
+    color: var(--muhub-neutral-800);
+    background-color: color-mix(in srgb, white 92%, var(--muhub-neutral-50));
+    border: 1px solid color-mix(in srgb, var(--muhub-neutral-400) 50%, transparent);
+    box-shadow: var(--shadow-sm);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast),
+      color var(--transition-fast);
+  }
+
+  .muhub-btn-outline:hover:not(:disabled) {
+    background-color: var(--muhub-neutral-100);
+    border-color: color-mix(in srgb, var(--muhub-neutral-500) 55%, transparent);
+  }
+
+  .muhub-btn-outline:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--muhub-primary-500) 22%, transparent);
+  }
+
+  .muhub-btn-outline:disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-btn-outline {
+      color: var(--muhub-neutral-700);
+      background-color: color-mix(in srgb, var(--muhub-neutral-100) 90%, transparent);
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 75%, transparent);
+    }
+    .muhub-btn-outline:hover:not(:disabled) {
+      background-color: color-mix(in srgb, var(--muhub-neutral-200) 70%, transparent);
+    }
+  }
+
+  /** Content cards — calm depth, readable in both themes */
+  .muhub-card {
+    border-radius: var(--radius-xl);
+    border: 1px solid color-mix(in srgb, var(--muhub-neutral-300) 68%, transparent);
+    background-color: color-mix(in srgb, white 93%, var(--muhub-neutral-50));
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-card {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 72%, transparent);
+      background-color: color-mix(in srgb, var(--muhub-neutral-100) 91%, var(--muhub-neutral-50));
+    }
+  }
+
+  .muhub-card--interactive {
+    transition: border-color var(--transition-base), box-shadow var(--transition-base),
+      transform 220ms cubic-bezier(0.4, 0, 0.2, 1), background-color var(--transition-base);
+  }
+
+  .muhub-card--interactive:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--muhub-primary-500) 22%, var(--muhub-neutral-400));
+    box-shadow: var(--shadow-md);
+    background-color: color-mix(in srgb, white 91%, var(--muhub-primary-50));
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-card--interactive:hover {
+      border-color: color-mix(in srgb, var(--muhub-primary-400) 26%, var(--muhub-neutral-600));
+      background-color: color-mix(in srgb, var(--muhub-neutral-100) 88%, var(--muhub-primary-900));
+    }
+  }
+
+  /** Hero: ultra-light grid + depth (no imagery) */
+  .muhub-hero-grid {
+    background-image: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--muhub-neutral-400) 9%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--muhub-neutral-400) 9%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 28px 28px;
+    mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-hero-grid {
+      background-image: linear-gradient(
+          to right,
+          color-mix(in srgb, var(--muhub-neutral-500) 14%, transparent) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          to bottom,
+          color-mix(in srgb, var(--muhub-neutral-500) 14%, transparent) 1px,
+          transparent 1px
+        );
+    }
+  }
+
+  /** Detail hero shell — aligns with content cards */
+  .muhub-detail-hero {
+    border-radius: var(--radius-2xl);
+    border: 1px solid color-mix(in srgb, var(--muhub-neutral-300) 68%, transparent);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, white 100%, transparent) 0%,
+      color-mix(in srgb, var(--muhub-neutral-50) 92%, white) 100%
+    );
+    box-shadow: var(--shadow-sm);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-detail-hero {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 72%, transparent);
+      background: linear-gradient(
+        180deg,
+        var(--muhub-neutral-100) 0%,
+        color-mix(in srgb, var(--muhub-neutral-100) 85%, var(--muhub-neutral-50)) 100%
+      );
+    }
+  }
+
+  /** Unified pills (tags & status) */
+  .muhub-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    padding: 0.125rem 0.5rem;
+    font-size: 11px;
+    font-weight: var(--font-medium);
+    line-height: var(--leading-snug);
+    border: 1px solid transparent;
+  }
+
+  .muhub-badge--neutral {
+    border-color: color-mix(in srgb, var(--muhub-neutral-300) 82%, transparent);
+    background-color: color-mix(in srgb, var(--muhub-neutral-50) 94%, white);
+    color: var(--muhub-neutral-700);
+  }
+
+  .muhub-badge--category {
+    border-color: color-mix(in srgb, var(--muhub-secondary-500) 22%, var(--muhub-neutral-300));
+    background-color: color-mix(in srgb, var(--muhub-secondary-50) 88%, white);
+    color: var(--muhub-secondary-800);
+    font-weight: var(--font-semibold);
+  }
+
+  .muhub-badge--sky {
+    border-color: color-mix(in srgb, var(--muhub-info-500) 28%, var(--muhub-neutral-300));
+    background-color: var(--muhub-info-50);
+    color: var(--muhub-info-700);
+    font-weight: var(--font-semibold);
+    font-size: 10px;
+  }
+
+  .muhub-badge--amber {
+    border-color: color-mix(in srgb, var(--muhub-warning-500) 28%, var(--muhub-neutral-300));
+    background-color: var(--muhub-warning-50);
+    color: var(--muhub-warning-700);
+    font-weight: var(--font-semibold);
+    font-size: 10px;
+  }
+
+  .muhub-badge--success {
+    border-color: color-mix(in srgb, var(--muhub-success-500) 32%, var(--muhub-neutral-300));
+    background-color: var(--muhub-success-50);
+    color: var(--muhub-success-700);
+  }
+
+  .muhub-badge--warning {
+    border-color: color-mix(in srgb, var(--muhub-warning-500) 35%, var(--muhub-neutral-300));
+    background-color: var(--muhub-warning-50);
+    color: var(--muhub-warning-700);
+  }
+
+  .muhub-badge--muted {
+    border-color: color-mix(in srgb, var(--muhub-neutral-300) 80%, transparent);
+    background-color: color-mix(in srgb, var(--muhub-neutral-100) 90%, white);
+    color: var(--muhub-neutral-600);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-badge--neutral {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 78%, transparent);
+      background-color: color-mix(in srgb, var(--muhub-neutral-200) 45%, transparent);
+      color: var(--muhub-neutral-600);
+    }
+    .muhub-badge--category {
+      border-color: color-mix(in srgb, var(--muhub-secondary-600) 40%, var(--muhub-neutral-600));
+      background-color: color-mix(in srgb, var(--muhub-secondary-900) 35%, var(--muhub-neutral-100));
+      color: var(--muhub-secondary-200);
+    }
+    .muhub-badge--sky {
+      border-color: color-mix(in srgb, var(--muhub-info-600) 38%, var(--muhub-neutral-600));
+      background-color: color-mix(in srgb, var(--muhub-info-900) 28%, var(--muhub-neutral-100));
+      color: var(--muhub-info-200);
+    }
+    .muhub-badge--amber {
+      border-color: color-mix(in srgb, var(--muhub-warning-600) 38%, var(--muhub-neutral-600));
+      background-color: color-mix(in srgb, var(--muhub-warning-900) 28%, var(--muhub-neutral-100));
+      color: var(--muhub-warning-200);
+    }
+    .muhub-badge--success {
+      border-color: color-mix(in srgb, var(--muhub-success-600) 42%, var(--muhub-neutral-600));
+      background-color: color-mix(in srgb, var(--muhub-success-900) 28%, var(--muhub-neutral-100));
+      color: var(--muhub-success-200);
+    }
+    .muhub-badge--warning {
+      border-color: color-mix(in srgb, var(--muhub-warning-700) 35%, var(--muhub-neutral-600));
+      background-color: color-mix(in srgb, var(--muhub-warning-900) 30%, var(--muhub-neutral-100));
+      color: var(--muhub-warning-200);
+    }
+    .muhub-badge--muted {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 80%, transparent);
+      background-color: color-mix(in srgb, var(--muhub-neutral-200) 50%, transparent);
+      color: var(--muhub-neutral-600);
+    }
+  }
+
+  .muhub-meta-label {
+    font-size: 10px;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muhub-neutral-500);
+  }
+
+  /** Form controls */
+  .muhub-input,
+  .muhub-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--muhub-neutral-400) 50%, transparent);
+    background-color: color-mix(in srgb, white 96%, var(--muhub-neutral-50));
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    line-height: var(--leading-normal);
+    color: var(--muhub-neutral-900);
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .muhub-input::placeholder {
+    color: var(--muhub-neutral-500);
+  }
+
+  .muhub-input:focus {
+    outline: none;
+    border-color: var(--muhub-primary-500);
+    box-shadow: var(--shadow-sm), 0 0 0 3px color-mix(in srgb, var(--muhub-primary-500) 18%, transparent);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-input,
+    .muhub-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 78%, transparent);
+      background-color: color-mix(in srgb, var(--muhub-neutral-100) 94%, transparent);
+      color: var(--muhub-neutral-900);
+    }
+    .muhub-input:focus {
+      border-color: var(--muhub-primary-400);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--muhub-primary-500) 22%, transparent);
+    }
+  }
+
+  select.muhub-input {
+    appearance: auto;
+  }
+
+  /** Form section legend (dashboard / long forms) */
+  .muhub-form-legend {
+    padding: 0;
+    width: 100%;
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muhub-neutral-500);
+  }
+
+  /** Detail / dashboard page section headings */
+  .muhub-page-section-title {
+    margin-bottom: var(--space-4);
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.025em;
+    color: var(--muhub-neutral-900);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-page-section-title {
+      color: var(--muhub-neutral-50);
+    }
+  }
+
+  /** Emphasis strip for AI / digest blocks (replaces heavy gradients) */
+  .muhub-prose-panel {
+    border-radius: var(--radius-2xl);
+    border: 1px solid color-mix(in srgb, var(--muhub-neutral-300) 65%, transparent);
+    background-color: color-mix(in srgb, white 94%, var(--muhub-neutral-50));
+    box-shadow: var(--shadow-sm);
+    border-left-width: 3px;
+    padding: var(--space-5) var(--space-6);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .muhub-prose-panel {
+      border-color: color-mix(in srgb, var(--muhub-neutral-600) 70%, transparent);
+      background-color: color-mix(in srgb, var(--muhub-neutral-100) 92%, transparent);
+    }
+  }
+
+  .muhub-prose-panel--accent-secondary {
+    border-left-color: color-mix(in srgb, var(--muhub-secondary-500) 55%, var(--muhub-neutral-400));
+  }
+
+  .muhub-prose-panel--accent-warning {
+    border-left-color: color-mix(in srgb, var(--muhub-warning-500) 60%, var(--muhub-neutral-400));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .muhub-card--interactive {
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+      background-color var(--transition-fast);
+  }
+
+  .muhub-card--interactive:hover {
+    transform: none;
+  }
+}
+
+@layer base {
+  fieldset.muhub-card {
+    min-width: 0;
+  }
 }

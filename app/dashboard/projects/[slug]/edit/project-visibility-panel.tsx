@@ -28,11 +28,11 @@ export function ProjectVisibilityPanel({
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <section
-      className="mt-10 rounded-xl border border-zinc-200 bg-white px-5 py-5 dark:border-zinc-700 dark:bg-zinc-900/40"
-      aria-labelledby="project-visibility-heading"
-    >
-      <h2 id="project-visibility-heading" className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+    <section className="muhub-card mt-10 px-5 py-5 sm:px-6" aria-labelledby="project-visibility-heading">
+      <h2
+        id="project-visibility-heading"
+        className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100"
+      >
         发布设置
       </h2>
       <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
@@ -48,7 +48,7 @@ export function ProjectVisibilityPanel({
           <button
             type="button"
             disabled={pending || visibilityStatus === "PUBLISHED"}
-            className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            className="muhub-btn-primary px-4 py-2.5 disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
               setError(null);
               startTransition(async () => {
@@ -71,7 +71,7 @@ export function ProjectVisibilityPanel({
           <button
             type="button"
             disabled={pending || visibilityStatus === "HIDDEN"}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+            className="muhub-btn-secondary px-4 py-2.5 disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
               setError(null);
               startTransition(async () => {
