@@ -14,7 +14,15 @@ import type {
 
 const REL_PATH = join("data", "discovery-items.json");
 
-const SOURCE_TYPES = new Set<DiscoverySourceType>(["github", "manual", "rss", "twitter", "other"]);
+const SOURCE_TYPES = new Set<DiscoverySourceType>([
+  "github",
+  "manual",
+  "rss",
+  "rss-producthunt",
+  "rss-github",
+  "twitter",
+  "other",
+]);
 const STATUSES = new Set<DiscoveryStatus>(["new", "reviewed", "imported", "rejected"]);
 const AI_STATUSES = new Set<DiscoveryAiStatus>(["scheduled", "done", "failed"]);
 
