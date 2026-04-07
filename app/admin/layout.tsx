@@ -25,6 +25,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               Discovery 候选
             </Link>
             <Link
+              href="/admin/discovery/items"
+              className="text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              JSON 队列
+            </Link>
+            <Link
               href="/admin/discovery/sources"
               className="text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
             >

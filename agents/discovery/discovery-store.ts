@@ -1,0 +1,176 @@
+/**
+ * 本地发现队列入库（data/discovery-items.json），最新条目写在数组前端。
+ */
+
+import { mkdir, readFile, writeFile } from "fs/promises";
+import { dirname, join } from "path";
+
+import type { DiscoveryItem, DiscoverySourceType, DiscoveryStatus } from "./discovery-types";
+
+const REL_PATH = join("data", "discovery-items.json");
+
+const SOURCE_TYPES = new Set<DiscoverySourceType>(["github", "manual", "rss", "twitter", "other"]);
+const STATUSES = new Set<DiscoveryStatus>(["new", "reviewed", "imported", "rejected"]);
+
+function filePath(): string {
+  return join(process.cwd(), REL_PATH);
+}
+
+/** 用于去重：同 URL 视为同一候选项 */
+export function normalizeDiscoveryUrl(url: string): string {
+  const t = url.trim();
+  try {
+    const u = new URL(t);
+    u.hash = "";
+    const path = u.pathname.replace(/\/+$/, "") || "/";
+    return `${u.protocol}//${u.host.toLowerCase()}${path}`.toLowerCase();
+  } catch {
+    return t.toLowerCase();
+  }
+}
+
+function coerceItem(raw: unknown): DiscoveryItem | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+  const o = raw as Record<string, unknown>;
+  if (
+    typeof o.id !== "string" ||
+    typeof o.title !== "string" ||
+    typeof o.url !== "string" ||
+    typeof o.createdAt !== "string"
+  ) {
+    return null;
+  }
+  const st = o.sourceType;
+  const stat = o.status;
+  if (typeof st !== "string" || !SOURCE_TYPES.has(st as DiscoverySourceType)) {
+    return null;
+  }
+  if (typeof stat !== "string" || !STATUSES.has(stat as DiscoveryStatus)) {
+    return null;
+  }
+  return {
+    id: o.id,
+    sourceType: st as DiscoverySourceType,
+    title: o.title,
+    url: o.url,
+    description: typeof o.description === "string" ? o.description : undefined,
+    projectSlug: typeof o.projectSlug === "string" ? o.projectSlug : undefined,
+    status: stat as DiscoveryStatus,
+    createdAt: o.createdAt,
+  };
+}
+
+function safeParseArray(raw: string): unknown[] {
+  try {
+    const data: unknown = JSON.parse(raw);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 确保 data 目录与 discovery-items.json 存在（缺省为 []）。 */
+export async function ensureDiscoveryStoreFile(): Promise<void> {
+  const path = filePath();
+  await mkdir(dirname(path), { recursive: true });
+  try {
+    await readFile(path, "utf8");
+  } catch {
+    await writeFile(path, "[]\n", "utf8");
+  }
+}
+
+async function readRawList(): Promise<DiscoveryItem[]> {
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  let raw = "[]";
+  try {
+    raw = await readFile(path, "utf8");
+  } catch {
+    return [];
+  }
+  const arr = safeParseArray(raw);
+  const out: DiscoveryItem[] = [];
+  for (const row of arr) {
+    const item = coerceItem(row);
+    if (item) {
+      out.push(item);
+    }
+  }
+  return out.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/**
+ * 读取队列（按 createdAt 倒序；解析失败的行被跳过）。
+ */
+export async function readDiscoveryItems(): Promise<DiscoveryItem[]> {
+  return readRawList();
+}
+
+export async function readDiscoveryItemById(id: string): Promise<DiscoveryItem | null> {
+  const list = await readRawList();
+  return list.find((x) => x.id === id) ?? null;
+}
+
+export async function findDiscoveryItemByUrl(url: string): Promise<DiscoveryItem | null> {
+  const key = normalizeDiscoveryUrl(url);
+  const list = await readRawList();
+  return list.find((i) => normalizeDiscoveryUrl(i.url) === key) ?? null;
+}
+
+/**
+ * 将一条记录插入队列头部；若同 normalize URL 已存在则跳过写入。
+ */
+export async function appendDiscoveryItem(item: DiscoveryItem): Promise<{ duplicate: boolean }> {
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  const list = await readRawList();
+  const key = normalizeDiscoveryUrl(item.url);
+  if (list.some((i) => normalizeDiscoveryUrl(i.url) === key)) {
+    return { duplicate: true };
+  }
+  const next = [item, ...list];
+  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return { duplicate: false };
+}
+
+export async function updateDiscoveryStatus(id: string, status: DiscoveryStatus): Promise<boolean> {
+  if (!STATUSES.has(status)) {
+    return false;
+  }
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  const list = await readRawList();
+  const idx = list.findIndex((x) => x.id === id);
+  if (idx < 0) {
+    return false;
+  }
+  const next = list.map((x) => (x.id === id ? { ...x, status } : x));
+  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return true;
+}
+
+/** 导入成功后回写 status=imported 与 projectSlug */
+export async function updateDiscoveryItemImportResult(
+  id: string,
+  projectSlug: string,
+): Promise<boolean> {
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  const list = await readRawList();
+  const idx = list.findIndex((x) => x.id === id);
+  if (idx < 0) {
+    return false;
+  }
+  const slug = projectSlug.trim();
+  if (!slug) {
+    return false;
+  }
+  const next = list.map((x) =>
+    x.id === id ? { ...x, status: "imported" as DiscoveryStatus, projectSlug: slug } : x,
+  );
+  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return true;
+}

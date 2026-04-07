@@ -141,12 +141,20 @@ export default async function AdminDiscoveryListPage({
             抓取结果先入此池，审核通过后再进入正式项目（默认草稿，不自动发布到广场）。
           </p>
         </div>
-        <Link
-          href="/admin/discovery/sources"
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-        >
-          来源 / 运行健康
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/discovery/items"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+          >
+            JSON 发现队列
+          </Link>
+          <Link
+            href="/admin/discovery/sources"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+          >
+            来源 / 运行健康
+          </Link>
+        </div>
       </header>
 
       <RunDiscoveryBar />
