@@ -19,6 +19,11 @@ export type DiscoveryItem = {
   sourceType: DiscoverySourceType;
   title: string;
   url: string;
+  normalizedUrl?: string;
+  githubRepoKey?: string;
+  websiteHost?: string;
+  duplicateOfId?: string;
+  possibleDuplicate?: boolean;
   description?: string;
   projectSlug?: string;
   status: DiscoveryStatus;

@@ -43,6 +43,16 @@ function aiBadgeClass(status: DiscoveryItem["aiStatus"]) {
   }
 }
 
+function duplicateBadgeClass(row: DiscoveryItem) {
+  if (row.duplicateOfId) {
+    return "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200";
+  }
+  if (row.possibleDuplicate) {
+    return "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200";
+  }
+  return "bg-zinc-50 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400";
+}
+
 export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -78,6 +88,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
             <th className="px-4 py-3">Source</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">AI</th>
+            <th className="px-4 py-3">Duplicate</th>
             <th className="px-4 py-3">CreatedAt</th>
             <th className="px-4 py-3">Action</th>
           </tr>
@@ -131,6 +142,11 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                       : row.aiStatus === "failed"
                         ? "Failed"
                         : "-"}
+                </span>
+              </td>
+              <td className="px-4 py-3">
+                <span className={`rounded px-2 py-0.5 text-xs ${duplicateBadgeClass(row)}`}>
+                  {row.duplicateOfId ? "Duplicate" : row.possibleDuplicate ? "Possible" : "-"}
                 </span>
               </td>
               <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-zinc-500 tabular-nums">

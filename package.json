@@ -32,7 +32,8 @@
     "discovery:run": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-project-discovery.ts",
     "discovery:items-demo": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-github-demo.ts",
     "discovery:rss": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-rss.ts",
-    "discovery:github-batch": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-github-batch.ts"
+    "discovery:github-batch": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-github-batch.ts",
+    "discovery:scheduled-run": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-scheduled.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",

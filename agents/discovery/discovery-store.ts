@@ -11,6 +11,12 @@ import type {
   DiscoverySourceType,
   DiscoveryStatus,
 } from "./discovery-types";
+import {
+  buildDiscoveryDedupeFields,
+  findPossibleDuplicateByTitle,
+  findStrongDuplicateItem,
+  normalizeUrl,
+} from "./discovery-dedupe";
 
 const REL_PATH = join("data", "discovery-items.json");
 
@@ -32,15 +38,11 @@ function filePath(): string {
 
 /** 用于去重：同 URL 视为同一候选项 */
 export function normalizeDiscoveryUrl(url: string): string {
-  const t = url.trim();
-  try {
-    const u = new URL(t);
-    u.hash = "";
-    const path = u.pathname.replace(/\/+$/, "") || "/";
-    return `${u.protocol}//${u.host.toLowerCase()}${path}`.toLowerCase();
-  } catch {
-    return t.toLowerCase();
+  const normalized = normalizeUrl(url);
+  if (normalized) {
+    return normalized.toLowerCase();
   }
+  return url.trim().toLowerCase();
 }
 
 function coerceItem(raw: unknown): DiscoveryItem | null {
@@ -69,6 +71,11 @@ function coerceItem(raw: unknown): DiscoveryItem | null {
     sourceType: st as DiscoverySourceType,
     title: o.title,
     url: o.url,
+    normalizedUrl: typeof o.normalizedUrl === "string" ? o.normalizedUrl : undefined,
+    githubRepoKey: typeof o.githubRepoKey === "string" ? o.githubRepoKey : undefined,
+    websiteHost: typeof o.websiteHost === "string" ? o.websiteHost : undefined,
+    duplicateOfId: typeof o.duplicateOfId === "string" ? o.duplicateOfId : undefined,
+    possibleDuplicate: typeof o.possibleDuplicate === "boolean" ? o.possibleDuplicate : undefined,
     description: typeof o.description === "string" ? o.description : undefined,
     projectSlug: typeof o.projectSlug === "string" ? o.projectSlug : undefined,
     status: stat as DiscoveryStatus,
@@ -146,11 +153,20 @@ export async function appendDiscoveryItem(item: DiscoveryItem): Promise<{ duplic
   await ensureDiscoveryStoreFile();
   const path = filePath();
   const list = await readRawList();
-  const key = normalizeDiscoveryUrl(item.url);
-  if (list.some((i) => normalizeDiscoveryUrl(i.url) === key)) {
+  const dedupeFields = buildDiscoveryDedupeFields(item);
+  const prepared: DiscoveryItem = {
+    ...item,
+    ...dedupeFields,
+  };
+  const strongDup = findStrongDuplicateItem(list, prepared);
+  if (strongDup) {
     return { duplicate: true };
   }
-  const next = [item, ...list];
+  const weakDup = findPossibleDuplicateByTitle(list, prepared);
+  const nextItem: DiscoveryItem = weakDup
+    ? { ...prepared, possibleDuplicate: true }
+    : prepared;
+  const next = [nextItem, ...list];
   await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
   return { duplicate: false };
 }

@@ -5,24 +5,34 @@
 import { randomUUID } from "crypto";
 
 import type { DiscoveryItem } from "./discovery-types";
-import { appendDiscoveryItem, findDiscoveryItemByUrl } from "./discovery-store";
+import { appendDiscoveryItem, readDiscoveryItems } from "./discovery-store";
+import {
+  buildDiscoveryDedupeFields,
+  findPossibleDuplicateByTitle,
+  findStrongDuplicateItem,
+} from "./discovery-dedupe";
 
 export async function createDiscoveryItem(
   input: Omit<DiscoveryItem, "id" | "status" | "createdAt">,
 ): Promise<DiscoveryItem> {
-  const existing = await findDiscoveryItemByUrl(input.url);
-  if (existing) {
-    return existing;
+  const list = await readDiscoveryItems();
+  const enrichedInput = { ...input, ...buildDiscoveryDedupeFields(input) };
+  const strongDup = findStrongDuplicateItem(list, enrichedInput);
+  if (strongDup) {
+    return strongDup;
   }
+  const weakDup = findPossibleDuplicateByTitle(list, input);
   const item: DiscoveryItem = {
-    ...input,
+    ...enrichedInput,
     id: randomUUID(),
     status: "new",
     createdAt: new Date().toISOString(),
+    possibleDuplicate: weakDup ? true : input.possibleDuplicate,
   };
   const { duplicate } = await appendDiscoveryItem(item);
   if (duplicate) {
-    const again = await findDiscoveryItemByUrl(input.url);
+    const againList = await readDiscoveryItems();
+    const again = findStrongDuplicateItem(againList, enrichedInput);
     if (again) {
       return again;
     }
