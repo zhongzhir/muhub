@@ -30,6 +30,19 @@ function statusBadgeClass(status: DiscoveryItem["status"]) {
   }
 }
 
+function aiBadgeClass(status: DiscoveryItem["aiStatus"]) {
+  switch (status) {
+    case "scheduled":
+      return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200";
+    case "done":
+      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200";
+    case "failed":
+      return "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200";
+    default:
+      return "bg-zinc-50 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400";
+  }
+}
+
 export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -64,6 +77,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
             <th className="px-4 py-3">Title</th>
             <th className="px-4 py-3">Source</th>
             <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">AI</th>
             <th className="px-4 py-3">CreatedAt</th>
             <th className="px-4 py-3">Action</th>
           </tr>
@@ -107,6 +121,17 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                     </Link>
                   </div>
                 ) : null}
+              </td>
+              <td className="px-4 py-3">
+                <span className={`rounded px-2 py-0.5 text-xs ${aiBadgeClass(row.aiStatus)}`}>
+                  {row.aiStatus === "scheduled"
+                    ? "Scheduled"
+                    : row.aiStatus === "done"
+                      ? "Done"
+                      : row.aiStatus === "failed"
+                        ? "Failed"
+                        : "-"}
+                </span>
               </td>
               <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-zinc-500 tabular-nums">
                 {row.createdAt.replace("T", " ").slice(0, 19)}

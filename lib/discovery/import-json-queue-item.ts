@@ -2,6 +2,7 @@
  * 将本地 JSON Discovery 队列项导入为正式 Project（与 Prisma DiscoveryCandidate 并存的最小闭环）。
  */
 import type { DiscoveryItem } from "@/agents/discovery/discovery-types";
+import { updateDiscoveryAiStatus } from "@/agents/discovery/discovery-store";
 import type { ProjectSourceKind } from "@prisma/client";
 import { parseRepoUrl } from "@/lib/repo-platform";
 import { prisma } from "@/lib/prisma";
@@ -195,7 +196,7 @@ export async function importJsonDiscoveryItem(
     });
   }
 
-  await prisma.project.create({
+  const project = await prisma.project.create({
     data: {
       name,
       slug,
@@ -217,8 +218,16 @@ export async function importJsonDiscoveryItem(
           }
         : undefined,
     },
+    select: { id: true, slug: true },
   });
 
-  scheduleProjectAiEnrichment(slug);
-  return { slug, created: true };
+  try {
+    scheduleProjectAiEnrichment(project.slug);
+    await updateDiscoveryAiStatus(item.id, "scheduled");
+    console.log(`[Discovery] AI enrichment scheduled for project: ${project.slug} (id=${project.id})`);
+  } catch (e) {
+    console.error("[Discovery] AI enrichment schedule failed", e);
+  }
+
+  return { slug: project.slug, created: true };
 }

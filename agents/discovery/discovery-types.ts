@@ -5,6 +5,7 @@
 export type DiscoverySourceType = "github" | "manual" | "rss" | "twitter" | "other";
 
 export type DiscoveryStatus = "new" | "reviewed" | "imported" | "rejected";
+export type DiscoveryAiStatus = "scheduled" | "done" | "failed";
 
 export type DiscoveryItem = {
   id: string;
@@ -14,5 +15,7 @@ export type DiscoveryItem = {
   description?: string;
   projectSlug?: string;
   status: DiscoveryStatus;
+  aiStatus?: DiscoveryAiStatus;
+  aiUpdatedAt?: string;
   createdAt: string;
 };

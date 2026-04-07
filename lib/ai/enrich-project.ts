@@ -4,15 +4,17 @@ import { prisma } from "@/lib/prisma";
 
 function eligibleSourceForDescription(sourceType: string | null | undefined): boolean {
   const s = (sourceType ?? "").toLowerCase();
-  return s === "import" || s === "seed";
+  return s === "import" || s === "seed" || s === "discovery-json-queue";
 }
 
 function eligibleSourceForTags(sourceType: string | null | undefined): boolean {
-  return (sourceType ?? "").toLowerCase() === "import";
+  const s = (sourceType ?? "").toLowerCase();
+  return s === "import" || s === "discovery-json-queue";
 }
 
 /**
- * 导入 / 种子项目在简介为空时补全 description；仅导入项目在标签为空时补全 tags。
+ * 导入 / 种子 / JSON Discovery 队列导入项目在简介为空时补全 description；
+ * 导入类项目在标签为空且具备 GitHub 等信息时补全 tags。
  * 未配置 AI 或无数据库时立即返回。
  */
 export async function enrichProjectWithAi(slug: string): Promise<void> {

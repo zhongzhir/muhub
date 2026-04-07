@@ -5,12 +5,18 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { dirname, join } from "path";
 
-import type { DiscoveryItem, DiscoverySourceType, DiscoveryStatus } from "./discovery-types";
+import type {
+  DiscoveryAiStatus,
+  DiscoveryItem,
+  DiscoverySourceType,
+  DiscoveryStatus,
+} from "./discovery-types";
 
 const REL_PATH = join("data", "discovery-items.json");
 
 const SOURCE_TYPES = new Set<DiscoverySourceType>(["github", "manual", "rss", "twitter", "other"]);
 const STATUSES = new Set<DiscoveryStatus>(["new", "reviewed", "imported", "rejected"]);
+const AI_STATUSES = new Set<DiscoveryAiStatus>(["scheduled", "done", "failed"]);
 
 function filePath(): string {
   return join(process.cwd(), REL_PATH);
@@ -58,6 +64,11 @@ function coerceItem(raw: unknown): DiscoveryItem | null {
     description: typeof o.description === "string" ? o.description : undefined,
     projectSlug: typeof o.projectSlug === "string" ? o.projectSlug : undefined,
     status: stat as DiscoveryStatus,
+    aiStatus:
+      typeof o.aiStatus === "string" && AI_STATUSES.has(o.aiStatus as DiscoveryAiStatus)
+        ? (o.aiStatus as DiscoveryAiStatus)
+        : undefined,
+    aiUpdatedAt: typeof o.aiUpdatedAt === "string" ? o.aiUpdatedAt : undefined,
     createdAt: o.createdAt,
   };
 }
@@ -170,6 +181,29 @@ export async function updateDiscoveryItemImportResult(
   }
   const next = list.map((x) =>
     x.id === id ? { ...x, status: "imported" as DiscoveryStatus, projectSlug: slug } : x,
+  );
+  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return true;
+}
+
+/** 回写 AI enrich 状态与时间 */
+export async function updateDiscoveryAiStatus(
+  id: string,
+  status: DiscoveryAiStatus,
+): Promise<boolean> {
+  if (!AI_STATUSES.has(status)) {
+    return false;
+  }
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  const list = await readRawList();
+  const idx = list.findIndex((x) => x.id === id);
+  if (idx < 0) {
+    return false;
+  }
+  const now = new Date().toISOString();
+  const next = list.map((x) =>
+    x.id === id ? { ...x, aiStatus: status, aiUpdatedAt: now } : x,
   );
   await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
   return true;
