@@ -3,8 +3,16 @@
 import { useCallback, useState, useTransition } from "react"
 
 import { generateExternalPostAction } from "@/app/dashboard/launch/actions"
+import type { ExternalPublishChannel } from "@/agents/growth/external-publish-types"
+
+const CHANNEL_OPTIONS: { value: ExternalPublishChannel; label: string }[] = [
+  { value: "generic", label: "Generic" },
+  { value: "twitter", label: "Twitter" },
+  { value: "linkedin", label: "LinkedIn" },
+]
 
 export function ExternalPostGenerator({ siteContentId }: { siteContentId: string }) {
+  const [channel, setChannel] = useState<ExternalPublishChannel>("generic")
   const [text, setText] = useState("")
   const [hint, setHint] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -14,7 +22,7 @@ export function ExternalPostGenerator({ siteContentId }: { siteContentId: string
     setHint(null)
     setCopied(false)
     startTransition(async () => {
-      const res = await generateExternalPostAction(siteContentId)
+      const res = await generateExternalPostAction(siteContentId, channel)
       if (!res.ok) {
         setHint(res.error)
         setText("")
@@ -41,6 +49,30 @@ export function ExternalPostGenerator({ siteContentId }: { siteContentId: string
 
   return (
     <div className="mt-4 space-y-2 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 dark:border-zinc-700 dark:bg-zinc-900/50">
+      <fieldset className="space-y-1">
+        <legend className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Template</legend>
+        <div className="flex flex-wrap gap-3">
+          {CHANNEL_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300"
+            >
+              <input
+                type="radio"
+                name={`ext-channel-${siteContentId}`}
+                value={opt.value}
+                checked={channel === opt.value}
+                onChange={() => {
+                  setChannel(opt.value)
+                  setCopied(false)
+                }}
+                className="border-zinc-400 text-violet-600 focus:ring-violet-500"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -71,7 +103,7 @@ export function ExternalPostGenerator({ siteContentId }: { siteContentId: string
           setCopied(false)
         }}
         rows={10}
-        placeholder="点击 Generate External Post 生成标题、摘要、链接与话题标签……"
+        placeholder="选择模板后点击 Generate External Post…"
         className="w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
       />
       {hint ? (

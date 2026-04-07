@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache"
 
 import { auth } from "@/auth"
 import { appendExternalPublishRecord } from "@/agents/growth/external-publish-store"
-import { formatExternalPostForClipboard, generateExternalPost } from "@/agents/growth/external-publish"
+import {
+  formatExternalPostForClipboard,
+  generateExternalPost,
+  parseExternalPublishChannel,
+} from "@/agents/growth/external-publish"
+import type { ExternalPublishChannel } from "@/agents/growth/external-publish-types"
 import {
   approveLaunchPlan,
   publishLaunchPlan,
@@ -53,21 +58,25 @@ export type GenerateExternalPostResult =
   | { ok: false; error: string }
 
 /** 生成外发帖文案并落盘 ExternalPublishRecord；由人工复制到外站，不自动发布。 */
-export async function generateExternalPostAction(siteContentId: string): Promise<GenerateExternalPostResult> {
+export async function generateExternalPostAction(
+  siteContentId: string,
+  channelRaw?: string,
+): Promise<GenerateExternalPostResult> {
   await assertAuthenticated()
   const id = siteContentId.trim()
   if (!id) {
     return { ok: false, error: "缺少内容 ID。" }
   }
+  const channel: ExternalPublishChannel = parseExternalPublishChannel(channelRaw) ?? "generic"
   const content = await getSiteContentById(id)
   if (!content) {
     return { ok: false, error: "未找到对应站内内容，请先完成站内发布。" }
   }
-  const payload = generateExternalPost(content)
-  const text = formatExternalPostForClipboard(payload)
+  const payload = generateExternalPost(content, channel)
+  const text = formatExternalPostForClipboard(payload, channel)
   const record = await appendExternalPublishRecord({
     contentId: content.id,
-    channel: "generic",
+    channel,
     status: "generated",
   })
   revalidatePath("/dashboard/launch")

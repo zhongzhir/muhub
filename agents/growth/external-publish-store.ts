@@ -14,7 +14,7 @@ import type {
 
 const REL_PATH = join("data", "external-publish-records.json")
 
-const CHANNELS = new Set<ExternalPublishChannel>(["generic"])
+const CHANNELS = new Set<ExternalPublishChannel>(["generic", "twitter", "linkedin"])
 const STATUSES = new Set<ExternalPublishStatus>(["generated"])
 
 function filePath(): string {
