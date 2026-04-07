@@ -251,15 +251,10 @@ export function ProjectDetailInfoSections({
           aria-labelledby="project-ops-info-heading"
           data-testid="project-ops-info-section"
         >
+          <h2 id="project-ops-info-heading" className="muhub-page-section-title">
+            运营信息
+          </h2>
           <div className="muhub-card overflow-hidden">
-            <div className="border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
-              <h2
-                id="project-ops-info-heading"
-                className="text-lg font-bold tracking-tight text-zinc-950 dark:text-zinc-50"
-              >
-                运营信息
-              </h2>
-            </div>
             <div className="space-y-2.5 px-6 py-5 text-sm">
               {sourceItems.map((s) => (
                 <div

@@ -95,6 +95,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const canonicalProjectUrl = projectCanonicalUrl(slug);
   const shareSnippet = buildProjectShareSnippet(data);
   const descriptionForShare = data.description.trim() || undefined;
+  const posterIntro =
+    data.tagline?.trim() ||
+    (data.description.trim() ? data.description.trim().slice(0, 360) : "") ||
+    shareSnippet;
 
   const { projectId, engagement } = await getProjectEngagementForSlug(slug, session?.user?.id);
   const relatedSiteContent = await readSiteContentForProjectSlug(slug);
@@ -121,6 +125,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               shareSnippet={shareSnippet}
               canonicalUrl={canonicalProjectUrl}
               description={descriptionForShare}
+              posterIntro={posterIntro}
+              githubUrl={data.githubUrl}
+              websiteUrl={data.websiteUrl}
               showManageLink={showManageLink}
               claimHref={claimHref}
               engagement={{

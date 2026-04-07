@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { ProjectEngagementPublic } from "@/lib/project-engagement";
 import { ProjectEngagementBar } from "@/components/project/project-engagement-bar";
 import { ProjectShareDialog } from "@/components/project/project-share-dialog";
+import { ProjectSharePoster } from "@/components/project/project-share-poster";
 
 export type ProjectHeroPublicActionsProps = {
   slug: string;
@@ -17,6 +18,10 @@ export type ProjectHeroPublicActionsProps = {
   showManageLink: boolean;
   /** 对外认领入口（例如非管理者可见） */
   claimHref?: string;
+  /** 分享海报用短文案（tagline / 简介截断） */
+  posterIntro: string;
+  githubUrl?: string | null;
+  websiteUrl?: string | null;
   /** 点赞/关注（仅正式库项目可交互） */
   engagement?: {
     projectId: string | null;
@@ -39,6 +44,9 @@ export function ProjectHeroPublicActions({
   description,
   showManageLink,
   claimHref,
+  posterIntro,
+  githubUrl,
+  websiteUrl,
   engagement,
 }: ProjectHeroPublicActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
@@ -63,6 +71,14 @@ export function ProjectHeroPublicActions({
           <span aria-hidden>📤</span>
           分享
         </button>
+        <ProjectSharePoster
+          slug={slug}
+          name={name}
+          intro={posterIntro}
+          projectPageUrl={canonicalUrl}
+          githubUrl={githubUrl}
+          websiteUrl={websiteUrl}
+        />
         {showManageLink ? (
           <Link
             href={`/dashboard/projects/${encodeURIComponent(slug)}`}

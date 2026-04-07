@@ -34,8 +34,10 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
     "@prisma/client": "^6.19.2",
+    "html2canvas": "^1.4.1",
     "next": "15.5.14",
     "next-auth": "5.0.0-beta.30",
+    "qrcode.react": "^4.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
@@ -58,8 +60,8 @@
     "eslint-config-next": "15.5.14",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "prisma": "^6.19.2",
     "png-to-ico": "^2.1.8",
+    "prisma": "^6.19.2",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
