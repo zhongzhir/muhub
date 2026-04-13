@@ -1,4 +1,5 @@
 import { runGitHubBatchDiscovery } from "../github/github-discovery";
+import { runGitHubDiscoveryV3 } from "../github/github-discovery-v3";
 import { runRssDiscovery } from "../rss/rss-discovery";
 import {
   discoverySchedulerConfig,
@@ -12,6 +13,7 @@ export type DiscoveryScheduledSummary = {
   finishedAt: string;
   rss: JobStatus;
   githubBatch: JobStatus;
+  githubV3: JobStatus;
 };
 
 let running = false;
@@ -27,12 +29,14 @@ export async function runDiscoveryScheduledJob(
       finishedAt: new Date().toISOString(),
       rss: "skipped",
       githubBatch: "skipped",
+      githubV3: "skipped",
     };
   }
 
   running = true;
   let rss: JobStatus = "skipped";
   let githubBatch: JobStatus = "skipped";
+  let githubV3: JobStatus = "skipped";
 
   try {
     console.log(`[DiscoveryScheduler] started at ${startedAt}`);
@@ -65,11 +69,26 @@ export async function runDiscoveryScheduledJob(
       console.log("[DiscoveryScheduler] source github-batch: skipped");
     }
 
+    if (config.enableGithubV3) {
+      try {
+        const result = await runGitHubDiscoveryV3();
+        githubV3 = "success";
+        console.log(
+          `[DiscoveryScheduler] source github-v3: success (keywords=${result.keywordsProcessed}, inserted=${result.inserted}, skipped=${result.skipped}, invalid=${result.invalid}, failedKeywords=${result.failedKeywords.length})`,
+        );
+      } catch (e) {
+        githubV3 = "failed";
+        console.error("[DiscoveryScheduler] source github-v3: failed", e);
+      }
+    } else {
+      console.log("[DiscoveryScheduler] source github-v3: skipped");
+    }
+
     const finishedAt = new Date().toISOString();
     console.log(
-      `[DiscoveryScheduler] finished at ${finishedAt} (rss=${rss}, githubBatch=${githubBatch})`,
+      `[DiscoveryScheduler] finished at ${finishedAt} (rss=${rss}, githubBatch=${githubBatch}, githubV3=${githubV3})`,
     );
-    return { startedAt, finishedAt, rss, githubBatch };
+    return { startedAt, finishedAt, rss, githubBatch, githubV3 };
   } finally {
     running = false;
   }
