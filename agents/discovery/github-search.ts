@@ -9,6 +9,7 @@ export type GithubRepoSearchItem = {
   html_url: string;
   description: string | null;
   stargazers_count: number;
+  fork?: boolean;
   language: string | null;
   pushed_at: string | null;
   homepage: string | null;
@@ -21,9 +22,12 @@ type SearchResponse = {
   total_count?: number;
 };
 
+function resolveGithubToken(): string {
+  return process.env.GITHUB_TOKEN?.trim() || process.env.GITHUB_ACCESS_TOKEN?.trim() || "";
+}
+
 function githubHeaders(): Record<string, string> {
-  const token =
-    process.env.GITHUB_TOKEN?.trim() || process.env.GITHUB_ACCESS_TOKEN?.trim();
+  const token = resolveGithubToken();
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
@@ -85,7 +89,9 @@ export async function fetchGithubSearchRepositories(
 
   const url = `https://api.github.com/search/repositories?${params.toString()}`;
 
-  if (!process.env.GITHUB_TOKEN?.trim() && !process.env.GITHUB_ACCESS_TOKEN?.trim()) {
+  const token = resolveGithubToken();
+  console.info(`[discovery] using github token: ${token ? "yes" : "no"}`);
+  if (!token) {
     console.warn(
       "[discovery] 未配置 GITHUB_TOKEN / GITHUB_ACCESS_TOKEN，将使用未认证速率限制（约 10 次/分钟搜索）。",
     );

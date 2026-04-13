@@ -77,6 +77,10 @@ function coerceItem(raw: unknown): DiscoveryItem | null {
     duplicateOfId: typeof o.duplicateOfId === "string" ? o.duplicateOfId : undefined,
     possibleDuplicate: typeof o.possibleDuplicate === "boolean" ? o.possibleDuplicate : undefined,
     description: typeof o.description === "string" ? o.description : undefined,
+    meta:
+      o.meta && typeof o.meta === "object" && !Array.isArray(o.meta)
+        ? (o.meta as Record<string, unknown>)
+        : undefined,
     projectSlug: typeof o.projectSlug === "string" ? o.projectSlug : undefined,
     status: stat as DiscoveryStatus,
     aiStatus:

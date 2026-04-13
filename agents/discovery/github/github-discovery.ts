@@ -20,6 +20,23 @@ export async function createDiscoveryItemFromGitHubUrl(url: string): Promise<Dis
   });
 }
 
+export async function createDiscoveryItemFromGitHubUrlWithMeta(
+  url: string,
+  options?: { description?: string; meta?: Record<string, unknown> },
+): Promise<DiscoveryItem> {
+  const ref = parseGitHubRepoRef(url);
+  if (!ref) {
+    throw new Error(`Invalid GitHub repo URL: ${url}`);
+  }
+  return createDiscoveryItem({
+    sourceType: "github",
+    title: buildGitHubDiscoveryTitle(ref),
+    url: ref.url,
+    description: options?.description?.trim() || buildGitHubDiscoveryDescription(ref),
+    meta: options?.meta,
+  });
+}
+
 export async function runGitHubBatchDiscovery(urls: string[]): Promise<{
   total: number;
   inserted: number;

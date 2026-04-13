@@ -25,6 +25,7 @@ export type DiscoveryItem = {
   duplicateOfId?: string;
   possibleDuplicate?: boolean;
   description?: string;
+  meta?: Record<string, unknown>;
   projectSlug?: string;
   status: DiscoveryStatus;
   aiStatus?: DiscoveryAiStatus;
