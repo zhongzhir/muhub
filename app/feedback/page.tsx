@@ -35,7 +35,7 @@ export default function FeedbackPage() {
           <ul className="mt-4 list-inside list-disc space-y-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             <li className="pl-0">
               <strong className="font-medium text-zinc-700 dark:text-zinc-300">邮件</strong>
-              ：3957410054@qq.com
+              ：MUHUB@QQ.COM
               <br />
               <span className="mt-1 block text-zinc-600 dark:text-zinc-400">
                 如在使用过程中遇到问题、发现 Bug 或有产品建议，欢迎随时通过邮件联系我们。

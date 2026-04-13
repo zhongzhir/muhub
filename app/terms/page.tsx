@@ -67,8 +67,9 @@ export default function TermsPage() {
 
       <section>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">9. 法律适用与争议解决</h2>
+        <p className="mt-2">本协议的订立、执行和解释及争议的解决均适用中华人民共和国法律。</p>
         <p className="mt-2">
-          本协议的订立、生效、解释与争议解决适用中华人民共和国法律。因本协议引发的争议，双方应优先协商解决；协商不成的，提交【运营主体所在地有管辖权的人民法院】处理。
+          如双方就本协议内容或其执行发生任何争议，双方应友好协商解决；协商不成时，任何一方均可向北京市海淀区人民法院提起诉讼。
         </p>
       </section>
     </LegalPageShell>

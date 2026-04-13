@@ -46,7 +46,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">6. 用户权利</h2>
         <p className="mt-2">
-          在适用法律规定范围内，您可通过【联系邮箱待补充】提出查询、更正、删除、撤回同意、注销等请求，也可通过该联系方式进行投诉或举报。我们将在核验后依法处理。
+          在适用法律规定范围内，您可通过 MUHUB@QQ.COM 提出查询、更正、删除、撤回同意、注销等请求，也可通过该联系方式进行投诉或举报。我们将在核验后依法处理。
         </p>
       </section>
 
@@ -66,9 +66,9 @@ export default function PrivacyPage() {
 
       <section>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">9. 联系我们</h2>
-        <p className="mt-2">运营主体： 【运营主体名称待补充】</p>
-        <p>联系邮箱： 【联系邮箱待补充】</p>
-        <p>联系地址： 【联系地址待补充】</p>
+        <p className="mt-2">运营主体： 北京链上文投信息技术有限公司</p>
+        <p>联系邮箱： MUHUB@QQ.COM</p>
+        <p>联系地址： 北京市海淀区上地信息产业基地创业路6号</p>
       </section>
 
       <section>

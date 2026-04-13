@@ -39,7 +39,7 @@ export default function LegalNoticePage() {
       <section>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">5. 知识产权与侵权处理</h2>
         <p className="mt-2">
-          如权利人认为平台内容侵犯其合法权益，可通过【联系邮箱待补充】提交权利通知及必要证明材料。平台在核实后将依法采取删除、屏蔽或其他必要处理措施。
+          如权利人认为平台内容侵犯其合法权益，可通过 MUHUB@QQ.COM 提交权利通知及必要证明材料。平台在核实后将依法采取删除、屏蔽或其他必要处理措施。
         </p>
       </section>
 
