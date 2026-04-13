@@ -19,6 +19,16 @@ export type GitHubV3SchedulerConfig = {
    * 推荐运行频率标签（仅用于运营与维护说明，不是 cron 表达式）。
    */
   scheduleLabel: "hourly" | "twice_daily" | "daily" | "manual";
+  /** 是否启用 Topic 维度发现（通常质量更稳定）。 */
+  enableTopicDiscovery: boolean;
+  /** 单次运行最多处理多少个 topic，避免请求过载。 */
+  maxTopicsPerRun: number;
+  /** 是否启用基于已发现项目的 related 扩展。 */
+  enableRelatedDiscovery: boolean;
+  /** 单次 related 扩展的 seed 上限，防止递归膨胀。 */
+  maxRelatedSeeds: number;
+  /** GitHub Search 调用间隔，降低触发 rate limit 的概率。 */
+  searchDelayMs: number;
 };
 
 export type DiscoverySchedulerConfig = {
@@ -39,7 +49,12 @@ export const discoverySchedulerConfig: DiscoverySchedulerConfig = {
   githubV3: {
     enabled: true,
     intents: ["active", "new", "popular"],
-    maxKeywordsPerRun: 20,
+    maxKeywordsPerRun: 10,
     scheduleLabel: "twice_daily",
+    enableTopicDiscovery: true,
+    maxTopicsPerRun: 10,
+    enableRelatedDiscovery: true,
+    maxRelatedSeeds: 5,
+    searchDelayMs: 1500,
   },
 };

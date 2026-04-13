@@ -74,10 +74,15 @@ export async function runDiscoveryScheduledJob(
         const result = await runGitHubDiscoveryV3({
           intents: config.githubV3.intents,
           maxKeywordsPerRun: config.githubV3.maxKeywordsPerRun,
+          enableTopicDiscovery: config.githubV3.enableTopicDiscovery,
+          maxTopicsPerRun: config.githubV3.maxTopicsPerRun,
+          enableRelatedDiscovery: config.githubV3.enableRelatedDiscovery,
+          maxRelatedSeeds: config.githubV3.maxRelatedSeeds,
+          searchDelayMs: config.githubV3.searchDelayMs,
         });
         githubV3 = "success";
         console.log(
-          `[DiscoveryScheduler] source github-v3: success (schedule=${config.githubV3.scheduleLabel}, totalKeywords=${result.totalKeywords}, processed=${result.keywordsProcessed}, intents=${result.intentsUsed.join(",")}, inserted=${result.inserted}, filtered=${result.filtered}, skipped=${result.skipped}, invalid=${result.invalid}, failedKeywords=${result.failedKeywords.length})`,
+          `[DiscoveryScheduler] source github-v3: success (schedule=${config.githubV3.scheduleLabel}, totalKeywords=${result.totalKeywords}, processed=${result.keywordsProcessed}, topics=${result.topicsProcessed}, relatedSeeds=${result.relatedSeedsProcessed}, intents=${result.intentsUsed.join(",")}, inserted=${result.inserted}, filtered=${result.filtered}, skipped=${result.skipped}, invalid=${result.invalid}, failedKeywords=${result.failedKeywords.length}, failedTopics=${result.failedTopics.length})`,
         );
       } catch (e) {
         githubV3 = "failed";

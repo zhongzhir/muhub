@@ -43,6 +43,22 @@ export type FetchGithubSearchResult =
   | { ok: true; items: GithubRepoSearchItem[] }
   | { ok: false; error: string; status?: number };
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function computeDelayMsFromRateLimit(headers: Headers, baseDelayMs: number): number {
+  const remainingRaw = headers.get("x-ratelimit-remaining");
+  const resetRaw = headers.get("x-ratelimit-reset");
+  const remaining = remainingRaw ? Number.parseInt(remainingRaw, 10) : Number.NaN;
+  const reset = resetRaw ? Number.parseInt(resetRaw, 10) : Number.NaN;
+  if (Number.isFinite(remaining) && Number.isFinite(reset) && remaining <= 0) {
+    const waitUntilResetMs = reset * 1000 - Date.now() + 1000;
+    return Math.max(baseDelayMs, waitUntilResetMs);
+  }
+  return baseDelayMs;
+}
+
 function formatGithubSearchErrorBody(raw: string): string {
   const t = raw.trim();
   if (!t) {
@@ -76,9 +92,10 @@ function formatGithubSearchErrorBody(raw: string): string {
 
 export async function fetchGithubSearchRepositories(
   q: string,
-  options: { sort: "updated" | "stars"; perPage: number },
+  options: { sort: "updated" | "stars"; perPage: number; delayMs?: number },
 ): Promise<FetchGithubSearchResult> {
   const perPage = Math.min(100, Math.max(1, options.perPage));
+  const delayMs = Math.max(0, Math.floor(options.delayMs ?? 1500));
   const order = "desc";
   const params = new URLSearchParams({
     q,
@@ -103,8 +120,10 @@ export async function fetchGithubSearchRepositories(
     `[discovery] github search sort=${options.sort} order=${order} per_page=${perPage}`,
   );
 
+  let delayAfterRequestMs = delayMs;
   try {
     const res = await fetch(url, { headers: githubHeaders(), cache: "no-store" });
+    delayAfterRequestMs = computeDelayMsFromRateLimit(res.headers, delayMs);
     const remaining = res.headers.get("x-ratelimit-remaining");
     const reset = res.headers.get("x-ratelimit-reset");
     if (remaining != null) {
@@ -147,5 +166,10 @@ export async function fetchGithubSearchRepositories(
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, error: msg };
+  } finally {
+    if (delayAfterRequestMs > 0) {
+      console.info(`[discovery] sleeping ${delayAfterRequestMs}ms to avoid GitHub rate limit`);
+      await sleep(delayAfterRequestMs);
+    }
   }
 }

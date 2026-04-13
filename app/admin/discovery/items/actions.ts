@@ -5,9 +5,12 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import {
   readDiscoveryItemById,
+  readDiscoveryItems,
   updateDiscoveryItemImportResult,
   updateDiscoveryStatus,
 } from "@/agents/discovery/discovery-store";
+import { runGitHubDiscoveryV3 } from "@/agents/discovery/github/github-discovery-v3";
+import { runRssDiscovery } from "@/agents/discovery/rss/rss-discovery";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
 
 const REVALIDATE = "/admin/discovery/items";
@@ -17,6 +20,28 @@ export type ImportDiscoveryItemResult = {
   message?: string;
   slug?: string;
 };
+
+export type RunGithubDiscoveryV3Result =
+  | {
+      ok: true;
+      summary: Awaited<ReturnType<typeof runGitHubDiscoveryV3>>;
+    }
+  | { ok: false; error: string };
+
+export type RunRssDiscoveryResult =
+  | {
+      ok: true;
+      summary: { before: number; after: number; delta: number };
+    }
+  | { ok: false; error: string };
+
+export type BulkDiscoveryStatusResult =
+  | { ok: true; updated: number }
+  | { ok: false; error: string };
+
+export type BulkImportResult =
+  | { ok: true; success: number; failed: number; skipped: number }
+  | { ok: false; error: string };
 
 export async function markDiscoveryItemReviewedAction(id: string): Promise<void> {
   await updateDiscoveryStatus(id, "reviewed");
@@ -63,5 +88,116 @@ export async function importDiscoveryItemAction(id: string): Promise<ImportDisco
     const msg =
       e instanceof Error ? e.message : "导入失败，请稍后重试或查看服务器日志。";
     return { ok: false, message: msg };
+  }
+}
+
+export async function runGithubDiscoveryV3Action(): Promise<RunGithubDiscoveryV3Result> {
+  try {
+    const summary = await runGitHubDiscoveryV3();
+    revalidatePath(REVALIDATE);
+    return { ok: true, summary };
+  } catch (err) {
+    console.error("[runGithubDiscoveryV3Action]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function runRssDiscoveryAction(): Promise<RunRssDiscoveryResult> {
+  try {
+    const before = (await readDiscoveryItems()).length;
+    await runRssDiscovery();
+    const after = (await readDiscoveryItems()).length;
+    revalidatePath(REVALIDATE);
+    return {
+      ok: true,
+      summary: { before, after, delta: Math.max(0, after - before) },
+    };
+  } catch (err) {
+    console.error("[runRssDiscoveryAction]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function bulkMarkReviewedAction(ids: string[]): Promise<BulkDiscoveryStatusResult> {
+  try {
+    const targetIds = Array.from(new Set(ids.filter((id) => typeof id === "string" && id.trim())));
+    let updated = 0;
+    for (const id of targetIds) {
+      const ok = await updateDiscoveryStatus(id, "reviewed");
+      if (ok) {
+        updated += 1;
+      }
+    }
+    revalidatePath(REVALIDATE);
+    return { ok: true, updated };
+  } catch (err) {
+    console.error("[bulkMarkReviewedAction]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function bulkRejectAction(ids: string[]): Promise<BulkDiscoveryStatusResult> {
+  try {
+    const targetIds = Array.from(new Set(ids.filter((id) => typeof id === "string" && id.trim())));
+    let updated = 0;
+    for (const id of targetIds) {
+      const ok = await updateDiscoveryStatus(id, "rejected");
+      if (ok) {
+        updated += 1;
+      }
+    }
+    revalidatePath(REVALIDATE);
+    return { ok: true, updated };
+  } catch (err) {
+    console.error("[bulkRejectAction]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function bulkImportAction(ids: string[]): Promise<BulkImportResult> {
+  try {
+    const targetIds = Array.from(new Set(ids.filter((id) => typeof id === "string" && id.trim())));
+    let success = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    for (const id of targetIds) {
+      try {
+        const result = await importDiscoveryItemAction(id);
+        if (!result.ok) {
+          failed += 1;
+          continue;
+        }
+        if (result.message?.includes("已关联既有项目")) {
+          skipped += 1;
+          continue;
+        }
+        success += 1;
+      } catch (err) {
+        failed += 1;
+        console.error(`[bulkImportAction:item:${id}]`, err);
+      }
+    }
+
+    revalidatePath(REVALIDATE);
+    return { ok: true, success, failed, skipped };
+  } catch (err) {
+    console.error("[bulkImportAction]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
