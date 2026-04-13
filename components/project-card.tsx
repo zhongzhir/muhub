@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProjectVisibilityStatus } from "@prisma/client";
 import type { ProjectListItem } from "@/lib/project-list";
 import { formatListDate } from "@/lib/format-date";
+import { getProjectCategoryLabel } from "@/lib/projects/project-categories";
 import { codeHostLinkLabel, parseRepoUrl } from "@/lib/repo-platform";
 import { mapSourceLabel } from "@/lib/project-sources";
 
@@ -165,7 +166,9 @@ export function ProjectCard({
           project.isChineseTool) ? (
           <div className="mb-2 flex flex-wrap items-center gap-1.5" data-testid="project-plaza-discovery-meta">
             {project.primaryCategory?.trim() ? (
-              <span className="muhub-badge muhub-badge--category">{project.primaryCategory.trim()}</span>
+              <span className="muhub-badge muhub-badge--category">
+                {getProjectCategoryLabel(project.primaryCategory.trim(), project.primaryCategory.trim())}
+              </span>
             ) : null}
             {project.plazaTags.map((t) => (
               <span key={t} className="muhub-badge muhub-badge--neutral">

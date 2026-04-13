@@ -1,6 +1,7 @@
 import type { ProjectStatus, ProjectVisibilityStatus, SocialPlatform } from "@prisma/client";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
+import { formatProjectTagsInput } from "@/lib/projects/project-tags";
 
 /** 编辑表单支持的四个社媒平台（与创建页一致） */
 export const EDIT_SOCIAL_PLATFORMS: SocialPlatform[] = [
@@ -13,6 +14,9 @@ export const EDIT_SOCIAL_PLATFORMS: SocialPlatform[] = [
 export type ProjectEditInitial = {
   slug: string;
   name: string;
+  category: string;
+  tags: string;
+  isFeatured: boolean;
   tagline: string;
   description: string;
   githubUrl: string;
@@ -64,6 +68,9 @@ export async function fetchProjectForEdit(slug: string): Promise<ProjectEditInit
   return {
     slug: row.slug,
     name: row.name,
+    category: row.primaryCategory ?? "",
+    tags: formatProjectTagsInput(row.tags),
+    isFeatured: row.isFeatured,
     tagline: row.tagline ?? "",
     description: row.description ?? "",
     githubUrl: row.githubUrl ?? "",

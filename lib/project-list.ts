@@ -10,6 +10,9 @@ import {
   completenessInputFromParts,
   plazaRecommendedSortScore,
 } from "@/lib/project-completeness";
+import { isProjectCategory } from "@/lib/projects/project-categories";
+import { normalizeProjectSearchQuery } from "@/lib/projects/project-search";
+import { parseSingleProjectTag } from "@/lib/projects/project-tags";
 import { PROJECT_PLAZA_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
@@ -211,25 +214,28 @@ export async function fetchPublicProjects(
     return { items: [], error: null };
   }
 
-  const query = filters.q?.trim() ?? "";
+  const query = normalizeProjectSearchQuery(filters.q);
   const parts: Prisma.ProjectWhereInput[] = [{ ...PROJECT_PLAZA_FILTER }];
 
   if (query) {
+    const queryLower = query.toLowerCase();
     parts.push({
       OR: [
         { name: { contains: query, mode: "insensitive" } },
         { slug: { contains: query, mode: "insensitive" } },
         { tagline: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
+        { tags: { has: queryLower } },
       ],
     });
   }
 
   const cat = filters.category?.trim();
-  if (cat) {
+  if (cat && isProjectCategory(cat)) {
     parts.push({ primaryCategory: cat });
   }
 
-  const tag = filters.tag?.trim();
+  const tag = parseSingleProjectTag(filters.tag);
   if (tag) {
     parts.push({ tags: { has: tag } });
   }
@@ -354,7 +360,7 @@ export async function fetchPlazaSpotlights(): Promise<PlazaSpotlights | null> {
       prisma.project.findMany({
         where: {
           ...PROJECT_PLAZA_FILTER,
-          OR: [{ primaryCategory: "AI Agent" }, { tags: { has: "Agent" } }],
+          OR: [{ primaryCategory: "ai-agents" }, { primaryCategory: "AI Agent" }, { tags: { has: "Agent" } }],
         },
         select: plazaSelect,
         orderBy: { updatedAt: "desc" },
@@ -431,6 +437,42 @@ export async function fetchPublicProjectSlugsForSitemap(): Promise<
     });
   } catch (e) {
     console.error("[fetchPublicProjectSlugsForSitemap]", e);
+    return [];
+  }
+}
+
+export async function fetchHomepageFeaturedProjects(limit = 6): Promise<ProjectListItem[]> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return [];
+  }
+  try {
+    const rows = (await prisma.project.findMany({
+      where: { ...PROJECT_PLAZA_FILTER, isFeatured: true },
+      select: plazaSelect,
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      take: limit,
+    })) as unknown as PlazaDbRow[];
+    return rows.map(mapPlazaRow);
+  } catch (e) {
+    console.error("[fetchHomepageFeaturedProjects]", e);
+    return [];
+  }
+}
+
+export async function fetchHomepageLatestProjects(limit = 6): Promise<ProjectListItem[]> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return [];
+  }
+  try {
+    const rows = (await prisma.project.findMany({
+      where: { ...PROJECT_PLAZA_FILTER },
+      select: plazaSelect,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    })) as unknown as PlazaDbRow[];
+    return rows.map(mapPlazaRow);
+  } catch (e) {
+    console.error("[fetchHomepageLatestProjects]", e);
     return [];
   }
 }

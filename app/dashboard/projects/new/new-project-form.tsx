@@ -8,6 +8,7 @@ import type { NewProjectPrefill } from "./prefill";
 import { createProject, type CreateProjectFormState } from "./actions";
 import { prefillProjectFromImportUrl } from "./import-prefill-actions";
 import { detectSourceUrlKind } from "@/lib/project-detect-source";
+import { PROJECT_CATEGORY_OPTIONS } from "@/lib/projects/project-categories";
 
 const inputClass = "muhub-input mt-1";
 
@@ -231,6 +232,19 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           defaultValue={p.tagline || undefined}
         />
 
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="category">
+          项目分类
+        </label>
+        <select id="category" className={inputClass} name="category" defaultValue="">
+          <option value="">未分类</option>
+          {PROJECT_CATEGORY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <FieldError message={state.fieldErrors?.category} />
+
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="description">
           项目介绍
         </label>
@@ -242,6 +256,30 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           placeholder="支持多行描述（可选）"
           defaultValue={p.description || undefined}
         />
+
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tags">
+          标签
+        </label>
+        <input
+          id="tags"
+          className={inputClass}
+          name="tags"
+          type="text"
+          autoComplete="off"
+          placeholder="例如：ai, open-source, llm（逗号分隔）"
+        />
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          使用逗号分隔；保存时会自动规范化、去重并限制数量。
+        </p>
+
+        <label className="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+          <input
+            name="isFeatured"
+            type="checkbox"
+            className="h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-900"
+          />
+          设为精选项目（Featured）
+        </label>
       </fieldset>
 
       <fieldset className="muhub-card space-y-4 p-5 sm:p-6">

@@ -4,6 +4,7 @@ import type { ProjectPageView } from "@/lib/demo-project";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
 import type { ProjectSourceDisplayItem } from "@/lib/project-sources";
 import { mapSourceEmoji, mapSourceLabel } from "@/lib/project-sources";
+import { getProjectCategoryLabel } from "@/lib/projects/project-categories";
 import { socialPlatformLabel } from "@/lib/social-platform";
 
 function externalPlatformHeading(platform: string): string {
@@ -172,7 +173,7 @@ export function ProjectDetailInfoSections({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {data.primaryCategory?.trim() ? (
               <span className="muhub-badge muhub-badge--category">
-                主类型 · {data.primaryCategory.trim()}
+                Category · {getProjectCategoryLabel(data.primaryCategory.trim(), data.primaryCategory.trim())}
               </span>
             ) : null}
             {(data.categories ?? [])

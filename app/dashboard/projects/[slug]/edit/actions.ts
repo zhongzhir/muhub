@@ -6,6 +6,8 @@ import { canManageProject } from "@/lib/project-permissions";
 import { parseSocialInput } from "@/lib/social-input";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
+import { isProjectCategory } from "@/lib/projects/project-categories";
+import { parseProjectTags } from "@/lib/projects/project-tags";
 
 export type UpdateProjectFormState = {
   ok: boolean;
@@ -62,6 +64,9 @@ export async function updateProject(
   const name = String(formData.get("name") ?? "").trim();
   const tagline = String(formData.get("tagline") ?? "").trim() || null;
   const description = String(formData.get("description") ?? "").trim() || null;
+  const tagsRaw = String(formData.get("tags") ?? "").trim();
+  const categoryRaw = String(formData.get("category") ?? "").trim();
+  const isFeatured = String(formData.get("isFeatured") ?? "") === "on";
   const githubUrlRaw = String(formData.get("githubUrl") ?? "").trim();
   const websiteUrlRaw = String(formData.get("websiteUrl") ?? "").trim();
   const statusRaw = String(formData.get("status") ?? "").trim();
@@ -99,6 +104,18 @@ export async function updateProject(
   }
 
   const status = statusRaw as ProjectStatus;
+  const tags = parseProjectTags(tagsRaw);
+  let primaryCategory: string | null = null;
+  if (categoryRaw) {
+    if (!isProjectCategory(categoryRaw)) {
+      fieldErrors.category = "请选择有效分类";
+    } else {
+      primaryCategory = categoryRaw;
+    }
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return { ...initialFail, fieldErrors };
+  }
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -108,6 +125,9 @@ export async function updateProject(
           name,
           tagline,
           description,
+          tags,
+          primaryCategory,
+          isFeatured,
           githubUrl,
           websiteUrl,
           status,

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ProjectListItem } from "@/lib/project-list";
+import { getProjectCategoryLabel } from "@/lib/projects/project-categories";
 
 function MiniList({
   title,
@@ -26,7 +27,9 @@ function MiniList({
                 {p.name}
               </Link>
               {p.primaryCategory?.trim() ? (
-                <span className="muhub-badge muhub-badge--category">{p.primaryCategory}</span>
+                <span className="muhub-badge muhub-badge--category">
+                  {getProjectCategoryLabel(p.primaryCategory.trim(), p.primaryCategory.trim())}
+                </span>
               ) : null}
             </li>
           ))}

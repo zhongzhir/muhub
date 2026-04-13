@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import { projectPublicPathPrefix } from "@/lib/seo/site";
 import type { ProjectEditInitial } from "@/lib/project-edit";
+import { PROJECT_CATEGORY_OPTIONS } from "@/lib/projects/project-categories";
 import { updateProject, type UpdateProjectFormState } from "./actions";
 
 const inputClass = "muhub-input mt-1";
@@ -87,6 +88,19 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
           defaultValue={initial.tagline}
         />
 
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="category">
+          项目分类
+        </label>
+        <select id="category" className={inputClass} name="category" defaultValue={initial.category}>
+          <option value="">未分类</option>
+          {PROJECT_CATEGORY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <FieldError message={state.fieldErrors?.category} />
+
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="description">
           项目介绍
         </label>
@@ -96,6 +110,19 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
           name="description"
           rows={5}
           defaultValue={initial.description}
+        />
+
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tags">
+          标签
+        </label>
+        <input
+          id="tags"
+          className={inputClass}
+          name="tags"
+          type="text"
+          autoComplete="off"
+          defaultValue={initial.tags}
+          placeholder="例如：ai, open-source, llm（逗号分隔）"
         />
       </fieldset>
 
@@ -187,6 +214,16 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
           <option value="ARCHIVED">已归档</option>
         </select>
         <FieldError message={state.fieldErrors?.status} />
+
+        <label className="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+          <input
+            name="isFeatured"
+            type="checkbox"
+            defaultChecked={initial.isFeatured}
+            className="h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-900"
+          />
+          设为精选项目（Featured）
+        </label>
       </fieldset>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -2,12 +2,18 @@ import Link from "next/link";
 import { PlazaDiscoveryBlocks } from "@/components/plaza-discovery-blocks";
 import { ProjectCard } from "@/components/project-card";
 import { RecommendedProjectCard } from "@/components/recommended-project-card";
-import { PRIMARY_TYPE_ORDER } from "@/lib/discovery/classification/keyword-rules";
 import {
   fetchPlazaSpotlights,
   fetchPublicProjects,
   type PlazaSortMode,
 } from "@/lib/project-list";
+import {
+  PROJECT_CATEGORY_OPTIONS,
+  getProjectCategoryLabel,
+  isProjectCategory,
+} from "@/lib/projects/project-categories";
+import { normalizeProjectSearchQuery } from "@/lib/projects/project-search";
+import { parseSingleProjectTag } from "@/lib/projects/project-tags";
 import { recommendedProjects } from "@/lib/recommended-projects";
 
 export const dynamic = "force-dynamic";
@@ -76,9 +82,11 @@ export default async function ProjectsListPage({
   searchParams: Promise<SearchParams>;
 }) {
   const sp = await searchParams;
-  const searchTerm = typeof sp.q === "string" ? sp.q.trim() : "";
-  const category = typeof sp.category === "string" ? sp.category.trim() : "";
-  const tag = typeof sp.tag === "string" ? sp.tag.trim() : "";
+  const searchTerm = normalizeProjectSearchQuery(typeof sp.q === "string" ? sp.q : "");
+  const rawCategory = typeof sp.category === "string" ? sp.category.trim() : "";
+  const category = isProjectCategory(rawCategory) ? rawCategory : "";
+  const rawTag = typeof sp.tag === "string" ? sp.tag.trim() : "";
+  const tag = parseSingleProjectTag(rawTag) ?? "";
   const ai = parseBoolQuery(sp.ai);
   const zh = parseBoolQuery(sp.zh);
   const hw = parseBoolQuery(sp.hw);
@@ -179,6 +187,32 @@ export default async function ProjectsListPage({
           </p>
         </header>
 
+        <nav aria-label="分类导航" className="mb-8 flex flex-wrap gap-2">
+          <Link
+            href="/projects"
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+              !category
+                ? "border-teal-500 bg-teal-50 text-teal-700 dark:border-teal-500 dark:bg-teal-950/40 dark:text-teal-200"
+                : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            }`}
+          >
+            All
+          </Link>
+          {PROJECT_CATEGORY_OPTIONS.map((opt) => (
+            <Link
+              key={opt.value}
+              href={`/projects?category=${encodeURIComponent(opt.value)}`}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+                category === opt.value
+                  ? "border-teal-500 bg-teal-50 text-teal-700 dark:border-teal-500 dark:bg-teal-950/40 dark:text-teal-200"
+                  : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              }`}
+            >
+              {opt.label}
+            </Link>
+          ))}
+        </nav>
+
         {spotlights ? (
           <PlazaDiscoveryBlocks
             hotAgents={spotlights.hotAgents}
@@ -232,16 +266,16 @@ export default async function ProjectsListPage({
                 </select>
               </label>
               <label className="flex flex-col gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                主类型
+                分类
                 <select
                   name="category"
                   defaultValue={category}
                   className="muhub-input px-2 py-1.5"
                 >
                   <option value="">全部</option>
-                  {PRIMARY_TYPE_ORDER.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  {PROJECT_CATEGORY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
                     </option>
                   ))}
                 </select>
@@ -330,6 +364,11 @@ export default async function ProjectsListPage({
               ) : null}
               {searchTerm && hasNonSearchFilters ? <span className="mx-1 text-zinc-400">·</span> : null}
               {hasNonSearchFilters ? <>已应用筛选或排序。</> : null}
+              {category ? (
+                <span className="ml-2 inline-flex items-center rounded bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                  分类：{getProjectCategoryLabel(category)}
+                </span>
+              ) : null}
               <Link href="/projects" className="ml-2 underline">
                 清除
               </Link>

@@ -10,6 +10,8 @@ import { prisma } from "@/lib/prisma";
 import { getProjectSourceById } from "@/agents/sources/source-registry";
 import { fallbackSlugBase, isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 import { parseProjectSourceRowsJson } from "@/app/dashboard/projects/new/prefill";
+import { isProjectCategory } from "@/lib/projects/project-categories";
+import { parseProjectTags } from "@/lib/projects/project-tags";
 
 export type CreateProjectFormState = {
   ok: boolean;
@@ -74,6 +76,8 @@ export async function createProject(
   const docsUrlRaw = String(formData.get("docsUrl") ?? "").trim();
   const blogUrlRaw = String(formData.get("blogUrl") ?? "").trim();
   const twitterUrlRaw = String(formData.get("twitterUrl") ?? "").trim();
+  const categoryRaw = String(formData.get("category") ?? "").trim();
+  const isFeatured = String(formData.get("isFeatured") ?? "") === "on";
 
   const fieldErrors: Partial<Record<string, string>> = {};
 
@@ -156,14 +160,20 @@ export async function createProject(
     return { ...initialFail, fieldErrors };
   }
 
+  let primaryCategory: string | null = null;
+  if (categoryRaw) {
+    if (!isProjectCategory(categoryRaw)) {
+      fieldErrors.category = "请选择有效分类";
+    } else {
+      primaryCategory = categoryRaw;
+    }
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return { ...initialFail, fieldErrors };
+  }
+
   const tagsRaw = String(formData.get("tags") ?? "").trim();
-  const tags = tagsRaw
-    ? tagsRaw
-        .split(/[,，]/)
-        .map((t) => t.trim())
-        .filter(Boolean)
-        .slice(0, 64)
-    : [];
+  const tags = parseProjectTags(tagsRaw);
 
   const growthSourceId = String(formData.get("growthSourceId") ?? "").trim();
   const importNotes = String(formData.get("importNotes") ?? "").trim();
@@ -275,6 +285,8 @@ export async function createProject(
         githubUrl,
         websiteUrl,
         sourceType,
+        primaryCategory,
+        isFeatured,
         status: "ACTIVE",
         isPublic: false,
         visibilityStatus: "DRAFT",
