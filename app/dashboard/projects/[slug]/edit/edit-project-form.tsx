@@ -14,6 +14,19 @@ const sectionTitle = "muhub-form-legend";
 
 const initialState: UpdateProjectFormState = { ok: false };
 
+function aiStatusBadgeClass(status: string): string {
+  if (status === "done") {
+    return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200";
+  }
+  if (status === "failed") {
+    return "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200";
+  }
+  if (status === "scheduled") {
+    return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200";
+  }
+  return "bg-zinc-50 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400";
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) {
     return null;
@@ -198,6 +211,20 @@ export function EditProjectForm({ initial }: { initial: ProjectEditInitial }) {
         <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           是否在广场对外公开请在下方「发布设置」中操作（公开 / 隐藏），此处仅影响项目生命周期标签。
         </p>
+        <div className="rounded border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs dark:border-zinc-700 dark:bg-zinc-900">
+          <span className="mr-2 text-zinc-500 dark:text-zinc-400">AI Status</span>
+          <span className={`rounded px-2 py-0.5 ${aiStatusBadgeClass(initial.aiStatus)}`}>
+            {initial.aiStatus || "-"}
+          </span>
+          {initial.aiUpdatedAt ? (
+            <span className="ml-2 font-mono text-zinc-500 dark:text-zinc-400">
+              {initial.aiUpdatedAt.replace("T", " ").slice(0, 19)}
+            </span>
+          ) : null}
+          {initial.aiStatus === "failed" && initial.aiError ? (
+            <p className="mt-1 text-red-600 dark:text-red-400">{initial.aiError}</p>
+          ) : null}
+        </div>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="status">
           项目状态

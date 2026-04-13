@@ -512,6 +512,12 @@ model Project {
   isChineseTool   Boolean?
   /** 运营脚本 / AI 生成的详情页摘要卡（hero 下） */
   aiCardSummary String?
+  /** AI enrichment 状态（scheduled/done/failed） */
+  aiStatus      String?
+  /** AI enrichment 最近一次状态更新时间 */
+  aiUpdatedAt   DateTime?
+  /** AI enrichment 最近一次失败原因（可空） */
+  aiError       String?
   logoUrl     String?
   websiteUrl  String?
   githubUrl   String?

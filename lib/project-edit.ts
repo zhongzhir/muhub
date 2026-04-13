@@ -17,6 +17,9 @@ export type ProjectEditInitial = {
   category: string;
   tags: string;
   isFeatured: boolean;
+  aiStatus: string;
+  aiUpdatedAt: string;
+  aiError: string;
   tagline: string;
   description: string;
   githubUrl: string;
@@ -71,6 +74,9 @@ export async function fetchProjectForEdit(slug: string): Promise<ProjectEditInit
     category: row.primaryCategory ?? "",
     tags: formatProjectTagsInput(row.tags),
     isFeatured: row.isFeatured,
+    aiStatus: row.aiStatus ?? "",
+    aiUpdatedAt: row.aiUpdatedAt ? row.aiUpdatedAt.toISOString() : "",
+    aiError: row.aiError ?? "",
     tagline: row.tagline ?? "",
     description: row.description ?? "",
     githubUrl: row.githubUrl ?? "",
