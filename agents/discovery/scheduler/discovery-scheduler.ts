@@ -69,12 +69,15 @@ export async function runDiscoveryScheduledJob(
       console.log("[DiscoveryScheduler] source github-batch: skipped");
     }
 
-    if (config.enableGithubV3) {
+    if (config.githubV3.enabled) {
       try {
-        const result = await runGitHubDiscoveryV3();
+        const result = await runGitHubDiscoveryV3({
+          intents: config.githubV3.intents,
+          maxKeywordsPerRun: config.githubV3.maxKeywordsPerRun,
+        });
         githubV3 = "success";
         console.log(
-          `[DiscoveryScheduler] source github-v3: success (keywords=${result.keywordsProcessed}, inserted=${result.inserted}, skipped=${result.skipped}, invalid=${result.invalid}, failedKeywords=${result.failedKeywords.length})`,
+          `[DiscoveryScheduler] source github-v3: success (schedule=${config.githubV3.scheduleLabel}, totalKeywords=${result.totalKeywords}, processed=${result.keywordsProcessed}, intents=${result.intentsUsed.join(",")}, inserted=${result.inserted}, filtered=${result.filtered}, skipped=${result.skipped}, invalid=${result.invalid}, failedKeywords=${result.failedKeywords.length})`,
         );
       } catch (e) {
         githubV3 = "failed";

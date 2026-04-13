@@ -8,11 +8,10 @@ import {
   type GithubDiscoveryFilterReason,
 } from "./github-discovery-filter";
 import { normalizeGitHubRepoUrl } from "./github-utils";
-
-type GitHubSearchIntent = "active" | "new" | "popular";
+import type { GitHubV3Intent, GitHubV3SchedulerConfig } from "../scheduler/discovery-scheduler-config";
 
 type GitHubSearchPlan = {
-  intent: GitHubSearchIntent;
+  intent: GitHubV3Intent;
   query: string;
   sort: "updated" | "stars";
   perPage: number;
@@ -20,13 +19,13 @@ type GitHubSearchPlan = {
 
 type GitHubRepoCandidate = {
   url: string;
-  intent: GitHubSearchIntent;
+  intent: GitHubV3Intent;
   repo: GithubRepoSearchItem;
 };
 
 export type GitHubKeywordDiscoverySummary = {
   keyword: string;
-  byIntent: Record<GitHubSearchIntent, { inserted: number; filtered: number; skipped: number }>;
+  byIntent: Record<GitHubV3Intent, { inserted: number; filtered: number; skipped: number }>;
   inserted: number;
   skipped: number;
   filtered: number;
@@ -38,15 +37,29 @@ export type GitHubKeywordDiscoverySummary = {
 export type GitHubDiscoveryV3Summary = {
   startedAt: string;
   finishedAt: string;
+  totalKeywords: number;
   keywordsProcessed: number;
+  maxKeywordsPerRun: number;
+  intentsUsed: GitHubV3Intent[];
+  truncatedByMaxKeywordsPerRun: boolean;
   inserted: number;
   skipped: number;
   filtered: number;
   invalid: number;
   byKeyword: Record<string, { inserted: number; filtered: number; skipped: number }>;
-  byIntent: Record<GitHubSearchIntent, { inserted: number; filtered: number; skipped: number }>;
+  byIntent: Record<GitHubV3Intent, { inserted: number; filtered: number; skipped: number }>;
   filterReasons: Partial<Record<GithubDiscoveryFilterReason, number>>;
   failedKeywords: string[];
+};
+
+type GitHubDiscoveryV3RuntimeConfig = Pick<
+  GitHubV3SchedulerConfig,
+  "intents" | "maxKeywordsPerRun"
+>;
+
+const DEFAULT_RUNTIME_CONFIG: GitHubDiscoveryV3RuntimeConfig = {
+  intents: ["active", "new", "popular"],
+  maxKeywordsPerRun: 20,
 };
 
 function isoDaysAgo(days: number): string {
@@ -54,32 +67,43 @@ function isoDaysAgo(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function buildSearchPlansForKeyword(keyword: string): GitHubSearchPlan[] {
+function sanitizeRuntimeConfig(
+  input?: Partial<GitHubDiscoveryV3RuntimeConfig>,
+): GitHubDiscoveryV3RuntimeConfig {
+  const intents = input?.intents?.length ? input.intents : DEFAULT_RUNTIME_CONFIG.intents;
+  const maxKeywordsPerRunRaw = input?.maxKeywordsPerRun ?? DEFAULT_RUNTIME_CONFIG.maxKeywordsPerRun;
+  const maxKeywordsPerRun = Math.max(1, Math.floor(maxKeywordsPerRunRaw));
+  return { intents, maxKeywordsPerRun };
+}
+
+function buildSearchPlanForIntent(keyword: string, intent: GitHubV3Intent): GitHubSearchPlan {
   const pushedAfter = isoDaysAgo(90);
   const createdAfter = isoDaysAgo(60);
-  return [
-    {
-      intent: "active",
+  if (intent === "active") {
+    return {
+      intent,
       query: `${keyword} stars:>10 pushed:>${pushedAfter}`,
       sort: "updated",
       perPage: 20,
-    },
-    {
-      intent: "new",
+    };
+  }
+  if (intent === "new") {
+    return {
+      intent,
       query: `${keyword} created:>${createdAfter} stars:>3`,
       sort: "updated",
       perPage: 20,
-    },
-    {
-      intent: "popular",
-      query: `${keyword} stars:>80`,
-      sort: "stars",
-      perPage: 20,
-    },
-  ];
+    };
+  }
+  return {
+    intent,
+    query: `${keyword} stars:>80`,
+    sort: "stars",
+    perPage: 20,
+  };
 }
 
-function emptyIntentStats(): Record<GitHubSearchIntent, { inserted: number; filtered: number; skipped: number }> {
+function emptyIntentStats(): Record<GitHubV3Intent, { inserted: number; filtered: number; skipped: number }> {
   return {
     active: { inserted: 0, filtered: 0, skipped: 0 },
     new: { inserted: 0, filtered: 0, skipped: 0 },
@@ -100,8 +124,11 @@ function mergeReasonCounter(
   }
 }
 
-export async function searchGitHubReposByKeyword(keyword: string): Promise<GitHubRepoCandidate[]> {
-  const plans = buildSearchPlansForKeyword(keyword);
+export async function searchGitHubReposByKeyword(
+  keyword: string,
+  intents: GitHubV3Intent[],
+): Promise<GitHubRepoCandidate[]> {
+  const plans = intents.map((intent) => buildSearchPlanForIntent(keyword, intent));
   const candidates = new Map<string, GitHubRepoCandidate>();
 
   for (const plan of plans) {
@@ -133,7 +160,9 @@ export async function searchGitHubReposByKeyword(keyword: string): Promise<GitHu
 
 export async function runGitHubKeywordDiscovery(
   keyword: string,
+  options?: { intents?: GitHubV3Intent[] },
 ): Promise<GitHubKeywordDiscoverySummary> {
+  const intents = options?.intents?.length ? options.intents : DEFAULT_RUNTIME_CONFIG.intents;
   const summary: GitHubKeywordDiscoverySummary = {
     keyword,
     byIntent: emptyIntentStats(),
@@ -145,7 +174,7 @@ export async function runGitHubKeywordDiscovery(
     filterReasons: {},
   };
 
-  const candidates = await searchGitHubReposByKeyword(keyword);
+  const candidates = await searchGitHubReposByKeyword(keyword, intents);
   if (candidates.length === 0) {
     console.log(`[GitHub Discovery V3] keyword="${keyword}" no candidate repos`);
     return summary;
@@ -194,19 +223,19 @@ export async function runGitHubKeywordDiscovery(
   console.log(
     `[GitHub Discovery V3] keyword="${keyword}" inserted=${summary.inserted} filtered=${summary.filtered} skipped=${summary.skipped} invalid=${summary.invalid} errors=${summary.errors}`,
   );
-  console.log(
-    `[GitHub Discovery V3] keyword="${keyword}" active: inserted=${summary.byIntent.active.inserted} filtered=${summary.byIntent.active.filtered}`,
-  );
-  console.log(
-    `[GitHub Discovery V3] keyword="${keyword}" new: inserted=${summary.byIntent.new.inserted} filtered=${summary.byIntent.new.filtered}`,
-  );
-  console.log(
-    `[GitHub Discovery V3] keyword="${keyword}" popular: inserted=${summary.byIntent.popular.inserted} filtered=${summary.byIntent.popular.filtered}`,
-  );
+  for (const intent of intents) {
+    console.log(
+      `[GitHub Discovery V3] keyword="${keyword}" ${intent}: inserted=${summary.byIntent[intent].inserted} filtered=${summary.byIntent[intent].filtered} skipped=${summary.byIntent[intent].skipped}`,
+    );
+  }
   return summary;
 }
 
-export async function runGitHubDiscoveryV3(): Promise<GitHubDiscoveryV3Summary> {
+export async function runGitHubDiscoveryV3(
+  inputConfig?: Partial<GitHubDiscoveryV3RuntimeConfig>,
+): Promise<GitHubDiscoveryV3Summary> {
+  const runtimeConfig = sanitizeRuntimeConfig(inputConfig);
+  const keywords = GITHUB_DISCOVERY_KEYWORDS.slice(0, runtimeConfig.maxKeywordsPerRun);
   const startedAt = new Date().toISOString();
   const failedKeywords: string[] = [];
   let inserted = 0;
@@ -218,11 +247,15 @@ export async function runGitHubDiscoveryV3(): Promise<GitHubDiscoveryV3Summary> 
   const filterReasons: Partial<Record<GithubDiscoveryFilterReason, number>> = {};
 
   console.log(`[GitHub Discovery V3] started at ${startedAt}`);
+  console.log(
+    `[GitHub Discovery V3] total keywords=${GITHUB_DISCOVERY_KEYWORDS.length} processed keywords=${keywords.length} maxKeywordsPerRun=${runtimeConfig.maxKeywordsPerRun}`,
+  );
+  console.log(`[GitHub Discovery V3] intents used=${runtimeConfig.intents.join(", ")}`);
 
-  for (const keyword of GITHUB_DISCOVERY_KEYWORDS) {
+  for (const keyword of keywords) {
     console.log(`[GitHub Discovery V3] processing keyword="${keyword}"`);
     try {
-      const result = await runGitHubKeywordDiscovery(keyword);
+      const result = await runGitHubKeywordDiscovery(keyword, { intents: runtimeConfig.intents });
       inserted += result.inserted;
       skipped += result.skipped + result.errors;
       filtered += result.filtered;
@@ -252,7 +285,11 @@ export async function runGitHubDiscoveryV3(): Promise<GitHubDiscoveryV3Summary> 
   const summary: GitHubDiscoveryV3Summary = {
     startedAt,
     finishedAt,
-    keywordsProcessed: GITHUB_DISCOVERY_KEYWORDS.length,
+    totalKeywords: GITHUB_DISCOVERY_KEYWORDS.length,
+    keywordsProcessed: keywords.length,
+    maxKeywordsPerRun: runtimeConfig.maxKeywordsPerRun,
+    intentsUsed: runtimeConfig.intents,
+    truncatedByMaxKeywordsPerRun: keywords.length < GITHUB_DISCOVERY_KEYWORDS.length,
     inserted,
     skipped,
     filtered,
@@ -263,7 +300,7 @@ export async function runGitHubDiscoveryV3(): Promise<GitHubDiscoveryV3Summary> 
     failedKeywords,
   };
   console.log(
-    `[GitHub Discovery V3] finished at ${finishedAt} keywords=${summary.keywordsProcessed} inserted=${inserted} filtered=${filtered} skipped=${skipped} invalid=${invalid} failedKeywords=${failedKeywords.length}`,
+    `[GitHub Discovery V3] finished at ${finishedAt} totalKeywords=${summary.totalKeywords} keywordsProcessed=${summary.keywordsProcessed} inserted=${inserted} filtered=${filtered} skipped=${skipped} invalid=${invalid} failedKeywords=${failedKeywords.length}`,
   );
   return summary;
 }
