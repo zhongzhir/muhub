@@ -7,11 +7,7 @@ import { ProjectHeroPublicActions } from "@/components/project/project-hero-publ
 import { ProjectUpdates } from "@/components/project/project-updates";
 import { ProjectDetailInfoSections } from "@/components/project/project-detail-info-sections";
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
-import {
-  buildProjectMetaDescription,
-  buildProjectOpenGraph,
-  buildProjectTwitter,
-} from "@/lib/seo/project-meta";
+import { buildProjectMetaDescription } from "@/lib/seo/project-meta";
 import { SITE_URL } from "@/lib/seo/site";
 import { getProjectSources } from "@/lib/project-sources";
 import { ProjectJsonLd } from "@/components/project/project-json-ld";
@@ -25,8 +21,31 @@ import { readSiteContentForProjectSlug } from "@/agents/growth/site-content-stor
 import { ProjectRelatedContent } from "@/components/content/project-related-content";
 import { ProjectTimeline } from "@/components/content/project-timeline";
 import { buildProjectTimelineItems } from "@/lib/content/project-timeline";
+import { readProjectActivities } from "@/agents/activity/project-activity-store";
+import { ProjectActivitySection } from "@/components/project/project-activity";
+import ProjectSummary from "@/components/project/project-summary";
+import { buildProjectHighlights } from "@/lib/project/project-highlights";
+import { buildProjectSummary } from "@/lib/project/project-summary";
+import { buildProjectPromoText } from "@/lib/project/project-promo-text";
 
 export const dynamic = "force-dynamic";
+
+function buildShareProjectInput(data: {
+  description: string;
+  tagline?: string;
+  tags?: string[];
+  githubUrl?: string;
+  githubSnapshot?: { stars?: number | null; lastCommitAt?: Date | null } | null;
+}) {
+  return {
+    description: data.description,
+    stars: data.githubSnapshot?.stars ?? 0,
+    lastCommitAt: data.githubSnapshot?.lastCommitAt ?? null,
+    topics: (data.tags ?? []).map((x) => x.toLowerCase()),
+    openSource: Boolean(data.githubUrl),
+    tagline: data.tagline?.trim() || "",
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -40,14 +59,35 @@ export async function generateMetadata({
     return { title: "项目" };
   }
   const { data, access } = loaded;
+  const shareInput = buildShareProjectInput(data);
+  const summary = buildProjectSummary(shareInput);
+  const description =
+    summary?.trim() ||
+    data.description.trim() ||
+    data.tagline?.trim() ||
+    buildProjectMetaDescription(data);
+  const title = `${data.name} | MUHUB`;
+  const url = `${SITE_URL}/projects/${slug}`;
+  const ogImage = `${SITE_URL}/projects/${slug}/opengraph-image`;
   const base = {
-    title: data.name,
-    description: buildProjectMetaDescription(data),
+    title,
+    description,
     alternates: {
-      canonical: `${SITE_URL}/projects/${slug}`,
+      canonical: url,
     },
-    openGraph: buildProjectOpenGraph(data, slug),
-    twitter: buildProjectTwitter(data),
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${data.name} | MUHUB` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
   };
   if (access === "manager_preview") {
     return { ...base, robots: { index: false, follow: false } };
@@ -103,6 +143,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const { projectId, engagement } = await getProjectEngagementForSlug(slug, session?.user?.id);
   const relatedSiteContent = await readSiteContentForProjectSlug(slug);
   const timelineItems = buildProjectTimelineItems(slug, data.updates, relatedSiteContent);
+  const projectActivities = (await readProjectActivities())
+    .filter((row) => row.projectSlug === slug)
+    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+    .slice(0, 5);
+  const project = buildShareProjectInput(data);
+  const highlights = buildProjectHighlights(project);
+  const summary = buildProjectSummary(project);
+  const promoText = buildProjectPromoText({
+    name: data.name,
+    summary,
+    highlights,
+    latestActivity: projectActivities?.[0] ?? null,
+    projectUrl: `${SITE_URL}/projects/${slug}`,
+  });
   const claimHref =
     fromDb && process.env.DATABASE_URL?.trim() && !showManageLink
       ? `/projects/${encodeURIComponent(slug)}/claim`
@@ -116,6 +170,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           slug={slug}
           name={data.name}
           tagline={data.tagline}
+          summary={summary ?? undefined}
+          highlights={highlights}
+          stars={data.githubSnapshot?.stars ?? undefined}
+          lastCommitAt={data.githubSnapshot?.lastCommitAt ?? null}
+          contributors={data.githubSnapshot?.contributorsCount ?? undefined}
+          latestActivity={
+            projectActivities[0]
+              ? {
+                  title: projectActivities[0].title,
+                  type: projectActivities[0].type,
+                  occurredAt: projectActivities[0].occurredAt,
+                }
+              : null
+          }
           createdAt={data.createdAt}
           actions={
             <ProjectHeroPublicActions
@@ -126,6 +194,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               canonicalUrl={canonicalProjectUrl}
               description={descriptionForShare}
               posterIntro={posterIntro}
+              posterSummary={summary ?? undefined}
+              posterHighlights={highlights}
+              posterLatestActivity={projectActivities[0] ?? null}
+              promoText={promoText}
               githubUrl={data.githubUrl}
               websiteUrl={data.websiteUrl}
               showManageLink={showManageLink}
@@ -149,6 +221,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </p>
         ) : null}
 
+        <ProjectActivitySection activities={projectActivities} />
+
+        <ProjectSummary summary={summary ?? undefined} />
+
+        <ProjectDetailInfoSections
+          data={data}
+          socials={socials}
+          sourceItems={sourceItems}
+          descriptionBody={descriptionBody}
+        />
+
         <ProjectUpdates
           slug={slug}
           updates={data.updates}
@@ -160,13 +243,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         <ProjectTimeline items={timelineItems} />
 
         <ProjectRelatedContent items={relatedSiteContent} />
-
-        <ProjectDetailInfoSections
-          data={data}
-          socials={socials}
-          sourceItems={sourceItems}
-          descriptionBody={descriptionBody}
-        />
       </div>
     </div>
   );

@@ -6,6 +6,8 @@ import type { ProjectEngagementPublic } from "@/lib/project-engagement";
 import { ProjectEngagementBar } from "@/components/project/project-engagement-bar";
 import { ProjectShareDialog } from "@/components/project/project-share-dialog";
 import { ProjectSharePoster } from "@/components/project/project-share-poster";
+import type { ProjectActivity } from "@/agents/activity/project-activity-store";
+import ProjectCopyPromo from "@/components/project/project-copy-promo";
 
 export type ProjectHeroPublicActionsProps = {
   slug: string;
@@ -20,6 +22,10 @@ export type ProjectHeroPublicActionsProps = {
   claimHref?: string;
   /** 分享海报用短文案（tagline / 简介截断） */
   posterIntro: string;
+  posterSummary?: string;
+  posterHighlights?: string[];
+  posterLatestActivity?: ProjectActivity | null;
+  promoText: string;
   githubUrl?: string | null;
   websiteUrl?: string | null;
   /** 点赞/关注（仅正式库项目可交互） */
@@ -45,6 +51,10 @@ export function ProjectHeroPublicActions({
   showManageLink,
   claimHref,
   posterIntro,
+  posterSummary,
+  posterHighlights,
+  posterLatestActivity,
+  promoText,
   githubUrl,
   websiteUrl,
   engagement,
@@ -54,7 +64,7 @@ export function ProjectHeroPublicActions({
   return (
     <>
       <div
-        className="flex flex-wrap items-baseline gap-x-4 gap-y-2"
+        className="flex flex-wrap items-start gap-4"
         data-testid="project-hero-public-actions"
       >
         {engagement ? (
@@ -67,18 +77,71 @@ export function ProjectHeroPublicActions({
             signInCallbackPath={engagement.signInCallbackPath}
           />
         ) : null}
-        <button type="button" className={inlineActionClass} onClick={() => setShareOpen(true)}>
-          <span aria-hidden>📤</span>
-          分享
-        </button>
-        <ProjectSharePoster
-          slug={slug}
-          name={name}
-          intro={posterIntro}
-          projectPageUrl={canonicalUrl}
-          githubUrl={githubUrl}
-          websiteUrl={websiteUrl}
-        />
+        <div className="min-w-[220px]">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Project Links
+          </p>
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+            {websiteUrl?.trim() ? (
+              <a
+                href={websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={inlineActionClass}
+              >
+                Visit Website
+              </a>
+            ) : null}
+            {githubUrl?.trim() ? (
+              <a
+                href={githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={inlineActionClass}
+              >
+                View GitHub
+              </a>
+            ) : null}
+          </div>
+        </div>
+        <div className="min-w-[220px]">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Promote
+          </p>
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+            <button type="button" className={inlineActionClass} onClick={() => setShareOpen(true)}>
+              <span aria-hidden>📤</span>
+              Share
+            </button>
+            <ProjectSharePoster
+              slug={slug}
+              name={name}
+              intro={posterIntro}
+              summary={posterSummary}
+              highlights={posterHighlights}
+              latestActivity={
+                posterLatestActivity
+                  ? {
+                      type: posterLatestActivity.type,
+                      title: posterLatestActivity.title,
+                      occurredAt: posterLatestActivity.occurredAt,
+                      summary: posterLatestActivity.summary,
+                    }
+                  : null
+              }
+              projectPageUrl={canonicalUrl}
+              githubUrl={githubUrl}
+              websiteUrl={websiteUrl}
+            />
+            <ProjectCopyPromo text={promoText} />
+          </div>
+        </div>
+        {(showManageLink || claimHref) && (
+          <div className="min-w-[160px]">
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Manage
+            </p>
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
         {showManageLink ? (
           <Link
             href={`/dashboard/projects/${encodeURIComponent(slug)}`}
@@ -95,6 +158,9 @@ export function ProjectHeroPublicActions({
             认领
           </Link>
         ) : null}
+            </div>
+          </div>
+        )}
       </div>
       <ProjectShareDialog
         open={shareOpen}

@@ -12,14 +12,28 @@ import {
   fetchHomepageFeaturedProjects,
   fetchHomepageLatestProjects,
 } from "@/lib/project-list";
+import { prisma } from "@/lib/prisma";
+import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
+import { readRecentProjectActivities } from "@/agents/activity/project-activity-store";
+import { RecentProjectActivitySection } from "@/components/home/recent-project-activity";
 
 export default async function HomePage() {
   const siteItems = await readSiteContentLatestFirst();
   const latestSite = siteItems.slice(0, 5);
-  const [featuredProjects, latestProjects] = await Promise.all([
+  const [featuredProjects, latestProjects, activeProjectSlugs] = await Promise.all([
     fetchHomepageFeaturedProjects(6),
     fetchHomepageLatestProjects(6),
+    process.env.DATABASE_URL?.trim()
+      ? prisma.project.findMany({
+          where: { ...PROJECT_ACTIVE_FILTER },
+          select: { slug: true },
+        })
+      : Promise.resolve([] as { slug: string }[]),
   ]);
+  const recentActivities = await readRecentProjectActivities(
+    8,
+    activeProjectSlugs.map((p) => p.slug),
+  );
 
   return (
     <main className="min-h-screen">
@@ -108,6 +122,7 @@ export default async function HomePage() {
           </div>
         </section>
       ) : null}
+      <RecentProjectActivitySection activities={recentActivities.slice(0, 8)} />
       <RecommendedProjects />
       <GeoFaq />
       <div className="mx-auto max-w-4xl px-6 pb-8 sm:px-8">

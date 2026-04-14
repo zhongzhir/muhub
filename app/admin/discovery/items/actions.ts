@@ -11,6 +11,7 @@ import {
 } from "@/agents/discovery/discovery-store";
 import { runGitHubDiscoveryV3 } from "@/agents/discovery/github/github-discovery-v3";
 import { runRssDiscovery } from "@/agents/discovery/rss/rss-discovery";
+import { runGitHubProjectActivity } from "@/agents/activity/github-activity";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
 
 const REVALIDATE = "/admin/discovery/items";
@@ -32,6 +33,14 @@ export type RunRssDiscoveryResult =
   | {
       ok: true;
       summary: { before: number; after: number; delta: number };
+    }
+  | { ok: false; error: string };
+
+export type RunProjectActivityResult =
+  | {
+      ok: true;
+      processed: number;
+      created: number;
     }
   | { ok: false; error: string };
 
@@ -117,6 +126,25 @@ export async function runRssDiscoveryAction(): Promise<RunRssDiscoveryResult> {
     };
   } catch (err) {
     console.error("[runRssDiscoveryAction]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function runProjectActivityAction(): Promise<RunProjectActivityResult> {
+  try {
+    const summary = await runGitHubProjectActivity();
+    revalidatePath(REVALIDATE);
+    const created = summary.inserted.release + summary.inserted.star + summary.inserted.update;
+    return {
+      ok: true,
+      processed: summary.withGithubUrl,
+      created,
+    };
+  } catch (err) {
+    console.error("[runProjectActivityAction]", err);
     return {
       ok: false,
       error: err instanceof Error ? err.message : String(err),

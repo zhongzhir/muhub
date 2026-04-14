@@ -9,6 +9,14 @@ export type ProjectSharePosterProps = {
   name: string;
   /** 海报用一句话/短简介 */
   intro: string;
+  summary?: string;
+  highlights?: string[];
+  latestActivity?: {
+    type: "release" | "star" | "update";
+    title: string;
+    occurredAt: string;
+    summary?: string;
+  } | null;
   projectPageUrl: string;
   githubUrl?: string | null;
   websiteUrl?: string | null;
@@ -23,6 +31,9 @@ export function ProjectSharePoster({
   slug,
   name,
   intro,
+  summary,
+  highlights,
+  latestActivity,
   projectPageUrl,
   githubUrl,
   websiteUrl,
@@ -55,13 +66,14 @@ export function ProjectSharePoster({
 
   const gh = githubUrl?.trim() || "";
   const web = websiteUrl?.trim() || "";
-  const introLines = intro.trim() || "在 MUHUB 查看项目主页与动态";
+  const introLines = summary?.trim() || intro.trim() || "在 MUHUB 查看项目主页与动态";
+  const badgeList = (highlights ?? []).slice(0, 4);
 
   return (
     <>
       <button type="button" className={actionBtnClass} onClick={() => setOpen(true)}>
         <span aria-hidden>🖼️</span>
-        分享海报
+        Share Poster
       </button>
 
       {open ? (
@@ -99,6 +111,32 @@ export function ProjectSharePoster({
                   <p className="mt-4 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap break-words">
                     {introLines}
                   </p>
+
+                  {badgeList.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {badgeList.map((h) => (
+                        <span
+                          key={h}
+                          className="rounded-full border border-zinc-300 px-2.5 py-1 text-[11px] font-medium text-zinc-700"
+                        >
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {latestActivity ? (
+                    <div className="mt-5 rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                        Latest Activity · {latestActivity.type}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-zinc-800">{latestActivity.title}</p>
+                      {latestActivity.summary ? (
+                        <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{latestActivity.summary}</p>
+                      ) : null}
+                      <p className="mt-1 text-[11px] text-zinc-500">{latestActivity.occurredAt}</p>
+                    </div>
+                  ) : null}
 
                   <div className="mt-6 space-y-2 border-t border-zinc-200 pt-5 text-sm">
                     {gh ? (

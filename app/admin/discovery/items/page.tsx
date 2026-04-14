@@ -12,6 +12,7 @@ import { discoverySchedulerConfig } from "@/agents/discovery/scheduler/discovery
 import { DiscoveryRunActions } from "./discovery-run-actions";
 import { DiscoveryRecentRuns } from "./discovery-recent-runs";
 import { DiscoveryJsonQueueTable } from "./discovery-json-queue-table";
+import { ProjectActivityRunActions } from "./project-activity-run-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,10 @@ export default async function AdminDiscoveryJsonQueuePage() {
       <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Discovery 运行状态</h2>
-          <DiscoveryRunActions />
+          <div className="flex flex-wrap items-start gap-2">
+            <DiscoveryRunActions />
+            <ProjectActivityRunActions />
+          </div>
         </div>
         <div className="mt-3 grid gap-2 text-xs text-zinc-600 dark:text-zinc-400 sm:grid-cols-2 lg:grid-cols-3">
           <p>GitHub V3: {githubV3.enabled ? "Enabled" : "Disabled"}</p>

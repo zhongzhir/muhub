@@ -2,11 +2,23 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { projectPublicPathPrefix } from "@/lib/seo/site";
 import { formatListDate } from "@/lib/format-date";
+import ProjectHeroMetrics from "@/components/project/project-hero-metrics";
+import ProjectHeroLatestActivity from "@/components/project/project-hero-latest-activity";
 
 export type ProjectDetailHeroProps = {
   slug: string;
   name: string;
   tagline: string | undefined;
+  summary?: string;
+  highlights?: string[];
+  stars?: number;
+  lastCommitAt?: string | Date | null;
+  contributors?: number;
+  latestActivity?: {
+    title: string;
+    type: "release" | "star" | "update";
+    occurredAt: string;
+  } | null;
   createdAt: Date;
   /** 公开页：分享、进入管理等（通常为客户端岛） */
   actions?: ReactNode;
@@ -16,6 +28,12 @@ export function ProjectDetailHero({
   slug,
   name,
   tagline,
+  summary,
+  highlights,
+  stars,
+  lastCommitAt,
+  contributors,
+  latestActivity,
   createdAt,
   actions,
 }: ProjectDetailHeroProps) {
@@ -34,32 +52,46 @@ export function ProjectDetailHero({
       aria-labelledby="project-detail-title"
     >
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-400">
-          项目主页
+        <p className="text-xs font-semibold uppercase tracking-wide text-teal-800/90 dark:text-teal-400/90">
+          MUHUB Project Profile
         </p>
 
         <h1
           id="project-detail-title"
-          className="mt-3 text-4xl font-bold tracking-tight text-zinc-950 md:text-5xl dark:text-zinc-50"
+          className="mt-2 text-4xl font-bold tracking-tight text-zinc-950 md:text-6xl dark:text-zinc-50"
         >
           {name}
         </h1>
 
-        {tagline?.trim() ? (
+        {(summary?.trim() || tagline?.trim()) ? (
           <>
             <h2 id="project-tagline-heading" className="sr-only">
               项目简介
             </h2>
             <p
-              className="mt-5 max-w-3xl text-lg leading-relaxed text-zinc-600 dark:text-zinc-400"
+              className="mt-2 line-clamp-2 max-w-3xl text-sm leading-relaxed text-gray-600 dark:text-zinc-400"
               aria-labelledby="project-tagline-heading"
             >
-              {tagline}
+              {summary?.trim() || tagline}
             </p>
           </>
         ) : null}
 
-        <dl className="mt-7 grid gap-2.5 text-sm text-zinc-600 dark:text-zinc-400">
+        <ProjectHeroMetrics stars={stars} updatedAt={lastCommitAt} contributors={contributors} />
+
+        <ProjectHeroLatestActivity activity={latestActivity} />
+
+        {highlights?.length ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {highlights.slice(0, 4).map((h) => (
+              <span key={h} className="rounded-md border px-2 py-1 text-xs">
+                {h}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <dl className="mt-6 grid gap-2.5 text-sm text-zinc-600 dark:text-zinc-400">
           <div className="flex flex-wrap gap-x-2">
             <dt className="shrink-0 text-xs font-medium text-zinc-500">项目访问地址</dt>
             <dd className="break-all font-mono text-zinc-800 dark:text-zinc-200">{publicPath}</dd>
