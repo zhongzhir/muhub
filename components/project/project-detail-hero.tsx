@@ -53,7 +53,9 @@ export function ProjectDetailHero({
     >
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wide text-teal-800/90 dark:text-teal-400/90">
-          MUHUB Project Profile
+          <span>项目主页</span>
+          <span className="mx-1 text-zinc-400">·</span>
+          <span>MUHUB Project Profile</span>
         </p>
 
         <h1
