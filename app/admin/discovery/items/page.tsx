@@ -1,11 +1,16 @@
 import Link from "next/link";
 
 import { readDiscoveryItems } from "@/agents/discovery/discovery-store";
+import {
+  readDiscoveryRunHistory,
+  type DiscoveryRunHistoryGitHubV3Entry,
+} from "@/agents/discovery/discovery-run-history-store";
 import { readDiscoveryRuntimeState } from "@/agents/discovery/discovery-runtime-store";
 import { GITHUB_DISCOVERY_KEYWORDS } from "@/agents/discovery/github/github-discovery-keywords";
 import { discoverySchedulerConfig } from "@/agents/discovery/scheduler/discovery-scheduler-config";
 
 import { DiscoveryRunActions } from "./discovery-run-actions";
+import { DiscoveryRecentRuns } from "./discovery-recent-runs";
 import { DiscoveryJsonQueueTable } from "./discovery-json-queue-table";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +18,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminDiscoveryJsonQueuePage() {
   const items = await readDiscoveryItems();
   const runtime = await readDiscoveryRuntimeState();
+  const runHistory = await readDiscoveryRunHistory();
+  const recentRuns: DiscoveryRunHistoryGitHubV3Entry[] = runHistory
+    .filter((e): e is DiscoveryRunHistoryGitHubV3Entry => e.type === "github-v3")
+    .slice(-5)
+    .reverse();
   const githubV3 = discoverySchedulerConfig.githubV3;
   const totalKeywords = GITHUB_DISCOVERY_KEYWORDS.length;
   const batchSize = Math.min(totalKeywords, Math.max(1, githubV3.maxKeywordsPerRun));
@@ -74,6 +84,8 @@ export default async function AdminDiscoveryJsonQueuePage() {
           </p>
         ) : null}
       </section>
+
+      <DiscoveryRecentRuns entries={recentRuns} />
 
       <DiscoveryJsonQueueTable items={items} />
     </div>

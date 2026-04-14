@@ -21,6 +21,7 @@ import {
   readDiscoveryRuntimeState,
   updateGitHubV3KeywordCursor,
 } from "../discovery-runtime-store";
+import { appendGitHubV3DiscoveryRunHistory } from "../discovery-run-history-store";
 
 type GitHubSearchPlan = {
   intent: GitHubV3Intent;
@@ -583,5 +584,10 @@ export async function runGitHubDiscoveryV3(
   console.log(
     `[GitHub Discovery V3] finished at ${finishedAt} totalKeywords=${summary.totalKeywords} keywordsProcessed=${summary.keywordsProcessed} keywordCursorStart=${summary.keywordCursorStart} keywordCursorEnd=${summary.keywordCursorEnd} nextKeywordCursor=${summary.nextKeywordCursor} topicsProcessed=${summary.topicsProcessed} relatedSeedsProcessed=${summary.relatedSeedsProcessed} inserted=${inserted} filtered=${filtered} skipped=${skipped} invalid=${invalid} failedKeywords=${failedKeywords.length} failedTopics=${failedTopics.length}`,
   );
+  try {
+    await appendGitHubV3DiscoveryRunHistory(summary);
+  } catch (e) {
+    console.warn("[GitHub Discovery V3] failed to persist run history", e);
+  }
   return summary;
 }
