@@ -17,11 +17,11 @@ async function assertAuthenticated(): Promise<void> {
 export async function discardDiscoveryCandidateAction(id: string): Promise<void> {
   await assertAuthenticated();
   await markDiscoveredCandidateDiscarded(id);
-  revalidatePath("/dashboard/discovery");
+  revalidatePath("/admin/discovery/items");
 }
 
 export async function markDiscoveryImportedAction(id: string): Promise<void> {
   await assertAuthenticated();
   await markDiscoveredCandidateImported(id);
-  revalidatePath("/dashboard/discovery");
+  revalidatePath("/admin/discovery/items");
 }
