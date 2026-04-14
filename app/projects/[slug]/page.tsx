@@ -150,6 +150,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const project = buildShareProjectInput(data);
   const highlights = buildProjectHighlights(project);
   const summary = buildProjectSummary(project);
+  const heroSummary = data.tagline?.trim() || summary || undefined;
+  const summaryForSection =
+    summary && summary.trim() !== data.description.trim() ? summary : null;
   const promoText = buildProjectPromoText({
     name: data.name,
     summary,
@@ -170,7 +173,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           slug={slug}
           name={data.name}
           tagline={data.tagline}
-          summary={summary ?? undefined}
+          summary={heroSummary}
           highlights={highlights}
           stars={data.githubSnapshot?.stars ?? undefined}
           lastCommitAt={data.githubSnapshot?.lastCommitAt ?? null}
@@ -223,7 +226,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <ProjectActivitySection activities={projectActivities} />
 
-        <ProjectSummary summary={summary ?? undefined} />
+        <ProjectSummary summary={summaryForSection ?? undefined} />
 
         <ProjectDetailInfoSections
           data={data}
