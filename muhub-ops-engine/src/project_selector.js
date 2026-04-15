@@ -22,8 +22,7 @@ function normalizeProject(project, index) {
                 : ""
           }
         : null,
-    url: typeof safeProject.url === "string" ? safeProject.url.trim() : "",
-    _index: index
+    url: typeof safeProject.url === "string" ? safeProject.url.trim() : ""
   };
 }
 
@@ -42,18 +41,19 @@ function scoreProject(project) {
 }
 
 function selectProjects(projects, limit) {
-  const normalized = Array.isArray(projects) ? projects.map(normalizeProject) : [];
+  const normalized = Array.isArray(projects) ? projects.map((p, i) => normalizeProject(p, i)) : [];
+  const indexed = normalized.map((project, index) => ({ project, index }));
 
-  return normalized
+  return indexed
     .sort((a, b) => {
-      const scoreDiff = scoreProject(b) - scoreProject(a);
+      const scoreDiff = scoreProject(b.project) - scoreProject(a.project);
       if (scoreDiff !== 0) {
         return scoreDiff;
       }
-      return a._index - b._index;
+      return a.index - b.index;
     })
     .slice(0, Math.max(0, limit))
-    .map(({ _index, ...rest }) => rest);
+    .map((row) => row.project);
 }
 
 function selectProjectsForWechat(projects, limit = 3) {

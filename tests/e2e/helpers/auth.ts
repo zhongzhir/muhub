@@ -18,7 +18,7 @@ export function skipWithoutE2EAuthGate(): void {
  * 注入 NextAuth JWT Cookie，无需真实 GitHub OAuth。
  * 依赖服务端 /api/e2e/auth-token（仅当 E2E_TEST_SECRET 与 DATABASE_URL 可用）。
  */
-export async function loginAsE2EUser(page: Page): Promise<void> {
+export async function loginAsE2EUser(page: Page): Promise<{ userId: string }> {
   skipWithoutE2EAuthGate();
 
   const baseURL = baseURLFromEnv();
@@ -31,8 +31,9 @@ export async function loginAsE2EUser(page: Page): Promise<void> {
     `e2e auth-token 失败: HTTP ${res.status()} ${await res.text()}`,
   ).toBeTruthy();
 
-  const body = (await res.json()) as { sessionToken: string; error?: string };
+  const body = (await res.json()) as { sessionToken: string; userId?: string; error?: string };
   expect(body.sessionToken, "响应缺少 sessionToken").toBeTruthy();
+  expect(body.userId, "响应缺少 userId").toBeTruthy();
 
   await page.context().addCookies([
     {
@@ -41,4 +42,6 @@ export async function loginAsE2EUser(page: Page): Promise<void> {
       url: baseURL,
     },
   ]);
+
+  return { userId: body.userId! };
 }

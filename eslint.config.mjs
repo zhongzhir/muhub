@@ -23,6 +23,13 @@ const eslintConfig = [
       "tests/**",
     ],
   },
+  {
+    files: ["muhub-ops-engine/**/*.js"],
+    rules: {
+      // muhub-ops-engine 是独立的 Node CommonJS 小工具链；此处不强套用 TS ESM import 规则
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ];
 
 export default eslintConfig;
