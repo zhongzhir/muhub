@@ -31,18 +31,18 @@ export function DiscoveryRunActions() {
                   const { inserted, skipped } = result.summary;
                   setToast({
                     kind: "ok",
-                    text: `GitHub V3 completed · Inserted ${inserted} · Skipped ${skipped}`,
+                    text: `GitHub 获取完成 · 新增 ${inserted} · 跳过 ${skipped}`,
                   });
                   router.refresh();
                 } else {
-                  setToast({ kind: "err", text: `GitHub V3 failed: ${result.error}` });
+                  setToast({ kind: "err", text: `GitHub 获取失败：${result.error}` });
                 }
                 setRunning(null);
               })();
             });
           }}
         >
-          {running === "github" ? "Running..." : "Run GitHub V3"}
+          {running === "github" ? "执行中..." : "从 GitHub 获取项目"}
         </button>
         <button
           type="button"
@@ -57,18 +57,18 @@ export function DiscoveryRunActions() {
                 if (result.ok) {
                   setToast({
                     kind: "ok",
-                    text: `RSS Discovery completed · Inserted ${result.summary.delta}`,
+                    text: `RSS 获取完成 · 新增 ${result.summary.delta}`,
                   });
                   router.refresh();
                 } else {
-                  setToast({ kind: "err", text: `RSS Discovery failed: ${result.error}` });
+                  setToast({ kind: "err", text: `RSS 获取失败：${result.error}` });
                 }
                 setRunning(null);
               })();
             });
           }}
         >
-          {running === "rss" ? "Running..." : "Run RSS Discovery"}
+          {running === "rss" ? "执行中..." : "从 RSS 获取项目"}
         </button>
       </div>
       {toast ? (

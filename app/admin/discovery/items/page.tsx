@@ -55,10 +55,10 @@ export default async function AdminDiscoveryJsonQueuePage() {
       <header>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           <Link href="/admin/discovery" className="underline-offset-4 hover:underline">
-            ← Discovery 候选池（数据库）
+            ← 项目发现候选池（数据库）
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Discovery 队列（JSON · 基础版）</h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">项目发现队列（JSON · 基础版）</h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           本地 <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">data/discovery-items.json</code>{" "}
           队列，用于最小闭环与后续导入衔接；本页不接 GitHub API、无自动抓取。
@@ -67,9 +67,9 @@ export default async function AdminDiscoveryJsonQueuePage() {
 
       <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Discovery 运行状态</h2>
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">项目发现运行状态</h2>
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Operations</p>
+            <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">运营工具</p>
             <div className="flex flex-wrap items-start gap-2">
               <DiscoveryRunActions />
               <ProjectActivityRunActions />
@@ -78,18 +78,23 @@ export default async function AdminDiscoveryJsonQueuePage() {
           </div>
         </div>
         <div className="mt-3 grid gap-2 text-xs text-zinc-600 dark:text-zinc-400 sm:grid-cols-2 lg:grid-cols-3">
-          <p>GitHub V3: {githubV3.enabled ? "Enabled" : "Disabled"}</p>
-          <p>maxKeywordsPerRun: {githubV3.maxKeywordsPerRun}</p>
-          <p>intents: {githubV3.intents.join(", ")}</p>
-          <p>Topic Discovery: {githubV3.enableTopicDiscovery ? "Enabled" : "Disabled"}</p>
-          <p>Related Discovery: {githubV3.enableRelatedDiscovery ? "Enabled" : "Disabled"}</p>
-          <p>searchDelayMs: {githubV3.searchDelayMs}</p>
-          <p>GitHub token: {hasGithubToken ? "configured" : "missing"}</p>
-          <p>keyword cursor: {cursor}</p>
-          <p>total keywords: {totalKeywords}</p>
-          <p>next batch size: {batchSize}</p>
-          <p>next run range: {totalKeywords > 0 ? `${cursor} ~ ${cursorEnd}` : "-"}</p>
+          <p>GitHub 获取：{githubV3.enabled ? "已启用" : "已停用"}</p>
+          <p>每次关键词数：{githubV3.maxKeywordsPerRun}</p>
+          <p>发现意图：{githubV3.intents.join(", ")}</p>
+          <p>主题发现：{githubV3.enableTopicDiscovery ? "已启用" : "已停用"}</p>
+          <p>关联扩展：{githubV3.enableRelatedDiscovery ? "已启用" : "已停用"}</p>
+          <p>GitHub 凭证：{hasGithubToken ? "已配置" : "未配置"}</p>
+          <p>关键词总量：{totalKeywords}</p>
+          <p>下次批量规模：{batchSize}</p>
         </div>
+        <details className="mt-3 rounded border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-zinc-400">
+          <summary className="cursor-pointer font-medium">系统调试信息</summary>
+          <div className="mt-2 grid gap-1 sm:grid-cols-2">
+            <p>searchDelayMs: {githubV3.searchDelayMs}</p>
+            <p>keyword cursor: {cursor}</p>
+            <p>next run range: {totalKeywords > 0 ? `${cursor} ~ ${cursorEnd}` : "-"}</p>
+          </div>
+        </details>
         {topSourceCounts.length > 0 ? (
           <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
             source 计数（当前页数据）：{" "}

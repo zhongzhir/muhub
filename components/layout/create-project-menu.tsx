@@ -15,10 +15,10 @@ export type CreateProjectMenuProps = {
 export function CreateProjectMenu({ authenticated }: CreateProjectMenuProps) {
   const manualHref = authenticated
     ? "/dashboard/projects/new"
-    : "/auth/signin?callbackUrl=/dashboard/projects/new";
+    : "/login?redirect=/dashboard/projects/new";
   const githubImportHref = authenticated
     ? "/dashboard/projects/import"
-    : "/auth/signin?callbackUrl=/dashboard/projects/import";
+    : "/login?redirect=/dashboard/projects/import";
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 

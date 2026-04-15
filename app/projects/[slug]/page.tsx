@@ -21,7 +21,7 @@ import { readSiteContentForProjectSlug } from "@/agents/growth/site-content-stor
 import { ProjectRelatedContent } from "@/components/content/project-related-content";
 import { ProjectTimeline } from "@/components/content/project-timeline";
 import { buildProjectTimelineItems } from "@/lib/content/project-timeline";
-import { readProjectActivities } from "@/agents/activity/project-activity-store";
+import { readProjectPublicActivities } from "@/lib/activity/project-activity-service";
 import { ProjectActivitySection } from "@/components/project/project-activity";
 import ProjectSummary from "@/components/project/project-summary";
 import { buildProjectHighlights } from "@/lib/project/project-highlights";
@@ -143,10 +143,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const { projectId, engagement } = await getProjectEngagementForSlug(slug, session?.user?.id);
   const relatedSiteContent = await readSiteContentForProjectSlug(slug);
   const timelineItems = buildProjectTimelineItems(slug, data.updates, relatedSiteContent);
-  const projectActivities = (await readProjectActivities())
-    .filter((row) => row.projectSlug === slug)
-    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-    .slice(0, 5);
+  const projectActivities = await readProjectPublicActivities(slug, 5);
   const project = buildShareProjectInput(data);
   const highlights = buildProjectHighlights(project);
   const summary = buildProjectSummary(project);

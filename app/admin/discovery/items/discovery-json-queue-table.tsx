@@ -126,13 +126,13 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
       ) : null}
       {selectedCount > 0 ? (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200">
-          <span>Selected: {selectedCount}</span>
+          <span>已选：{selectedCount}</span>
           <button
             type="button"
             disabled={pending}
             className={btn}
             onClick={() => {
-              if (!window.confirm(`Confirm import ${selectedCount} items?`)) {
+              if (!window.confirm(`确认导入 ${selectedCount} 条记录？`)) {
                 return;
               }
               setFeedback(null);
@@ -143,19 +143,19 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                   if (r.ok) {
                     setFeedback({
                       kind: "ok",
-                      text: `Import completed\nSuccess: ${r.success}\nFailed: ${r.failed}\nSkipped: ${r.skipped}`,
+                      text: `导入完成\n成功：${r.success}\n失败：${r.failed}\n跳过：${r.skipped}`,
                     });
                     setSelectedIds([]);
                     router.refresh();
                   } else {
-                    setFeedback({ kind: "err", text: r.error || "批量 Import 失败" });
+                    setFeedback({ kind: "err", text: r.error || "批量导入失败" });
                   }
                   setBulkRunning(null);
                 })();
               });
             }}
           >
-            {bulkRunning === "import" ? "Importing..." : "Import"}
+            {bulkRunning === "import" ? "导入中..." : "导入项目"}
           </button>
           <button
             type="button"
@@ -168,18 +168,18 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 void (async () => {
                   const r = await bulkMarkReviewedAction(selectedValidIds);
                   if (r.ok) {
-                    setFeedback({ kind: "ok", text: `Marked ${r.updated} items as reviewed` });
+                    setFeedback({ kind: "ok", text: `已处理 ${r.updated} 条` });
                     setSelectedIds([]);
                     router.refresh();
                   } else {
-                    setFeedback({ kind: "err", text: r.error || "批量 Reviewed 失败" });
+                    setFeedback({ kind: "err", text: r.error || "批量已处理失败" });
                   }
                   setBulkRunning(null);
                 })();
               });
             }}
           >
-            {bulkRunning === "reviewed" ? "Marking..." : "Mark Reviewed"}
+            {bulkRunning === "reviewed" ? "处理中..." : "已处理"}
           </button>
           <button
             type="button"
@@ -192,18 +192,18 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 void (async () => {
                   const r = await bulkRejectAction(selectedValidIds);
                   if (r.ok) {
-                    setFeedback({ kind: "ok", text: `Rejected ${r.updated} items` });
+                    setFeedback({ kind: "ok", text: `已拒绝 ${r.updated} 条` });
                     setSelectedIds([]);
                     router.refresh();
                   } else {
-                    setFeedback({ kind: "err", text: r.error || "批量 Reject 失败" });
+                    setFeedback({ kind: "err", text: r.error || "批量拒绝失败" });
                   }
                   setBulkRunning(null);
                 })();
               });
             }}
           >
-            {bulkRunning === "rejected" ? "Rejecting..." : "Reject"}
+            {bulkRunning === "rejected" ? "拒绝中..." : "拒绝"}
           </button>
           <button
             type="button"
@@ -211,7 +211,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
             className={btn}
             onClick={() => setSelectedIds([])}
           >
-            Clear
+            清空
           </button>
         </div>
       ) : null}
@@ -227,14 +227,14 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 aria-label="全选当前页"
               />
             </th>
-            <th className="px-4 py-3">Title</th>
-            <th className="px-4 py-3">Source</th>
+            <th className="px-4 py-3">项目</th>
+            <th className="px-4 py-3">来源</th>
             <th className="px-4 py-3">Meta</th>
-            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">状态</th>
             <th className="px-4 py-3">AI</th>
             <th className="px-4 py-3">Duplicate</th>
-            <th className="px-4 py-3">CreatedAt</th>
-            <th className="px-4 py-3">Action</th>
+            <th className="px-4 py-3">创建时间</th>
+            <th className="px-4 py-3">操作</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -325,17 +325,17 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
               <td className="px-4 py-3">
                 <span className={`rounded px-2 py-0.5 text-xs ${aiBadgeClass(row.aiStatus)}`}>
                   {row.aiStatus === "scheduled"
-                    ? "Scheduled"
+                    ? "待处理"
                     : row.aiStatus === "done"
-                      ? "Done"
+                      ? "完成"
                       : row.aiStatus === "failed"
-                        ? "Failed"
+                        ? "失败"
                         : "-"}
                 </span>
               </td>
               <td className="px-4 py-3">
                 <span className={`rounded px-2 py-0.5 text-xs ${duplicateBadgeClass(row)}`}>
-                  {row.duplicateOfId ? "Duplicate" : row.possibleDuplicate ? "Possible" : "-"}
+                  {row.duplicateOfId ? "重复" : row.possibleDuplicate ? "疑似" : "-"}
                 </span>
               </td>
               <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-zinc-500 tabular-nums">
@@ -345,7 +345,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 <div className="flex flex-wrap gap-1.5">
                   {row.status === "imported" ? (
                     <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
-                      Imported
+                      已导入
                     </span>
                   ) : (
                     <button
@@ -354,8 +354,8 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                       className={`${btn} ${row.status === "rejected" ? "cursor-not-allowed opacity-50" : ""}`}
                       title={
                         row.status === "rejected"
-                          ? "请先 Mark new 或 Reviewed 后再导入"
-                          : "写入 Project 表并回写本队列"
+                          ? "请先标记为新或已处理后再导入"
+                          : "写入项目表并回写本队列"
                       }
                       onClick={() => {
                         setFeedback(null);
@@ -378,7 +378,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                         });
                       }}
                     >
-                      Import
+                      导入项目
                     </button>
                   )}
                   {row.status !== "reviewed" ? (
@@ -390,7 +390,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                         startTransition(() => void markDiscoveryItemReviewedAction(row.id))
                       }
                     >
-                      Reviewed
+                      已处理
                     </button>
                   ) : null}
                   {row.status !== "rejected" ? (
@@ -402,7 +402,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                         startTransition(() => void markDiscoveryItemRejectedAction(row.id))
                       }
                     >
-                      Reject
+                      拒绝
                     </button>
                   ) : null}
                   {row.status !== "new" ? (
@@ -414,7 +414,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                         startTransition(() => void markDiscoveryItemNewAction(row.id))
                       }
                     >
-                      Mark new
+                      标记为新
                     </button>
                   ) : null}
                 </div>

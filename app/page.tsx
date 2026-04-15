@@ -5,38 +5,29 @@ import Features from "@/components/home/features";
 import { ProjectClaimCta } from "@/components/home/project-claim-cta";
 import { ProjectCard } from "@/components/project-card";
 import { fetchHomepageLatestProjects } from "@/lib/project-list";
-import { prisma } from "@/lib/prisma";
-import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
-import { readRecentProjectActivities, type ProjectActivity } from "@/agents/activity/project-activity-store";
+import { type ProjectActivity, readRecentPublicActivities } from "@/lib/activity/project-activity-service";
 import { RecentProjectActivitySection } from "@/components/home/recent-project-activity";
 
 export default async function HomePage() {
-  const [latestProjects, activeProjectSlugs] = await Promise.all([
-    fetchHomepageLatestProjects(6),
-    process.env.DATABASE_URL?.trim()
-      ? prisma.project.findMany({
-          where: { ...PROJECT_ACTIVE_FILTER },
-          select: { slug: true },
-        })
-      : Promise.resolve([] as { slug: string }[]),
-  ]);
-  const recentActivities = await readRecentProjectActivities(
-    8,
-    activeProjectSlugs.map((p) => p.slug),
-  );
+  const latestProjects = await fetchHomepageLatestProjects(6);
+  const recentActivities = await readRecentPublicActivities(8);
+  // fallback: 当 Activity 数据不足时，使用真实 Project.updatedAt 兜底，后续应由 Activity 全量覆盖。
   const fallbackActivities: ProjectActivity[] =
     recentActivities.length === 0
       ? latestProjects.slice(0, 6).map((project, index) => ({
           id: `fallback-${project.slug}-${index}`,
-          type: "update",
+          projectId: `fallback-${project.slug}`,
+          type: "project_profile_updated",
           projectSlug: project.slug,
           projectName: project.name,
-          githubUrl: project.githubUrl ?? project.websiteUrl ?? "",
-          repoFullName: project.slug,
+          sourceType: "project_fallback",
+          sourceUrl: project.githubUrl ?? project.websiteUrl ?? null,
           title: "项目信息最近有更新",
           summary: project.tagline?.trim() || "查看项目主页获取最新公开信息。",
           occurredAt: project.updatedAt.toISOString(),
-          fetchedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          isPublic: true,
+          metadataJson: { fallback: true },
         }))
       : [];
   const homepageActivities = recentActivities.length > 0 ? recentActivities : fallbackActivities;

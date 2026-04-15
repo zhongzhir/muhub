@@ -25,6 +25,9 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
   }, [cooldown]);
 
   const sendCode = useCallback(async () => {
+    if (sending || loggingIn || cooldown > 0) {
+      return;
+    }
     setError(null);
     setHint(null);
     setSending(true);
@@ -68,9 +71,12 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
     } finally {
       setSending(false);
     }
-  }, [phone]);
+  }, [cooldown, loggingIn, phone, sending]);
 
   const login = useCallback(async () => {
+    if (loggingIn || sending) {
+      return;
+    }
     setError(null);
     const p = phone.replace(/\D/g, "");
     const c = code.trim();
@@ -94,9 +100,10 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
       router.refresh();
     } catch {
       setError("登录失败，请稍后再试");
+    } finally {
       setLoggingIn(false);
     }
-  }, [callbackUrl, code, phone, router]);
+  }, [callbackUrl, code, loggingIn, phone, router, sending]);
 
   const inputClass = "muhub-input mt-1";
 
@@ -137,7 +144,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
         </div>
         <button
           type="button"
-          disabled={sending || cooldown > 0}
+          disabled={sending || loggingIn || cooldown > 0}
           onClick={() => void sendCode()}
           className="muhub-btn-outline shrink-0"
         >
@@ -158,7 +165,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
 
       <button
         type="button"
-        disabled={loggingIn}
+        disabled={loggingIn || sending}
         onClick={() => void login()}
         className="muhub-btn-primary w-full px-5 py-3 disabled:opacity-60"
       >

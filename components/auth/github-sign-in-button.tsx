@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useState } from "react";
 
 export function GitHubSignInButton({
   callbackUrl,
@@ -9,17 +10,26 @@ export function GitHubSignInButton({
   callbackUrl: string;
   className?: string;
 }) {
+  const [pending, setPending] = useState(false);
+
   return (
     <button
       type="button"
-      onClick={() => signIn("github", { callbackUrl })}
+      disabled={pending}
+      onClick={() => {
+        if (pending) {
+          return;
+        }
+        setPending(true);
+        void signIn("github", { callbackUrl });
+      }}
       className={
         className ??
-        "muhub-btn-primary w-full max-w-sm px-5 py-3"
+        "muhub-btn-primary w-full max-w-sm px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
       }
     >
       <GitHubMark className="h-5 w-5" aria-hidden />
-      使用 GitHub 登录
+      {pending ? "跳转中…" : "使用 GitHub 登录"}
     </button>
   );
 }

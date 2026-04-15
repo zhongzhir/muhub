@@ -8,6 +8,10 @@ import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { isProjectCategory } from "@/lib/projects/project-categories";
 import { parseProjectTags } from "@/lib/projects/project-tags";
+import {
+  createProjectActivity,
+  detectMeaningfulProjectProfileChanges,
+} from "@/lib/activity/project-activity-service";
 
 export type UpdateProjectFormState = {
   ok: boolean;
@@ -50,7 +54,18 @@ export async function updateProject(
 
   const existing = await prisma.project.findFirst({
     where: { slug, ...PROJECT_ACTIVE_FILTER },
-    select: { id: true, createdById: true, claimedByUserId: true },
+    select: {
+      id: true,
+      createdById: true,
+      claimedByUserId: true,
+      name: true,
+      tagline: true,
+      description: true,
+      githubUrl: true,
+      websiteUrl: true,
+      primaryCategory: true,
+      tags: true,
+    },
   });
 
   if (!existing) {
@@ -118,6 +133,16 @@ export async function updateProject(
   }
 
   try {
+    const before = {
+      name: existing.name,
+      tagline: existing.tagline,
+      description: existing.description,
+      githubUrl: existing.githubUrl,
+      websiteUrl: existing.websiteUrl,
+      primaryCategory: existing.primaryCategory,
+      tags: existing.tags,
+    };
+
     await prisma.$transaction(async (tx) => {
       await tx.project.update({
         where: { id: existing.id },
@@ -152,6 +177,29 @@ export async function updateProject(
         }
       }
     });
+
+    const after = {
+      name,
+      tagline,
+      description,
+      githubUrl,
+      websiteUrl,
+      primaryCategory,
+      tags,
+    };
+    const profileChanged = detectMeaningfulProjectProfileChanges({ before, after });
+    if (profileChanged.changed) {
+      await createProjectActivity({
+        projectId: existing.id,
+        type: "project_profile_updated",
+        title: "项目资料已更新",
+        summary: profileChanged.summary,
+        sourceType: "project_edit",
+        sourceUrl: `/projects/${slug}`,
+        dedupeKey: profileChanged.dedupeKey,
+        metadataJson: { changedBy: session.user.id },
+      });
+    }
   } catch (e) {
     console.error("[updateProject]", e);
     return {

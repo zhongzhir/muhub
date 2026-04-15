@@ -39,7 +39,7 @@ export default async function AdminDiscoverySourcesPage() {
       </p>
 
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Discovery 来源与运行健康</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">项目发现来源与运行状态</h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           查看各抓取源最近状态；手动触发运行；跳转筛选后的候选池。
         </p>
@@ -52,9 +52,9 @@ export default async function AdminDiscoverySourcesPage() {
               <th className="px-3 py-2">名称 / key</th>
               <th className="px-3 py-2">类型</th>
               <th className="px-3 py-2">状态</th>
-              <th className="px-3 py-2">lastRun</th>
+              <th className="px-3 py-2">最近执行</th>
               <th className="px-3 py-2">成功/失败</th>
-              <th className="px-3 py-2">最近 run 统计</th>
+              <th className="px-3 py-2">最近执行统计</th>
               <th className="px-3 py-2">操作</th>
             </tr>
           </thead>

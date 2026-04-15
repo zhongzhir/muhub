@@ -11,6 +11,7 @@ import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { inferRepoSourceKind } from "@/lib/project-sources";
 import { isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
+import { createProjectActivity } from "@/lib/activity/project-activity-service";
 
 function taglineFromDescription(description: string | null | undefined): string | null {
   if (!description?.trim()) {
@@ -71,7 +72,7 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
 async function findExistingProject(
   item: DiscoveryItem,
   link: ParsedLink,
-): Promise<{ id: string; slug: string } | null> {
+): Promise<{ id: string; slug: string; name: string } | null> {
   const title = item.title.trim();
   const baseSlug = slugifyProjectName(title);
   const validBase = baseSlug && isValidProjectSlug(baseSlug) ? baseSlug : null;
@@ -79,7 +80,7 @@ async function findExistingProject(
   if (item.projectSlug?.trim()) {
     const byHint = await prisma.project.findFirst({
       where: { slug: item.projectSlug.trim(), deletedAt: null },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, name: true },
     });
     if (byHint) {
       return byHint;
@@ -89,7 +90,7 @@ async function findExistingProject(
   if (link.githubUrl) {
     const byGh = await prisma.project.findFirst({
       where: { deletedAt: null, githubUrl: link.githubUrl },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, name: true },
     });
     if (byGh) {
       return byGh;
@@ -99,7 +100,7 @@ async function findExistingProject(
   if (link.websiteUrl) {
     const byWeb = await prisma.project.findFirst({
       where: { deletedAt: null, websiteUrl: link.websiteUrl },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, name: true },
     });
     if (byWeb) {
       return byWeb;
@@ -112,7 +113,7 @@ async function findExistingProject(
         deletedAt: null,
         sources: { some: { kind: "GITEE", url: link.primaryRepo.url } },
       },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, name: true },
     });
     if (byGitee) {
       return byGitee;
@@ -122,7 +123,7 @@ async function findExistingProject(
   if (validBase) {
     const bySlug = await prisma.project.findFirst({
       where: { deletedAt: null, slug: validBase },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, name: true },
     });
     if (bySlug) {
       return bySlug;
@@ -137,7 +138,13 @@ async function findExistingProject(
  */
 export async function importJsonDiscoveryItem(
   item: DiscoveryItem,
-): Promise<{ slug: string; created: boolean }> {
+): Promise<{
+  slug: string;
+  projectId: string;
+  projectName: string;
+  created: boolean;
+  duplicated: boolean;
+}> {
   if (!process.env.DATABASE_URL?.trim()) {
     throw new Error("未配置 DATABASE_URL，无法导入项目。");
   }
@@ -159,13 +166,26 @@ export async function importJsonDiscoveryItem(
       select: { slug: true },
     });
     if (exists) {
-      return { slug: exists.slug, created: false };
+      const p = await prisma.project.findFirst({
+        where: { slug: exists.slug, deletedAt: null },
+        select: { id: true, slug: true, name: true },
+      });
+      if (!p) {
+        throw new Error("项目状态异常，请稍后重试");
+      }
+      return { slug: p.slug, projectId: p.id, projectName: p.name, created: false, duplicated: true };
     }
   }
 
   const existing = await findExistingProject(item, link);
   if (existing) {
-    return { slug: existing.slug, created: false };
+    return {
+      slug: existing.slug,
+      projectId: existing.id,
+      projectName: existing.name,
+      created: false,
+      duplicated: true,
+    };
   }
 
   const description = item.description?.trim() || null;
@@ -221,6 +241,21 @@ export async function importJsonDiscoveryItem(
     select: { id: true, slug: true },
   });
 
+  await createProjectActivity({
+    projectId: project.id,
+    type: "project_imported",
+    title: "项目已收录到 MUHUB 项目库",
+    summary: "来自项目发现队列的候选线索，已完成首次建档。",
+    sourceType: "discovery_import",
+    sourceUrl: item.url,
+    occurredAt: new Date(),
+    dedupeKey: `project_imported:${project.id}`,
+    metadataJson: {
+      discoveryItemId: item.id,
+      discoverySourceType: item.sourceType,
+    },
+  });
+
   try {
     scheduleProjectAiEnrichment(project.slug);
     await updateDiscoveryAiStatus(item.id, "scheduled");
@@ -229,5 +264,11 @@ export async function importJsonDiscoveryItem(
     console.error("[Discovery] AI enrichment schedule failed", e);
   }
 
-  return { slug: project.slug, created: true };
+  return {
+    slug: project.slug,
+    projectId: project.id,
+    projectName: name,
+    created: true,
+    duplicated: false,
+  };
 }

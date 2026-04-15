@@ -16,7 +16,12 @@ export type ProjectDetailHeroProps = {
   contributors?: number;
   latestActivity?: {
     title: string;
-    type: "release" | "star" | "update";
+    type:
+      | "project_imported"
+      | "project_profile_updated"
+      | "github_repo_updated"
+      | "github_release_detected"
+      | "official_update_detected";
     occurredAt: string;
   } | null;
   createdAt: Date;

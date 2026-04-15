@@ -27,20 +27,20 @@ export function ProjectActivityRunActions() {
               if (result.ok) {
                 setToast({
                   kind: "ok",
-                  text: `Project activity updated · Processed ${result.processed} projects · Created ${result.created} activities`,
+                  text: `项目动态更新完成 · 扫描 ${result.processed} 个项目 · 新增 ${result.created} 条动态`,
                 });
                 router.refresh();
               } else {
                 setToast({
                   kind: "err",
-                  text: "Project activity failed",
+                  text: "项目动态更新失败",
                 });
               }
             })();
           });
         }}
       >
-        {pending ? "Running..." : "Run Project Activity"}
+        {pending ? "执行中..." : "更新项目动态"}
       </button>
       {toast ? (
         <p

@@ -12,7 +12,12 @@ export type ProjectSharePosterProps = {
   summary?: string;
   highlights?: string[];
   latestActivity?: {
-    type: "release" | "star" | "update";
+    type:
+      | "project_imported"
+      | "project_profile_updated"
+      | "github_repo_updated"
+      | "github_release_detected"
+      | "official_update_detected";
     title: string;
     occurredAt: string;
     summary?: string;
@@ -128,7 +133,7 @@ export function ProjectSharePoster({
                   {latestActivity ? (
                     <div className="mt-5 rounded-md border border-zinc-200 bg-zinc-50 p-3">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                        Latest Activity · {latestActivity.type}
+                        最新动态 · {latestActivity.type}
                       </p>
                       <p className="mt-1 text-sm font-medium text-zinc-800">{latestActivity.title}</p>
                       {latestActivity.summary ? (

@@ -136,7 +136,7 @@ export default async function AdminDiscoveryListPage({
     <div className="space-y-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Discovery 候选池</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">项目发现候选池</h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             抓取结果先入此池，审核通过后再进入正式项目（默认草稿，不自动发布到广场）。
           </p>
@@ -152,7 +152,7 @@ export default async function AdminDiscoveryListPage({
             href="/admin/discovery/sources"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >
-            来源 / 运行健康
+            来源 / 运行状态
           </Link>
         </div>
       </header>

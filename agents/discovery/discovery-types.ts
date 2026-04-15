@@ -23,6 +23,7 @@ export type DiscoveryItem = {
   githubRepoKey?: string;
   websiteHost?: string;
   duplicateOfId?: string;
+  duplicateProjectId?: string;
   possibleDuplicate?: boolean;
   description?: string;
   meta?: Record<string, unknown>;

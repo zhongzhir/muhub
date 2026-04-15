@@ -28,7 +28,7 @@ export default async function PhoneAuthPage({
         <div className="mx-auto max-w-md">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">手机号登录未启用。</p>
           <p className="mt-4">
-            <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="underline">
+            <Link href={`/login?redirect=${encodeURIComponent(callbackUrl)}`} className="underline">
               返回登录页
             </Link>
           </p>
@@ -45,7 +45,7 @@ export default async function PhoneAuthPage({
             返回首页
           </Link>
           <Link
-            href={`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+            href={`/login?redirect=${encodeURIComponent(callbackUrl)}`}
             className="underline-offset-4 hover:underline"
           >
             其它登录方式

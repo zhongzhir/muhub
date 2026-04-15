@@ -1,15 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { parseGitHubRepoUrl } from "@/lib/github";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
-import {
-  appendProjectActivity,
-  readProjectActivities,
-  type ProjectActivity,
-} from "./project-activity-store";
+import { createProjectActivity } from "@/lib/activity/project-activity-service";
 
 type GitHubRepoApi = {
   full_name?: string;
-  stargazers_count?: number;
   pushed_at?: string | null;
 };
 
@@ -44,21 +39,11 @@ function toIsoOrNow(input?: string | null): string {
   return d.toISOString();
 }
 
-function latestByType(
-  list: ProjectActivity[],
-  projectSlug: string,
-  type: ProjectActivity["type"],
-): ProjectActivity | undefined {
-  return [...list]
-    .reverse()
-    .find((row) => row.projectSlug === projectSlug && row.type === type);
-}
-
 export type GitHubProjectActivityRunSummary = {
   scannedProjects: number;
   withGithubUrl: number;
-  inserted: { release: number; star: number; update: number };
-  skipped: { release: number; star: number; update: number };
+  inserted: { release: number; update: number };
+  skipped: { release: number; update: number };
   failed: number;
 };
 
@@ -67,24 +52,23 @@ export async function runGitHubProjectActivity(): Promise<GitHubProjectActivityR
     return {
       scannedProjects: 0,
       withGithubUrl: 0,
-      inserted: { release: 0, star: 0, update: 0 },
-      skipped: { release: 0, star: 0, update: 0 },
+      inserted: { release: 0, update: 0 },
+      skipped: { release: 0, update: 0 },
       failed: 0,
     };
   }
 
   const projects = await prisma.project.findMany({
     where: { ...PROJECT_ACTIVE_FILTER },
-    select: { slug: true, name: true, githubUrl: true },
+    select: { id: true, slug: true, name: true, githubUrl: true },
   });
   const withGithub = projects.filter((p) => p.githubUrl && p.githubUrl.trim());
   const headers = buildGitHubHeaders();
-  const existing = await readProjectActivities();
   const result: GitHubProjectActivityRunSummary = {
     scannedProjects: projects.length,
     withGithubUrl: withGithub.length,
-    inserted: { release: 0, star: 0, update: 0 },
-    skipped: { release: 0, star: 0, update: 0 },
+    inserted: { release: 0, update: 0 },
+    skipped: { release: 0, update: 0 },
     failed: 0,
   };
 
@@ -103,51 +87,21 @@ export async function runGitHubProjectActivity(): Promise<GitHubProjectActivityR
       }
       const repo = (await repoRes.json()) as GitHubRepoApi;
       const repoFullName = repo.full_name ?? `${parsed.owner}/${parsed.repo}`;
-      const stars = typeof repo.stargazers_count === "number" ? repo.stargazers_count : 0;
       const pushedAt = toIsoOrNow(repo.pushed_at ?? null);
 
-      const prevStar = latestByType(existing, p.slug, "star");
-      if (!prevStar || prevStar.stars !== stars) {
-        const inserted = await appendProjectActivity({
-          type: "star",
-          projectSlug: p.slug,
-          projectName: p.name,
-          githubUrl: p.githubUrl ?? "",
-          repoFullName,
-          title: `GitHub Stars 更新为 ${stars}`,
-          summary: `仓库 ${repoFullName} 当前 Star 数：${stars}`,
-          occurredAt: new Date().toISOString(),
-          stars,
-        });
-        if (inserted) {
-          result.inserted.star += 1;
-          existing.push(inserted);
-        } else {
-          result.skipped.star += 1;
-        }
-      } else {
-        result.skipped.star += 1;
-      }
-
-      const prevUpdate = latestByType(existing, p.slug, "update");
-      if (!prevUpdate || prevUpdate.pushedAt !== pushedAt) {
-        const inserted = await appendProjectActivity({
-          type: "update",
-          projectSlug: p.slug,
-          projectName: p.name,
-          githubUrl: p.githubUrl ?? "",
-          repoFullName,
-          title: "代码仓库有新提交",
-          summary: `最近推送时间：${pushedAt}`,
-          occurredAt: pushedAt,
-          pushedAt,
-        });
-        if (inserted) {
-          result.inserted.update += 1;
-          existing.push(inserted);
-        } else {
-          result.skipped.update += 1;
-        }
+      const update = await createProjectActivity({
+        projectId: p.id,
+        type: "github_repo_updated",
+        title: "GitHub 仓库有新提交",
+        summary: `仓库 ${repoFullName} 最近推送时间：${pushedAt}`,
+        sourceType: "github",
+        sourceUrl: p.githubUrl ?? null,
+        occurredAt: new Date(pushedAt),
+        dedupeKey: `github_repo_updated:${repoFullName}:${pushedAt}`,
+        metadataJson: { repoFullName, pushedAt },
+      });
+      if (update.created) {
+        result.inserted.update += 1;
       } else {
         result.skipped.update += 1;
       }
@@ -161,25 +115,19 @@ export async function runGitHubProjectActivity(): Promise<GitHubProjectActivityR
         const tag = release.tag_name?.trim();
         if (tag) {
           const occurredAt = toIsoOrNow(release.published_at ?? null);
-          const prevRelease = latestByType(existing, p.slug, "release");
-          if (!prevRelease || prevRelease.releaseTag !== tag) {
-            const inserted = await appendProjectActivity({
-              type: "release",
-              projectSlug: p.slug,
-              projectName: p.name,
-              githubUrl: p.githubUrl ?? "",
-              repoFullName,
-              title: `发布新版本 ${tag}`,
-              summary: release.name?.trim() || release.html_url || undefined,
-              occurredAt,
-              releaseTag: tag,
-            });
-            if (inserted) {
-              result.inserted.release += 1;
-              existing.push(inserted);
-            } else {
-              result.skipped.release += 1;
-            }
+          const created = await createProjectActivity({
+            projectId: p.id,
+            type: "github_release_detected",
+            title: `检测到新版本 ${tag}`,
+            summary: release.name?.trim() || release.html_url || null,
+            sourceType: "github",
+            sourceUrl: release.html_url || p.githubUrl || null,
+            occurredAt: new Date(occurredAt),
+            dedupeKey: `github_release_detected:${repoFullName}:${tag}`,
+            metadataJson: { repoFullName, releaseTag: tag },
+          });
+          if (created.created) {
+            result.inserted.release += 1;
           } else {
             result.skipped.release += 1;
           }

@@ -132,7 +132,7 @@ export function DiscoveryCandidatesTable(props: {
           onClick={() => runBulk("/api/admin/discovery/candidates/bulk-approve")}
           className="rounded bg-emerald-700 px-2 py-1 text-xs text-white disabled:opacity-50"
         >
-          批量 Approve→DRAFT
+          批量导入项目
         </button>
         <button
           type="button"
@@ -140,7 +140,7 @@ export function DiscoveryCandidatesTable(props: {
           onClick={() => runBulk("/api/admin/discovery/candidates/bulk-reject")}
           className="rounded border border-red-300 px-2 py-1 text-xs text-red-800 disabled:opacity-50 dark:border-red-800 dark:text-red-300"
         >
-          批量 Reject
+          批量拒绝
         </button>
         <button
           type="button"
@@ -148,7 +148,7 @@ export function DiscoveryCandidatesTable(props: {
           onClick={() => runBulk("/api/admin/discovery/candidates/bulk-ignore")}
           className="rounded border border-zinc-400 px-2 py-1 text-xs disabled:opacity-50 dark:border-zinc-600"
         >
-          批量 Ignore
+          批量忽略
         </button>
         <button
           type="button"
@@ -157,7 +157,7 @@ export function DiscoveryCandidatesTable(props: {
           className="rounded border border-indigo-400 bg-indigo-50 px-2 py-1 text-xs text-indigo-900 disabled:opacity-50 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200"
           title="对选中候选依次运行 Enrichment（GitHub + 官网）"
         >
-          批量 Enrichment
+          批量补全
         </button>
         <button
           type="button"
@@ -166,7 +166,7 @@ export function DiscoveryCandidatesTable(props: {
           className="rounded border border-violet-400 bg-violet-50 px-2 py-1 text-xs text-violet-900 disabled:opacity-50 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-200"
           title="对选中候选依次运行规则分类"
         >
-          批量 Classification
+          批量分类
         </button>
         {bulkMessage ? (
           <span className="text-xs text-zinc-600 dark:text-zinc-400">{bulkMessage}</span>

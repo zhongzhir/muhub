@@ -11,6 +11,7 @@ import { auth } from "@/auth";
 import {
   readDiscoveryItemById,
   readDiscoveryItems,
+  updateDiscoveryItemDuplicateResult,
   updateDiscoveryItemImportResult,
   updateDiscoveryStatus,
 } from "@/agents/discovery/discovery-store";
@@ -96,8 +97,10 @@ export async function importDiscoveryItemAction(id: string): Promise<ImportDisco
   }
 
   try {
-    const { slug, created } = await importJsonDiscoveryItem(item);
-    const updated = await updateDiscoveryItemImportResult(id, slug);
+    const { slug, created, duplicated, projectId } = await importJsonDiscoveryItem(item);
+    const updated = duplicated
+      ? await updateDiscoveryItemDuplicateResult(id, projectId, slug)
+      : await updateDiscoveryItemImportResult(id, slug);
     if (!updated) {
       return { ok: false, message: "项目已创建或已关联，但回写 JSON 队列失败，请检查 data/discovery-items.json。" };
     }
@@ -107,7 +110,7 @@ export async function importDiscoveryItemAction(id: string): Promise<ImportDisco
     return {
       ok: true,
       slug,
-      message: created ? "已导入项目库。" : "已关联既有项目（未新建重复条目）。",
+      message: created ? "已导入项目库并生成收录动态。" : "已关联既有项目并标记为重复线索。",
     };
   } catch (e) {
     console.error("[importDiscoveryItemAction]", e);
@@ -154,7 +157,7 @@ export async function runProjectActivityAction(): Promise<RunProjectActivityResu
   try {
     const summary = await runGitHubProjectActivity();
     revalidatePath(REVALIDATE);
-    const created = summary.inserted.release + summary.inserted.star + summary.inserted.update;
+    const created = summary.inserted.release + summary.inserted.update;
     return {
       ok: true,
       processed: summary.withGithubUrl,
@@ -286,7 +289,7 @@ export async function bulkImportAction(ids: string[]): Promise<BulkImportResult>
           failed += 1;
           continue;
         }
-        if (result.message?.includes("已关联既有项目")) {
+        if (result.message?.includes("标记为重复线索")) {
           skipped += 1;
           continue;
         }

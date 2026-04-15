@@ -6,7 +6,7 @@ import type { ProjectEngagementPublic } from "@/lib/project-engagement";
 import { ProjectEngagementBar } from "@/components/project/project-engagement-bar";
 import { ProjectShareDialog } from "@/components/project/project-share-dialog";
 import { ProjectSharePoster } from "@/components/project/project-share-poster";
-import type { ProjectActivity } from "@/agents/activity/project-activity-store";
+import type { ProjectActivity } from "@/lib/activity/project-activity-service";
 import ProjectCopyPromo from "@/components/project/project-copy-promo";
 
 export type ProjectHeroPublicActionsProps = {

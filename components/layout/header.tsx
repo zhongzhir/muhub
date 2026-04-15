@@ -67,7 +67,7 @@ export async function SiteHeader() {
               <UserMenu name={user.name} email={user.email} image={user.image} phone={user.phone} />
             </>
           ) : (
-            <Link href="/auth/signin?callbackUrl=/dashboard" className="muhub-nav-link muhub-nav-link--cta">
+            <Link href="/login?redirect=/dashboard" className="muhub-nav-link muhub-nav-link--cta">
               登录
             </Link>
           )}

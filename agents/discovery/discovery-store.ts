@@ -75,6 +75,7 @@ function coerceItem(raw: unknown): DiscoveryItem | null {
     githubRepoKey: typeof o.githubRepoKey === "string" ? o.githubRepoKey : undefined,
     websiteHost: typeof o.websiteHost === "string" ? o.websiteHost : undefined,
     duplicateOfId: typeof o.duplicateOfId === "string" ? o.duplicateOfId : undefined,
+    duplicateProjectId: typeof o.duplicateProjectId === "string" ? o.duplicateProjectId : undefined,
     possibleDuplicate: typeof o.possibleDuplicate === "boolean" ? o.possibleDuplicate : undefined,
     description: typeof o.description === "string" ? o.description : undefined,
     meta:
@@ -209,6 +210,39 @@ export async function updateDiscoveryItemImportResult(
   }
   const next = list.map((x) =>
     x.id === id ? { ...x, status: "imported" as DiscoveryStatus, projectSlug: slug } : x,
+  );
+  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return true;
+}
+
+/** 关联到已存在 Project 时回写重复信息（不标记 imported）。 */
+export async function updateDiscoveryItemDuplicateResult(
+  id: string,
+  duplicateProjectId: string,
+  duplicateProjectSlug: string,
+): Promise<boolean> {
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  const list = await readRawList();
+  const idx = list.findIndex((x) => x.id === id);
+  if (idx < 0) {
+    return false;
+  }
+  const dupId = duplicateProjectId.trim();
+  const dupSlug = duplicateProjectSlug.trim();
+  if (!dupId || !dupSlug) {
+    return false;
+  }
+  const next = list.map((x) =>
+    x.id === id
+      ? {
+          ...x,
+          status: "reviewed" as DiscoveryStatus,
+          duplicateOfId: dupSlug,
+          duplicateProjectId: dupId,
+          possibleDuplicate: true,
+        }
+      : x,
   );
   await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
   return true;

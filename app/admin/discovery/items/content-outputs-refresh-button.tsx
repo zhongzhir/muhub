@@ -21,7 +21,7 @@ export function ContentOutputsRefreshButton() {
         });
       }}
     >
-      {pending ? "Refreshing..." : "Refresh"}
+      {pending ? "刷新中..." : "刷新"}
     </button>
   );
 }

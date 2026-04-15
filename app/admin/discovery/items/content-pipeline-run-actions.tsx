@@ -38,21 +38,21 @@ export function ContentPipelineRunActions() {
                 setToast({
                   kind: "ok",
                   text: outputSnippet
-                    ? `Content pipeline completed · ${outputSnippet}`
-                    : "Content pipeline completed",
+                    ? `内容生成完成 · ${outputSnippet}`
+                    : "内容生成完成",
                 });
                 router.refresh();
               } else {
                 setToast({
                   kind: "err",
-                  text: `Content pipeline failed: ${result.error}`,
+                  text: `内容生成失败：${result.error}`,
                 });
               }
             })();
           });
         }}
       >
-        {pending ? "Running..." : "Run Content Pipeline"}
+        {pending ? "执行中..." : "运行内容生成"}
       </button>
       {toast ? (
         <p
