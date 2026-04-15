@@ -10,9 +10,10 @@ test.describe("公开页：基础冒烟", () => {
     const res = await page.goto("/");
     expect(res?.ok(), `首页 HTTP 状态异常: ${res?.status()}`).toBeTruthy();
 
-    // 与现有 smoke.spec.ts 对齐：使用稳定标题锚点
+    // 与现有 smoke.spec.ts 对齐：使用稳定标题 + Hero CTA 锚点
     await expect(page.getByRole("heading", { name: "木哈布 MUHUB", exact: true })).toBeVisible();
-    await expect(page.getByTestId("home-beta-notice")).toBeVisible();
+    await expect(page.getByRole("link", { name: "浏览项目" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "查看最新动态" })).toBeVisible();
   });
 
   test("项目广场可打开（有卡片或空状态）", async ({ page }) => {
