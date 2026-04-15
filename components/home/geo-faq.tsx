@@ -1,5 +1,5 @@
 /**
- * 首页 GEO 第二阶段：低调 FAQ（语义化 section / h2 / h3）
+ * 首页 FAQ：压缩为 3-4 条折叠问答
  */
 export default function GeoFaq() {
   return (
@@ -15,31 +15,42 @@ export default function GeoFaq() {
           常见问题
         </h2>
 
-        <div className="mt-10 space-y-8">
-          <article>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">什么是木哈布 MUHUB？</h3>
+        <div className="mt-8 space-y-3">
+          <details className="group rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              什么是木哈布 MUHUB？
+            </summary>
             <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              木哈布 MUHUB 是面向创业项目与产品的 <span className="whitespace-nowrap">AI Native</span>{" "}
-              项目主页与动态聚合平台，帮助你把仓库、官网与公开进展集中到一页，便于对外展示与分享。
+              MUHUB 是项目展示与动态聚合平台，帮助你把公开信息集中到一个可持续更新的项目主页。
             </p>
-          </article>
+          </details>
 
-          <article>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">谁适合使用 MUHUB？</h3>
+          <details className="group rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              平台上的信息来自哪里？
+            </summary>
             <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              早期团队、独立开发者、需要向投资人或合作方持续同步进展的项目负责人，以及希望统一展示 GitHub
-              / Gitee 与多源动态的社区项目，都可以使用 MUHUB 作为主分享入口。
+              主要来自公开项目资料与公开动态，包括代码仓库、官网和项目维护者补充的信息。
             </p>
-          </article>
+          </details>
 
-          <article>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">MUHUB 支持哪些项目来源？</h3>
+          <details className="group rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              可以认领或完善自己的项目吗？
+            </summary>
             <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              支持从 <strong className="font-medium text-zinc-700 dark:text-zinc-300">GitHub</strong>、
-              <strong className="font-medium text-zinc-700 dark:text-zinc-300">Gitee</strong>{" "}
-              导入或完全手工创建；可配置官网、文档、博客等信息源，并与手动动态、AI 摘要等一并展示。
+              可以，认领与入驻流程正在逐步开放。你可以先通过页面下方入口提交认领意向。
             </p>
-          </article>
+          </details>
+
+          <details className="group rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              适合哪些人使用？
+            </summary>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              适合关注 AI/科技项目的用户、项目维护者，以及需要跟踪项目公开进展的运营与合作团队。
+            </p>
+          </details>
         </div>
       </div>
     </section>

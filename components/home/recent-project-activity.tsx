@@ -25,7 +25,21 @@ const typeLabel: Record<ProjectActivity["type"], string> = {
   update: "Update",
 };
 
-export function RecentProjectActivitySection({ activities }: { activities: ProjectActivity[] }) {
+type RecentProjectActivitySectionProps = {
+  activities: ProjectActivity[];
+  title?: string;
+  subtitle?: string;
+  actionHref?: string;
+  actionLabel?: string;
+};
+
+export function RecentProjectActivitySection({
+  activities,
+  title = "Recent Project Activity",
+  subtitle = "平台最近项目动态（GitHub）",
+  actionHref = "/projects?sort=updated",
+  actionLabel = "查看全部动态",
+}: RecentProjectActivitySectionProps) {
   if (activities.length === 0) {
     return null;
   }
@@ -33,11 +47,19 @@ export function RecentProjectActivitySection({ activities }: { activities: Proje
   return (
     <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Recent Project Activity
-          </h2>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">平台最近项目动态（GitHub）</p>
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+          </div>
+          <Link
+            href={actionHref}
+            className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
+          >
+            {actionLabel}
+          </Link>
         </div>
 
         <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">

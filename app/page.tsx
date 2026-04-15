@@ -1,26 +1,17 @@
 import Link from "next/link";
 import Hero from "@/components/home/hero";
-import BetaNotice from "@/components/home/beta-notice";
 import GeoFaq from "@/components/home/geo-faq";
-import GeoSeoFootnote from "@/components/home/geo-seo-footnote";
-import { BetaTrustStrip } from "@/components/home/beta-trust-strip";
+import Features from "@/components/home/features";
+import { ProjectClaimCta } from "@/components/home/project-claim-cta";
 import { ProjectCard } from "@/components/project-card";
-import { readSiteContentLatestFirst } from "@/agents/growth/site-content-store";
-import { ContentList } from "@/components/content/content-list";
-import {
-  fetchHomepageFeaturedProjects,
-  fetchHomepageLatestProjects,
-} from "@/lib/project-list";
+import { fetchHomepageLatestProjects } from "@/lib/project-list";
 import { prisma } from "@/lib/prisma";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
-import { readRecentProjectActivities } from "@/agents/activity/project-activity-store";
+import { readRecentProjectActivities, type ProjectActivity } from "@/agents/activity/project-activity-store";
 import { RecentProjectActivitySection } from "@/components/home/recent-project-activity";
 
 export default async function HomePage() {
-  const siteItems = await readSiteContentLatestFirst();
-  const latestSite = siteItems.slice(0, 5);
-  const [featuredProjects, latestProjects, activeProjectSlugs] = await Promise.all([
-    fetchHomepageFeaturedProjects(6),
+  const [latestProjects, activeProjectSlugs] = await Promise.all([
     fetchHomepageLatestProjects(6),
     process.env.DATABASE_URL?.trim()
       ? prisma.project.findMany({
@@ -33,84 +24,41 @@ export default async function HomePage() {
     8,
     activeProjectSlugs.map((p) => p.slug),
   );
+  const fallbackActivities: ProjectActivity[] =
+    recentActivities.length === 0
+      ? latestProjects.slice(0, 6).map((project, index) => ({
+          id: `fallback-${project.slug}-${index}`,
+          type: "update",
+          projectSlug: project.slug,
+          projectName: project.name,
+          githubUrl: project.githubUrl ?? project.websiteUrl ?? "",
+          repoFullName: project.slug,
+          title: "项目信息最近有更新",
+          summary: project.tagline?.trim() || "查看项目主页获取最新公开信息。",
+          occurredAt: project.updatedAt.toISOString(),
+          fetchedAt: new Date().toISOString(),
+        }))
+      : [];
+  const homepageActivities = recentActivities.length > 0 ? recentActivities : fallbackActivities;
 
   return (
     <main className="min-h-screen">
       <Hero />
-      <BetaNotice />
-      {latestSite.length > 0 ? (
-        <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                  Latest from MUHUB
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  最近站内发布的内容动态（最多 5 条）
-                </p>
-              </div>
-              <Link
-                href="/content"
-                className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
-              >
-                查看全部
-              </Link>
+      <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">最新收录项目</h2>
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">来自公开项目库的实时内容</p>
             </div>
-            <div className="mt-8">
-              <ContentList items={latestSite} />
-            </div>
+            <Link
+              href="/projects?sort=new"
+              className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
+            >
+              查看全部项目
+            </Link>
           </div>
-        </section>
-      ) : null}
-      {featuredProjects.length > 0 ? (
-        <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                  Featured Projects
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  运营精选项目
-                </p>
-              </div>
-              <Link
-                href="/projects"
-                className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
-              >
-                查看全部
-              </Link>
-            </div>
-            <ul className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 sm:gap-8">
-              {featuredProjects.map((p) => (
-                <li key={p.slug} className="h-full">
-                  <ProjectCard project={p} variant="plaza" />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      ) : null}
-      {latestProjects.length > 0 ? (
-        <section className="border-t border-zinc-200/80 py-14 dark:border-zinc-800">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-                  Latest Projects
-                </h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  最新收录的公开项目
-                </p>
-              </div>
-              <Link
-                href="/projects?sort=new"
-                className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
-              >
-                查看全部
-              </Link>
-            </div>
+          {latestProjects.length > 0 ? (
             <ul className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 sm:gap-8">
               {latestProjects.map((p) => (
                 <li key={p.slug} className="h-full">
@@ -118,15 +66,23 @@ export default async function HomePage() {
                 </li>
               ))}
             </ul>
-          </div>
-        </section>
-      ) : null}
-      <RecentProjectActivitySection activities={recentActivities.slice(0, 8)} />
+          ) : (
+            <p className="rounded-xl border border-zinc-200 bg-white px-4 py-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+              当前还没有可展示的公开项目。
+            </p>
+          )}
+        </div>
+      </section>
+      <RecentProjectActivitySection
+        activities={homepageActivities.slice(0, 8)}
+        title="最新动态"
+        subtitle="项目更新、发布和公开活动时间线"
+        actionHref="/projects?sort=updated"
+        actionLabel="查看全部动态"
+      />
+      <Features />
+      <ProjectClaimCta />
       <GeoFaq />
-      <div className="mx-auto max-w-4xl px-6 pb-8 sm:px-8">
-        <BetaTrustStrip />
-      </div>
-      <GeoSeoFootnote />
     </main>
   );
 }
