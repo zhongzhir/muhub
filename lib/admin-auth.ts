@@ -1,16 +1,17 @@
 import { auth } from "@/auth";
 
+type AdminSessionUser = {
+  id?: string | null;
+  email?: string | null;
+  role?: string | null;
+};
+
 const DEV_ALLOW_ALL_ADMINS =
   process.env.MUHUB_ADMIN_DEV_ALLOW_ALL === "1" ||
   process.env.MUHUB_ADMIN_DEV_ALLOW_ALL === "true";
 
-/**
- * 管理后台：逗号分隔的用户 id（与 session.user.id / User.id 一致，cuid）。
- * 生产环境务必配置；开发可设 MUHUB_ADMIN_DEV_ALLOW_ALL=true 放行任意登录用户（仅本地）。
- */
-export function parseMuHubAdminUserIds(): Set<string> {
-  const raw = process.env.MUHUB_ADMIN_USER_IDS?.trim() ?? "";
-  if (!raw) {
+function parseEnvList(raw: string | undefined): Set<string> {
+  if (!raw?.trim()) {
     return new Set();
   }
   return new Set(
@@ -21,6 +22,25 @@ export function parseMuHubAdminUserIds(): Set<string> {
   );
 }
 
+/**
+ * 管理后台用户 ID 白名单：
+ * - 优先新变量 ADMIN_USER_IDS
+ * - 兼容旧变量 MUHUB_ADMIN_USER_IDS
+ */
+export function parseMuHubAdminUserIds(): Set<string> {
+  return parseEnvList(process.env.ADMIN_USER_IDS ?? process.env.MUHUB_ADMIN_USER_IDS);
+}
+
+/**
+ * 管理后台邮箱白名单（小写比较）：
+ * - 优先新变量 ADMIN_EMAILS
+ * - 兼容旧变量 MUHUB_ADMIN_EMAILS
+ */
+export function parseMuHubAdminEmails(): Set<string> {
+  const rows = parseEnvList(process.env.ADMIN_EMAILS ?? process.env.MUHUB_ADMIN_EMAILS);
+  return new Set([...rows].map((v) => v.toLowerCase()));
+}
+
 export function isMuHubAdminUserId(userId: string | undefined): boolean {
   if (!userId) {
     return false;
@@ -29,22 +49,65 @@ export function isMuHubAdminUserId(userId: string | undefined): boolean {
     return true;
   }
   const ids = parseMuHubAdminUserIds();
-  if (ids.size === 0 && process.env.NODE_ENV === "development") {
-    return false;
-  }
   return ids.has(userId);
 }
 
-export async function requireMuHubAdmin(): Promise<{ userId: string }> {
+export function isMuHubAdminUser(user: AdminSessionUser | undefined): boolean {
+  if (!user?.id) {
+    return false;
+  }
+  if (process.env.NODE_ENV === "development" && DEV_ALLOW_ALL_ADMINS) {
+    return true;
+  }
+
+  // 兼容未来数据库 role 字段或 session 扩展
+  if (typeof user.role === "string" && user.role.toUpperCase() === "ADMIN") {
+    return true;
+  }
+
+  const adminIds = parseMuHubAdminUserIds();
+  if (adminIds.has(user.id)) {
+    return true;
+  }
+
+  const email = typeof user.email === "string" ? user.email.trim().toLowerCase() : "";
+  if (email) {
+    const adminEmails = parseMuHubAdminEmails();
+    if (adminEmails.has(email)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function getMuHubAdminDebugInfo(user: AdminSessionUser | undefined) {
+  return {
+    userId: user?.id ?? null,
+    email: user?.email ?? null,
+    role: user?.role ?? null,
+    adminUserIdsConfigured: parseMuHubAdminUserIds().size,
+    adminEmailsConfigured: parseMuHubAdminEmails().size,
+    devAllowAll: process.env.NODE_ENV === "development" && DEV_ALLOW_ALL_ADMINS,
+  };
+}
+
+export async function requireMuHubAdmin(): Promise<{ userId: string; email?: string | null }> {
   const session = await auth();
-  const userId = session?.user?.id;
+  const user = {
+    id: session?.user?.id,
+    email: session?.user?.email,
+    role: (session?.user as { role?: string | null } | undefined)?.role ?? null,
+  };
+  const userId = user.id;
   if (!userId) {
     throw new AdminAuthError("UNAUTHORIZED", "请先登录");
   }
-  if (!isMuHubAdminUserId(userId)) {
+  if (!isMuHubAdminUser(user)) {
+    console.warn("[admin-auth] forbidden", getMuHubAdminDebugInfo(user));
     throw new AdminAuthError("FORBIDDEN", "无权访问管理功能");
   }
-  return { userId };
+  return { userId, email: user.email ?? null };
 }
 
 export class AdminAuthError extends Error {

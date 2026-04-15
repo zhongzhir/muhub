@@ -1,15 +1,24 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { isMuHubAdminUserId } from "@/lib/admin-auth";
+import { getMuHubAdminDebugInfo, isMuHubAdminUser } from "@/lib/admin-auth";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/auth/signin?callbackUrl=/admin/discovery");
+  const callback = "/admin/discovery/items";
+  const user = {
+    id: session?.user?.id,
+    email: session?.user?.email,
+    role: (session?.user as { role?: string | null } | undefined)?.role ?? null,
+  };
+
+  if (!user.id) {
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(callback)}`);
   }
-  if (!isMuHubAdminUserId(session.user.id)) {
-    redirect("/dashboard?error=admin_forbidden");
+  if (!isMuHubAdminUser(user)) {
+    const debug = getMuHubAdminDebugInfo(user);
+    console.warn("[admin-layout] forbidden", debug);
+    redirect("/admin-forbidden");
   }
 
   return (
