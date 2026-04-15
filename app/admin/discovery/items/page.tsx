@@ -8,11 +8,14 @@ import {
 import { readDiscoveryRuntimeState } from "@/agents/discovery/discovery-runtime-store";
 import { GITHUB_DISCOVERY_KEYWORDS } from "@/agents/discovery/github/github-discovery-keywords";
 import { discoverySchedulerConfig } from "@/agents/discovery/scheduler/discovery-scheduler-config";
+import { readLatestWechatOutput, readLatestXOutputs } from "@/lib/admin/content-output-reader";
 
 import { DiscoveryRunActions } from "./discovery-run-actions";
 import { DiscoveryRecentRuns } from "./discovery-recent-runs";
 import { DiscoveryJsonQueueTable } from "./discovery-json-queue-table";
 import { ProjectActivityRunActions } from "./project-activity-run-actions";
+import { ContentPipelineRunActions } from "./content-pipeline-run-actions";
+import { ContentOutputsPanel } from "./content-outputs-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +28,8 @@ export default async function AdminDiscoveryJsonQueuePage() {
     .slice(-5)
     .reverse();
   const githubV3 = discoverySchedulerConfig.githubV3;
+  const wechatDraft = await readLatestWechatOutput();
+  const xDrafts = await readLatestXOutputs(5);
   const totalKeywords = GITHUB_DISCOVERY_KEYWORDS.length;
   const batchSize = Math.min(totalKeywords, Math.max(1, githubV3.maxKeywordsPerRun));
   const cursor = totalKeywords > 0 ? runtime.githubV3KeywordCursor % totalKeywords : 0;
@@ -63,9 +68,13 @@ export default async function AdminDiscoveryJsonQueuePage() {
       <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Discovery 运行状态</h2>
-          <div className="flex flex-wrap items-start gap-2">
-            <DiscoveryRunActions />
-            <ProjectActivityRunActions />
+          <div className="space-y-1">
+            <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Operations</p>
+            <div className="flex flex-wrap items-start gap-2">
+              <DiscoveryRunActions />
+              <ProjectActivityRunActions />
+              <ContentPipelineRunActions />
+            </div>
           </div>
         </div>
         <div className="mt-3 grid gap-2 text-xs text-zinc-600 dark:text-zinc-400 sm:grid-cols-2 lg:grid-cols-3">
@@ -88,6 +97,8 @@ export default async function AdminDiscoveryJsonQueuePage() {
           </p>
         ) : null}
       </section>
+
+      <ContentOutputsPanel wechatDraft={wechatDraft} xDrafts={xDrafts} />
 
       <DiscoveryRecentRuns entries={recentRuns} />
 

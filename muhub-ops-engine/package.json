@@ -1,0 +1,16 @@
+{
+  "name": "muhub-ops-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MUHUB 外部 AI 传播与运营引擎 V1（自动生成，不自动发布）",
+  "main": "scripts/run_content_pipeline.js",
+  "scripts": {
+    "gen:wechat": "node scripts/generate_wechat_post.js",
+    "gen:x": "node scripts/generate_x_posts.js",
+    "gen:all": "node scripts/run_content_pipeline.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "openai": "^4.104.0"
+  }
+}

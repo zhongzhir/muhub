@@ -1,0 +1,4 @@
+node_modules/
+
+# Generated outputs (keep directory placeholders via .gitkeep)
+outputs/**/*.md

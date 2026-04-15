@@ -1,0 +1,31 @@
+[
+  {
+    "name": "CowAgent",
+    "slug": "cowagent",
+    "summary": "支持多平台接入的 AI 超级助理与数字员工系统。",
+    "highlights": ["AI", "Open Source", "Active"],
+    "latestActivity": {
+      "type": "release",
+      "title": "发布新版本 v1.2.0"
+    },
+    "url": "https://www.muhub.cn/projects/cowagent"
+  },
+  {
+    "name": "FlowVision",
+    "slug": "flowvision",
+    "summary": "面向内容团队的多模态工作流编排工具。",
+    "highlights": ["Workflow", "Multi-modal", "SaaS", "NoCode"],
+    "latestActivity": {
+      "type": "update",
+      "title": "新增批量素材分析能力"
+    },
+    "url": "https://www.muhub.cn/projects/flowvision"
+  },
+  {
+    "name": "PromptDock",
+    "slug": "promptdock",
+    "summary": "面向开发者的 Prompt 管理与版本协作平台。",
+    "highlights": ["Prompt", "Developer Tool"],
+    "url": "https://www.muhub.cn/projects/promptdock"
+  }
+]

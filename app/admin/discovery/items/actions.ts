@@ -1,5 +1,10 @@
 "use server";
 
+import { execFile } from "node:child_process";
+import { access } from "node:fs/promises";
+import path from "node:path";
+import { promisify } from "node:util";
+
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
@@ -15,6 +20,7 @@ import { runGitHubProjectActivity } from "@/agents/activity/github-activity";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
 
 const REVALIDATE = "/admin/discovery/items";
+const execFileAsync = promisify(execFile);
 
 export type ImportDiscoveryItemResult = {
   ok: boolean;
@@ -43,6 +49,17 @@ export type RunProjectActivityResult =
       created: number;
     }
   | { ok: false; error: string };
+
+export type RunContentPipelineResult =
+  | {
+      ok: true;
+      message: string;
+      output: string;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
 
 export type BulkDiscoveryStatusResult =
   | { ok: true; updated: number }
@@ -145,6 +162,67 @@ export async function runProjectActivityAction(): Promise<RunProjectActivityResu
     };
   } catch (err) {
     console.error("[runProjectActivityAction]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+function getOpsEngineCandidates() {
+  const cwd = process.cwd();
+  return [
+    path.resolve(cwd, "muhub-ops-engine"),
+    path.resolve(cwd, "..", "muhub-ops-engine"),
+  ];
+}
+
+async function resolveOpsEngineDir() {
+  const candidates = getOpsEngineCandidates();
+  for (const dir of candidates) {
+    try {
+      await access(dir);
+      return dir;
+    } catch {
+      // ignore and continue
+    }
+  }
+  return null;
+}
+
+function getNpmCommand() {
+  return process.platform === "win32" ? "npm.cmd" : "npm";
+}
+
+export async function runContentPipelineAction(): Promise<RunContentPipelineResult> {
+  try {
+    const opsEngineDir = await resolveOpsEngineDir();
+    if (!opsEngineDir) {
+      return { ok: false, error: "muhub-ops-engine not found" };
+    }
+
+    const npmCommand = getNpmCommand();
+    const { stdout, stderr } = await execFileAsync(npmCommand, ["run", "gen:all"], {
+      cwd: opsEngineDir,
+      timeout: 10 * 60 * 1000,
+      maxBuffer: 1024 * 1024 * 8,
+      windowsHide: true,
+    });
+    const output = [stdout, stderr].filter(Boolean).join("\n").trim();
+
+    return {
+      ok: true,
+      message: "Content pipeline completed",
+      output,
+    };
+  } catch (err) {
+    console.error("[runContentPipelineAction]", err);
+    if (err && typeof err === "object" && "stderr" in err) {
+      const stderr = String((err as { stderr?: string }).stderr ?? "").trim();
+      if (stderr) {
+        return { ok: false, error: stderr };
+      }
+    }
     return {
       ok: false,
       error: err instanceof Error ? err.message : String(err),
