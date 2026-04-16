@@ -21,7 +21,7 @@ import { runGitHubDiscoveryV3 } from "@/agents/discovery/github/github-discovery
 import { runRssDiscovery } from "@/agents/discovery/rss/rss-discovery";
 import { runGitHubProjectActivity } from "@/agents/activity/github-activity";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
-import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
+import { extractGithubRepoUrlsFromText, normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { prisma } from "@/lib/prisma";
 import { slugifyProjectName } from "@/lib/project-slug";
 import { parseRepoUrl } from "@/lib/repo-platform";
@@ -141,51 +141,8 @@ export type BulkAddGithubProjectsToQueueResult =
     }
   | { ok: false; error: string };
 
-function normalizeGithubRepoUrlFromAny(raw: string): string | null {
-  try {
-    const url = new URL(raw.trim());
-    const host = url.hostname.toLowerCase();
-    if (host !== "github.com" && host !== "www.github.com") {
-      return null;
-    }
-    const segments = url.pathname.split("/").filter(Boolean);
-    if (segments.length < 2) {
-      return null;
-    }
-    const owner = segments[0] || "";
-    let repo = segments[1] || "";
-    if (!owner || !repo) {
-      return null;
-    }
-    if (repo.endsWith(".git")) {
-      repo = repo.slice(0, -4);
-    }
-    if (!owner || !repo) {
-      return null;
-    }
-    return normalizeGithubRepoUrl(`https://github.com/${owner}/${repo}`);
-  } catch {
-    return null;
-  }
-}
-
 function extractGithubRepoUrlsFromArticleText(articleBody: string): string[] {
-  const text = articleBody.trim();
-  if (!text) {
-    return [];
-  }
-  const pattern =
-    /((?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\/[^\s)\]}>，。；;、]*)?)/gi;
-  const matches = Array.from(text.matchAll(pattern), (match) => match[1] ?? "").filter(Boolean);
-  const unique = new Set<string>();
-  for (const m of matches) {
-    const normalized = normalizeGithubRepoUrlFromAny(m);
-    if (!normalized) {
-      continue;
-    }
-    unique.add(normalized);
-  }
-  return Array.from(unique);
+  return extractGithubRepoUrlsFromText(articleBody).normalizedMatches;
 }
 
 function createManualDiscoveryItem(input: {
@@ -749,11 +706,9 @@ export async function extractGithubProjectsFromArticleAction(input: {
   if (!body) {
     return { ok: false, error: "请先粘贴文章正文。" };
   }
-  const rawMatches = Array.from(
-    body.matchAll(/((?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\/[^\s)\]}>，。；;、]*)?)/gi),
-    (match) => match[1] ?? "",
-  ).filter(Boolean);
-  const urls = extractGithubRepoUrlsFromArticleText(body);
+  const extraction = extractGithubRepoUrlsFromText(body);
+  const rawMatches = extraction.rawMatches;
+  const urls = extraction.normalizedMatches;
   console.log("[extractGithubProjectsFromArticleAction] raw matches:", rawMatches);
   console.log("[extractGithubProjectsFromArticleAction] normalized matches:", urls);
   if (urls.length === 0) {

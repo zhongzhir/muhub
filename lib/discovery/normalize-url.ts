@@ -63,9 +63,38 @@ export function firstGithubRepoUrlFromText(text: string | null | undefined): str
   if (!m?.[1]) {
     return null;
   }
+  return normalizeGithubRepoUrlOrNull(m[1]);
+}
+
+export function normalizeGithubRepoUrlOrNull(raw: string | null | undefined): string | null {
+  if (!raw?.trim()) {
+    return null;
+  }
   try {
-    return normalizeGithubRepoUrl(m[1]);
+    return normalizeGithubRepoUrl(raw);
   } catch {
     return null;
   }
+}
+
+export function extractGithubRepoUrlsFromText(text: string | null | undefined): {
+  rawMatches: string[];
+  normalizedMatches: string[];
+} {
+  if (!text?.trim()) {
+    return { rawMatches: [], normalizedMatches: [] };
+  }
+  const re = /((?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\/[^\s)\]}>，。；;、]*)?)/gi;
+  const rawMatches = Array.from(text.matchAll(re), (match) => match[1] ?? "").filter(Boolean);
+  const normalized = new Set<string>();
+  for (const raw of rawMatches) {
+    const next = normalizeGithubRepoUrlOrNull(raw);
+    if (next) {
+      normalized.add(next);
+    }
+  }
+  return {
+    rawMatches,
+    normalizedMatches: Array.from(normalized),
+  };
 }

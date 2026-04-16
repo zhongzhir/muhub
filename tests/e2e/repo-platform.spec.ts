@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { firstGithubRepoUrlFromText, normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
+import {
+  extractGithubRepoUrlsFromText,
+  firstGithubRepoUrlFromText,
+  normalizeGithubRepoUrl,
+} from "@/lib/discovery/normalize-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
 test.describe("多平台仓库 URL 解析", () => {
@@ -65,5 +69,20 @@ test.describe("多平台仓库 URL 解析", () => {
     expect(firstGithubRepoUrlFromText("查看代码：www.github.com/vercel/next.js/tree/canary")).toBe(
       "https://github.com/vercel/next.js",
     );
+  });
+
+  test("批量提取与单项目添加共用同一 GitHub 提取 helper", () => {
+    expect(extractGithubRepoUrlsFromText("github.com/ourongxing/newsnow").normalizedMatches).toEqual([
+      "https://github.com/ourongxing/newsnow",
+    ]);
+    expect(extractGithubRepoUrlsFromText("github.com/readest/readest").normalizedMatches).toEqual([
+      "https://github.com/readest/readest",
+    ]);
+    expect(
+      extractGithubRepoUrlsFromText("GitHub 地址→github.com/game1024/OpenSpeedy").normalizedMatches,
+    ).toEqual(["https://github.com/game1024/OpenSpeedy"]);
+    expect(
+      extractGithubRepoUrlsFromText("GitHub 地址：github.com/readest/readest").normalizedMatches,
+    ).toEqual(["https://github.com/readest/readest"]);
   });
 });
