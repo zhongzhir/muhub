@@ -1,5 +1,5 @@
 /**
- * Discovery 轻量入口：生成 id / 时间戳并写入本地队列；后续可接 RSS、API 等。
+ * Discovery 轻量入口：生成 id / 时间戳并写入 Discovery 队列（DB 优先，文件存储仅本地兜底）。
  */
 
 import { randomUUID } from "crypto";

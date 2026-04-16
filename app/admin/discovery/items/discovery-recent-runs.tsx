@@ -33,11 +33,7 @@ export function DiscoveryRecentRuns({ entries }: Props) {
       <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">最近执行记录</h2>
         <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-          暂无记录。完成一次 GitHub V3 运行后会自动写入{" "}
-          <code className="rounded bg-zinc-100 px-1 font-mono text-[11px] dark:bg-zinc-800">
-            data/discovery-run-history.json
-          </code>
-          （最多保留 20 条）。
+          暂无记录。完成一次 GitHub V3 运行后会自动写入 Discovery 运行历史（数据库，最多保留 20 条）。
         </p>
       </section>
     );
@@ -47,11 +43,7 @@ export function DiscoveryRecentRuns({ entries }: Props) {
     <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">最近执行记录</h2>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-        展示至多 5 次 GitHub V3 运行摘要（新→旧）。磁盘上最多保留 20 条，见{" "}
-        <code className="rounded bg-zinc-100 px-1 font-mono text-[11px] dark:bg-zinc-800">
-          data/discovery-run-history.json
-        </code>
-        。
+        展示至多 5 次 GitHub V3 运行摘要（新→旧）。数据库中最多保留 20 条历史。
       </p>
       <ul className="mt-3 space-y-3">
         {entries.map((entry) => {

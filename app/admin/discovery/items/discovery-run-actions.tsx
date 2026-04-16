@@ -35,7 +35,10 @@ export function DiscoveryRunActions() {
                   });
                   router.refresh();
                 } else {
-                  setToast({ kind: "err", text: `GitHub 获取失败：${result.error}` });
+                  setToast({
+                    kind: "err",
+                    text: "GitHub 获取失败：执行失败，请联系管理员检查运行时存储配置。",
+                  });
                 }
                 setRunning(null);
               })();

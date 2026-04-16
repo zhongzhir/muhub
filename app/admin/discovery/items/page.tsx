@@ -58,10 +58,9 @@ export default async function AdminDiscoveryJsonQueuePage() {
             ← 项目发现候选池（数据库）
           </Link>
         </p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">项目发现队列（JSON · 基础版）</h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">项目发现队列（数据库 · V1）</h1>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          本地 <code className="rounded bg-zinc-100 px-1 font-mono text-xs dark:bg-zinc-800">data/discovery-items.json</code>{" "}
-          队列，用于最小闭环与后续导入衔接；本页不接 GitHub API、无自动抓取。
+          队列数据与运行态均使用数据库持久化（本地文件仅在无数据库场景下兜底）。
         </p>
       </header>
 

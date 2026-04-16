@@ -4,6 +4,8 @@
 
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { dirname, join } from "path";
+import { DiscoveryImportStatus, DiscoveryReviewStatus, DiscoverySourceType } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 import type {
   DiscoveryAiStatus,
@@ -31,6 +33,7 @@ const SOURCE_TYPES = new Set<DiscoverySourceType>([
 ]);
 const STATUSES = new Set<DiscoveryStatus>(["new", "reviewed", "imported", "rejected"]);
 const AI_STATUSES = new Set<DiscoveryAiStatus>(["scheduled", "done", "failed"]);
+const DB_DISCOVERY_QUEUE_SOURCE_KEY = "json-discovery-queue";
 
 function filePath(): string {
   return join(process.cwd(), REL_PATH);
@@ -102,6 +105,191 @@ function safeParseArray(raw: string): unknown[] {
   }
 }
 
+function isDbEnabled(): boolean {
+  return Boolean(process.env.DATABASE_URL?.trim());
+}
+
+function pickItemUrl(meta: Record<string, unknown> | undefined, fallback: string | null): string {
+  const metaUrl = typeof meta?.url === "string" ? meta.url.trim() : "";
+  if (metaUrl) {
+    return metaUrl;
+  }
+  return fallback?.trim() || "";
+}
+
+function parseDiscoveryMeta(
+  raw: unknown,
+): {
+  meta: Record<string, unknown> | undefined;
+  sourceType: DiscoverySourceType;
+  aiStatus?: DiscoveryAiStatus;
+  aiUpdatedAt?: string;
+  duplicateOfId?: string;
+  duplicateProjectId?: string;
+  possibleDuplicate?: boolean;
+  normalizedUrl?: string;
+  githubRepoKey?: string;
+  websiteHost?: string;
+  projectSlug?: string;
+} {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { meta: undefined, sourceType: "other" };
+  }
+  const row = raw as Record<string, unknown>;
+  const sourceTypeRaw = typeof row.sourceType === "string" ? row.sourceType : "other";
+  const sourceType = SOURCE_TYPES.has(sourceTypeRaw as DiscoverySourceType)
+    ? (sourceTypeRaw as DiscoverySourceType)
+    : "other";
+  const aiStatusRaw = typeof row.aiStatus === "string" ? row.aiStatus : undefined;
+  const aiStatus =
+    aiStatusRaw && AI_STATUSES.has(aiStatusRaw as DiscoveryAiStatus)
+      ? (aiStatusRaw as DiscoveryAiStatus)
+      : undefined;
+  const meta = row.meta && typeof row.meta === "object" && !Array.isArray(row.meta)
+    ? (row.meta as Record<string, unknown>)
+    : undefined;
+  return {
+    meta,
+    sourceType,
+    aiStatus,
+    aiUpdatedAt: typeof row.aiUpdatedAt === "string" ? row.aiUpdatedAt : undefined,
+    duplicateOfId: typeof row.duplicateOfId === "string" ? row.duplicateOfId : undefined,
+    duplicateProjectId: typeof row.duplicateProjectId === "string" ? row.duplicateProjectId : undefined,
+    possibleDuplicate: typeof row.possibleDuplicate === "boolean" ? row.possibleDuplicate : undefined,
+    normalizedUrl: typeof row.normalizedUrl === "string" ? row.normalizedUrl : undefined,
+    githubRepoKey: typeof row.githubRepoKey === "string" ? row.githubRepoKey : undefined,
+    websiteHost: typeof row.websiteHost === "string" ? row.websiteHost : undefined,
+    projectSlug: typeof row.projectSlug === "string" ? row.projectSlug : undefined,
+  };
+}
+
+async function ensureDbDiscoveryQueueSource() {
+  return prisma.discoverySource.upsert({
+    where: { key: DB_DISCOVERY_QUEUE_SOURCE_KEY },
+    update: {},
+    create: {
+      key: DB_DISCOVERY_QUEUE_SOURCE_KEY,
+      name: "JSON Discovery Queue",
+      type: DiscoverySourceType.GITHUB,
+      subtype: "json-queue",
+      status: "ACTIVE",
+      configJson: { mode: "json-compatible" },
+    },
+    select: { id: true },
+  });
+}
+
+function mapDbStatus(reviewStatus: DiscoveryReviewStatus, importStatus: DiscoveryImportStatus): DiscoveryStatus {
+  if (importStatus === "IMPORTED") {
+    return "imported";
+  }
+  if (reviewStatus === "REJECTED") {
+    return "rejected";
+  }
+  if (reviewStatus === "APPROVED" || reviewStatus === "MERGED") {
+    return "reviewed";
+  }
+  return "new";
+}
+
+async function readDbList(): Promise<DiscoveryItem[]> {
+  const rows = await prisma.discoveryCandidate.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 2000,
+    select: {
+      id: true,
+      title: true,
+      externalUrl: true,
+      repoUrl: true,
+      website: true,
+      summary: true,
+      metadataJson: true,
+      reviewStatus: true,
+      importStatus: true,
+      createdAt: true,
+      matchedProject: { select: { id: true, slug: true } },
+    },
+  });
+  return rows.map((row) => {
+    const parsed = parseDiscoveryMeta(row.metadataJson);
+    const url = pickItemUrl(parsed.meta, row.externalUrl || row.repoUrl || row.website || "");
+    return {
+      id: row.id,
+      sourceType: parsed.sourceType,
+      title: row.title,
+      url,
+      normalizedUrl: parsed.normalizedUrl,
+      githubRepoKey: parsed.githubRepoKey,
+      websiteHost: parsed.websiteHost,
+      duplicateOfId: parsed.duplicateOfId,
+      duplicateProjectId: parsed.duplicateProjectId ?? row.matchedProject?.id ?? undefined,
+      possibleDuplicate: parsed.possibleDuplicate,
+      description: row.summary ?? parsed.meta?.description?.toString(),
+      meta: parsed.meta,
+      projectSlug: parsed.projectSlug ?? row.matchedProject?.slug ?? undefined,
+      status: mapDbStatus(row.reviewStatus, row.importStatus),
+      aiStatus: parsed.aiStatus,
+      aiUpdatedAt: parsed.aiUpdatedAt,
+      createdAt: row.createdAt.toISOString(),
+    } satisfies DiscoveryItem;
+  });
+}
+
+async function findDbById(id: string): Promise<DiscoveryItem | null> {
+  const row = await prisma.discoveryCandidate.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      externalUrl: true,
+      repoUrl: true,
+      website: true,
+      summary: true,
+      metadataJson: true,
+      reviewStatus: true,
+      importStatus: true,
+      createdAt: true,
+      matchedProject: { select: { id: true, slug: true } },
+    },
+  });
+  if (!row) {
+    return null;
+  }
+  const parsed = parseDiscoveryMeta(row.metadataJson);
+  return {
+    id: row.id,
+    sourceType: parsed.sourceType,
+    title: row.title,
+    url: pickItemUrl(parsed.meta, row.externalUrl || row.repoUrl || row.website || ""),
+    normalizedUrl: parsed.normalizedUrl,
+    githubRepoKey: parsed.githubRepoKey,
+    websiteHost: parsed.websiteHost,
+    duplicateOfId: parsed.duplicateOfId,
+    duplicateProjectId: parsed.duplicateProjectId ?? row.matchedProject?.id ?? undefined,
+    possibleDuplicate: parsed.possibleDuplicate,
+    description: row.summary ?? parsed.meta?.description?.toString(),
+    meta: parsed.meta,
+    projectSlug: parsed.projectSlug ?? row.matchedProject?.slug ?? undefined,
+    status: mapDbStatus(row.reviewStatus, row.importStatus),
+    aiStatus: parsed.aiStatus,
+    aiUpdatedAt: parsed.aiUpdatedAt,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function mapStatusToDb(status: DiscoveryStatus): { reviewStatus?: DiscoveryReviewStatus; importStatus?: DiscoveryImportStatus } {
+  if (status === "imported") {
+    return { reviewStatus: "APPROVED", importStatus: "IMPORTED" };
+  }
+  if (status === "reviewed") {
+    return { reviewStatus: "APPROVED", importStatus: "PENDING" };
+  }
+  if (status === "rejected") {
+    return { reviewStatus: "REJECTED", importStatus: "PENDING" };
+  }
+  return { reviewStatus: "PENDING", importStatus: "PENDING" };
+}
+
 /** 确保 data 目录与 discovery-items.json 存在（缺省为 []）。 */
 export async function ensureDiscoveryStoreFile(): Promise<void> {
   const path = filePath();
@@ -137,15 +325,34 @@ async function readRawList(): Promise<DiscoveryItem[]> {
  * 读取队列（按 createdAt 倒序；解析失败的行被跳过）。
  */
 export async function readDiscoveryItems(): Promise<DiscoveryItem[]> {
+  if (isDbEnabled()) {
+    return readDbList();
+  }
   return readRawList();
 }
 
 export async function readDiscoveryItemById(id: string): Promise<DiscoveryItem | null> {
+  if (isDbEnabled()) {
+    return findDbById(id);
+  }
   const list = await readRawList();
   return list.find((x) => x.id === id) ?? null;
 }
 
 export async function findDiscoveryItemByUrl(url: string): Promise<DiscoveryItem | null> {
+  if (isDbEnabled()) {
+    const key = normalizeDiscoveryUrl(url);
+    const row = await prisma.discoveryCandidate.findFirst({
+      where: {
+        OR: [{ externalUrl: key }, { repoUrl: key }, { website: key }],
+      },
+      select: { id: true },
+    });
+    if (!row) {
+      return null;
+    }
+    return findDbById(row.id);
+  }
   const key = normalizeDiscoveryUrl(url);
   const list = await readRawList();
   return list.find((i) => normalizeDiscoveryUrl(i.url) === key) ?? null;
@@ -155,6 +362,54 @@ export async function findDiscoveryItemByUrl(url: string): Promise<DiscoveryItem
  * 将一条记录插入队列头部；若同 normalize URL 已存在则跳过写入。
  */
 export async function appendDiscoveryItem(item: DiscoveryItem): Promise<{ duplicate: boolean }> {
+  if (isDbEnabled()) {
+    const source = await ensureDbDiscoveryQueueSource();
+    const dedupeFields = buildDiscoveryDedupeFields(item);
+    const prepared: DiscoveryItem = {
+      ...item,
+      ...dedupeFields,
+    };
+    const existing = await findDiscoveryItemByUrl(prepared.url);
+    if (existing) {
+      return { duplicate: true };
+    }
+    const url = normalizeDiscoveryUrl(prepared.url);
+    const { reviewStatus, importStatus } = mapStatusToDb(prepared.status);
+    const existingMeta = prepared.meta ?? {};
+    await prisma.discoveryCandidate.create({
+      data: {
+        id: prepared.id,
+        sourceId: source.id,
+        sourceKey: prepared.sourceType,
+        externalType: prepared.sourceType,
+        externalUrl: url,
+        repoUrl: prepared.githubRepoKey ? url : null,
+        website: prepared.websiteHost ? url : null,
+        title: prepared.title,
+        summary: prepared.description ?? null,
+        metadataJson: {
+          sourceType: prepared.sourceType,
+          meta: existingMeta,
+          aiStatus: prepared.aiStatus ?? null,
+          aiUpdatedAt: prepared.aiUpdatedAt ?? null,
+          duplicateOfId: prepared.duplicateOfId ?? null,
+          duplicateProjectId: prepared.duplicateProjectId ?? null,
+          possibleDuplicate: prepared.possibleDuplicate ?? false,
+          normalizedUrl: prepared.normalizedUrl ?? normalizeUrl(prepared.url),
+          githubRepoKey: prepared.githubRepoKey ?? null,
+          websiteHost: prepared.websiteHost ?? null,
+          projectSlug: prepared.projectSlug ?? null,
+          url: prepared.url,
+        },
+        reviewStatus: reviewStatus ?? "PENDING",
+        importStatus: importStatus ?? "PENDING",
+        createdAt: new Date(prepared.createdAt),
+        firstSeenAt: new Date(prepared.createdAt),
+        lastSeenAt: new Date(prepared.createdAt),
+      },
+    });
+    return { duplicate: false };
+  }
   await ensureDiscoveryStoreFile();
   const path = filePath();
   const list = await readRawList();
@@ -180,6 +435,21 @@ export async function updateDiscoveryStatus(id: string, status: DiscoveryStatus)
   if (!STATUSES.has(status)) {
     return false;
   }
+  if (isDbEnabled()) {
+    const row = await prisma.discoveryCandidate.findUnique({ where: { id }, select: { id: true } });
+    if (!row) {
+      return false;
+    }
+    const mapped = mapStatusToDb(status);
+    await prisma.discoveryCandidate.update({
+      where: { id },
+      data: {
+        reviewStatus: mapped.reviewStatus,
+        importStatus: mapped.importStatus,
+      },
+    });
+    return true;
+  }
   await ensureDiscoveryStoreFile();
   const path = filePath();
   const list = await readRawList();
@@ -197,6 +467,50 @@ export async function updateDiscoveryItemImportResult(
   id: string,
   projectSlug: string,
 ): Promise<boolean> {
+  if (isDbEnabled()) {
+    const slug = projectSlug.trim();
+    if (!slug) {
+      return false;
+    }
+    const project = await prisma.project.findFirst({
+      where: { slug, deletedAt: null },
+      select: { id: true, slug: true },
+    });
+    if (!project) {
+      return false;
+    }
+    const row = await prisma.discoveryCandidate.findUnique({
+      where: { id },
+      select: { metadataJson: true },
+    });
+    if (!row) {
+      return false;
+    }
+    const parsed = parseDiscoveryMeta(row.metadataJson);
+    await prisma.discoveryCandidate.update({
+      where: { id },
+      data: {
+        reviewStatus: "APPROVED",
+        importStatus: "IMPORTED",
+        matchedProjectId: project.id,
+        metadataJson: {
+          sourceType: parsed.sourceType,
+          meta: parsed.meta ?? {},
+          aiStatus: parsed.aiStatus ?? null,
+          aiUpdatedAt: parsed.aiUpdatedAt ?? null,
+          duplicateOfId: parsed.duplicateOfId ?? null,
+          duplicateProjectId: parsed.duplicateProjectId ?? null,
+          possibleDuplicate: parsed.possibleDuplicate ?? false,
+          normalizedUrl: parsed.normalizedUrl ?? null,
+          githubRepoKey: parsed.githubRepoKey ?? null,
+          websiteHost: parsed.websiteHost ?? null,
+          projectSlug: project.slug,
+          url: pickItemUrl(parsed.meta, ""),
+        },
+      },
+    });
+    return true;
+  }
   await ensureDiscoveryStoreFile();
   const path = filePath();
   const list = await readRawList();
@@ -221,6 +535,44 @@ export async function updateDiscoveryItemDuplicateResult(
   duplicateProjectId: string,
   duplicateProjectSlug: string,
 ): Promise<boolean> {
+  if (isDbEnabled()) {
+    const dupId = duplicateProjectId.trim();
+    const dupSlug = duplicateProjectSlug.trim();
+    if (!dupId || !dupSlug) {
+      return false;
+    }
+    const row = await prisma.discoveryCandidate.findUnique({
+      where: { id },
+      select: { metadataJson: true },
+    });
+    if (!row) {
+      return false;
+    }
+    const parsed = parseDiscoveryMeta(row.metadataJson);
+    await prisma.discoveryCandidate.update({
+      where: { id },
+      data: {
+        reviewStatus: "APPROVED",
+        importStatus: "SKIPPED",
+        matchedProjectId: dupId,
+        metadataJson: {
+          sourceType: parsed.sourceType,
+          meta: parsed.meta ?? {},
+          aiStatus: parsed.aiStatus ?? null,
+          aiUpdatedAt: parsed.aiUpdatedAt ?? null,
+          duplicateOfId: dupSlug,
+          duplicateProjectId: dupId,
+          possibleDuplicate: true,
+          normalizedUrl: parsed.normalizedUrl ?? null,
+          githubRepoKey: parsed.githubRepoKey ?? null,
+          websiteHost: parsed.websiteHost ?? null,
+          projectSlug: dupSlug,
+          url: pickItemUrl(parsed.meta, ""),
+        },
+      },
+    });
+    return true;
+  }
   await ensureDiscoveryStoreFile();
   const path = filePath();
   const list = await readRawList();
@@ -255,6 +607,37 @@ export async function updateDiscoveryAiStatus(
 ): Promise<boolean> {
   if (!AI_STATUSES.has(status)) {
     return false;
+  }
+  if (isDbEnabled()) {
+    const row = await prisma.discoveryCandidate.findUnique({
+      where: { id },
+      select: { metadataJson: true },
+    });
+    if (!row) {
+      return false;
+    }
+    const parsed = parseDiscoveryMeta(row.metadataJson);
+    const now = new Date().toISOString();
+    await prisma.discoveryCandidate.update({
+      where: { id },
+      data: {
+        metadataJson: {
+          sourceType: parsed.sourceType,
+          meta: parsed.meta ?? {},
+          aiStatus: status,
+          aiUpdatedAt: now,
+          duplicateOfId: parsed.duplicateOfId ?? null,
+          duplicateProjectId: parsed.duplicateProjectId ?? null,
+          possibleDuplicate: parsed.possibleDuplicate ?? false,
+          normalizedUrl: parsed.normalizedUrl ?? null,
+          githubRepoKey: parsed.githubRepoKey ?? null,
+          websiteHost: parsed.websiteHost ?? null,
+          projectSlug: parsed.projectSlug ?? null,
+          url: pickItemUrl(parsed.meta, ""),
+        },
+      },
+    });
+    return true;
   }
   await ensureDiscoveryStoreFile();
   const path = filePath();

@@ -1,15 +1,11 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import { dirname, join } from "path";
 import { randomUUID } from "crypto";
 
 import type { GitHubDiscoveryV3Summary } from "./github/github-discovery-v3";
+import { prisma } from "@/lib/prisma";
+import { DiscoverySourceType } from "@prisma/client";
 
-const REL_PATH = join("data", "discovery-run-history.json");
 export const DISCOVERY_RUN_HISTORY_MAX = 20;
-
-function historyFilePath(): string {
-  return join(process.cwd(), REL_PATH);
-}
+const GITHUB_V3_RUNTIME_SOURCE_KEY = "github-v3-runtime";
 
 /** 与 GitHub V3 summary 对齐的可持久化子集（JSON 友好） */
 export type DiscoveryRunHistoryGitHubV3Entry = {
@@ -53,23 +49,60 @@ function coerceHistoryArray(raw: unknown): DiscoveryRunHistoryEntry[] {
   return raw.filter(isGithubV3Entry);
 }
 
+async function ensureRuntimeSource() {
+  return prisma.discoverySource.upsert({
+    where: { key: GITHUB_V3_RUNTIME_SOURCE_KEY },
+    update: {},
+    create: {
+      key: GITHUB_V3_RUNTIME_SOURCE_KEY,
+      name: "GitHub V3 Runtime",
+      type: DiscoverySourceType.GITHUB,
+      subtype: "runtime",
+      status: "ACTIVE",
+      configJson: { githubV3KeywordCursor: 0 },
+    },
+    select: { id: true },
+  });
+}
+
 export async function ensureDiscoveryRunHistoryFile(): Promise<void> {
-  const path = historyFilePath();
-  await mkdir(dirname(path), { recursive: true });
+  if (!process.env.DATABASE_URL?.trim()) {
+    return;
+  }
   try {
-    await readFile(path, "utf8");
-  } catch {
-    await writeFile(path, "[]\n", "utf8");
+    await ensureRuntimeSource();
+  } catch (e) {
+    console.warn("[discovery-run-history-store] failed to initialize db run history source", e);
   }
 }
 
 export async function readDiscoveryRunHistory(): Promise<DiscoveryRunHistoryEntry[]> {
-  await ensureDiscoveryRunHistoryFile();
-  const path = historyFilePath();
+  if (!process.env.DATABASE_URL?.trim()) {
+    return [];
+  }
   try {
-    const raw = await readFile(path, "utf8");
-    return coerceHistoryArray(JSON.parse(raw));
-  } catch {
+    const source = await ensureRuntimeSource();
+    const rows = await prisma.discoveryRun.findMany({
+      where: { sourceId: source.id },
+      orderBy: { startedAt: "desc" },
+      take: DISCOVERY_RUN_HISTORY_MAX,
+      select: {
+        id: true,
+        startedAt: true,
+        finishedAt: true,
+        logJson: true,
+      },
+    });
+    const entries: DiscoveryRunHistoryEntry[] = [];
+    for (const row of rows) {
+      const parsed = coerceHistoryArray([row.logJson]).at(0);
+      if (parsed) {
+        entries.push(parsed);
+      }
+    }
+    return entries.reverse();
+  } catch (e) {
+    console.warn("[discovery-run-history-store] failed to read db run history", e);
     return [];
   }
 }
@@ -123,11 +156,28 @@ export function githubV3SummaryToHistoryEntry(
 }
 
 export async function appendDiscoveryRunHistory(entry: DiscoveryRunHistoryEntry): Promise<void> {
-  await ensureDiscoveryRunHistoryFile();
-  const path = historyFilePath();
-  const prev = await readDiscoveryRunHistory();
-  const next = [...prev, entry].slice(-DISCOVERY_RUN_HISTORY_MAX);
-  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  if (!process.env.DATABASE_URL?.trim()) {
+    return;
+  }
+  try {
+    const source = await ensureRuntimeSource();
+    await prisma.discoveryRun.create({
+      data: {
+        sourceId: source.id,
+        status: "SUCCESS",
+        startedAt: new Date(entry.startedAt),
+        finishedAt: new Date(entry.finishedAt),
+        fetchedCount: entry.keywordsProcessed + entry.topicsProcessed + entry.relatedSeedsProcessed,
+        parsedCount: entry.keywordsProcessed,
+        newCandidateCount: entry.inserted,
+        updatedCandidateCount: entry.skipped,
+        skippedCount: entry.skipped + entry.filtered + entry.invalid,
+        logJson: entry,
+      },
+    });
+  } catch (e) {
+    console.warn("[discovery-run-history-store] failed to persist db run history", e);
+  }
 }
 
 /** 将 GitHub V3 完整 summary 追加到运行历史（供调度与手动触发共用） */

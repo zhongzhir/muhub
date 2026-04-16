@@ -127,9 +127,21 @@ export async function runGithubDiscoveryV3Action(): Promise<RunGithubDiscoveryV3
     return { ok: true, summary };
   } catch (err) {
     console.error("[runGithubDiscoveryV3Action]", err);
+    const raw = err instanceof Error ? err.message : String(err);
+    const normalized = raw.toLowerCase();
+    if (
+      normalized.includes("read-only file system") ||
+      normalized.includes("ero fs") ||
+      normalized.includes("discovery-runtime.json")
+    ) {
+      return {
+        ok: false,
+        error: "执行失败，请联系管理员检查运行时存储配置。",
+      };
+    }
     return {
       ok: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: raw,
     };
   }
 }

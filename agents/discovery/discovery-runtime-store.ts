@@ -1,15 +1,10 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import { dirname, join } from "path";
+import { prisma } from "@/lib/prisma";
+import { DiscoverySourceType } from "@prisma/client";
 
 export type DiscoveryRuntimeState = {
   githubV3KeywordCursor: number;
 };
-
-const REL_PATH = join("data", "discovery-runtime.json");
-
-function runtimeFilePath(): string {
-  return join(process.cwd(), REL_PATH);
-}
+const GITHUB_V3_RUNTIME_SOURCE_KEY = "github-v3-runtime";
 
 function normalizeCursor(value: unknown): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -28,32 +23,71 @@ function coerceRuntimeState(raw: unknown): DiscoveryRuntimeState {
   };
 }
 
+async function ensureRuntimeSource() {
+  return prisma.discoverySource.upsert({
+    where: { key: GITHUB_V3_RUNTIME_SOURCE_KEY },
+    update: {},
+    create: {
+      key: GITHUB_V3_RUNTIME_SOURCE_KEY,
+      name: "GitHub V3 Runtime",
+      type: DiscoverySourceType.GITHUB,
+      subtype: "runtime",
+      status: "ACTIVE",
+      configJson: { githubV3KeywordCursor: 0 },
+    },
+    select: { id: true, configJson: true },
+  });
+}
+
 export async function ensureDiscoveryRuntimeStoreFile(): Promise<void> {
-  const path = runtimeFilePath();
-  await mkdir(dirname(path), { recursive: true });
+  if (!process.env.DATABASE_URL?.trim()) {
+    return;
+  }
   try {
-    await readFile(path, "utf8");
-  } catch {
-    await writeFile(path, `${JSON.stringify({ githubV3KeywordCursor: 0 }, null, 2)}\n`, "utf8");
+    await ensureRuntimeSource();
+  } catch (e) {
+    console.warn("[discovery-runtime-store] failed to initialize db runtime source", e);
   }
 }
 
 export async function readDiscoveryRuntimeState(): Promise<DiscoveryRuntimeState> {
-  await ensureDiscoveryRuntimeStoreFile();
-  const path = runtimeFilePath();
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { githubV3KeywordCursor: 0 };
+  }
   try {
-    const raw = await readFile(path, "utf8");
-    return coerceRuntimeState(JSON.parse(raw));
-  } catch {
+    const row = await ensureRuntimeSource();
+    return coerceRuntimeState(row.configJson);
+  } catch (e) {
+    console.warn("[discovery-runtime-store] failed to read db runtime state", e);
     return { githubV3KeywordCursor: 0 };
   }
 }
 
 export async function updateGitHubV3KeywordCursor(nextCursor: number): Promise<DiscoveryRuntimeState> {
-  await ensureDiscoveryRuntimeStoreFile();
-  const path = runtimeFilePath();
   const normalized = normalizeCursor(nextCursor);
   const nextState: DiscoveryRuntimeState = { githubV3KeywordCursor: normalized };
-  await writeFile(path, `${JSON.stringify(nextState, null, 2)}\n`, "utf8");
+  if (!process.env.DATABASE_URL?.trim()) {
+    return nextState;
+  }
+  try {
+    await prisma.discoverySource.upsert({
+      where: { key: GITHUB_V3_RUNTIME_SOURCE_KEY },
+      update: {
+        configJson: nextState,
+        lastRunAt: new Date(),
+      },
+      create: {
+        key: GITHUB_V3_RUNTIME_SOURCE_KEY,
+        name: "GitHub V3 Runtime",
+        type: DiscoverySourceType.GITHUB,
+        subtype: "runtime",
+        status: "ACTIVE",
+        configJson: nextState,
+        lastRunAt: new Date(),
+      },
+    });
+  } catch (e) {
+    console.warn("[discovery-runtime-store] failed to persist db cursor, fallback to stateless mode", e);
+  }
   return nextState;
 }
