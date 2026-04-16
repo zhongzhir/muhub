@@ -228,7 +228,7 @@ export async function readProjectPublicActivities(projectSlug: string, limit = 8
   return mapped.slice(0, Math.max(1, limit));
 }
 
-export async function detectMeaningfulProjectProfileChanges(args: {
+export function detectMeaningfulProjectProfileChanges(args: {
   before: {
     name: string;
     tagline: string | null;

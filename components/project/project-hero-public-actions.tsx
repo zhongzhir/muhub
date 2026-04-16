@@ -125,7 +125,7 @@ export function ProjectHeroPublicActions({
                       type: posterLatestActivity.type,
                       title: posterLatestActivity.title,
                       occurredAt: posterLatestActivity.occurredAt,
-                      summary: posterLatestActivity.summary,
+                      summary: posterLatestActivity.summary ?? undefined,
                     }
                   : null
               }

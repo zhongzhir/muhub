@@ -4,7 +4,12 @@
 
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { dirname, join } from "path";
-import { DiscoveryImportStatus, DiscoveryReviewStatus, DiscoverySourceType } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+import {
+  DiscoveryImportStatus,
+  DiscoveryReviewStatus,
+  DiscoverySourceType as PrismaDiscoverySourceType,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 import type {
@@ -34,6 +39,23 @@ const SOURCE_TYPES = new Set<DiscoverySourceType>([
 const STATUSES = new Set<DiscoveryStatus>(["new", "reviewed", "imported", "rejected"]);
 const AI_STATUSES = new Set<DiscoveryAiStatus>(["scheduled", "done", "failed"]);
 const DB_DISCOVERY_QUEUE_SOURCE_KEY = "json-discovery-queue";
+
+function toDiscoverySourceType(raw: unknown): DiscoverySourceType {
+  if (typeof raw !== "string") {
+    return "other";
+  }
+  const normalized = raw.trim().toLowerCase();
+  if (SOURCE_TYPES.has(normalized as DiscoverySourceType)) {
+    return normalized as DiscoverySourceType;
+  }
+  if (normalized === "github") return "github";
+  if (normalized === "manual") return "manual";
+  if (normalized === "rss") return "rss";
+  if (normalized === "rss-producthunt") return "rss-producthunt";
+  if (normalized === "rss-github") return "rss-github";
+  if (normalized === "twitter") return "twitter";
+  return "other";
+}
 
 function filePath(): string {
   return join(process.cwd(), REL_PATH);
@@ -136,10 +158,7 @@ function parseDiscoveryMeta(
     return { meta: undefined, sourceType: "other" };
   }
   const row = raw as Record<string, unknown>;
-  const sourceTypeRaw = typeof row.sourceType === "string" ? row.sourceType : "other";
-  const sourceType = SOURCE_TYPES.has(sourceTypeRaw as DiscoverySourceType)
-    ? (sourceTypeRaw as DiscoverySourceType)
-    : "other";
+  const sourceType = toDiscoverySourceType(row.sourceType);
   const aiStatusRaw = typeof row.aiStatus === "string" ? row.aiStatus : undefined;
   const aiStatus =
     aiStatusRaw && AI_STATUSES.has(aiStatusRaw as DiscoveryAiStatus)
@@ -170,7 +189,7 @@ async function ensureDbDiscoveryQueueSource() {
     create: {
       key: DB_DISCOVERY_QUEUE_SOURCE_KEY,
       name: "JSON Discovery Queue",
-      type: DiscoverySourceType.GITHUB,
+      type: PrismaDiscoverySourceType.GITHUB,
       subtype: "json-queue",
       status: "ACTIVE",
       configJson: { mode: "json-compatible" },
@@ -400,7 +419,7 @@ export async function appendDiscoveryItem(item: DiscoveryItem): Promise<{ duplic
           websiteHost: prepared.websiteHost ?? null,
           projectSlug: prepared.projectSlug ?? null,
           url: prepared.url,
-        },
+        } as Prisma.InputJsonValue,
         reviewStatus: reviewStatus ?? "PENDING",
         importStatus: importStatus ?? "PENDING",
         createdAt: new Date(prepared.createdAt),
@@ -506,7 +525,7 @@ export async function updateDiscoveryItemImportResult(
           websiteHost: parsed.websiteHost ?? null,
           projectSlug: project.slug,
           url: pickItemUrl(parsed.meta, ""),
-        },
+        } as Prisma.InputJsonValue,
       },
     });
     return true;
@@ -568,7 +587,7 @@ export async function updateDiscoveryItemDuplicateResult(
           websiteHost: parsed.websiteHost ?? null,
           projectSlug: dupSlug,
           url: pickItemUrl(parsed.meta, ""),
-        },
+        } as Prisma.InputJsonValue,
       },
     });
     return true;
@@ -634,7 +653,7 @@ export async function updateDiscoveryAiStatus(
           websiteHost: parsed.websiteHost ?? null,
           projectSlug: parsed.projectSlug ?? null,
           url: pickItemUrl(parsed.meta, ""),
-        },
+        } as Prisma.InputJsonValue,
       },
     });
     return true;
