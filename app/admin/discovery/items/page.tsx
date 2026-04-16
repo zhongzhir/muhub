@@ -16,6 +16,8 @@ import { DiscoveryJsonQueueTable } from "./discovery-json-queue-table";
 import { ProjectActivityRunActions } from "./project-activity-run-actions";
 import { ContentPipelineRunActions } from "./content-pipeline-run-actions";
 import { ContentOutputsPanel } from "./content-outputs-panel";
+import { ManualAddProjectModal } from "./manual-add-project-modal";
+import { BulkExtractProjectModal } from "./bulk-extract-project-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +72,8 @@ export default async function AdminDiscoveryJsonQueuePage() {
           <div className="space-y-1">
             <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">运营工具</p>
             <div className="flex flex-wrap items-start gap-2">
+              <ManualAddProjectModal />
+              <BulkExtractProjectModal />
               <DiscoveryRunActions />
               <ProjectActivityRunActions />
               <ContentPipelineRunActions />
