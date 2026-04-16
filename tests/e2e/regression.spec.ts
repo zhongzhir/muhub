@@ -8,7 +8,7 @@ test.describe("木哈布 回归", () => {
 
   test("未登录访问创建项目页会跳转登录", async ({ page }) => {
     await page.goto("/dashboard/projects/new");
-    await page.waitForURL(/\/auth\/signin(\?|$)/);
+    await page.waitForURL(/\/login(\?|$)/);
     await expect(page.getByRole("heading", { name: "登录 MUHUB" })).toBeVisible();
     await expect(page.getByRole("button", { name: "使用 GitHub 登录" })).toBeVisible();
   });
