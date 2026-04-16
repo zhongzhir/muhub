@@ -58,10 +58,14 @@ export function firstGithubRepoUrlFromText(text: string | null | undefined): str
   if (!text?.trim()) {
     return null;
   }
-  const re = /(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/gi;
+  const re = /((?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\/[^\s)\]}>，。；;、]*)?)/gi;
   const m = re.exec(text);
-  if (!m?.[1] || !m[2]) {
+  if (!m?.[1]) {
     return null;
   }
-  return `https://github.com/${m[1]}/${m[2]}`;
+  try {
+    return normalizeGithubRepoUrl(m[1]);
+  } catch {
+    return null;
+  }
 }

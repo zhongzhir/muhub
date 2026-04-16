@@ -175,8 +175,8 @@ function extractGithubRepoUrlsFromArticleText(articleBody: string): string[] {
     return [];
   }
   const pattern =
-    /(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:[^\s)\]}>,，。；;、]*)?/gi;
-  const matches = text.match(pattern) ?? [];
+    /((?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\/[^\s)\]}>，。；;、]*)?)/gi;
+  const matches = Array.from(text.matchAll(pattern), (match) => match[1] ?? "").filter(Boolean);
   const unique = new Set<string>();
   for (const m of matches) {
     const normalized = normalizeGithubRepoUrlFromAny(m);
@@ -749,7 +749,13 @@ export async function extractGithubProjectsFromArticleAction(input: {
   if (!body) {
     return { ok: false, error: "请先粘贴文章正文。" };
   }
+  const rawMatches = Array.from(
+    body.matchAll(/((?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\/[^\s)\]}>，。；;、]*)?)/gi),
+    (match) => match[1] ?? "",
+  ).filter(Boolean);
   const urls = extractGithubRepoUrlsFromArticleText(body);
+  console.log("[extractGithubProjectsFromArticleAction] raw matches:", rawMatches);
+  console.log("[extractGithubProjectsFromArticleAction] normalized matches:", urls);
   if (urls.length === 0) {
     return { ok: false, error: "正文中未识别到有效的 GitHub 仓库链接。" };
   }
@@ -817,7 +823,7 @@ export async function extractGithubProjectsFromArticleAction(input: {
   return {
     ok: true,
     items,
-    totalUrls: (input.articleBody.match(/https?:\/\/github\.com\//gi) ?? []).length,
+    totalUrls: rawMatches.length,
     uniqueRepoUrls: urls.length,
   };
 }

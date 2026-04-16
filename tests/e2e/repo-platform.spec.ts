@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
+import { firstGithubRepoUrlFromText, normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
 test.describe("多平台仓库 URL 解析", () => {
@@ -46,6 +46,24 @@ test.describe("多平台仓库 URL 解析", () => {
     );
     expect(normalizeGithubRepoUrl("github.com/facebook/react/blob/main/README.md")).toBe(
       "https://github.com/facebook/react",
+    );
+  });
+
+  test("中文语境下的 GitHub 地址也能提取成功", () => {
+    expect(firstGithubRepoUrlFromText("GitHub 地址→github.com/game1024/OpenSpeedy")).toBe(
+      "https://github.com/game1024/OpenSpeedy",
+    );
+    expect(firstGithubRepoUrlFromText("GitHub 地址：github.com/readest/readest")).toBe(
+      "https://github.com/readest/readest",
+    );
+    expect(firstGithubRepoUrlFromText("项目仓库（github.com/lucide-icons/lucide）")).toBe(
+      "https://github.com/lucide-icons/lucide",
+    );
+    expect(firstGithubRepoUrlFromText("仓库地址 https://github.com/openai/openai-cookbook")).toBe(
+      "https://github.com/openai/openai-cookbook",
+    );
+    expect(firstGithubRepoUrlFromText("查看代码：www.github.com/vercel/next.js/tree/canary")).toBe(
+      "https://github.com/vercel/next.js",
     );
   });
 });
