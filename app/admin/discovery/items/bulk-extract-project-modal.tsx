@@ -70,6 +70,9 @@ export function BulkExtractProjectModal() {
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                   粘贴公众号文章正文，自动提取 GitHub 项目并批量加入发现队列。
                 </p>
+                <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
+                  提取规则版本：2026-04-16-b
+                </p>
               </div>
               <button
                 type="button"
