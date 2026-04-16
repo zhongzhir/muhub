@@ -2,15 +2,35 @@
  * 去重优先：规范化 GitHub 仓库 URL（忽略 query/hash、尾部斜杠、.git）。
  */
 export function normalizeGithubRepoUrl(raw: string): string {
-  const u = new URL(raw.trim());
+  const input = raw.trim();
+  const href = /^(https?:)?\/\//i.test(input)
+    ? input
+    : /^(www\.)?github\.com\//i.test(input)
+      ? `https://${input}`
+      : input;
+  const u = new URL(href);
   u.hash = "";
   u.search = "";
-  let path = u.pathname.replace(/\/+$/, "");
-  if (path.endsWith(".git")) {
-    path = path.slice(0, -4);
+  const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+  if (host !== "github.com") {
+    throw new Error("Not a GitHub repo URL");
   }
-  u.pathname = path;
-  return u.href;
+  const segments = u.pathname.split("/").filter(Boolean);
+  if (segments.length < 2) {
+    throw new Error("Invalid GitHub repo URL");
+  }
+  const owner = segments[0]!;
+  let repo = segments[1]!;
+  if (repo.endsWith(".git")) {
+    repo = repo.slice(0, -4);
+  }
+  if (!owner || !repo) {
+    throw new Error("Invalid GitHub repo URL");
+  }
+  u.protocol = "https:";
+  u.hostname = "github.com";
+  u.pathname = `/${owner}/${repo}`;
+  return u.toString();
 }
 
 export function buildGithubNormalizedKey(owner: string, repo: string): string {
@@ -38,7 +58,7 @@ export function firstGithubRepoUrlFromText(text: string | null | undefined): str
   if (!text?.trim()) {
     return null;
   }
-  const re = /https?:\/\/github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/gi;
+  const re = /(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)/gi;
   const m = re.exec(text);
   if (!m?.[1] || !m[2]) {
     return null;

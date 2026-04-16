@@ -174,7 +174,8 @@ function extractGithubRepoUrlsFromArticleText(articleBody: string): string[] {
   if (!text) {
     return [];
   }
-  const pattern = /https?:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:[^\s)\]}>,，。；;、]*)?/gi;
+  const pattern =
+    /(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:[^\s)\]}>,，。；;、]*)?/gi;
   const matches = text.match(pattern) ?? [];
   const unique = new Set<string>();
   for (const m of matches) {
@@ -577,10 +578,10 @@ export async function parseManualGithubProjectAction(input: {
   const rawGithubUrl = input.githubUrl?.trim() || "";
   const parsed = parseRepoUrl(rawGithubUrl);
   if (!parsed || parsed.platform !== "github") {
-    return { ok: false, error: "GitHub URL 无效，请输入 https://github.com/{owner}/{repo}" };
+    return { ok: false, error: "GitHub URL 无效，请输入 github.com/{owner}/{repo}" };
   }
   try {
-    const normalizedGithubUrl = normalizeGithubRepoUrl(rawGithubUrl);
+    const normalizedGithubUrl = normalizeGithubRepoUrl(`https://github.com/${parsed.owner}/${parsed.repo}`);
     const repoData = await fetchGithubRepo(parsed.owner, parsed.repo);
     const websiteFromInput = input.websiteUrl?.trim() || "";
     const websiteUrl = websiteFromInput || repoData.homepage || null;
@@ -634,10 +635,10 @@ export async function addManualGithubToQueueAction(input: {
   const githubUrlRaw = input.githubUrl?.trim() || "";
   const parsed = parseRepoUrl(githubUrlRaw);
   if (!parsed || parsed.platform !== "github") {
-    return { ok: false, error: "GitHub URL 无效，请输入 https://github.com/{owner}/{repo}" };
+    return { ok: false, error: "GitHub URL 无效，请输入 github.com/{owner}/{repo}" };
   }
   const title = input.title?.trim() || parsed.repo;
-  const githubUrl = normalizeGithubRepoUrl(githubUrlRaw);
+  const githubUrl = normalizeGithubRepoUrl(`https://github.com/${parsed.owner}/${parsed.repo}`);
   const duplicate = await findExistingProjectByPriority({
     githubUrl,
     websiteUrl: input.websiteUrl?.trim() || null,
@@ -690,10 +691,10 @@ export async function importManualGithubProjectAction(input: {
   const githubUrlRaw = input.githubUrl?.trim() || "";
   const parsed = parseRepoUrl(githubUrlRaw);
   if (!parsed || parsed.platform !== "github") {
-    return { ok: false, error: "GitHub URL 无效，请输入 https://github.com/{owner}/{repo}" };
+    return { ok: false, error: "GitHub URL 无效，请输入 github.com/{owner}/{repo}" };
   }
   const title = input.title?.trim() || parsed.repo;
-  const githubUrl = normalizeGithubRepoUrl(githubUrlRaw);
+  const githubUrl = normalizeGithubRepoUrl(`https://github.com/${parsed.owner}/${parsed.repo}`);
   const duplicate = await findExistingProjectByPriority({
     githubUrl,
     websiteUrl: input.websiteUrl?.trim() || null,

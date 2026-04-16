@@ -10,8 +10,22 @@ export type ParsedRepoUrl = {
   repo: string;
 };
 
-export function parseRepoUrl(raw: string): ParsedRepoUrl | null {
+function withDefaultProtocol(raw: string): string {
   const s = raw.trim();
+  if (!s) {
+    return s;
+  }
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) {
+    return s;
+  }
+  if (/^(www\.)?(github|gitee)\.com\//i.test(s)) {
+    return `https://${s}`;
+  }
+  return s;
+}
+
+export function parseRepoUrl(raw: string): ParsedRepoUrl | null {
+  const s = withDefaultProtocol(raw);
   if (!s) {
     return null;
   }
