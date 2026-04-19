@@ -20,8 +20,17 @@ export default async function AdminProjectEditPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+        <Link href="/admin/projects" className="underline-offset-4 hover:underline">
+          返回项目列表
+        </Link>
         <Link href="/admin/discovery" className="underline-offset-4 hover:underline">
-          返回待筛选项目
+          Discovery 候选
+        </Link>
+        <Link href={`/admin/projects/${project.id}/publish`} className="underline-offset-4 hover:underline">
+          发布与可见性（骨架）
+        </Link>
+        <Link href={`/admin/projects/${project.id}/activity`} className="underline-offset-4 hover:underline">
+          项目动态（骨架）
         </Link>
         <Link href={`/projects/${project.slug}`} className="underline-offset-4 hover:underline">
           查看前台项目页

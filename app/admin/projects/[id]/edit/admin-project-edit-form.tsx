@@ -267,13 +267,12 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
               {initial.importedFromCandidateId ? ` / 待筛选项目 ${initial.importedFromCandidateId}` : ""}
             </p>
           </div>
-          <button
-            type="button"
-            disabled
-            className="rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-400"
+          <Link
+            href={`/admin/marketing?projectId=${encodeURIComponent(initial.id)}`}
+            className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-900 underline-offset-2 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-100 dark:hover:bg-violet-950/70"
           >
-            进入项目营销中心（预留）
-          </button>
+            进入项目营销中心
+          </Link>
         </div>
 
         {initial.readinessMessages.length > 0 ? (

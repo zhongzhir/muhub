@@ -22,6 +22,8 @@ export async function approveDiscoveryCandidateAction(
     const r = await approveDiscoveryCandidateImport(candidateId, userId);
     revalidatePath("/admin/discovery");
     revalidatePath(`/admin/discovery/${candidateId}`);
+    revalidatePath("/admin/projects");
+    revalidatePath(`/admin/projects/${r.projectId}/edit`);
     return { ok: true, slug: r.slug, projectId: r.projectId };
   } catch (e) {
     if (e instanceof AdminAuthError) {
@@ -55,9 +57,12 @@ export async function mergeDiscoveryCandidateAction(
 ): Promise<DiscoveryAdminMutationResult> {
   try {
     const { userId } = await requireMuHubAdmin();
-    await mergeDiscoveryCandidateToProject(candidateId, projectId.trim(), userId);
+    const pid = projectId.trim();
+    await mergeDiscoveryCandidateToProject(candidateId, pid, userId);
     revalidatePath("/admin/discovery");
     revalidatePath(`/admin/discovery/${candidateId}`);
+    revalidatePath("/admin/projects");
+    revalidatePath(`/admin/projects/${pid}/edit`);
     return { ok: true };
   } catch (e) {
     if (e instanceof AdminAuthError) {

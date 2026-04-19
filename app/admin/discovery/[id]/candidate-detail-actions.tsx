@@ -72,8 +72,8 @@ export function CandidateDetailActions(props: {
     start(async () => {
       const result = await mergeDiscoveryCandidateAction(candidateId, projectId);
       if (result.ok) {
-        setMessage("已合并到已有项目。");
-        router.refresh();
+        router.push(`/admin/projects/${projectId}/edit`);
+        return;
       } else {
         setMessage(result.error);
       }

@@ -399,14 +399,20 @@ export default async function AdminDiscoveryDetailPage({
         {row.matchedProject ? (
           <section className="rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-4 text-sm dark:border-emerald-900/50 dark:bg-emerald-950/20">
             <h2 className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">已导入 Project</h2>
-            <p className="mt-2">
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
               <Link
                 href={`/projects/${row.matchedProject.slug}`}
                 className="font-medium text-emerald-800 underline dark:text-emerald-300"
               >
                 {row.matchedProject.name}
-              </Link>{" "}
+              </Link>
               <span className="font-mono text-xs text-zinc-500">({row.matchedProject.id})</span>
+              <Link
+                href={`/admin/projects/${row.matchedProject.id}/edit`}
+                className="text-sm font-medium text-emerald-900 underline dark:text-emerald-200"
+              >
+                后台编辑项目
+              </Link>
             </p>
             {row.importStatus === "IMPORTED" ? (
               <ul className="mt-2 list-inside list-disc space-y-0.5 text-xs text-zinc-700 dark:text-zinc-300">
