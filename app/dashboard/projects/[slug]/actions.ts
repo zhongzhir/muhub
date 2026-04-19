@@ -78,7 +78,7 @@ export async function publishProject(
   if (!validation.ok) {
     return {
       ok: false,
-      error: `发布前请先补齐：${validation.errors.join("；")}`,
+      error: `发布前请先补齐：${validation.blockingErrors.join("；")}`,
     };
   }
 

@@ -1,23 +1,66 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import type { AdminProjectEditInitial } from "@/lib/admin-project-edit";
 import { PROJECT_CATEGORY_OPTIONS } from "@/lib/projects/project-categories";
 import { saveAdminProject, type AdminProjectEditFormState } from "./actions";
 
-const initialState: AdminProjectEditFormState = { ok: false };
+const initialState: AdminProjectEditFormState = { ok: false, action: null };
 
 const inputClass = "muhub-input mt-1";
 
+function formatPublishedAt(value: string | null | undefined) {
+  if (!value) {
+    return "未发布";
+  }
+  return value.replace("T", " ").slice(0, 19);
+}
+
 export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditInitial }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(saveAdminProject, initialState);
+  const [toast, setToast] = useState<AdminProjectEditFormState["toast"]>();
+
   useRedirectFromActionState(state.redirectPath);
+
+  useEffect(() => {
+    if (!state.toast) {
+      return;
+    }
+    setToast(state.toast);
+  }, [state.toast]);
+
+  useEffect(() => {
+    if (state.ok && state.refreshedAt && !state.redirectPath) {
+      router.refresh();
+    }
+  }, [router, state.ok, state.refreshedAt, state.redirectPath]);
+
+  const statusView = {
+    status: state.statusSnapshot?.status ?? initial.status,
+    visibilityStatus: state.statusSnapshot?.visibilityStatus ?? initial.visibilityStatus,
+    isPublic: state.statusSnapshot?.isPublic ?? initial.isPublic,
+    publishedAt: state.statusSnapshot?.publishedAt ?? initial.publishedAt,
+  };
 
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="projectId" value={initial.id} />
+
+      {toast ? (
+        <div
+          className={`rounded-xl px-4 py-3 text-sm ${
+            toast.kind === "success"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {toast.message}
+        </div>
+      ) : null}
 
       {state.formError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -30,13 +73,21 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">基础信息</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              项目 ID：<code>{initial.id}</code>
+              项目 ID：
+              {" "}
+              <code>{initial.id}</code>
             </p>
           </div>
           <div className="text-right text-xs text-zinc-500">
-            <div>状态：{initial.status}</div>
             <div>访问路径：/projects/{initial.slug}</div>
           </div>
+        </div>
+
+        <div className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-600 sm:grid-cols-2 lg:grid-cols-4">
+          <div>当前状态：{statusView.status}</div>
+          <div>当前可见性：{statusView.visibilityStatus}</div>
+          <div>是否公开：{statusView.isPublic ? "是" : "否"}</div>
+          <div>发布时间：{formatPublishedAt(statusView.publishedAt)}</div>
         </div>
 
         <div>
@@ -107,7 +158,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
             name="externalLinksText"
             className={`${inputClass} min-h-[120px] resize-y`}
             defaultValue={initial.externalLinksText}
-            placeholder={"每行一条，格式：平台, URL, 标签(可选), primary(可选)"}
+            placeholder="每行一条，格式：平台, URL, 标签(可选), primary(可选)"
           />
           <p className="mt-1 text-xs text-zinc-500">例如：docs, https://example.com/docs, 文档, primary</p>
         </div>
@@ -164,10 +215,12 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
           </div>
         )}
 
-        <div className="grid gap-3 text-xs text-zinc-500 sm:grid-cols-3">
-          <div>当前状态：{initial.status}</div>
-          <div>可见性：{initial.visibilityStatus}</div>
-          <div>发布时间：{initial.publishedAt ? initial.publishedAt.replace("T", " ").slice(0, 19) : "未发布"}</div>
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs text-zinc-600">
+          发布阻塞项：
+          {" "}
+          项目名称、项目分类、一句话简介或项目详情至少一项、官网/GitHub/外部链接至少一项。
+          {" "}
+          其它提示仅为建议项，不会阻塞发布。
         </div>
       </section>
 
@@ -179,13 +232,9 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
           disabled={pending}
           className="muhub-btn-secondary px-4 py-3 disabled:opacity-60"
         >
-          {pending ? "保存中..." : "保存草稿"}
+          {pending && state.action === "save" ? "保存中..." : "保存草稿"}
         </button>
-        <Link
-          href={`/projects/${initial.slug}`}
-          target="_blank"
-          className="muhub-btn-secondary px-4 py-3"
-        >
+        <Link href={`/projects/${initial.slug}`} target="_blank" className="muhub-btn-secondary px-4 py-3">
           预览
         </Link>
         <button
@@ -195,7 +244,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
           disabled={pending}
           className="muhub-btn-primary px-4 py-3 disabled:opacity-60"
         >
-          发布项目
+          {pending && state.action === "publish" ? "发布中..." : "发布项目"}
         </button>
       </div>
     </form>

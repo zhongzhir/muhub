@@ -21,6 +21,7 @@ export type AdminProjectEditInitial = {
   aiCardSummary: string;
   status: ProjectStatus;
   visibilityStatus: string;
+  isPublic: boolean;
   publishedAt: string;
   discoverySource: string;
   discoverySourceId: string;
@@ -43,7 +44,7 @@ export type ParsedAdminProjectInput = {
 
 export type PublishValidationResult = {
   ok: boolean;
-  errors: string[];
+  blockingErrors: string[];
   readinessMessages: string[];
 };
 
@@ -59,9 +60,12 @@ function normalizeOptionalUrl(value: string, fieldLabel: string): string | null 
   }
 }
 
-function parseExternalLinks(text: string): Array<{ platform: string; url: string; label: string | null; isPrimary: boolean }> {
+function parseExternalLinks(
+  text: string,
+): Array<{ platform: string; url: string; label: string | null; isPrimary: boolean }> {
   const rows: Array<{ platform: string; url: string; label: string | null; isPrimary: boolean }> = [];
   const seen = new Set<string>();
+
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line) {
@@ -69,12 +73,12 @@ function parseExternalLinks(text: string): Array<{ platform: string; url: string
     }
     const parts = line.split(",").map((part) => part.trim());
     if (parts.length < 2) {
-      throw new Error("外部链接每行请使用“平台, URL, 标签(可选)”格式。");
+      throw new Error('外部链接每行请使用“平台, URL, 标签(可选), primary(可选)”格式。');
     }
     const platform = parts[0];
     const url = normalizeOptionalUrl(parts[1], `外部链接 ${platform}`) ?? "";
     if (!platform || !url) {
-      throw new Error("外部链接需要同时填写平台与 URL。");
+      throw new Error("外部链接需要同时填写平台和 URL。");
     }
     const label = parts[2] ? parts[2] : null;
     const isPrimary = parts[3]?.toLowerCase() === "primary";
@@ -85,6 +89,7 @@ function parseExternalLinks(text: string): Array<{ platform: string; url: string
     seen.add(dedupeKey);
     rows.push({ platform, url, label, isPrimary });
   }
+
   return rows;
 }
 
@@ -125,18 +130,19 @@ export function parseAdminProjectInput(formData: FormData): ParsedAdminProjectIn
 }
 
 export function validateProjectForPublish(input: ParsedAdminProjectInput): PublishValidationResult {
-  const errors: string[] = [];
+  const blockingErrors: string[] = [];
+
   if (!input.name.trim()) {
-    errors.push("项目名称未填写");
+    blockingErrors.push("项目名称未填写");
   }
   if (!input.tagline?.trim() && !input.description?.trim()) {
-    errors.push("至少补充一句话简介或项目详情");
+    blockingErrors.push("至少补充一句话简介或项目详情");
   }
   if (!input.primaryCategory?.trim()) {
-    errors.push("请选择项目分类");
+    blockingErrors.push("请选择项目分类");
   }
   if (!input.websiteUrl && !input.githubUrl && input.externalLinks.length === 0) {
-    errors.push("至少补充一个官网、GitHub 或外部链接");
+    blockingErrors.push("至少补充一个官网、GitHub 或外部链接");
   }
 
   const completeness = computeProjectCompleteness(
@@ -154,8 +160,8 @@ export function validateProjectForPublish(input: ParsedAdminProjectInput): Publi
   );
 
   return {
-    ok: errors.length === 0,
-    errors,
+    ok: blockingErrors.length === 0,
+    blockingErrors,
     readinessMessages: publishReadinessMessages(completeness),
   };
 }
@@ -202,6 +208,7 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
     aiCardSummary: row.aiCardSummary ?? "",
     status: row.status,
     visibilityStatus: row.visibilityStatus,
+    isPublic: row.isPublic,
     publishedAt: row.publishedAt ? row.publishedAt.toISOString() : "",
     discoverySource: row.discoverySource ?? "",
     discoverySourceId: row.discoverySourceId ?? "",
