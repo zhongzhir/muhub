@@ -36,17 +36,12 @@ function readSuggestSourceFromForm(): Parameters<typeof suggestAdminProjectClass
 export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditInitial }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(saveAdminProject, initialState);
+  /** 与 `page.tsx` 中 `key={project.dataUpdatedAt}` 配合：保存后 remount，此处无需 effect 同步 props */
   const [categoryValue, setCategoryValue] = useState(initial.category);
   const [tagsValue, setTagsValue] = useState(initial.tags);
   const [classifyHint, setClassifyHint] = useState<string | null>(null);
 
   useRedirectFromActionState(state.redirectPath);
-
-  useEffect(() => {
-    setCategoryValue(initial.category);
-    setTagsValue(initial.tags);
-    setClassifyHint(null);
-  }, [initial.id, initial.dataUpdatedAt, initial.category, initial.tags]);
 
   useEffect(() => {
     if (state.ok && state.refreshedAt && !state.redirectPath) {
