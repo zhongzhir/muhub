@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
@@ -22,16 +22,8 @@ function formatPublishedAt(value: string | null | undefined) {
 export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditInitial }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(saveAdminProject, initialState);
-  const [toast, setToast] = useState<AdminProjectEditFormState["toast"]>();
 
   useRedirectFromActionState(state.redirectPath);
-
-  useEffect(() => {
-    if (!state.toast) {
-      return;
-    }
-    setToast(state.toast);
-  }, [state.toast]);
 
   useEffect(() => {
     if (state.ok && state.refreshedAt && !state.redirectPath) {
@@ -50,15 +42,15 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="projectId" value={initial.id} />
 
-      {toast ? (
+      {state.toast ? (
         <div
           className={`rounded-xl px-4 py-3 text-sm ${
-            toast.kind === "success"
+            state.toast.kind === "success"
               ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
               : "border border-red-200 bg-red-50 text-red-700"
           }`}
         >
-          {toast.message}
+          {state.toast.message}
         </div>
       ) : null}
 
