@@ -37,7 +37,7 @@ export default async function AdminProjectEditPage({
         </p>
       </header>
 
-      <AdminProjectEditForm initial={project} />
+      <AdminProjectEditForm key={project.dataUpdatedAt} initial={project} />
     </div>
   );
 }

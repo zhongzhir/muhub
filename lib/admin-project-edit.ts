@@ -1,7 +1,8 @@
 import type { ProjectStatus } from "@prisma/client";
+import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
 import { prisma } from "@/lib/prisma";
 import { formatProjectTagsInput, parseProjectTags } from "@/lib/projects/project-tags";
-import { isProjectCategory } from "@/lib/projects/project-categories";
+import { normalizePrimaryCategoryToSlug } from "@/lib/projects/project-categories";
 import {
   completenessInputFromParts,
   computeProjectCompleteness,
@@ -11,6 +12,8 @@ import {
 export type AdminProjectEditInitial = {
   id: string;
   slug: string;
+  /** 用于 soft refresh 后强制 remount，使 select 等与服务器 defaultValue 同步 */
+  dataUpdatedAt: string;
   name: string;
   tagline: string;
   description: string;
@@ -110,10 +113,11 @@ export function parseAdminProjectInput(formData: FormData): ParsedAdminProjectIn
 
   let primaryCategory: string | null = null;
   if (categoryRaw) {
-    if (!isProjectCategory(categoryRaw)) {
+    const normalized = normalizePrimaryCategoryToSlug(categoryRaw);
+    if (!normalized) {
       throw new Error("请选择有效的项目分类。");
     }
-    primaryCategory = categoryRaw;
+    primaryCategory = normalized;
   }
 
   return {
@@ -181,12 +185,17 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
     return null;
   }
 
+  const categorySlugForForm =
+    normalizePrimaryCategoryToSlug(row.primaryCategory) ??
+    normalizePrimaryCategoryToSlug(stringArrayFromJson(row.categoriesJson)[0]) ??
+    "";
+
   const readiness = computeProjectCompleteness(
     completenessInputFromParts({
       name: row.name,
       tagline: row.tagline,
       description: row.description,
-      primaryCategory: row.primaryCategory,
+      primaryCategory: categorySlugForForm || null,
       tags: row.tags,
       websiteUrl: row.websiteUrl,
       githubUrl: row.githubUrl,
@@ -198,10 +207,11 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
   return {
     id: row.id,
     slug: row.slug,
+    dataUpdatedAt: row.updatedAt.toISOString(),
     name: row.name,
     tagline: row.tagline ?? "",
     description: row.description ?? "",
-    category: row.primaryCategory ?? "",
+    category: categorySlugForForm,
     tags: formatProjectTagsInput(row.tags),
     websiteUrl: row.websiteUrl ?? "",
     githubUrl: row.githubUrl ?? "",

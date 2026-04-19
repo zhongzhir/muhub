@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import type { AdminProjectEditInitial } from "@/lib/admin-project-edit";
 import { PROJECT_CATEGORY_OPTIONS } from "@/lib/projects/project-categories";
+import { formatProjectTagsInput, parseProjectTags } from "@/lib/projects/project-tags";
 import { saveAdminProject, type AdminProjectEditFormState } from "./actions";
 
 const initialState: AdminProjectEditFormState = { ok: false, action: null };
@@ -19,11 +21,32 @@ function formatPublishedAt(value: string | null | undefined) {
   return value.replace("T", " ").slice(0, 19);
 }
 
+function readSuggestSourceFromForm(): Parameters<typeof suggestAdminProjectClassificationAndTags>[0] {
+  const val = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null)?.value ?? "";
+  return {
+    githubUrl: val("githubUrl"),
+    tagline: val("tagline"),
+    description: val("description"),
+    name: val("name"),
+    websiteUrl: val("websiteUrl"),
+    aiCardSummary: val("aiCardSummary"),
+  };
+}
+
 export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditInitial }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(saveAdminProject, initialState);
+  const [categoryValue, setCategoryValue] = useState(initial.category);
+  const [tagsValue, setTagsValue] = useState(initial.tags);
+  const [classifyHint, setClassifyHint] = useState<string | null>(null);
 
   useRedirectFromActionState(state.redirectPath);
+
+  useEffect(() => {
+    setCategoryValue(initial.category);
+    setTagsValue(initial.tags);
+    setClassifyHint(null);
+  }, [initial.id, initial.dataUpdatedAt, initial.category, initial.tags]);
 
   useEffect(() => {
     if (state.ok && state.refreshedAt && !state.redirectPath) {
@@ -36,6 +59,44 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     visibilityStatus: state.statusSnapshot?.visibilityStatus ?? initial.visibilityStatus,
     isPublic: state.statusSnapshot?.isPublic ?? initial.isPublic,
     publishedAt: state.statusSnapshot?.publishedAt ?? initial.publishedAt,
+  };
+
+  const applySuggestSoft = () => {
+    const hadCategory = categoryValue.trim() !== "";
+    const hadTags = parseProjectTags(tagsValue).length > 0;
+    const result = suggestAdminProjectClassificationAndTags(readSuggestSourceFromForm());
+    const suggestedTagsParsed = parseProjectTags(result.tags.join(", "));
+
+    if (!hadCategory) {
+      setCategoryValue(result.primaryCategory);
+    }
+    if (!hadTags) {
+      setTagsValue(formatProjectTagsInput(suggestedTagsParsed.slice(0, 8)));
+    }
+
+    const parts: string[] = [];
+    if (!hadCategory) {
+      parts.push(`已填入分类「${result.primaryCategory}」`);
+    } else {
+      parts.push("分类未改动（如需替换请清空分类或点击「强制覆盖」）");
+    }
+    if (!hadTags) {
+      parts.push(`已填入标签：${result.tags.join("，")}`);
+    } else {
+      parts.push("标签未改动（已手工填写；如需替换请点击「强制覆盖分类与标签」）");
+    }
+    setClassifyHint(parts.join("。"));
+  };
+
+  const applySuggestForce = () => {
+    if (!window.confirm("将用本次规则结果覆盖当前「项目分类」和「标签」，确定？")) {
+      return;
+    }
+    const result = suggestAdminProjectClassificationAndTags(readSuggestSourceFromForm());
+    const suggestedTagsParsed = parseProjectTags(result.tags.join(", "));
+    setCategoryValue(result.primaryCategory);
+    setTagsValue(formatProjectTagsInput(suggestedTagsParsed.slice(0, 8)));
+    setClassifyHint(`已覆盖为分类「${result.primaryCategory}」，标签：${result.tags.join("，")}`);
   };
 
   return (
@@ -101,7 +162,13 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="category">
               项目分类
             </label>
-            <select id="category" name="category" className={inputClass} defaultValue={initial.category}>
+            <select
+              id="category"
+              name="category"
+              className={inputClass}
+              value={categoryValue}
+              onChange={(e) => setCategoryValue(e.target.value)}
+            >
               <option value="">未分类</option>
               {PROJECT_CATEGORY_OPTIONS.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -118,11 +185,30 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
               id="tags"
               name="tags"
               className={inputClass}
-              defaultValue={initial.tags}
+              value={tagsValue}
+              onChange={(e) => setTagsValue(e.target.value)}
               placeholder="AI, 开源, Agent"
             />
           </div>
         </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <button
+            type="button"
+            className="muhub-btn-secondary w-fit px-3 py-2 text-sm"
+            onClick={applySuggestSoft}
+          >
+            自动生成分类与标签
+          </button>
+          <button type="button" className="text-sm text-zinc-600 underline-offset-4 hover:underline" onClick={applySuggestForce}>
+            强制覆盖分类与标签
+          </button>
+          <p className="text-xs text-zinc-500">
+            根据当前表单中的 GitHub、简介、详情、名称、官网与动态摘要做规则推断；不会自动执行，也不影响发布校验中的「标签为建议项」。
+          </p>
+        </div>
+        {classifyHint ? (
+          <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700">{classifyHint}</p>
+        ) : null}
       </section>
 
       <section className="muhub-card space-y-4 p-5 sm:p-6">
