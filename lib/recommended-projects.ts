@@ -79,7 +79,7 @@ export function recommendedProjectToPageView(p: RecommendedProject): ProjectPage
     aiCardSummary: undefined,
     aiWeeklySummary: null,
     sources: [],
-    status: "ACTIVE",
+    status: "PUBLISHED",
     createdAt: new Date(0),
     claimStatus: "UNCLAIMED",
     claimedAt: null,

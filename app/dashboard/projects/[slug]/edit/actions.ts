@@ -22,7 +22,7 @@ export type UpdateProjectFormState = {
 
 const initialFail: UpdateProjectFormState = { ok: false };
 
-const STATUSES: ProjectStatus[] = ["DRAFT", "ACTIVE", "ARCHIVED"];
+const STATUSES: ProjectStatus[] = ["DRAFT", "READY", "PUBLISHED", "ARCHIVED"];
 
 const SOCIAL_FIELDS: { platform: SocialPlatform; field: string }[] = [
   { platform: "WEIBO", field: "weibo" },

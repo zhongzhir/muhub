@@ -127,7 +127,7 @@ export async function approveDiscoveryCandidateImport(
         websiteUrl,
         githubUrl,
         sourceType: "discovery-v2",
-        status: "ACTIVE",
+        status: "DRAFT",
         isPublic: false,
         visibilityStatus: "DRAFT",
         discoverySource: cand.source.type,
@@ -149,6 +149,7 @@ export async function approveDiscoveryCandidateImport(
     await tx.discoveryCandidate.update({
       where: { id: cand.id },
       data: {
+        status: "APPROVED",
         reviewStatus: "APPROVED",
         importStatus: "IMPORTED",
         matchedProjectId: project.id,
@@ -210,6 +211,7 @@ export async function rejectDiscoveryCandidate(
   await prisma.discoveryCandidate.update({
     where: { id: candidateId },
     data: {
+      status: "REJECTED",
       reviewStatus: "REJECTED",
       importStatus: "SKIPPED",
       reviewedById: reviewerUserId,
@@ -303,6 +305,7 @@ export async function mergeDiscoveryCandidateToProject(
     await tx.discoveryCandidate.update({
       where: { id: cand.id },
       data: {
+        status: "MERGED",
         reviewStatus: "MERGED",
         importStatus: "IMPORTED",
         matchedProjectId: project.id,
@@ -314,4 +317,3 @@ export async function mergeDiscoveryCandidateToProject(
 
   await persistReviewPriorityForCandidateId(prisma, candidateId);
 }
-

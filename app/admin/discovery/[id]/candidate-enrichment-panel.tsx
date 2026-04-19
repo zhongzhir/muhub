@@ -137,7 +137,7 @@ export function CandidateEnrichmentPanel(props: {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-            Enrichment（外链补全 V1）
+            自动信息补全（外链补全 V1）
           </h2>
           <p className="mt-1 text-xs text-zinc-500">
             状态：{enrichmentStatus} · 从 GitHub README / 仓库主页 / owner、以及官网首页抽取；不覆盖已有字段，需勾选后
@@ -150,7 +150,7 @@ export function CandidateEnrichmentPanel(props: {
           onClick={runEnrichment}
           className="shrink-0 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
         >
-          运行 Enrichment
+          运行自动信息补全
         </button>
       </div>
 
@@ -251,7 +251,7 @@ export function CandidateEnrichmentPanel(props: {
           </table>
           {links.length === 0 ? (
             <p className="px-3 py-6 text-center text-xs text-zinc-500">
-              暂无抽取结果，请点击「运行 Enrichment」。
+              暂无抽取结果，请点击“运行自动信息补全”。
             </p>
           ) : null}
         </div>

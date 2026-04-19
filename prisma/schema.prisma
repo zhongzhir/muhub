@@ -9,8 +9,16 @@ datasource db {
 
 enum ProjectStatus {
   DRAFT
-  ACTIVE
+  READY
+  PUBLISHED
   ARCHIVED
+}
+
+enum DiscoveryCandidateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  MERGED
 }
 
 /** 广场与对外匿名可见语义（与 isPublic 双轨兼容，查询以本字段为准） */
@@ -290,6 +298,7 @@ model DiscoveryCandidate {
   isChineseTool               Boolean?
 
   enrichmentStatus DiscoveryEnrichmentStatus @default(PENDING)
+  status           DiscoveryCandidateStatus  @default(PENDING)
   reviewStatus     DiscoveryReviewStatus     @default(PENDING)
   importStatus     DiscoveryImportStatus     @default(PENDING)
 
@@ -328,6 +337,7 @@ model DiscoveryCandidate {
   @@index([isAiRelated])
   @@index([isChineseTool])
   @@index([classificationStatus])
+  @@index([status])
   @@index([reviewStatus, importStatus])
   @@index([reviewStatus, reviewPriorityScore(sort: Desc)])
   @@index([repoUrl])
@@ -525,7 +535,7 @@ model Project {
   isFeatured   Boolean       @default(false)
   /** 数据来源占位，如 seed、manual */
   sourceType   String?
-  status       ProjectStatus @default(ACTIVE)
+  status       ProjectStatus @default(DRAFT)
   /** 历史字段；发布/隐藏动作与 visibilityStatus 同步 */
   isPublic     Boolean                 @default(false)
   visibilityStatus ProjectVisibilityStatus @default(DRAFT)
@@ -539,6 +549,7 @@ model Project {
   claimedByUser   User?   @relation("ProjectClaimer", fields: [claimedByUserId], references: [id])
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  publishedAt  DateTime?
   /** 非空表示已软删除；广场与详情不显；slug 仍占用直至恢复或未来硬删 */
   deletedAt    DateTime?
 

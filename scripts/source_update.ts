@@ -16,7 +16,7 @@ async function main(): Promise<void> {
 
   const projects = await prisma.project.findMany({
     where: {
-      status: "ACTIVE",
+      status: "PUBLISHED",
       ...PROJECT_ACTIVE_FILTER,
       sources: {
         some: { kind: { in: ["WEBSITE", "BLOG", "DOCS"] } },

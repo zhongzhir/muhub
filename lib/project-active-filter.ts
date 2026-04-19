@@ -7,5 +7,6 @@ export const PROJECT_ACTIVE_FILTER = { deletedAt: null } as const;
 /** 项目广场、匿名 sitemap / 分享可见：已公开且未删除 */
 export const PROJECT_PLAZA_FILTER = {
   deletedAt: null,
+  status: "PUBLISHED" as const,
   visibilityStatus: "PUBLISHED" as const,
 } as const;

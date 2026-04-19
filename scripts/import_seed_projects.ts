@@ -131,7 +131,7 @@ async function main(): Promise<void> {
             githubUrl: canonicalRepoUrl,
             isFeatured,
             sourceType,
-            status: "ACTIVE",
+            status: "PUBLISHED",
             isPublic: true,
             visibilityStatus: "PUBLISHED",
             claimStatus: "UNCLAIMED",

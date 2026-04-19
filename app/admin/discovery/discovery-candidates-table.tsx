@@ -155,7 +155,7 @@ export function DiscoveryCandidatesTable(props: {
           disabled={pending}
           onClick={() => runBulk("/api/admin/discovery/candidates/bulk-enrich")}
           className="rounded border border-indigo-400 bg-indigo-50 px-2 py-1 text-xs text-indigo-900 disabled:opacity-50 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200"
-          title="对选中候选依次运行 Enrichment（GitHub + 官网）"
+          title="对选中候选依次运行自动信息补全（GitHub + 官网）"
         >
           批量补全
         </button>

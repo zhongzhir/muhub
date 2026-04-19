@@ -226,7 +226,7 @@ export async function importJsonDiscoveryItem(
       websiteUrl: link.websiteUrl,
       tags: [],
       sourceType: "discovery-json-queue",
-      status: "ACTIVE",
+      status: "DRAFT",
       isPublic: false,
       visibilityStatus: "DRAFT",
       discoverySource: item.sourceType,

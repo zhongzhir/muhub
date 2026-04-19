@@ -1,7 +1,3 @@
-/**
- * 项目来源与生命周期标签：产品统一文案与样式（中文优先）。
- */
-
 import type { ClaimStatus, ProjectStatus } from "@prisma/client";
 import { isRecommendedProject } from "@/lib/recommended-projects";
 
@@ -20,7 +16,6 @@ export type ProjectDisplayBadge = {
   key: string;
   label: string;
   variant: BadgeVariant;
-  /** 供 Playwright 等挂 data-testid */
   testId?: string;
 };
 
@@ -33,7 +28,6 @@ export type ProjectBadgeContext = {
   status: ProjectStatus;
 };
 
-/** 来源类标签（推荐 / 种子 / 导入 / 手工 / 演示 / 精选） */
 export function buildProjectSourceBadges(ctx: ProjectBadgeContext): ProjectDisplayBadge[] {
   const badges: ProjectDisplayBadge[] = [];
 
@@ -46,13 +40,13 @@ export function buildProjectSourceBadges(ctx: ProjectBadgeContext): ProjectDispl
     return badges;
   }
 
-  const st = (ctx.sourceType ?? "").trim().toLowerCase();
-  if (st === "seed") {
+  const sourceType = (ctx.sourceType ?? "").trim().toLowerCase();
+  if (sourceType === "seed") {
     badges.push({ key: "src-seed", label: "种子项目", variant: "violet" });
-  } else if (st === "import") {
-    badges.push({ key: "src-import", label: "仓库导入", variant: "sky" });
+  } else if (sourceType === "import") {
+    badges.push({ key: "src-import", label: "导入项目", variant: "sky" });
   } else {
-    badges.push({ key: "src-manual", label: "手工创建", variant: "slate" });
+    badges.push({ key: "src-manual", label: "手动创建", variant: "slate" });
   }
 
   if (ctx.isFeatured) {
@@ -62,25 +56,22 @@ export function buildProjectSourceBadges(ctx: ProjectBadgeContext): ProjectDispl
   return badges;
 }
 
-/** 发布状态 + 认领状态（仅库内项目展示「未认领」） */
 export function buildProjectLifecycleBadges(ctx: ProjectBadgeContext): ProjectDisplayBadge[] {
   const badges: ProjectDisplayBadge[] = [];
 
   if (ctx.status === "DRAFT") {
     badges.push({ key: "life-draft", label: "草稿", variant: "zinc" });
-  } else if (ctx.status === "ACTIVE") {
-    badges.push({ key: "life-active", label: "已发布", variant: "emerald" });
+  } else if (ctx.status === "READY") {
+    badges.push({ key: "life-ready", label: "待发布", variant: "amber" });
+  } else if (ctx.status === "PUBLISHED") {
+    badges.push({ key: "life-published", label: "已发布", variant: "emerald" });
   } else {
     badges.push({ key: "life-archived", label: "已归档", variant: "slate" });
   }
 
   if (ctx.fromDb) {
     if (ctx.claimStatus === "CLAIMED") {
-      badges.push({
-        key: "life-claimed",
-        label: "已认领",
-        variant: "emeraldSolid",
-      });
+      badges.push({ key: "life-claimed", label: "已认领", variant: "emeraldSolid" });
     } else {
       badges.push({ key: "life-unclaimed", label: "未认领", variant: "outline" });
     }
@@ -101,7 +92,6 @@ export function buildProjectBadgeGroups(ctx: ProjectBadgeContext): {
 
 const baseBadge = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold";
 
-/** 详情 / 广场等浅色背景 */
 export function projectBadgeClass(variant: BadgeVariant, theme: "light" | "dark" = "light"): string {
   if (theme === "dark") {
     switch (variant) {
@@ -126,7 +116,8 @@ export function projectBadgeClass(variant: BadgeVariant, theme: "light" | "dark"
       default:
         return `${baseBadge} bg-white/15 text-zinc-100`;
     }
-  } // light / card
+  }
+
   switch (variant) {
     case "amber":
       return `${baseBadge} bg-amber-100 text-amber-900 dark:bg-amber-900/45 dark:text-amber-100`;

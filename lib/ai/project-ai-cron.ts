@@ -156,7 +156,7 @@ export async function checkProjectUpdates(
     where: {
       githubUrl: { not: null },
       NOT: { githubUrl: "" },
-      status: "ACTIVE",
+      status: { in: ["READY", "PUBLISHED"] },
       githubSnapshots: { some: {} },
       ...PROJECT_ACTIVE_FILTER,
     },

@@ -287,7 +287,7 @@ export async function createProject(
         sourceType,
         primaryCategory,
         isFeatured,
-        status: "ACTIVE",
+        status: "DRAFT",
         isPublic: false,
         visibilityStatus: "DRAFT",
         createdById: ownerId,

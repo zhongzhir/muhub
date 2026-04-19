@@ -237,7 +237,7 @@ export const demoProjectView: ProjectPageView = {
       createdAt: new Date("2026-02-20T08:00:00.000Z"),
     },
   ] satisfies DemoUpdate[],
-  status: "ACTIVE",
+  status: "PUBLISHED",
   createdAt: new Date("2026-01-01T08:00:00.000Z"),
   claimStatus: "UNCLAIMED",
   claimedAt: null,

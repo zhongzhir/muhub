@@ -29,12 +29,12 @@ export default async function AdminDiscoveryListPage({
   await ensureDiscoveryDefaultSources();
 
   const sp = await searchParams;
-  const u = nextSearchParamsToURLSearchParams(sp);
-  const page = Math.max(1, Number(u.get("page")) || 1);
+  const query = nextSearchParamsToURLSearchParams(sp);
+  const page = Math.max(1, Number(query.get("page")) || 1);
   const pageSize = 30;
 
-  const where = discoveryCandidateWhereFromSearchParams(u);
-  const orderBy = discoveryCandidateOrderByFromParams(u.get("sort"), u.get("order"));
+  const where = discoveryCandidateWhereFromSearchParams(query);
+  const orderBy = discoveryCandidateOrderByFromParams(query.get("sort"), query.get("order"));
 
   const [sources, total, rows, spotlights] = await Promise.all([
     prisma.discoverySource.findMany({
@@ -82,63 +82,63 @@ export default async function AdminDiscoveryListPage({
     fetchDiscoveryReviewSpotlights(),
   ]);
 
-  const tableRows: CandidateListRow[] = rows.map((r) => {
+  const tableRows: CandidateListRow[] = rows.map((row) => {
     const signals = computeDiscoveryCandidateQualitySignals({
-      website: r.website,
-      docsUrl: r.docsUrl,
-      twitterUrl: r.twitterUrl,
-      repoUrl: r.repoUrl,
-      descriptionRaw: r.descriptionRaw,
-      summary: r.summary,
-      tagsJson: r.tagsJson,
-      lastCommitAt: r.lastCommitAt,
-      repoUpdatedAt: r.repoUpdatedAt,
-      stars: r.stars,
+      website: row.website,
+      docsUrl: row.docsUrl,
+      twitterUrl: row.twitterUrl,
+      repoUrl: row.repoUrl,
+      descriptionRaw: row.descriptionRaw,
+      summary: row.summary,
+      tagsJson: row.tagsJson,
+      lastCommitAt: row.lastCommitAt,
+      repoUpdatedAt: row.repoUpdatedAt,
+      stars: row.stars,
     });
     const fusion = buildDiscoveryFusionSummary({
-      externalType: r.externalType,
-      sourceKey: r.sourceKey,
-      metadataJson: r.metadataJson,
-      repoUrl: r.repoUrl,
+      externalType: row.externalType,
+      sourceKey: row.sourceKey,
+      metadataJson: row.metadataJson,
+      repoUrl: row.repoUrl,
     });
     return {
-      id: r.id,
-      title: r.title,
-      stars: r.stars,
-      score: r.score,
-      reviewPriorityScore: r.reviewPriorityScore,
-      reviewStatus: r.reviewStatus,
-      importStatus: r.importStatus,
-      firstSeenAt: r.firstSeenAt.toISOString(),
-      lastSeenAt: r.lastSeenAt.toISOString(),
-      repoUpdatedAt: r.repoUpdatedAt?.toISOString() ?? null,
-      repoUrl: r.repoUrl,
-      sourceName: r.source.name,
-      sourceKey: r.source.key,
-      externalType: r.externalType,
+      id: row.id,
+      title: row.title,
+      stars: row.stars,
+      score: row.score,
+      reviewPriorityScore: row.reviewPriorityScore,
+      reviewStatus: row.reviewStatus,
+      importStatus: row.importStatus,
+      firstSeenAt: row.firstSeenAt.toISOString(),
+      lastSeenAt: row.lastSeenAt.toISOString(),
+      repoUpdatedAt: row.repoUpdatedAt?.toISOString() ?? null,
+      repoUrl: row.repoUrl,
+      sourceName: row.source.name,
+      sourceKey: row.source.key,
+      externalType: row.externalType,
       signals,
-      matchedProjectId: r.matchedProjectId,
-      suggestedType: r.suggestedType,
-      classificationScore: r.classificationScore,
-      classificationStatus: r.classificationStatus,
-      isAiRelated: r.isAiRelated,
-      isChineseTool: r.isChineseTool,
-      enrichmentStatus: r.enrichmentStatus,
+      matchedProjectId: row.matchedProjectId,
+      suggestedType: row.suggestedType,
+      classificationScore: row.classificationScore,
+      classificationStatus: row.classificationStatus,
+      isAiRelated: row.isAiRelated,
+      isChineseTool: row.isChineseTool,
+      enrichmentStatus: row.enrichmentStatus,
       multiSource: fusion.multiSource,
       productHuntFused: fusion.productHuntFused,
       contributingLabels: fusion.contributingLabels,
     };
   });
 
-  const paramString = u.toString();
+  const paramString = query.toString();
 
   return (
     <div className="space-y-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">项目发现候选池</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">待筛选项目</h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            抓取结果先入此池，审核通过后再进入正式项目（默认草稿，不自动发布到广场）。
+            先在这里筛选候选项目，再收录为正式项目并进入项目编辑页继续保存草稿、检查并发布。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -152,7 +152,7 @@ export default async function AdminDiscoveryListPage({
             href="/admin/discovery/sources"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >
-            来源 / 运行状态
+            来源与运行状态
           </Link>
         </div>
       </header>

@@ -11,7 +11,7 @@ import { runDiscoverySourceByKey } from "@/lib/discovery/run-discovery-source";
 import { recomputeDiscoveryReviewPriorityBatch } from "@/lib/discovery/persist-review-priority";
 
 export type DiscoveryAdminMutationResult =
-  | { ok: true; slug?: string }
+  | { ok: true; slug?: string; projectId?: string }
   | { ok: false; error: string };
 
 export async function approveDiscoveryCandidateAction(
@@ -22,7 +22,7 @@ export async function approveDiscoveryCandidateAction(
     const r = await approveDiscoveryCandidateImport(candidateId, userId);
     revalidatePath("/admin/discovery");
     revalidatePath(`/admin/discovery/${candidateId}`);
-    return { ok: true, slug: r.slug };
+    return { ok: true, slug: r.slug, projectId: r.projectId };
   } catch (e) {
     if (e instanceof AdminAuthError) {
       return { ok: false, error: e.message };
