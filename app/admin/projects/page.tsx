@@ -1,10 +1,29 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
+import type { Prisma, ProjectStatus, ProjectVisibilityStatus } from "@prisma/client";
+import { ProjectsAdminTable } from "./projects-admin-table";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminProjectsListPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+const STATUS_OPTIONS: ProjectStatus[] = ["DRAFT", "READY", "PUBLISHED", "ARCHIVED"];
+const VISIBILITY_OPTIONS: ProjectVisibilityStatus[] = ["DRAFT", "PUBLISHED", "HIDDEN"];
+
+function qp(sp: SearchParams, key: string): string {
+  const value = sp[key];
+  if (Array.isArray(value)) {
+    return (value[0] ?? "").trim();
+  }
+  return (value ?? "").trim();
+}
+
+export default async function AdminProjectsListPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   if (!process.env.DATABASE_URL?.trim()) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950/40">
@@ -13,14 +32,40 @@ export default async function AdminProjectsListPage() {
     );
   }
 
+  const sp = await searchParams;
+  const status = qp(sp, "status");
+  const visibility = qp(sp, "visibility");
+  const keyword = qp(sp, "keyword");
+  const where: Prisma.ProjectWhereInput = {
+    ...PROJECT_ACTIVE_FILTER,
+    ...(status && STATUS_OPTIONS.includes(status as ProjectStatus)
+      ? { status: status as ProjectStatus }
+      : {}),
+    ...(visibility && VISIBILITY_OPTIONS.includes(visibility as ProjectVisibilityStatus)
+      ? { visibilityStatus: visibility as ProjectVisibilityStatus }
+      : {}),
+    ...(keyword
+      ? {
+          OR: [
+            { name: { contains: keyword, mode: "insensitive" } },
+            { slug: { contains: keyword, mode: "insensitive" } },
+            { tagline: { contains: keyword, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
   const rows = await prisma.project.findMany({
-    where: PROJECT_ACTIVE_FILTER,
+    where,
     select: {
       id: true,
       slug: true,
       name: true,
+      tagline: true,
       status: true,
       visibilityStatus: true,
+      primaryCategory: true,
+      tags: true,
       isPublic: true,
       updatedAt: true,
     },
@@ -45,52 +90,64 @@ export default async function AdminProjectsListPage() {
         </Link>
       </header>
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium uppercase text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/80">
-            <tr>
-              <th className="px-4 py-3">项目名称</th>
-              <th className="px-4 py-3">状态</th>
-              <th className="px-4 py-3">可见性</th>
-              <th className="px-4 py-3">公开</th>
-              <th className="px-4 py-3">更新时间</th>
-              <th className="px-4 py-3">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
-                  暂无项目
-                </td>
-              </tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/60">
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{r.name}</td>
-                  <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">{r.status}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.visibilityStatus}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.isPublic ? "是" : "否"}</td>
-                  <td className="px-4 py-3 text-xs text-zinc-500">{r.updatedAt.toISOString().replace("T", " ").slice(0, 19)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Link href={`/admin/projects/${r.id}/edit`} className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400">
-                        编辑
-                      </Link>
-                      <Link
-                        href={`/admin/marketing?projectId=${encodeURIComponent(r.id)}`}
-                        className="text-violet-600 underline-offset-2 hover:underline dark:text-violet-400"
-                      >
-                        营销中心
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <form className="grid gap-3 md:grid-cols-4">
+          <label className="text-sm text-zinc-600 dark:text-zinc-300">
+            状态
+            <select name="status" defaultValue={status} className="muhub-input mt-1">
+              <option value="">全部</option>
+              {STATUS_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-zinc-600 dark:text-zinc-300">
+            可见性
+            <select name="visibility" defaultValue={visibility} className="muhub-input mt-1">
+              <option value="">全部</option>
+              {VISIBILITY_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-zinc-600 dark:text-zinc-300 md:col-span-2">
+            关键词（name / slug / tagline）
+            <input
+              name="keyword"
+              defaultValue={keyword}
+              placeholder="例如：agent / muhub / 一句话简介"
+              className="muhub-input mt-1"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2 md:col-span-4">
+            <button type="submit" className="muhub-btn-primary px-3 py-2 text-sm">
+              筛选
+            </button>
+            <Link href="/admin/projects" className="muhub-btn-secondary px-3 py-2 text-sm">
+              重置
+            </Link>
+          </div>
+        </form>
+      </section>
+
+      <ProjectsAdminTable
+        rows={rows.map((r) => ({
+          id: r.id,
+          slug: r.slug,
+          name: r.name,
+          tagline: r.tagline,
+          status: r.status,
+          visibilityStatus: r.visibilityStatus,
+          primaryCategory: r.primaryCategory,
+          tags: r.tags,
+          isPublic: r.isPublic,
+          updatedAtText: r.updatedAt.toISOString().replace("T", " ").slice(0, 19),
+        }))}
+      />
     </div>
   );
 }

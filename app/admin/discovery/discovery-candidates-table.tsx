@@ -49,6 +49,22 @@ function Flag({ on, label }: { on: boolean; label: string }) {
   );
 }
 
+function reviewStateView(reviewStatus: string, importStatus: string) {
+  if (reviewStatus === "PENDING") {
+    return { label: "待处理", className: "bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200" };
+  }
+  if (reviewStatus === "REJECTED") {
+    return { label: "已拒绝", className: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300" };
+  }
+  if (reviewStatus === "MERGED") {
+    return { label: "已合并", className: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300" };
+  }
+  if (importStatus === "IMPORTED" || reviewStatus === "APPROVED") {
+    return { label: "已收录", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" };
+  }
+  return { label: "处理中", className: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" };
+}
+
 export function DiscoveryCandidatesTable(props: {
   rows: CandidateListRow[];
   paramString: string;
@@ -199,8 +215,10 @@ export function DiscoveryCandidatesTable(props: {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-zinc-100 dark:border-zinc-800/80">
+            {rows.map((r) => {
+              const state = reviewStateView(r.reviewStatus, r.importStatus);
+              return (
+              <tr key={r.id} className="border-b border-zinc-100 dark:border-zinc-800/80 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/30">
                 <td className="px-2 py-2">
                   <input
                     type="checkbox"
@@ -265,9 +283,14 @@ export function DiscoveryCandidatesTable(props: {
                 <td className="px-2 py-2 tabular-nums">{r.stars}</td>
                 <td className="px-2 py-2 tabular-nums">{r.score ?? "—"}</td>
                 <td className="px-2 py-2 text-[10px] leading-tight text-zinc-600">
-                  {r.reviewStatus}
-                  <br />
-                  {r.importStatus}
+                  <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${state.className}`}>
+                    {state.label}
+                  </span>
+                  <div className="mt-1">
+                    {r.reviewStatus}
+                    <br />
+                    {r.importStatus}
+                  </div>
                 </td>
                 <td className="max-w-[140px] px-2 py-2 text-[10px] leading-tight text-zinc-600">
                   <div className="truncate font-medium text-violet-800 dark:text-violet-300" title={r.suggestedType ?? ""}>
@@ -310,7 +333,8 @@ export function DiscoveryCandidatesTable(props: {
                   <div>更 {r.repoUpdatedAt?.slice(0, 10) ?? "—"}</div>
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
         {rows.length === 0 ? (

@@ -7,6 +7,7 @@ import {
   validateProjectForPublish,
   type ParsedAdminProjectInput,
 } from "@/lib/admin-project-edit";
+import { writeProjectActionLog } from "@/lib/project-action-log";
 import { prisma } from "@/lib/prisma";
 
 export type AdminProjectEditFormState = {
@@ -226,6 +227,18 @@ export async function saveAdminProject(
           })),
         });
       }
+
+      await writeProjectActionLog(
+        {
+          projectId: existing.id,
+          action: intent === "publish" ? "publish" : "save",
+          detail:
+            intent === "publish"
+              ? "编辑页发布项目"
+              : "编辑页保存草稿",
+        },
+        tx,
+      );
     });
 
     const updated = await prisma.project.findUniqueOrThrow({

@@ -15,6 +15,7 @@ import {
   projectCreateClassificationSlice,
 } from "@/lib/discovery/sync-discovery-to-project";
 import { persistReviewPriorityForCandidateId } from "@/lib/discovery/persist-review-priority";
+import { writeProjectActionLog } from "@/lib/project-action-log";
 
 function taglineFromSummary(summary: string | null | undefined): string | null {
   if (!summary?.trim()) {
@@ -157,6 +158,15 @@ export async function approveDiscoveryCandidateImport(
         reviewedAt: new Date(),
       },
     });
+
+    await writeProjectActionLog(
+      {
+        projectId: project.id,
+        action: "import",
+        detail: `从 discovery 收录：candidate=${cand.id}`,
+      },
+      tx,
+    );
 
     return { projectId: project.id, slug: project.slug };
   });

@@ -7,6 +7,11 @@ export type AdminMarketingProjectSnippet = {
   name: string;
   status: string;
   visibilityStatus: string;
+  tagline: string | null;
+  primaryCategory: string | null;
+  tags: string[];
+  websiteUrl: string | null;
+  githubUrl: string | null;
 };
 
 export async function fetchMarketingProjectSnippet(
@@ -24,6 +29,11 @@ export async function fetchMarketingProjectSnippet(
       name: true,
       status: true,
       visibilityStatus: true,
+      tagline: true,
+      primaryCategory: true,
+      tags: true,
+      websiteUrl: true,
+      githubUrl: true,
     },
   });
 }

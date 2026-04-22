@@ -27,10 +27,10 @@ export default async function AdminProjectEditPage({
           Discovery 候选
         </Link>
         <Link href={`/admin/projects/${project.id}/publish`} className="underline-offset-4 hover:underline">
-          发布与可见性（骨架）
+          发布与可见性
         </Link>
         <Link href={`/admin/projects/${project.id}/activity`} className="underline-offset-4 hover:underline">
-          项目动态（骨架）
+          项目动态
         </Link>
         <Link href={`/projects/${project.slug}`} className="underline-offset-4 hover:underline">
           查看前台项目页

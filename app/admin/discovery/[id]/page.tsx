@@ -413,7 +413,21 @@ export default async function AdminDiscoveryDetailPage({
               >
                 后台编辑项目
               </Link>
+              <Link
+                href={`/admin/marketing?projectId=${encodeURIComponent(row.matchedProject.id)}`}
+                className="text-sm font-medium text-emerald-900 underline dark:text-emerald-200"
+              >
+                去营销中心
+              </Link>
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href={`/admin/projects/${row.matchedProject.id}/edit`} className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-medium text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
+                下一步：后台编辑项目
+              </Link>
+              <Link href={`/admin/marketing?projectId=${encodeURIComponent(row.matchedProject.id)}`} className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-900 dark:border-violet-700 dark:bg-violet-950/30 dark:text-violet-200">
+                下一步：去营销中心
+              </Link>
+            </div>
             {row.importStatus === "IMPORTED" ? (
               <ul className="mt-2 list-inside list-disc space-y-0.5 text-xs text-zinc-700 dark:text-zinc-300">
                 <li>
