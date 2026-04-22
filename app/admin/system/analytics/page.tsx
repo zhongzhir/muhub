@@ -22,7 +22,8 @@ function StatCard({
 }
 
 export default async function AdminSystemAnalyticsPage() {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const [
     totalUsers,
