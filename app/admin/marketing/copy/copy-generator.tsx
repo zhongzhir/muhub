@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import type { MarketingCopyActionState, WriteSummaryActionState } from "./actions";
 import { generateMarketingCopyAction, writeSimpleSummaryFromCopyAction } from "./actions";
 
@@ -52,13 +52,16 @@ export function MarketingCopyGenerator({ projectId }: { projectId: string }) {
   >({});
   const [copyAllMessage, setCopyAllMessage] = useState("");
 
-  useEffect(() => {
+  const switchTemplate = (nextTemplate: "general" | "social") => {
     if (state.ok && state.output) {
-      setSessionOutputs((prev) => ({ ...prev, [state.template]: state.output! }));
+      setSessionOutputs((prev) => ({ ...prev, [state.template]: state.output }));
     }
-  }, [state.ok, state.output, state.template]);
+    setTemplate(nextTemplate);
+  };
 
-  const activeOutput = sessionOutputs[template] ?? state.output;
+  const latestOutputForTemplate =
+    state.ok && state.output && state.template === template ? state.output : null;
+  const activeOutput = latestOutputForTemplate ?? sessionOutputs[template] ?? null;
 
   const allCopyText = useMemo(() => {
     if (!activeOutput) {
@@ -111,14 +114,14 @@ export function MarketingCopyGenerator({ projectId }: { projectId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => setTemplate("general")}
+          onClick={() => switchTemplate("general")}
           className={`rounded px-3 py-1 text-xs ${template === "general" ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "border border-zinc-300 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300"}`}
         >
           通用模板
         </button>
         <button
           type="button"
-          onClick={() => setTemplate("social")}
+          onClick={() => switchTemplate("social")}
           className={`rounded px-3 py-1 text-xs ${template === "social" ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "border border-zinc-300 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300"}`}
         >
           社交模板
