@@ -61,6 +61,7 @@ export type ProjectPageView = {
   /** 项目 Logo URL（可选；分享页等用于展示） */
   logoUrl?: string;
   tagline?: string;
+  simpleSummary?: string;
   description: string;
   /** AI/导入生成的轻量标签 */
   tags?: string[];
@@ -77,6 +78,13 @@ export type ProjectPageView = {
     label?: string;
     isPrimary: boolean;
     source?: string | null;
+  }>;
+  referenceSources?: Array<{
+    title?: string;
+    url: string;
+    summary?: string;
+    sourceName?: string;
+    type?: string;
   }>;
   /** 经 Discovery 候选审核导入 */
   fromDiscovery?: boolean;
@@ -111,6 +119,7 @@ export const demoProjectView: ProjectPageView = {
   slug: "demo",
   name: "示例开源项目",
   tagline: "木哈布 演示项目的标语示例",
+  simpleSummary: "一个帮助你快速了解项目进展和价值的演示项目。",
   description:
     "这是一个用于展示项目详情页布局的示例项目，包含 GitHub 卡片、社媒与动态流等模块。",
   tags: ["开源", "演示", "木哈布"],

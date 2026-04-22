@@ -8,10 +8,12 @@ export type AdminMarketingProjectSnippet = {
   status: string;
   visibilityStatus: string;
   tagline: string | null;
+  simpleSummary: string | null;
   primaryCategory: string | null;
   tags: string[];
   websiteUrl: string | null;
   githubUrl: string | null;
+  referenceSources: unknown;
 };
 
 export async function fetchMarketingProjectSnippet(
@@ -30,10 +32,12 @@ export async function fetchMarketingProjectSnippet(
       status: true,
       visibilityStatus: true,
       tagline: true,
+      simpleSummary: true,
       primaryCategory: true,
       tags: true,
       websiteUrl: true,
       githubUrl: true,
+      referenceSources: true,
     },
   });
 }

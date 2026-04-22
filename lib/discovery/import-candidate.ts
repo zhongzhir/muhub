@@ -16,6 +16,10 @@ import {
 } from "@/lib/discovery/sync-discovery-to-project";
 import { persistReviewPriorityForCandidateId } from "@/lib/discovery/persist-review-priority";
 import { writeProjectActionLog } from "@/lib/project-action-log";
+import {
+  inferReferenceSourcesFromCandidate,
+  mergeReferenceSources,
+} from "@/lib/discovery/reference-sources";
 
 function taglineFromSummary(summary: string | null | undefined): string | null {
   if (!summary?.trim()) {
@@ -94,6 +98,17 @@ export async function approveDiscoveryCandidateImport(
     cand.summary?.trim() || cand.descriptionRaw?.trim()
       ? (cand.summary?.trim() || cand.descriptionRaw?.trim())!
       : null;
+  const referenceSources = mergeReferenceSources(
+    cand.referenceSources,
+    inferReferenceSourcesFromCandidate({
+      externalUrl: cand.externalUrl,
+      website: cand.website,
+      repoUrl: cand.repoUrl,
+      docsUrl: cand.docsUrl,
+      twitterUrl: cand.twitterUrl,
+      sourceName: cand.source.key,
+    }),
+  );
 
   let githubUrl: string | null = null;
   if (cand.repoUrl?.trim()) {
@@ -123,10 +138,12 @@ export async function approveDiscoveryCandidateImport(
         slug,
         tagline,
         description,
+        simpleSummary: tagline,
         tags,
         logoUrl: cand.avatarUrl?.trim() || null,
         websiteUrl,
         githubUrl,
+        referenceSources: referenceSources as unknown as Prisma.InputJsonValue,
         sourceType: "discovery-v2",
         status: "DRAFT",
         isPublic: false,
@@ -266,6 +283,7 @@ export async function mergeDiscoveryCandidateToProject(
       isChineseTool: true,
       discoverySource: true,
       discoverySourceId: true,
+      referenceSources: true,
     },
   });
   if (!project) {
@@ -279,6 +297,20 @@ export async function mergeDiscoveryCandidateToProject(
 
     const data: Prisma.ProjectUpdateInput = {
       tags: mergedTags,
+      referenceSources: mergeReferenceSources(
+        project.referenceSources,
+        mergeReferenceSources(
+          cand.referenceSources,
+          inferReferenceSourcesFromCandidate({
+            externalUrl: cand.externalUrl,
+            website: cand.website,
+            repoUrl: cand.repoUrl,
+            docsUrl: cand.docsUrl,
+            twitterUrl: cand.twitterUrl,
+            sourceName: cand.source.key,
+          }),
+        ),
+      ) as unknown as Prisma.InputJsonValue,
     };
 
     if (accepted) {

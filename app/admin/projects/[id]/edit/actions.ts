@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
 import {
   parseAdminProjectInput,
@@ -193,11 +194,13 @@ export async function saveAdminProject(
           name: parsed.name,
           tagline: parsed.tagline,
           description: parsed.description,
+          simpleSummary: parsed.simpleSummary ?? null,
           primaryCategory: parsed.primaryCategory,
           tags: parsed.tags,
           websiteUrl: parsed.websiteUrl,
           githubUrl: parsed.githubUrl,
           aiCardSummary: parsed.aiCardSummary,
+          referenceSources: (parsed.referenceSources ?? []) as unknown as Prisma.InputJsonValue,
           status: intent === "publish" ? "PUBLISHED" : nextDraftStatus,
           visibilityStatus:
             intent === "publish"

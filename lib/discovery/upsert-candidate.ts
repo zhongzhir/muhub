@@ -4,6 +4,10 @@ import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import type { GithubCandidatePayload } from "@/lib/discovery/map-github-repo";
 import { persistReviewPriorityForCandidateId } from "@/lib/discovery/persist-review-priority";
 import { scoreDiscoveryCandidate, tagsFromJson } from "@/lib/discovery/score-candidate";
+import {
+  inferReferenceSourcesFromCandidate,
+  mergeReferenceSources,
+} from "@/lib/discovery/reference-sources";
 import type { JsonValue } from "@/lib/discovery/types";
 import { fallbackSlugBase, isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 
@@ -100,6 +104,14 @@ export async function upsertGithubDiscoveryCandidate(
   };
 
   if (!existing) {
+    const referenceSources = inferReferenceSourcesFromCandidate({
+      externalUrl: payload.externalUrl,
+      website: payload.website,
+      repoUrl: payload.repoUrl,
+      docsUrl: payload.docsUrl,
+      twitterUrl: payload.twitterUrl,
+      sourceName: sourceKey,
+    });
     const created = await db.discoveryCandidate.create({
       data: {
         sourceId,
@@ -132,6 +144,7 @@ export async function upsertGithubDiscoveryCandidate(
         avatarUrl: payload.avatarUrl,
         categoriesJson: payload.categoriesJson as Prisma.InputJsonValue,
         tagsJson: payload.tagsJson as Prisma.InputJsonValue,
+        referenceSources: referenceSources as unknown as Prisma.InputJsonValue,
         metadataJson: mode === "trending" ? { firstSeenVia: "trending" } : { firstSeenVia: "github" },
         rawPayloadJson: payload.rawPayloadJson as Prisma.InputJsonValue,
         enrichmentStatus: "OK",
@@ -145,6 +158,14 @@ export async function upsertGithubDiscoveryCandidate(
   }
 
   if (mode === "trending") {
+    const referenceSources = inferReferenceSourcesFromCandidate({
+      externalUrl: payload.externalUrl,
+      website: payload.website,
+      repoUrl: payload.repoUrl,
+      docsUrl: payload.docsUrl,
+      twitterUrl: payload.twitterUrl,
+      sourceName: sourceKey,
+    });
     const mergedRaw = mergeRawWithTrendingSnapshot(
       existing.rawPayloadJson as JsonValue | null,
       payload.rawPayloadJson as JsonValue,
@@ -165,6 +186,10 @@ export async function upsertGithubDiscoveryCandidate(
         issues: payload.issues,
         lastCommitAt: payload.lastCommitAt,
         repoUpdatedAt: payload.repoUpdatedAt,
+        referenceSources: mergeReferenceSources(
+          existing.referenceSources,
+          referenceSources,
+        ) as unknown as Prisma.InputJsonValue,
         rawPayloadJson: mergedRaw as Prisma.InputJsonValue,
         metadataJson: { ...meta, trendingHits: hits } as Prisma.InputJsonValue,
         ...baseScores,
@@ -176,6 +201,14 @@ export async function upsertGithubDiscoveryCandidate(
   }
 
   if (shouldPreserveTextFields(existing.reviewStatus)) {
+    const referenceSources = inferReferenceSourcesFromCandidate({
+      externalUrl: payload.externalUrl,
+      website: payload.website,
+      repoUrl: payload.repoUrl,
+      docsUrl: payload.docsUrl,
+      twitterUrl: payload.twitterUrl,
+      sourceName: sourceKey,
+    });
     await db.discoveryCandidate.update({
       where: { id: existing.id },
       data: {
@@ -193,6 +226,10 @@ export async function upsertGithubDiscoveryCandidate(
         avatarUrl: payload.avatarUrl ?? existing.avatarUrl,
         tagsJson: payload.tagsJson as Prisma.InputJsonValue,
         categoriesJson: payload.categoriesJson as Prisma.InputJsonValue,
+        referenceSources: mergeReferenceSources(
+          existing.referenceSources,
+          referenceSources,
+        ) as unknown as Prisma.InputJsonValue,
         rawPayloadJson: {
           ...(asObject(existing.rawPayloadJson)),
           ...(asObject(payload.rawPayloadJson)),
@@ -239,6 +276,17 @@ export async function upsertGithubDiscoveryCandidate(
       avatarUrl: payload.avatarUrl,
       categoriesJson: payload.categoriesJson as Prisma.InputJsonValue,
       tagsJson: payload.tagsJson as Prisma.InputJsonValue,
+      referenceSources: mergeReferenceSources(
+        existing.referenceSources,
+        inferReferenceSourcesFromCandidate({
+          externalUrl: payload.externalUrl,
+          website: payload.website,
+          repoUrl: payload.repoUrl,
+          docsUrl: payload.docsUrl,
+          twitterUrl: payload.twitterUrl,
+          sourceName: sourceKey,
+        }),
+      ) as unknown as Prisma.InputJsonValue,
       rawPayloadJson: payload.rawPayloadJson as Prisma.InputJsonValue,
       ...baseScores,
       lastSeenAt: new Date(),
@@ -324,6 +372,12 @@ export async function upsertInstitutionDiscoveryCandidate(
     ...(sourceTitle ? { sourceTitle } : {}),
     ...(sourceUrl ? { sourceUrl } : {}),
   };
+  const referenceSources = inferReferenceSourcesFromCandidate({
+    externalUrl: externalUrlNorm,
+    website: normUrl,
+    docsUrl: sourceUrl ?? null,
+    sourceName: sourceKey,
+  });
 
   const scored = scoreDiscoveryCandidate({
     title: name,
@@ -377,6 +431,7 @@ export async function upsertInstitutionDiscoveryCandidate(
         forks: 0,
         watchers: 0,
         issues: 0,
+        referenceSources: referenceSources as unknown as Prisma.InputJsonValue,
         metadataJson: metadataJson as Prisma.InputJsonValue,
         rawPayloadJson: rawPayloadJson as Prisma.InputJsonValue,
         enrichmentStatus: "PENDING",
@@ -406,6 +461,10 @@ export async function upsertInstitutionDiscoveryCandidate(
         lastSeenAt: new Date(),
         website: normUrl,
         externalUrl: externalUrlNorm,
+        referenceSources: mergeReferenceSources(
+          existing.referenceSources,
+          referenceSources,
+        ) as unknown as Prisma.InputJsonValue,
         metadataJson: mergedMeta as Prisma.InputJsonValue,
         rawPayloadJson: mergedRaw as Prisma.InputJsonValue,
         ...baseScores,
@@ -431,6 +490,10 @@ export async function upsertInstitutionDiscoveryCandidate(
       summary: description?.slice(0, 2000) ?? null,
       descriptionRaw: description?.slice(0, 8000) ?? null,
       website: normUrl,
+      referenceSources: mergeReferenceSources(
+        existing.referenceSources,
+        referenceSources,
+      ) as unknown as Prisma.InputJsonValue,
       metadataJson: mergedMeta as Prisma.InputJsonValue,
       rawPayloadJson: mergedRaw as Prisma.InputJsonValue,
       ...baseScores,

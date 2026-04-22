@@ -1,4 +1,5 @@
 import type { ProjectStatus } from "@prisma/client";
+import { normalizeReferenceSources, type ReferenceSourceItem } from "@/lib/discovery/reference-sources";
 import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
 import { prisma } from "@/lib/prisma";
 import { formatProjectTagsInput, parseProjectTags } from "@/lib/projects/project-tags";
@@ -17,6 +18,7 @@ export type AdminProjectEditInitial = {
   name: string;
   tagline: string;
   description: string;
+  simpleSummary: string;
   category: string;
   tags: string;
   websiteUrl: string;
@@ -30,6 +32,7 @@ export type AdminProjectEditInitial = {
   discoverySourceId: string;
   importedFromCandidateId: string;
   externalLinksText: string;
+  referenceSources: ReferenceSourceItem[];
   readinessMessages: string[];
 };
 
@@ -37,12 +40,14 @@ export type ParsedAdminProjectInput = {
   name: string;
   tagline: string | null;
   description: string | null;
+  simpleSummary?: string | null;
   primaryCategory: string | null;
   tags: string[];
   websiteUrl: string | null;
   githubUrl: string | null;
   aiCardSummary: string | null;
   externalLinks: Array<{ platform: string; url: string; label: string | null; isPrimary: boolean }>;
+  referenceSources?: ReferenceSourceItem[];
 };
 
 export type PublishValidationResult = {
@@ -100,12 +105,22 @@ export function parseAdminProjectInput(formData: FormData): ParsedAdminProjectIn
   const name = String(formData.get("name") ?? "").trim();
   const tagline = String(formData.get("tagline") ?? "").trim() || null;
   const description = String(formData.get("description") ?? "").trim() || null;
+  const simpleSummary = String(formData.get("simpleSummary") ?? "").trim() || null;
   const categoryRaw = String(formData.get("category") ?? "").trim();
   const tags = parseProjectTags(String(formData.get("tags") ?? "").trim());
   const websiteUrl = normalizeOptionalUrl(String(formData.get("websiteUrl") ?? ""), "官网链接");
   const githubUrl = normalizeOptionalUrl(String(formData.get("githubUrl") ?? ""), "GitHub 链接");
   const aiCardSummary = String(formData.get("aiCardSummary") ?? "").trim() || null;
   const externalLinks = parseExternalLinks(String(formData.get("externalLinksText") ?? ""));
+  const referenceSourcesJson = String(formData.get("referenceSourcesJson") ?? "").trim();
+  let referenceSources: ReferenceSourceItem[] = [];
+  if (referenceSourcesJson) {
+    try {
+      referenceSources = normalizeReferenceSources(JSON.parse(referenceSourcesJson));
+    } catch {
+      throw new Error("参考资料格式不正确，请重试。");
+    }
+  }
 
   if (!name) {
     throw new Error("请填写项目名称。");
@@ -124,12 +139,14 @@ export function parseAdminProjectInput(formData: FormData): ParsedAdminProjectIn
     name,
     tagline,
     description,
+    simpleSummary,
     primaryCategory,
     tags,
     websiteUrl,
     githubUrl,
     aiCardSummary,
     externalLinks,
+    referenceSources,
   };
 }
 
@@ -211,6 +228,7 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
     name: row.name,
     tagline: row.tagline ?? "",
     description: row.description ?? "",
+    simpleSummary: row.simpleSummary ?? "",
     category: categorySlugForForm,
     tags: formatProjectTagsInput(row.tags),
     websiteUrl: row.websiteUrl ?? "",
@@ -226,6 +244,7 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
     externalLinksText: row.externalLinks
       .map((item) => [item.platform, item.url, item.label ?? "", item.isPrimary ? "primary" : ""].join(", "))
       .join("\n"),
+    referenceSources: normalizeReferenceSources(row.referenceSources),
     readinessMessages: publishReadinessMessages(readiness),
   };
 }

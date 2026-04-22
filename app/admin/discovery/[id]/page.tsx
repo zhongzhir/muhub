@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { computeDiscoveryCandidateQualitySignals } from "@/lib/discovery/candidate-quality-signals";
+import { normalizeReferenceSources } from "@/lib/discovery/reference-sources";
 import type { ReviewPrioritySignals } from "@/lib/discovery/review-priority";
 import { buildDiscoveryFusionSummary } from "@/lib/discovery/review-priority";
 import { CandidateDetailActions } from "./candidate-detail-actions";
@@ -157,6 +158,7 @@ export default async function AdminDiscoveryDetailPage({
       repoUpdatedAt: row.repoUpdatedAt,
       stars: row.stars,
     });
+    const referenceSources = normalizeReferenceSources(row.referenceSources);
 
     return (
       <div className="space-y-8">
@@ -354,6 +356,25 @@ export default async function AdminDiscoveryDetailPage({
           <p className="mt-2 text-sm text-zinc-600">
             类目：{categories.length ? categories.join(" · ") : "—"}
           </p>
+        </section>
+
+        <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">参考资料</h2>
+          {referenceSources.length === 0 ? (
+            <p className="mt-2 text-sm text-zinc-500">暂无参考资料。</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {referenceSources.map((item, idx) => (
+                <li key={`${item.type}-${item.url}-${idx}`} className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
+                  <p className="text-xs text-zinc-500">{item.type}</p>
+                  <a href={item.url} target="_blank" rel="noreferrer" className="mt-1 block break-all text-blue-600 underline dark:text-blue-400">
+                    {item.title || item.url}
+                  </a>
+                  {item.note ? <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{item.note}</p> : null}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <CandidateClassificationPanel

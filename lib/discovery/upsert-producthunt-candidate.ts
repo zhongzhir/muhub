@@ -2,6 +2,10 @@ import type { DiscoveryReviewStatus, Prisma, PrismaClient } from "@prisma/client
 import type { ProductHuntCandidatePayload } from "@/lib/discovery/producthunt/map-producthunt-item";
 import { persistReviewPriorityForCandidateId } from "@/lib/discovery/persist-review-priority";
 import { normalizeGithubRepoUrl, normalizeWebsiteHost } from "@/lib/discovery/normalize-url";
+import {
+  inferReferenceSourcesFromCandidate,
+  mergeReferenceSources,
+} from "@/lib/discovery/reference-sources";
 import { scoreDiscoveryCandidate, tagsFromJson } from "@/lib/discovery/score-candidate";
 import type { JsonValue } from "@/lib/discovery/types";
 
@@ -138,6 +142,12 @@ export async function upsertProductHuntDiscoveryCandidate(
   };
 
   if (!existing) {
+    const referenceSources = inferReferenceSourcesFromCandidate({
+      externalUrl: payload.externalUrl,
+      website: payload.website,
+      repoUrl: payload.repoUrl,
+      sourceName: sourceKey,
+    });
     const created = await db.discoveryCandidate.create({
       data: {
         sourceId,
@@ -156,6 +166,7 @@ export async function upsertProductHuntDiscoveryCandidate(
         repoUrl: payload.repoUrl ? normalizeGithubRepoUrlSafe(payload.repoUrl) : null,
         tagsJson: payload.tagsJson as Prisma.InputJsonValue,
         categoriesJson: payload.categoriesJson as Prisma.InputJsonValue,
+        referenceSources: referenceSources as unknown as Prisma.InputJsonValue,
         metadataJson: payload.metadataJson as Prisma.InputJsonValue,
         rawPayloadJson: payload.rawPayloadJson as Prisma.InputJsonValue,
         avatarUrl: payload.avatarUrl,
@@ -195,6 +206,15 @@ export async function upsertProductHuntDiscoveryCandidate(
         sourceKey,
         lastSeenAt: new Date(),
         tagsJson: mergeTopicTags(existing.tagsJson, tagList),
+        referenceSources: mergeReferenceSources(
+          existing.referenceSources,
+          inferReferenceSourcesFromCandidate({
+            externalUrl: payload.externalUrl,
+            website: payload.website,
+            repoUrl: payload.repoUrl,
+            sourceName: sourceKey,
+          }),
+        ) as unknown as Prisma.InputJsonValue,
         metadataJson: {
           ...prevMeta,
           productHunt: { ...prevPh, ...incomingPh, snapshots: phHistory },
@@ -221,6 +241,15 @@ export async function upsertProductHuntDiscoveryCandidate(
         sourceKey,
         lastSeenAt: new Date(),
         tagsJson: mergeTopicTags(existing.tagsJson, tagList),
+        referenceSources: mergeReferenceSources(
+          existing.referenceSources,
+          inferReferenceSourcesFromCandidate({
+            externalUrl: payload.externalUrl,
+            website: payload.website,
+            repoUrl: payload.repoUrl,
+            sourceName: sourceKey,
+          }),
+        ) as unknown as Prisma.InputJsonValue,
         metadataJson: meta as Prisma.InputJsonValue,
         rawPayloadJson: {
           ...asObject(existing.rawPayloadJson),
@@ -236,6 +265,12 @@ export async function upsertProductHuntDiscoveryCandidate(
   }
 
   if (shouldPreserveTextFields(existing.reviewStatus)) {
+    const referenceSources = inferReferenceSourcesFromCandidate({
+      externalUrl: payload.externalUrl,
+      website: payload.website,
+      repoUrl: payload.repoUrl,
+      sourceName: sourceKey,
+    });
     await db.discoveryCandidate.update({
       where: { id: existing.id },
       data: {
@@ -246,6 +281,10 @@ export async function upsertProductHuntDiscoveryCandidate(
         externalUrl: payload.externalUrl,
         stars: payload.votesCount,
         tagsJson: mergeTopicTags(existing.tagsJson, tagList),
+        referenceSources: mergeReferenceSources(
+          existing.referenceSources,
+          referenceSources,
+        ) as unknown as Prisma.InputJsonValue,
         metadataJson: mergeJsonMeta(
           existing.metadataJson as JsonValue | null,
           payload.metadataJson,
@@ -286,6 +325,15 @@ export async function upsertProductHuntDiscoveryCandidate(
       repoUrl: payload.repoUrl ? normalizeGithubRepoUrlSafe(payload.repoUrl) : null,
       tagsJson: payload.tagsJson as Prisma.InputJsonValue,
       categoriesJson: payload.categoriesJson as Prisma.InputJsonValue,
+      referenceSources: mergeReferenceSources(
+        existing.referenceSources,
+        inferReferenceSourcesFromCandidate({
+          externalUrl: payload.externalUrl,
+          website: payload.website,
+          repoUrl: payload.repoUrl,
+          sourceName: sourceKey,
+        }),
+      ) as unknown as Prisma.InputJsonValue,
       metadataJson: payload.metadataJson as Prisma.InputJsonValue,
       rawPayloadJson: payload.rawPayloadJson as Prisma.InputJsonValue,
       avatarUrl: payload.avatarUrl,

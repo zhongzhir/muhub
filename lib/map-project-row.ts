@@ -8,6 +8,7 @@ import type {
   ProjectWeeklySummary,
 } from "@prisma/client";
 import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
+import { normalizeReferenceSources } from "@/lib/discovery/reference-sources";
 import type { ProjectPageView } from "@/lib/demo-project";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
@@ -83,6 +84,7 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     name: row.name,
     logoUrl: row.logoUrl ?? undefined,
     tagline: row.tagline ?? undefined,
+    simpleSummary: row.simpleSummary ?? undefined,
     description: row.description ?? "",
     tags: row.tags?.length ? [...row.tags] : [],
     categories: stringArrayFromJson(row.categoriesJson),
@@ -90,6 +92,13 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     isAiRelated: row.isAiRelated ?? undefined,
     isChineseTool: row.isChineseTool ?? undefined,
     externalLinks,
+    referenceSources: normalizeReferenceSources(row.referenceSources).map((item) => ({
+      title: item.title ?? undefined,
+      url: item.url,
+      summary: item.note ?? undefined,
+      sourceName: item.source ?? undefined,
+      type: item.type,
+    })),
     aiCardSummary: row.aiCardSummary ?? undefined,
     aiWeeklySummary: latestWeekly
       ? {

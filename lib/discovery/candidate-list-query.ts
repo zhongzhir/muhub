@@ -34,7 +34,14 @@ export const DISCOVERY_CLASSIFICATION_STATUSES: DiscoveryClassificationStatus[] 
   "ACCEPTED",
 ];
 
-export const DISCOVERY_SOURCE_TYPES: DiscoverySourceType[] = ["GITHUB", "PRODUCTHUNT", "INSTITUTION"];
+export const DISCOVERY_SOURCE_TYPES = [
+  "GITHUB",
+  "PRODUCTHUNT",
+  "INSTITUTION",
+  "NEWS",
+  "SOCIAL",
+  "BLOG",
+] as const;
 
 export type DiscoveryCandidateSortField =
   | "score"
@@ -84,8 +91,8 @@ export function discoveryCandidateWhereFromSearchParams(
   }
 
   const sourceType = sp.get("sourceType")?.trim();
-  if (sourceType && DISCOVERY_SOURCE_TYPES.includes(sourceType as DiscoverySourceType)) {
-    parts.push({ source: { type: sourceType as DiscoverySourceType } });
+  if (sourceType && DISCOVERY_SOURCE_TYPES.includes(sourceType as (typeof DISCOVERY_SOURCE_TYPES)[number])) {
+    parts.push({ source: { type: sourceType as unknown as DiscoverySourceType } });
   }
 
   const rs = sp.get("reviewStatus")?.trim();

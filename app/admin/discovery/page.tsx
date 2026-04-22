@@ -161,6 +161,12 @@ export default async function AdminDiscoveryListPage({
             来源与运行状态
           </Link>
           <Link
+            href="/admin/discovery/signals"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+          >
+            线索池 / Signals
+          </Link>
+          <Link
             href="/admin/discovery/tasks"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >

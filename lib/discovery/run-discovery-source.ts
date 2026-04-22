@@ -15,6 +15,7 @@ import { mapProductHuntItemToCandidatePayload } from "@/lib/discovery/producthun
 import { upsertProductHuntDiscoveryCandidate } from "@/lib/discovery/upsert-producthunt-candidate";
 import { runInstitutionDiscovery } from "@/lib/discovery/institution/run-institution-discovery";
 import type { Prisma } from "@prisma/client";
+import { upsertDiscoverySignalFromSeed } from "@/lib/discovery/signals";
 
 export type RunDiscoverySourceSummary = {
   runId: string;
@@ -153,6 +154,77 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
   }
 
   try {
+    if (source.type === "NEWS" || source.type === "SOCIAL" || source.type === "BLOG") {
+      const config = (source.configJson ?? {}) as {
+        signals?: Array<{
+          signalType?: string;
+          title?: string;
+          summary?: string;
+          url?: string;
+          rawText?: string;
+          referenceSources?: unknown;
+        }>;
+        title?: string;
+        summary?: string;
+        url?: string;
+        rawText?: string;
+      };
+
+      const seeds =
+        Array.isArray(config.signals) && config.signals.length > 0
+          ? config.signals
+          : [
+              {
+                signalType: source.type,
+                title: config.title ?? `${source.name} 线索`,
+                summary: config.summary,
+                url: config.url,
+                rawText: config.rawText,
+              },
+            ];
+
+      fetchedCount = seeds.length;
+      for (const seed of seeds) {
+        const up = await upsertDiscoverySignalFromSeed({
+          sourceId: source.id,
+          sourceType: source.type,
+          sourceName: source.name,
+          seed,
+        });
+        if (!up) {
+          logs.push(`[${key}] skip invalid signal seed`);
+          continue;
+        }
+        parsedCount += 1;
+        if (up.created) {
+          newCandidateCount += 1;
+        } else {
+          updatedCandidateCount += 1;
+        }
+      }
+
+      await finalizeDiscoveryRun({
+        runId: run.id,
+        sourceId: source.id,
+        status: "SUCCESS",
+        logs: [...logs, `[${key}] signal ingestion done parsed=${parsedCount}`],
+        fetchedCount,
+        parsedCount,
+        newCandidateCount,
+        updatedCandidateCount,
+        errorMessage: null,
+      });
+      return {
+        runId: run.id,
+        ok: true,
+        logs,
+        fetchedCount,
+        parsedCount,
+        newCandidateCount,
+        updatedCandidateCount,
+      };
+    }
+
     if (source.type === "INSTITUTION") {
       const inst = await runInstitutionDiscovery({
         db: prisma,

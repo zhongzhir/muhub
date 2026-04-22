@@ -103,6 +103,9 @@ enum DiscoverySourceType {
   GITHUB
   PRODUCTHUNT
   INSTITUTION
+  NEWS
+  SOCIAL
+  BLOG
 }
 
 /** Discovery V2：单次任务运行状态 */
@@ -125,6 +128,13 @@ enum DiscoveryEnrichmentJobStatus {
   RUNNING
   SUCCESS
   FAILED
+}
+
+enum DiscoverySignalStatus {
+  PENDING
+  REVIEWED
+  CONVERTED
+  REJECTED
 }
 
 /** Discovery V2：规则分类流水线状态（候选侧建议值；ACCEPTED 表示已合并入 tags/categories） */
@@ -212,6 +222,7 @@ model DiscoverySource {
 
   runs       DiscoveryRun[]
   candidates DiscoveryCandidate[]
+  signals    DiscoverySignal[]
 
   @@index([type, status])
 }
@@ -284,6 +295,8 @@ model DiscoveryCandidate {
   categoriesJson  Json?
   tagsJson        Json?
   metadataJson    Json?
+  /** 参考资料（来源原文、新闻、社媒、博客等） */
+  referenceSources Json?
   rawPayloadJson  Json?
 
   /** 规则分类 V1：建议主类型（单值） */
@@ -327,6 +340,7 @@ model DiscoveryCandidate {
 
   /** 若本候选通过「新建 Project」导入，对应 Project 上的回溯字段指向本条 */
   importedAsOriginProject Project? @relation("ImportedProjectFromCandidate")
+  convertedFromSignals DiscoverySignal[] @relation("DiscoverySignalConvertedCandidate")
 
   enrichmentJobs       DiscoveryEnrichmentJob[]
   enrichmentLinks      DiscoveryEnrichmentLink[]
@@ -342,6 +356,33 @@ model DiscoveryCandidate {
   @@index([reviewStatus, reviewPriorityScore(sort: Desc)])
   @@index([repoUrl])
   @@index([matchedProjectId])
+}
+
+model DiscoverySignal {
+  id                   String                @id @default(cuid())
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  sourceType           DiscoverySourceType
+  sourceId             String
+  source               DiscoverySource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceName           String
+  signalType           String
+  title                String
+  summary              String?               @db.Text
+  url                  String                @unique
+  rawText              String?               @db.Text
+  referenceSources     Json?
+  guessedProjectName   String?
+  guessedWebsiteUrl    String?
+  guessedGithubUrl     String?
+  status               DiscoverySignalStatus @default(PENDING)
+  reviewNote           String?               @db.Text
+  convertedCandidateId String?
+  convertedCandidate   DiscoveryCandidate?   @relation("DiscoverySignalConvertedCandidate", fields: [convertedCandidateId], references: [id], onDelete: SetNull)
+
+  @@index([sourceType, status, createdAt(sort: Desc)])
+  @@index([sourceId, createdAt(sort: Desc)])
+  @@index([convertedCandidateId])
 }
 
 /** Discovery V2：候选 Enrichment 任务（审计；不落原始 HTML） */
@@ -511,6 +552,8 @@ model Project {
   name        String
   tagline     String?
   description String?
+  /** 面向普通用户的通俗介绍 */
+  simpleSummary String?
   /** AI 等处写入的轻量标签（导入项目等） */
   tags        String[]      @default([])
   /** Discovery 分类接受后的类目列表（JSON string[]，与候选 categoriesJson 对齐） */
@@ -531,6 +574,8 @@ model Project {
   logoUrl     String?
   websiteUrl  String?
   githubUrl   String?
+  /** 从候选继承/人工维护的参考资料 */
+  referenceSources Json?
   /** 种子/运营标记：广场当前列表不按此排序，仅预留 */
   isFeatured   Boolean       @default(false)
   /** 数据来源占位，如 seed、manual */

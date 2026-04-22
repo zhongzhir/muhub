@@ -6,6 +6,7 @@ import { ProjectDetailHero } from "@/components/project/project-detail-hero";
 import { ProjectHeroPublicActions } from "@/components/project/project-hero-public-actions";
 import { ProjectUpdates } from "@/components/project/project-updates";
 import { ProjectDetailInfoSections } from "@/components/project/project-detail-info-sections";
+import { ProjectReferenceSources } from "@/components/project/project-reference-sources";
 import { loadProjectPageViewCached, sortProjectSocials } from "@/lib/load-project-page-view";
 import { buildProjectMetaDescription } from "@/lib/seo/project-meta";
 import { SITE_URL } from "@/lib/seo/site";
@@ -33,12 +34,13 @@ export const dynamic = "force-dynamic";
 function buildShareProjectInput(data: {
   description: string;
   tagline?: string;
+  simpleSummary?: string;
   tags?: string[];
   githubUrl?: string;
   githubSnapshot?: { stars?: number | null; lastCommitAt?: Date | null } | null;
 }) {
   return {
-    description: data.description,
+    description: data.simpleSummary?.trim() || data.description,
     stars: data.githubSnapshot?.stars ?? 0,
     lastCommitAt: data.githubSnapshot?.lastCommitAt ?? null,
     topics: (data.tags ?? []).map((x) => x.toLowerCase()),
@@ -148,8 +150,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const highlights = buildProjectHighlights(project);
   const summary = buildProjectSummary(project);
   const heroSummary = data.tagline?.trim() || summary || undefined;
+  const heroSummaryWithSimple = data.simpleSummary?.trim() || heroSummary;
   const summaryForSection =
-    summary && summary.trim() !== data.description.trim() ? summary : null;
+    (data.simpleSummary?.trim() && data.simpleSummary.trim() !== data.description.trim()
+      ? data.simpleSummary.trim()
+      : summary && summary.trim() !== data.description.trim()
+        ? summary
+        : null);
   const promoText = buildProjectPromoText({
     name: data.name,
     summary,
@@ -170,7 +177,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           slug={slug}
           name={data.name}
           tagline={data.tagline}
-          summary={heroSummary}
+          summary={heroSummaryWithSimple}
           highlights={highlights}
           stars={data.githubSnapshot?.stars ?? undefined}
           lastCommitAt={data.githubSnapshot?.lastCommitAt ?? null}
@@ -231,6 +238,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           sourceItems={sourceItems}
           descriptionBody={descriptionBody}
         />
+
+        <ProjectReferenceSources sources={data.referenceSources} />
 
         <ProjectUpdates
           slug={slug}

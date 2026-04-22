@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import type { AdminProjectEditInitial } from "@/lib/admin-project-edit";
+import type { ReferenceSourceItem } from "@/lib/discovery/reference-sources";
+import { ensureSinglePrimary } from "@/lib/discovery/reference-sources";
+import { generateSimpleSummary } from "@/lib/project-simple-summary";
 import { PROJECT_CATEGORY_OPTIONS } from "@/lib/projects/project-categories";
 import { formatProjectTagsInput, parseProjectTags } from "@/lib/projects/project-tags";
 import { saveAdminProject, type AdminProjectEditFormState } from "./actions";
@@ -39,7 +42,13 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
   /** 与 `page.tsx` 中 `key={project.dataUpdatedAt}` 配合：保存后 remount，此处无需 effect 同步 props */
   const [categoryValue, setCategoryValue] = useState(initial.category);
   const [tagsValue, setTagsValue] = useState(initial.tags);
+  const [simpleSummaryValue, setSimpleSummaryValue] = useState(initial.simpleSummary);
+  const [referenceSources, setReferenceSources] = useState<ReferenceSourceItem[]>(
+    initial.referenceSources ?? [],
+  );
   const [classifyHint, setClassifyHint] = useState<string | null>(null);
+  const [summaryGenerating, setSummaryGenerating] = useState(false);
+  const [referenceMessage, setReferenceMessage] = useState<string | null>(null);
 
   useRedirectFromActionState(state.redirectPath);
 
@@ -94,9 +103,84 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     setClassifyHint(`已覆盖为分类「${result.primaryCategory}」，标签：${result.tags.join("，")}`);
   };
 
+  const generateSummary = async (force: boolean) => {
+    if (!force && simpleSummaryValue.trim()) {
+      if (!window.confirm("当前已填写通俗介绍，是否覆盖？")) {
+        return;
+      }
+    }
+    if (force) {
+      if (!window.confirm("将覆盖当前通俗介绍，确定继续？")) {
+        return;
+      }
+    }
+    setSummaryGenerating(true);
+    try {
+      const val = (id: string) =>
+        (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null)?.value ?? "";
+      const summary = generateSimpleSummary({
+        name: val("name"),
+        tagline: val("tagline"),
+        description: val("description"),
+        primaryCategory: categoryValue,
+        tags: parseProjectTags(tagsValue),
+        referenceSummaries: [
+          ...referenceSources
+            .filter((item) => item.isPrimary)
+            .map((item) => item.summary ?? item.note ?? item.title ?? ""),
+          ...referenceSources
+            .filter((item) => !item.isPrimary)
+            .map((item) => item.summary ?? item.note ?? item.title ?? ""),
+        ].filter(Boolean),
+      });
+      setSimpleSummaryValue(summary);
+    } finally {
+      setSummaryGenerating(false);
+    }
+  };
+
+  const moveUpReference = (idx: number) => {
+    if (idx <= 0) {
+      return;
+    }
+    setReferenceSources((prev) => {
+      const next = [...prev];
+      const tmp = next[idx - 1];
+      next[idx - 1] = next[idx]!;
+      next[idx] = tmp!;
+      return next;
+    });
+    setReferenceMessage("已上移该参考资料。");
+  };
+
+  const deleteReference = (idx: number) => {
+    if (!window.confirm("确认删除这条参考资料？")) {
+      return;
+    }
+    setReferenceSources((prev) => prev.filter((_, i) => i !== idx));
+    setReferenceMessage("已删除参考资料。");
+  };
+
+  const setPrimaryReference = (idx: number) => {
+    setReferenceSources((prev) =>
+      ensureSinglePrimary(
+        prev.map((item, i) => ({
+          ...item,
+          isPrimary: i === idx,
+        })),
+      ),
+    );
+    setReferenceMessage("已设置为主要参考。");
+  };
+
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="projectId" value={initial.id} />
+      <input
+        type="hidden"
+        name="referenceSourcesJson"
+        value={JSON.stringify(referenceSources)}
+      />
 
       {state.toast ? (
         <div
@@ -150,6 +234,39 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
             一句话简介
           </label>
           <input id="tagline" name="tagline" className={inputClass} defaultValue={initial.tagline} />
+        </div>
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="simpleSummary">
+              通俗介绍
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                onClick={() => generateSummary(false)}
+                disabled={summaryGenerating}
+              >
+                {summaryGenerating ? "生成中..." : "自动生成"}
+              </button>
+              <button
+                type="button"
+                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                onClick={() => generateSummary(true)}
+                disabled={summaryGenerating}
+              >
+                覆盖生成
+              </button>
+            </div>
+          </div>
+          <textarea
+            id="simpleSummary"
+            name="simpleSummary"
+            className={`${inputClass} min-h-[96px] resize-y`}
+            value={simpleSummaryValue}
+            onChange={(e) => setSimpleSummaryValue(e.target.value)}
+            placeholder="用非技术语言介绍这个项目：它解决什么问题、适合谁使用。"
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -245,6 +362,50 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
           className={`${inputClass} min-h-[180px] resize-y`}
           defaultValue={initial.description}
         />
+      </section>
+
+      <section className="muhub-card space-y-3 p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">参考资料</h2>
+        {referenceMessage ? (
+          <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300">
+            {referenceMessage}
+          </p>
+        ) : null}
+        {referenceSources.length === 0 ? (
+          <p className="text-sm text-zinc-500">暂无参考资料（通常由 Discovery 候选继承）。</p>
+        ) : (
+          <ul className="space-y-2">
+            {referenceSources.map((item, idx) => (
+              <li key={`${item.type}-${item.url}-${idx}`} className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-zinc-500">{item.type}</p>
+                  {item.isPrimary ? (
+                    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
+                      主要参考
+                    </span>
+                  ) : null}
+                </div>
+                <a href={item.url} target="_blank" rel="noreferrer" className="mt-1 block break-all text-blue-600 underline dark:text-blue-400">
+                  {item.title || item.url}
+                </a>
+                {(item.summary || item.note) ? (
+                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">{item.summary || item.note}</p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => deleteReference(idx)} className="rounded border border-red-300 px-2 py-1 text-xs text-red-700 dark:border-red-800 dark:text-red-300">
+                    删除
+                  </button>
+                  <button type="button" onClick={() => setPrimaryReference(idx)} className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-600 dark:text-zinc-300">
+                    设为主要参考
+                  </button>
+                  <button type="button" onClick={() => moveUpReference(idx)} className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 dark:border-zinc-600 dark:text-zinc-300" disabled={idx === 0}>
+                    上移
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="muhub-card space-y-4 p-5 sm:p-6">
