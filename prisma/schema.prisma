@@ -571,6 +571,33 @@ model Project {
   aiUpdatedAt   DateTime?
   /** AI enrichment 最近一次失败原因（可空） */
   aiError       String?
+  /** AI 项目认知卡（V1） */
+  aiInsight Json?
+  /** AI 认知卡状态：idle | pending | success | failed */
+  aiInsightStatus String?
+  aiInsightUpdatedAt DateTime?
+  aiInsightError String?
+  /** AI 结构化信号（GitHub / 官网 / 社媒等） */
+  aiSignals Json?
+  aiSuggestedTags Json?
+  aiSuggestedCategories Json?
+  aiCompleteness Json?
+  /** AI 生成时的来源快照，便于人工复核 */
+  aiSourceSnapshot Json?
+  /** 信息来源层级：A(多源完整) - E(信息不足) */
+  aiSourceLevel String?
+  /** AI 传播表达草稿（V1） */
+  aiContent Json?
+  /** AI 传播草稿状态：idle | pending | success | failed */
+  aiContentStatus String?
+  aiContentUpdatedAt DateTime?
+  aiContentError String?
+  aiContentDraft Json?
+  aiContentDraftUpdatedAt DateTime?
+  aiContentDraftBy String?
+  /** 传播草稿工作流：drafting | reviewing | ready_for_publish */
+  aiContentDraftStatus            String?
+  aiContentDraftStatusUpdatedAt DateTime?
   logoUrl     String?
   websiteUrl  String?
   githubUrl   String?
@@ -617,6 +644,10 @@ model Project {
   followers         ProjectFollow[]
   notificationEvents  ProjectNotificationEvent[]
   userInboxNotifications UserNotification[]
+  aiOpsLogs ProjectAiOpsLog[]
+  claimRequests ProjectClaim[]
+  officialInfo ProjectOfficialInfo?
+  contentEditLogs ProjectContentEditLog[]
 
   @@index([createdById])
   @@index([claimedByUserId])
@@ -624,6 +655,72 @@ model Project {
   @@index([primaryCategory])
   @@index([isAiRelated])
   @@index([isChineseTool])
+}
+
+model ProjectContentEditLog {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  operatorId String
+  before     Json
+  after      Json
+  /** save：普通保存；reset：恢复为 AI 原始版本（用于历史摘要） */
+  editKind   String?
+  createdAt  DateTime @default(now())
+
+  @@index([projectId, createdAt(sort: Desc)])
+}
+
+model ProjectClaim {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId     String
+  userEmail  String?
+  status     String
+  reason     String?
+  createdAt  DateTime @default(now())
+  reviewedAt DateTime?
+
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model ProjectOfficialInfo {
+  id              String   @id @default(cuid())
+  projectId       String   @unique
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ownerId         String
+  summary         String?
+  fullDescription String?
+  useCases        Json?
+  whoFor          Json?
+  website         String?
+  twitter         String?
+  discord         String?
+  contactEmail    String?
+  teamInfo        Json?
+  businessInfo    Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ownerId, updatedAt(sort: Desc)])
+}
+
+model ProjectAiOpsLog {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  operatorId    String
+  operatorEmail String?
+  action        String
+  mode          String
+  before        Json
+  after         Json
+  appliedItems  Json
+  createdAt     DateTime @default(now())
+
+  @@index([projectId, createdAt(sort: Desc)])
 }
 
 /** 项目点赞（每用户每项目至多一条） */

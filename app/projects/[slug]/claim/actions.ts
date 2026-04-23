@@ -83,36 +83,30 @@ export async function claimProject(
     return { ...initialFail, formError: "仓库地址与项目不匹配" };
   }
 
-  const parsed = parseRepoUrl(repoUrl);
-  if (!parsed) {
-    return { ...initialFail, formError: "仓库地址格式错误（当前支持 GitHub、Gitee）" };
-  }
-
-  const claimedBy = `${parsed.owner}/${parsed.repo}`;
-
-  let updated;
   try {
-    updated = await prisma.project.updateMany({
+    const existedPending = await prisma.projectClaim.findFirst({
       where: {
-        id: project.id,
-        claimStatus: "UNCLAIMED",
-        ...PROJECT_ACTIVE_FILTER,
+        projectId: project.id,
+        userId: claimerId,
+        status: "pending",
       },
-      data: {
-        claimStatus: "CLAIMED",
-        claimedAt: new Date(),
-        claimedBy,
-        claimedByUserId: claimerId,
-      },
+      select: { id: true },
     });
+    if (!existedPending) {
+      await prisma.projectClaim.create({
+        data: {
+          projectId: project.id,
+          userId: claimerId,
+          userEmail: session.user.email ?? null,
+          status: "pending",
+          reason: `仓库地址：${repoUrl}`.slice(0, 500),
+        },
+      });
+    }
   } catch {
-    return { ...initialFail, formError: "认领保存失败，请稍后重试。" };
-  }
-
-  if (updated.count === 0) {
-    return { ...initialFail, formError: "该项目已被认领" };
+    return { ...initialFail, formError: "认领申请提交失败，请稍后重试。" };
   }
 
   revalidatePath(`/projects/${slug}`, "page");
-  redirect(`/projects/${encodeURIComponent(slug)}`);
+  redirect(`/projects/${encodeURIComponent(slug)}/claim?submitted=1`);
 }

@@ -28,6 +28,9 @@ import ProjectSummary from "@/components/project/project-summary";
 import { buildProjectHighlights } from "@/lib/project/project-highlights";
 import { buildProjectSummary } from "@/lib/project/project-summary";
 import { buildProjectPromoText } from "@/lib/project/project-promo-text";
+import { ProjectOfficialInfoEditor } from "@/components/project/project-official-info-editor";
+import { ProjectAiContentDraft } from "@/components/project/project-ai-content-draft";
+import { userOperatorLabel } from "@/lib/project-ai-content-edit-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -107,13 +110,98 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   const { data, fromDb } = loaded;
   let showManageLink = false;
+  let projectIdForOfficial = "";
+  let isClaimedOwner = false;
+  let officialInfo: {
+    summary: string | null;
+    fullDescription: string | null;
+    useCases: string[];
+    whoFor: string[];
+    website: string | null;
+    twitter: string | null;
+    discord: string | null;
+    contactEmail: string | null;
+  } | null = null;
+  let aiSummary: string | null = null;
+  let aiContentStatus = "";
+  let aiContentUpdatedAt = "";
+  let aiContentError = "";
+  let aiContent: unknown = null;
+  let aiContentDraft: unknown = null;
+  let aiContentDraftUpdatedAt = "";
+  let aiContentDraftWorkflowStatus = "";
+  let aiContentDraftWorkflowStatusUpdatedAt = "";
+  let aiContentDraftOperatorLabel = "";
   if (fromDb && process.env.DATABASE_URL?.trim()) {
     const owners = await prisma.project.findFirst({
       where: { slug, ...PROJECT_ACTIVE_FILTER },
-      select: { createdById: true, claimedByUserId: true },
+      select: {
+        id: true,
+        createdById: true,
+        claimedByUserId: true,
+        aiInsight: true,
+        aiContent: true,
+        aiContentStatus: true,
+        aiContentUpdatedAt: true,
+        aiContentError: true,
+        aiContentDraft: true,
+        aiContentDraftUpdatedAt: true,
+        aiContentDraftBy: true,
+        aiContentDraftStatus: true,
+        aiContentDraftStatusUpdatedAt: true,
+        officialInfo: {
+          select: {
+            summary: true,
+            fullDescription: true,
+            useCases: true,
+            whoFor: true,
+            website: true,
+            twitter: true,
+            discord: true,
+            contactEmail: true,
+          },
+        },
+      },
     });
     if (owners) {
+      projectIdForOfficial = owners.id;
       showManageLink = canManageProject(session?.user?.id, owners);
+      isClaimedOwner = Boolean(session?.user?.id && owners.claimedByUserId === session.user.id);
+      aiSummary =
+        owners.aiInsight && typeof owners.aiInsight === "object" && typeof (owners.aiInsight as Record<string, unknown>).summary === "string"
+          ? ((owners.aiInsight as Record<string, unknown>).summary as string)
+          : null;
+      aiContent = owners.aiContent;
+      aiContentStatus = owners.aiContentStatus ?? "idle";
+      aiContentUpdatedAt = owners.aiContentUpdatedAt?.toISOString() ?? "";
+      aiContentError = owners.aiContentError ?? "";
+      aiContentDraft = owners.aiContentDraft;
+      aiContentDraftUpdatedAt = owners.aiContentDraftUpdatedAt?.toISOString() ?? "";
+      aiContentDraftWorkflowStatus = owners.aiContentDraftStatus ?? "";
+      aiContentDraftWorkflowStatusUpdatedAt = owners.aiContentDraftStatusUpdatedAt?.toISOString() ?? "";
+      if (owners.aiContentDraftBy) {
+        const draftUser = await prisma.user.findFirst({
+          where: { id: owners.aiContentDraftBy },
+          select: { name: true, email: true },
+        });
+        aiContentDraftOperatorLabel = userOperatorLabel(draftUser, owners.aiContentDraftBy);
+      }
+      officialInfo = owners.officialInfo
+        ? {
+            summary: owners.officialInfo.summary,
+            fullDescription: owners.officialInfo.fullDescription,
+            useCases: Array.isArray(owners.officialInfo.useCases)
+              ? owners.officialInfo.useCases.filter((item): item is string => typeof item === "string")
+              : [],
+            whoFor: Array.isArray(owners.officialInfo.whoFor)
+              ? owners.officialInfo.whoFor.filter((item): item is string => typeof item === "string")
+              : [],
+            website: owners.officialInfo.website,
+            twitter: owners.officialInfo.twitter,
+            discord: owners.officialInfo.discord,
+            contactEmail: owners.officialInfo.contactEmail,
+          }
+        : null;
     }
   }
 
@@ -149,8 +237,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const project = buildShareProjectInput(data);
   const highlights = buildProjectHighlights(project);
   const summary = buildProjectSummary(project);
-  const heroSummary = data.tagline?.trim() || summary || undefined;
-  const heroSummaryWithSimple = data.simpleSummary?.trim() || heroSummary;
+  const officialSummary = officialInfo?.summary?.trim() || null;
+  const fallbackAiSummary = aiSummary?.trim() || null;
+  const heroSummary =
+    officialSummary ||
+    fallbackAiSummary ||
+    data.tagline?.trim() ||
+    summary ||
+    undefined;
+  const heroSummaryWithSimple = officialSummary || fallbackAiSummary || data.simpleSummary?.trim() || heroSummary;
   const summaryForSection =
     (data.simpleSummary?.trim() && data.simpleSummary.trim() !== data.description.trim()
       ? data.simpleSummary.trim()
@@ -230,6 +325,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <ProjectActivitySection activities={projectActivities} />
 
+        <section className="mb-6 rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+              {officialSummary ? "官方信息" : "AI整理"}
+            </span>
+            {!officialSummary && fallbackAiSummary ? (
+              <span className="text-xs text-zinc-500">当前优先展示 AI 整理摘要</span>
+            ) : null}
+          </div>
+          <p className="mt-2 text-zinc-700 dark:text-zinc-300">
+            {officialSummary || fallbackAiSummary || "信息不足"}
+          </p>
+        </section>
+
         <ProjectSummary summary={summaryForSection ?? undefined} />
 
         <ProjectDetailInfoSections
@@ -252,6 +361,40 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         <ProjectTimeline items={timelineItems} />
 
         <ProjectRelatedContent items={relatedSiteContent} />
+
+        {isClaimedOwner && projectIdForOfficial ? (
+          <div className="mt-8">
+            <ProjectOfficialInfoEditor
+              projectId={projectIdForOfficial}
+              initial={{
+                summary: officialInfo?.summary ?? "",
+                fullDescription: officialInfo?.fullDescription ?? "",
+                website: officialInfo?.website ?? "",
+                twitter: officialInfo?.twitter ?? "",
+                discord: officialInfo?.discord ?? "",
+                contactEmail: officialInfo?.contactEmail ?? "",
+                useCases: officialInfo?.useCases ?? [],
+                whoFor: officialInfo?.whoFor ?? [],
+              }}
+            />
+          </div>
+        ) : null}
+        {isClaimedOwner && projectIdForOfficial ? (
+          <div className="mt-8">
+            <ProjectAiContentDraft
+              projectId={projectIdForOfficial}
+              initialStatus={aiContentStatus}
+              initialUpdatedAt={aiContentUpdatedAt}
+              initialContent={aiContent}
+              initialError={aiContentError}
+              initialDraft={aiContentDraft}
+              initialDraftUpdatedAt={aiContentDraftUpdatedAt}
+              initialDraftOperatorLabel={aiContentDraftOperatorLabel}
+              initialDraftWorkflowStatus={aiContentDraftWorkflowStatus}
+              initialDraftWorkflowStatusUpdatedAt={aiContentDraftWorkflowStatusUpdatedAt}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -34,6 +34,40 @@ export type AdminProjectEditInitial = {
   externalLinksText: string;
   referenceSources: ReferenceSourceItem[];
   readinessMessages: string[];
+  aiInsightStatus: string;
+  aiInsightUpdatedAt: string;
+  aiInsightError: string;
+  aiInsight: unknown;
+  aiSignals: unknown;
+  aiSuggestedTags: unknown;
+  aiSuggestedCategories: unknown;
+  aiCompleteness: unknown;
+  aiSourceSnapshot: unknown;
+  aiSourceLevel: string;
+  aiOpsLogs: Array<{
+    id: string;
+    action: string;
+    mode: string;
+    operatorEmail: string | null;
+    appliedItems: unknown;
+    createdAt: string;
+  }>;
+  claimStatusView: {
+    claimStatus: string;
+    claimedByUserId: string;
+    pendingClaimId: string;
+    pendingClaimUserEmail: string;
+    pendingClaimReason: string;
+    pendingClaimCreatedAt: string;
+  };
+  officialInfo: {
+    summary: string;
+    fullDescription: string;
+    website: string;
+    twitter: string;
+    discord: string;
+    contactEmail: string;
+  };
 };
 
 export type ParsedAdminProjectInput = {
@@ -195,6 +229,39 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
         orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
       },
       sources: { select: { kind: true } },
+      aiOpsLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: {
+          id: true,
+          action: true,
+          mode: true,
+          operatorEmail: true,
+          appliedItems: true,
+          createdAt: true,
+        },
+      },
+      claimRequests: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          userEmail: true,
+          reason: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+      officialInfo: {
+        select: {
+          summary: true,
+          fullDescription: true,
+          website: true,
+          twitter: true,
+          discord: true,
+          contactEmail: true,
+        },
+      },
     },
   });
 
@@ -246,5 +313,40 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
       .join("\n"),
     referenceSources: normalizeReferenceSources(row.referenceSources),
     readinessMessages: publishReadinessMessages(readiness),
+    aiInsightStatus: row.aiInsightStatus ?? "idle",
+    aiInsightUpdatedAt: row.aiInsightUpdatedAt?.toISOString() ?? "",
+    aiInsightError: row.aiInsightError ?? "",
+    aiInsight: row.aiInsight,
+    aiSignals: row.aiSignals,
+    aiSuggestedTags: row.aiSuggestedTags,
+    aiSuggestedCategories: row.aiSuggestedCategories,
+    aiCompleteness: row.aiCompleteness,
+    aiSourceSnapshot: row.aiSourceSnapshot,
+    aiSourceLevel: row.aiSourceLevel ?? "",
+    aiOpsLogs: row.aiOpsLogs.map((item) => ({
+      id: item.id,
+      action: item.action,
+      mode: item.mode,
+      operatorEmail: item.operatorEmail ?? null,
+      appliedItems: item.appliedItems,
+      createdAt: item.createdAt.toISOString(),
+    })),
+    claimStatusView: {
+      claimStatus: row.claimStatus,
+      claimedByUserId: row.claimedByUserId ?? "",
+      pendingClaimId: row.claimRequests[0]?.status === "pending" ? row.claimRequests[0].id : "",
+      pendingClaimUserEmail: row.claimRequests[0]?.status === "pending" ? (row.claimRequests[0].userEmail ?? "") : "",
+      pendingClaimReason: row.claimRequests[0]?.status === "pending" ? (row.claimRequests[0].reason ?? "") : "",
+      pendingClaimCreatedAt:
+        row.claimRequests[0]?.status === "pending" ? row.claimRequests[0].createdAt.toISOString() : "",
+    },
+    officialInfo: {
+      summary: row.officialInfo?.summary ?? "",
+      fullDescription: row.officialInfo?.fullDescription ?? "",
+      website: row.officialInfo?.website ?? "",
+      twitter: row.officialInfo?.twitter ?? "",
+      discord: row.officialInfo?.discord ?? "",
+      contactEmail: row.officialInfo?.contactEmail ?? "",
+    },
   };
 }

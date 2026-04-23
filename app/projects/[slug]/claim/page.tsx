@@ -9,10 +9,12 @@ import { ClaimProjectForm } from "./claim-project-form";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ submitted?: string }>;
 };
 
-export default async function ClaimProjectPage({ params }: PageProps) {
+export default async function ClaimProjectPage({ params, searchParams }: PageProps) {
   const slug = normalizeProjectSlugParam((await params).slug);
+  const submitted = (await searchParams)?.submitted === "1";
 
   if (!process.env.DATABASE_URL?.trim()) {
     return (
@@ -33,6 +35,7 @@ export default async function ClaimProjectPage({ params }: PageProps) {
   const project = await prisma.project.findFirst({
     where: { slug, ...PROJECT_ACTIVE_FILTER },
     select: {
+      id: true,
       slug: true,
       name: true,
       githubUrl: true,
@@ -67,6 +70,12 @@ export default async function ClaimProjectPage({ params }: PageProps) {
       </div>
     );
   }
+
+  const latestClaim = await prisma.projectClaim.findFirst({
+    where: { projectId: project.id, status: "pending" },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, userId: true, createdAt: true },
+  });
 
   if (project.claimStatus === "CLAIMED") {
     return (
@@ -105,6 +114,16 @@ export default async function ClaimProjectPage({ params }: PageProps) {
           </Link>
         </p>
         <h1 className="mb-8 text-2xl font-semibold tracking-tight">认领项目</h1>
+        {submitted ? (
+          <p className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+            认领申请已提交，等待管理员审核。
+          </p>
+        ) : null}
+        {latestClaim ? (
+          <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-100">
+            当前项目已有待审核认领请求，提交后将进入审核队列。
+          </p>
+        ) : null}
 
         {githubClaimBlocked ? (
           <p

@@ -17,11 +17,81 @@ const initialState: AdminProjectEditFormState = { ok: false, action: null };
 
 const inputClass = "muhub-input mt-1";
 
+type InsightView = {
+  summary?: string;
+  whatItIs?: string;
+  whoFor?: string[];
+  useCases?: string[];
+  highlights?: string[];
+  valueSignals?: string[];
+  activity?: { level?: string; signals?: string[] };
+  risks?: string[];
+  suggestions?: string[];
+  sourceNotes?: string[];
+};
+
+type CompletenessView = {
+  score?: number;
+  existing?: string[];
+  missing?: string[];
+  note?: string;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
+
+function readInsightView(value: unknown): InsightView {
+  const obj = asRecord(value);
+  const activity = asRecord(obj.activity);
+  return {
+    summary: typeof obj.summary === "string" ? obj.summary : undefined,
+    whatItIs: typeof obj.whatItIs === "string" ? obj.whatItIs : undefined,
+    whoFor: asStringArray(obj.whoFor),
+    useCases: asStringArray(obj.useCases),
+    highlights: asStringArray(obj.highlights),
+    valueSignals: asStringArray(obj.valueSignals),
+    activity: {
+      level: typeof activity.level === "string" ? activity.level : undefined,
+      signals: asStringArray(activity.signals),
+    },
+    risks: asStringArray(obj.risks),
+    suggestions: asStringArray(obj.suggestions),
+    sourceNotes: asStringArray(obj.sourceNotes),
+  };
+}
+
+function readCompletenessView(value: unknown): CompletenessView {
+  const obj = asRecord(value);
+  return {
+    score: typeof obj.score === "number" ? obj.score : undefined,
+    existing: asStringArray(obj.existing),
+    missing: asStringArray(obj.missing),
+    note: typeof obj.note === "string" ? obj.note : undefined,
+  };
+}
+
 function formatPublishedAt(value: string | null | undefined) {
   if (!value) {
     return "未发布";
   }
   return value.replace("T", " ").slice(0, 19);
+}
+
+function sourceLevelLabel(level: string): string {
+  if (level === "A") return "A（多源完整）";
+  if (level === "B") return "B（GitHub+官网）";
+  if (level === "C") return "C（仅 GitHub）";
+  if (level === "D") return "D（仅项目描述）";
+  if (level === "E") return "E（信息不足）";
+  return level;
 }
 
 function readSuggestSourceFromForm(): Parameters<typeof suggestAdminProjectClassificationAndTags>[0] {
@@ -49,6 +119,25 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
   const [classifyHint, setClassifyHint] = useState<string | null>(null);
   const [summaryGenerating, setSummaryGenerating] = useState(false);
   const [referenceMessage, setReferenceMessage] = useState<string | null>(null);
+  const [aiInsightStatus, setAiInsightStatus] = useState(initial.aiInsightStatus || "idle");
+  const [aiInsightError, setAiInsightError] = useState(initial.aiInsightError || "");
+  const [aiInsightUpdatedAt, setAiInsightUpdatedAt] = useState(initial.aiInsightUpdatedAt || "");
+  const [aiInsight, setAiInsight] = useState<unknown>(initial.aiInsight);
+  const [aiCompleteness, setAiCompleteness] = useState<unknown>(initial.aiCompleteness);
+  const [aiSignals, setAiSignals] = useState<unknown>(initial.aiSignals);
+  const [aiSuggestedTags, setAiSuggestedTags] = useState<string[]>(
+    asStringArray(initial.aiSuggestedTags),
+  );
+  const [aiSuggestedCategories, setAiSuggestedCategories] = useState<unknown>(
+    initial.aiSuggestedCategories,
+  );
+  const [aiSourceSnapshot, setAiSourceSnapshot] = useState<unknown>(initial.aiSourceSnapshot);
+  const [aiSourceLevel, setAiSourceLevel] = useState(initial.aiSourceLevel || "");
+  const [showSourceSnapshot, setShowSourceSnapshot] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [claimReviewBusy, setClaimReviewBusy] = useState(false);
+  const [claimStatus, setClaimStatus] = useState(initial.claimStatusView.claimStatus);
+  const [pendingClaimId, setPendingClaimId] = useState(initial.claimStatusView.pendingClaimId);
 
   useRedirectFromActionState(state.redirectPath);
 
@@ -63,6 +152,150 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     visibilityStatus: state.statusSnapshot?.visibilityStatus ?? initial.visibilityStatus,
     isPublic: state.statusSnapshot?.isPublic ?? initial.isPublic,
     publishedAt: state.statusSnapshot?.publishedAt ?? initial.publishedAt,
+  };
+  const insightView = readInsightView(aiInsight);
+  const completenessView = readCompletenessView(aiCompleteness);
+  const categoriesView = asRecord(aiSuggestedCategories);
+  const sourceSnapshotView = asRecord(aiSourceSnapshot);
+  const extractedSignals = asRecord(sourceSnapshotView.extractedSignals);
+  const mainSources = asStringArray(extractedSignals.mainSources);
+  const missingSources = asStringArray(extractedSignals.missingSources);
+
+  const generateAiInsight = async () => {
+    setAiBusy(true);
+    setAiInsightStatus("pending");
+    setAiInsightError("");
+    try {
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/ai-insight`, {
+        method: "POST",
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        status?: string;
+        insight?: unknown;
+        completeness?: unknown;
+        signals?: unknown;
+        suggestedTags?: unknown;
+        suggestedCategories?: unknown;
+        sourceSnapshot?: unknown;
+        sourceLevel?: string | null;
+        updatedAt?: string | null;
+      };
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || "AI 认知卡生成失败，请稍后重试。");
+      }
+      setAiInsightStatus(json.status || "success");
+      setAiInsight(json.insight);
+      setAiCompleteness(json.completeness);
+      setAiSignals(json.signals);
+      setAiSuggestedTags(asStringArray(json.suggestedTags));
+      setAiSuggestedCategories(json.suggestedCategories ?? {});
+      setAiSourceSnapshot(json.sourceSnapshot ?? {});
+      setAiSourceLevel(typeof json.sourceLevel === "string" ? json.sourceLevel : "");
+      setAiInsightUpdatedAt(json.updatedAt || new Date().toISOString());
+      setAiInsightError("");
+    } catch (error) {
+      setAiInsightStatus("failed");
+      setAiInsightError(error instanceof Error ? error.message : "AI 认知卡生成失败，请稍后重试。");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
+  const applyAiTags = async (mode: "append" | "replace") => {
+    const defaults = aiSuggestedTags.join(", ");
+    const edited = window.prompt("可编辑要应用的标签（逗号分隔）", defaults);
+    if (edited === null) return;
+    const selectedTags = parseProjectTags(edited).slice(0, 8);
+    if (!selectedTags.length) {
+      window.alert("未选择有效标签。");
+      return;
+    }
+    if (mode === "replace" && !window.confirm("将覆盖当前标签，确定继续？")) {
+      return;
+    }
+    const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-tags`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, tags: selectedTags }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; tags?: string[] };
+    if (!res.ok || !json.ok) {
+      window.alert(json.error || "应用推荐标签失败。");
+      return;
+    }
+    const nextTags = formatProjectTagsInput(Array.isArray(json.tags) ? json.tags : selectedTags);
+    setTagsValue(nextTags);
+    router.refresh();
+    window.alert(mode === "replace" ? "已覆盖标签。" : "已追加标签。");
+  };
+
+  const applyAiCategories = async (mode: "append" | "replace") => {
+    const primaryDefault = typeof categoriesView.primary === "string" ? categoriesView.primary : "";
+    const secondaryDefault = typeof categoriesView.secondary === "string" ? categoriesView.secondary : "";
+    const optionalDefault = asStringArray(categoriesView.optional).join(", ");
+    const primary = window.prompt("primary 分类（可编辑）", primaryDefault);
+    if (primary === null) return;
+    const secondary = window.prompt("secondary 分类（可编辑，可留空）", secondaryDefault);
+    if (secondary === null) return;
+    const optionalRaw = window.prompt("optional 分类（逗号分隔，可留空）", optionalDefault);
+    if (optionalRaw === null) return;
+    if (mode === "replace" && !window.confirm("将覆盖当前分类，确定继续？")) {
+      return;
+    }
+    const optional = parseProjectTags(optionalRaw).slice(0, 8);
+    const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-categories`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode,
+        categories: {
+          primary: primary.trim(),
+          secondary: secondary.trim(),
+          optional,
+        },
+      }),
+    });
+    const json = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+      primaryCategory?: string | null;
+    };
+    if (!res.ok || !json.ok) {
+      window.alert(json.error || "应用推荐分类失败。");
+      return;
+    }
+    if (typeof json.primaryCategory === "string" && json.primaryCategory) {
+      setCategoryValue(json.primaryCategory);
+    }
+    router.refresh();
+    window.alert(mode === "replace" ? "已覆盖分类。" : "已合并分类。");
+  };
+
+  const reviewClaim = async (action: "approve" | "reject") => {
+    if (!pendingClaimId) return;
+    if (action === "reject" && !window.confirm("确认拒绝该认领申请？")) return;
+    if (action === "approve" && !window.confirm("确认通过该认领申请？")) return;
+    setClaimReviewBusy(true);
+    try {
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/claim/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        window.alert(json.error || "审核失败，请稍后重试。");
+        return;
+      }
+      setClaimStatus(action === "approve" ? "CLAIMED" : "UNCLAIMED");
+      setPendingClaimId("");
+      router.refresh();
+      window.alert(action === "approve" ? "已通过认领申请。" : "已拒绝认领申请。");
+    } finally {
+      setClaimReviewBusy(false);
+    }
   };
 
   const applySuggestSoft = () => {
@@ -320,6 +553,291 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
         </div>
         {classifyHint ? (
           <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700">{classifyHint}</p>
+        ) : null}
+      </section>
+
+      <section className="muhub-card space-y-4 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">项目认领状态</h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              {claimStatus === "CLAIMED" ? "已认领" : pendingClaimId ? "认领中" : "未认领"}
+            </p>
+          </div>
+          <a
+            href={`/projects/${encodeURIComponent(initial.slug)}/claim`}
+            target="_blank"
+            rel="noreferrer"
+            className="muhub-btn-secondary px-3 py-2 text-sm"
+          >
+            提交认领
+          </a>
+        </div>
+        {pendingClaimId ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p>待审核申请：{initial.claimStatusView.pendingClaimUserEmail || "未知用户"}</p>
+            {initial.claimStatusView.pendingClaimReason ? (
+              <p className="mt-1 text-xs">申请说明：{initial.claimStatusView.pendingClaimReason}</p>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="muhub-btn-secondary px-3 py-2 text-sm"
+                disabled={claimReviewBusy}
+                onClick={() => reviewClaim("approve")}
+              >
+                审核通过
+              </button>
+              <button
+                type="button"
+                className="rounded border border-red-300 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+                disabled={claimReviewBusy}
+                onClick={() => reviewClaim("reject")}
+              >
+                审核拒绝
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="muhub-card space-y-4 p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">官方信息（当前）</h2>
+        <p className="text-xs text-zinc-500">
+          官方信息由已认领用户维护，展示优先级高于 AI 整理信息。
+        </p>
+        <div className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 sm:grid-cols-2">
+          <div>一句话介绍：{initial.officialInfo.summary || "未填写"}</div>
+          <div>官网：{initial.officialInfo.website || "未填写"}</div>
+          <div>Twitter：{initial.officialInfo.twitter || "未填写"}</div>
+          <div>Discord：{initial.officialInfo.discord || "未填写"}</div>
+          <div>联系方式：{initial.officialInfo.contactEmail || "未填写"}</div>
+        </div>
+        <p className="text-xs text-zinc-500">
+          详细介绍：{initial.officialInfo.fullDescription || "未填写"}
+        </p>
+      </section>
+
+      <section className="muhub-card space-y-4 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">AI 项目认知卡</h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              基于当前公开信息整理。仅提供判断依据与信息结构，不代表项目质量评价。
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={generateAiInsight}
+              disabled={aiBusy}
+              className="muhub-btn-secondary px-3 py-2 text-sm disabled:opacity-60"
+            >
+              {aiBusy ? "生成中..." : aiInsightStatus === "success" ? "重新生成" : "生成 AI 认知卡"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSourceSnapshot((prev) => !prev)}
+              className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {showSourceSnapshot ? "收起来源快照" : "查看来源快照"}
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300">
+          状态：{aiInsightStatus}
+          {aiInsightUpdatedAt ? ` / 最近更新：${aiInsightUpdatedAt.replace("T", " ").slice(0, 19)}` : ""}
+          {aiSourceLevel ? ` / 信息来源层级：${sourceLevelLabel(aiSourceLevel)}` : ""}
+        </div>
+
+        {aiInsightStatus === "idle" ? (
+          <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
+            尚未生成 AI 项目认知卡。点击上方按钮开始生成。
+          </div>
+        ) : null}
+        {aiInsightStatus === "pending" ? (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            正在整理项目信息，请稍候...
+          </div>
+        ) : null}
+        {aiInsightStatus === "failed" ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {aiInsightError || "AI 认知卡生成失败，请重试。"}
+          </div>
+        ) : null}
+
+        {aiInsightStatus === "success" ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">一句话理解</h3>
+              <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{insightView.summary || "信息不足"}</p>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{insightView.whatItIs || "信息不足"}</p>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">适合谁 / 使用场景</h3>
+                <p className="mt-2 text-xs text-zinc-500">适合谁</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(insightView.whoFor ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+                <p className="mt-3 text-xs text-zinc-500">使用场景</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(insightView.useCases ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">亮点 / 判断依据</h3>
+                <p className="mt-2 text-xs text-zinc-500">亮点</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(insightView.highlights ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+                <p className="mt-3 text-xs text-zinc-500">判断依据</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(insightView.valueSignals ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">活跃度与依据</h3>
+                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+                  活跃度：{insightView.activity?.level || "unknown"}
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(insightView.activity?.signals ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">信息完整度</h3>
+                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+                  分数：{typeof completenessView.score === "number" ? completenessView.score : "-"} / 100
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {completenessView.note || "该分数仅反映当前公开信息完整度，不代表项目质量评价。"}
+                </p>
+                <p className="mt-2 text-xs text-zinc-500">已有信息</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(completenessView.existing ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+                <p className="mt-2 text-xs text-zinc-500">当前缺少的信息</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(completenessView.missing ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">风险与建议</h3>
+                <p className="mt-2 text-xs text-zinc-500">风险</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(insightView.risks ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+                <p className="mt-3 text-xs text-zinc-500">建议</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  {(insightView.suggestions ?? []).map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 推荐标签/分类</h3>
+                <p className="mt-2 text-xs text-zinc-500">推荐标签</p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {aiSuggestedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-zinc-500">推荐分类</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                  <li>primary: {typeof categoriesView.primary === "string" ? categoriesView.primary : "-"}</li>
+                  <li>secondary: {typeof categoriesView.secondary === "string" ? categoriesView.secondary : "-"}</li>
+                  <li>optional: {asStringArray(categoriesView.optional).join("、") || "-"}</li>
+                </ul>
+              </div>
+            </div>
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">来源与备注</h3>
+              <p className="mt-2 text-xs text-zinc-500">
+                主要信息来源：{mainSources.join(" / ") || "信息不足"}
+              </p>
+              {missingSources.length > 0 ? (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-700 dark:text-amber-300">
+                  {missingSources.map((item) => <li key={item}>⚠️ {item}</li>)}
+                </ul>
+              ) : null}
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                {(insightView.sourceNotes ?? []).map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+            {showSourceSnapshot ? (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">来源快照（可复核）</h3>
+                <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs text-zinc-700 dark:text-zinc-300">
+                  {JSON.stringify({ sourceSnapshot: aiSourceSnapshot, signals: aiSignals }, null, 2)}
+                </pre>
+              </div>
+            ) : null}
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">应用推荐到正式数据</h3>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className="muhub-btn-secondary px-3 py-2 text-sm"
+                  onClick={() => applyAiTags("append")}
+                >
+                  应用推荐标签
+                </button>
+                <button
+                  type="button"
+                  className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  onClick={() => applyAiTags("replace")}
+                >
+                  覆盖标签
+                </button>
+                <button
+                  type="button"
+                  className="muhub-btn-secondary px-3 py-2 text-sm"
+                  onClick={() => applyAiCategories("append")}
+                >
+                  应用推荐分类
+                </button>
+                <button
+                  type="button"
+                  className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  onClick={() => applyAiCategories("replace")}
+                >
+                  覆盖分类
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-zinc-500">
+                默认采用追加模式，不会自动覆盖已有数据；覆盖模式会再次确认。
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">最近操作记录</h3>
+              {initial.aiOpsLogs.length === 0 ? (
+                <p className="mt-2 text-xs text-zinc-500">暂无 AI 应用操作记录。</p>
+              ) : (
+                <ul className="mt-2 space-y-2">
+                  {initial.aiOpsLogs.map((log) => (
+                    <li key={log.id} className="rounded border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300">
+                      {log.createdAt.replace("T", " ").slice(0, 19)}
+                      {" / "}
+                      {log.action === "apply_tags" ? "应用标签" : "应用分类"}
+                      {" / "}
+                      {log.mode === "replace" ? "覆盖模式" : "追加模式"}
+                      {" / "}
+                      操作人：{log.operatorEmail || "未知"}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         ) : null}
       </section>
 
