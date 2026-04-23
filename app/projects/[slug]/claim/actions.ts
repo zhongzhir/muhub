@@ -107,6 +107,6 @@ export async function claimProject(
     return { ...initialFail, formError: "认领申请提交失败，请稍后重试。" };
   }
 
-  revalidatePath(`/projects/${slug}`, "page");
-  redirect(`/projects/${encodeURIComponent(slug)}/claim?submitted=1`);
+  revalidatePath(`/projects/${encodeURIComponent(slug)}`, "page");
+  redirect(`/projects/${encodeURIComponent(slug)}`);
 }
