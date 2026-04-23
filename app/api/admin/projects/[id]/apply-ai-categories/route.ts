@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { normalizeSuggestedCategories } from "@/lib/tag-normalization";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -30,16 +31,16 @@ function uniqueStrings(list: string[], limit = 10): string[] {
 
 function parseSuggestedCategories(value: unknown) {
   const obj = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
-  const primary = clean(obj.primary);
-  const secondary = clean(obj.secondary);
+  const primary = clean(obj.primary) || undefined;
+  const secondary = clean(obj.secondary) || undefined;
   const optionalRaw = Array.isArray(obj.optional)
     ? obj.optional.map((item) => clean(item))
     : [];
-  return {
+  return normalizeSuggestedCategories({
     primary,
     secondary,
     optional: uniqueStrings(optionalRaw, 8),
-  };
+  });
 }
 
 export async function POST(
@@ -79,8 +80,8 @@ export async function POST(
 
   const suggested = parseSuggestedCategories(row.aiSuggestedCategories);
   const selected = parseSuggestedCategories(body.categories ?? {});
-  const primary = selected.primary || suggested.primary;
-  const secondary = selected.secondary || suggested.secondary;
+  const primary = selected.primary || suggested.primary || "";
+  const secondary = selected.secondary || suggested.secondary || "";
   const optional = selected.optional.length ? selected.optional : suggested.optional;
   if (!primary && !secondary && !optional.length) {
     return Response.json({ ok: false, error: "暂无可应用的 AI 推荐分类。" }, { status: 400 });

@@ -89,7 +89,7 @@ export async function GET(
 }
 
 export async function POST(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params;
@@ -115,11 +115,13 @@ export async function POST(
   });
 
   try {
+    const body = (await req.json().catch(() => ({}))) as { mode?: "balanced" | "expressive" };
+    const mode = body.mode === "expressive" ? "expressive" : "balanced";
     const snapshot = await buildProjectContentSourceSnapshot(project.id);
     if (!snapshot) {
       return Response.json({ ok: false, error: "项目不存在或已删除。" }, { status: 404 });
     }
-    const content = await generateProjectAIContent(snapshot);
+    const content = await generateProjectAIContent(snapshot, { mode });
     const updated = await saveProjectAIContent(project.id, { content });
     await prisma.project.update({
       where: { id: project.id },

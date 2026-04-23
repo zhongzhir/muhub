@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
+import { categoryDisplayLabel } from "@/lib/tag-normalization";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import type { AdminProjectEditInitial } from "@/lib/admin-project-edit";
 import type { ReferenceSourceItem } from "@/lib/discovery/reference-sources";
@@ -92,6 +93,14 @@ function sourceLevelLabel(level: string): string {
   if (level === "D") return "D（仅项目描述）";
   if (level === "E") return "E（信息不足）";
   return level;
+}
+
+function aiOpsActionLabel(action: string): string {
+  if (action === "apply_tags") return "应用标签";
+  if (action === "apply_categories") return "应用分类";
+  if (action === "apply_ai_summary") return "应用一句话介绍";
+  if (action === "apply_ai_description") return "应用项目介绍";
+  return action;
 }
 
 function readSuggestSourceFromForm(): Parameters<typeof suggestAdminProjectClassificationAndTags>[0] {
@@ -271,6 +280,48 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     }
     router.refresh();
     window.alert(mode === "replace" ? "已覆盖分类。" : "已合并分类。");
+  };
+
+  const applyAiSummary = async () => {
+    const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-summary`, {
+      method: "POST",
+    });
+    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; tagline?: string };
+    if (!res.ok || !json.ok || !json.tagline) {
+      window.alert(json.error || "应用 AI 一句话介绍失败。");
+      return;
+    }
+    const input = document.getElementById("tagline") as HTMLInputElement | null;
+    if (input) input.value = json.tagline;
+    router.refresh();
+    window.alert("已应用为一句话介绍。");
+  };
+
+  const applyAiDescription = async () => {
+    const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-description`, {
+      method: "POST",
+    });
+    const json = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+      simpleSummary?: string;
+      description?: string;
+    };
+    if (!res.ok || !json.ok) {
+      window.alert(json.error || "应用 AI 项目介绍失败。");
+      return;
+    }
+    const simpleSummaryEl = document.getElementById("simpleSummary") as HTMLTextAreaElement | null;
+    const descEl = document.getElementById("description") as HTMLTextAreaElement | null;
+    if (simpleSummaryEl && json.simpleSummary) {
+      simpleSummaryEl.value = json.simpleSummary;
+      setSimpleSummaryValue(json.simpleSummary);
+    }
+    if (descEl && json.description) {
+      descEl.value = json.description;
+    }
+    router.refresh();
+    window.alert("已应用为项目介绍。");
   };
 
   const reviewClaim = async (action: "approve" | "reject") => {
@@ -673,6 +724,22 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">一句话理解</h3>
               <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{insightView.summary || "信息不足"}</p>
               <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{insightView.whatItIs || "信息不足"}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="muhub-btn-secondary px-3 py-2 text-sm"
+                  onClick={applyAiSummary}
+                >
+                  应用为一句话介绍
+                </button>
+                <button
+                  type="button"
+                  className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  onClick={applyAiDescription}
+                >
+                  应用为项目介绍
+                </button>
+              </div>
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
@@ -740,6 +807,17 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
               </div>
               <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
                 <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 推荐标签/分类</h3>
+                <p className="mt-2 text-xs text-zinc-500">当前标签</p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {parseProjectTags(tagsValue).map((tag) => (
+                    <span
+                      key={`cur-${tag}`}
+                      className="rounded bg-emerald-100 px-2 py-1 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
                 <p className="mt-2 text-xs text-zinc-500">推荐标签</p>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {aiSuggestedTags.map((tag) => (
@@ -753,9 +831,9 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
                 </div>
                 <p className="mt-3 text-xs text-zinc-500">推荐分类</p>
                 <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
-                  <li>primary: {typeof categoriesView.primary === "string" ? categoriesView.primary : "-"}</li>
-                  <li>secondary: {typeof categoriesView.secondary === "string" ? categoriesView.secondary : "-"}</li>
-                  <li>optional: {asStringArray(categoriesView.optional).join("、") || "-"}</li>
+                  <li>primary: {categoryDisplayLabel(typeof categoriesView.primary === "string" ? categoriesView.primary : null)}</li>
+                  <li>secondary: {categoryDisplayLabel(typeof categoriesView.secondary === "string" ? categoriesView.secondary : null)}</li>
+                  <li>optional: {asStringArray(categoriesView.optional).map((item) => categoryDisplayLabel(item)).join("、") || "-"}</li>
                 </ul>
               </div>
             </div>
@@ -827,7 +905,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
                     <li key={log.id} className="rounded border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300">
                       {log.createdAt.replace("T", " ").slice(0, 19)}
                       {" / "}
-                      {log.action === "apply_tags" ? "应用标签" : "应用分类"}
+                      {aiOpsActionLabel(log.action)}
                       {" / "}
                       {log.mode === "replace" ? "覆盖模式" : "追加模式"}
                       {" / "}

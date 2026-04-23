@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
 import { fetchMarketingProjectSnippet } from "@/lib/admin-marketing-context";
-import { normalizeReferenceSources } from "@/lib/discovery/reference-sources";
+import {
+  buildProjectContentSourceSnapshot,
+  generateProjectAIContent,
+  saveProjectAIContent,
+  type ProjectAIContent,
+} from "@/lib/project-ai-content";
 import { writeProjectActionLog } from "@/lib/project-action-log";
 import { prisma } from "@/lib/prisma";
 
@@ -17,6 +22,7 @@ export type MarketingCopyActionState = {
     oneLiner: string;
     plaza: string;
     social: string;
+    mode: "balanced" | "expressive";
   } | null;
 };
 
@@ -32,37 +38,32 @@ const initialState: MarketingCopyActionState = {
   output: null,
 };
 
+function asContent(value: unknown): ProjectAIContent | null {
+  if (!value || typeof value !== "object") return null;
+  const obj = value as Record<string, unknown>;
+  if (!obj.copy || typeof obj.copy !== "object") return null;
+  return value as ProjectAIContent;
+}
+
 function buildCopy(
   project: NonNullable<Awaited<ReturnType<typeof fetchMarketingProjectSnippet>>>,
+  content: ProjectAIContent,
   template: CopyTemplate,
 ) {
-  const references = normalizeReferenceSources(project.referenceSources);
-  const primaryReference = references.find((item) => item.isPrimary) ?? references[0];
-  const topReference = primaryReference?.url ?? "";
-  const topReferenceText =
-    primaryReference?.summary?.trim() ||
-    primaryReference?.title?.trim() ||
-    "";
   const tags = project.tags.slice(0, 5).map((tag) => `#${tag}`).join(" ");
-  const category = project.primaryCategory ? `「${project.primaryCategory}」` : "实用工具";
-  const baseTagline =
-    project.simpleSummary?.trim() ||
-    project.tagline ||
-    `一个聚焦 ${category} 的项目`;
   const link = project.websiteUrl || project.githubUrl || `/projects/${project.slug}`;
-
-  if (template === "social") {
-    return {
-      oneLiner: `${project.name}：${baseTagline}${topReferenceText ? `（参考：${topReferenceText}）` : ""}，现在可快速了解并上手。`,
-      plaza: `推荐 ${project.name} ｜${baseTagline} ｜${tags}`.replace(/\s+/g, " ").trim(),
-      social: `刚发现 ${project.name}，${baseTagline}。${tags} ${link}${topReference ? ` 参考：${topReference}` : ""}`.replace(/\s+/g, " ").trim(),
-    };
-  }
+  const mode: "balanced" | "expressive" =
+    content.mode === "expressive" ? "expressive" : "balanced";
+  const oneLiner = content.copy.oneLiner || `${project.name}：${project.simpleSummary || project.tagline || "信息不足"}`;
+  const medium = content.copy.medium || content.copy.short || oneLiner;
+  const short = content.copy.short || oneLiner;
+  const socialBase = template === "social" ? (content.copy.audienceVersions?.creator || short) : short;
 
   return {
-    oneLiner: `${project.name}：${baseTagline}${topReferenceText ? `（参考：${topReferenceText}）` : ""}。`,
-    plaza: `【${project.name}】${baseTagline} ${tags}${topReference ? ` · 参考：${topReference}` : ""}`.trim(),
-    social: `我在 MUHUB 发现了 ${project.name}，${baseTagline}。${tags} ${link}${topReference ? ` 参考：${topReference}` : ""}`.trim(),
+    oneLiner,
+    plaza: `【${project.name}】${medium} ${tags}`.replace(/\s+/g, " ").trim(),
+    social: `${socialBase} ${tags} ${link}`.replace(/\s+/g, " ").trim(),
+    mode,
   };
 }
 
@@ -89,16 +90,33 @@ export async function generateMarketingCopyAction(
     return { ...initialState, message: "项目不存在或已删除。", template };
   }
 
-  const output = buildCopy(project, template);
+  let content = asContent(project.aiContent);
+  if (!content) {
+    const snapshot = await buildProjectContentSourceSnapshot(project.id);
+    if (!snapshot) {
+      return { ...initialState, message: "项目不存在或已删除。", template };
+    }
+    const generated = await generateProjectAIContent(snapshot, { mode: "balanced" });
+    await saveProjectAIContent(project.id, { content: generated });
+    await prisma.project.update({
+      where: { id: project.id },
+      data: {
+        aiContentDraft: generated,
+      },
+    });
+    content = generated;
+  }
+
+  const output = buildCopy(project, content, template);
   await writeProjectActionLog({
     projectId: project.id,
     action: "marketing_generate",
-    detail: `生成文案 template=${template}`,
+    detail: `生成文案 template=${template} mode=${output.mode}`,
   });
 
   return {
     ok: true,
-    message: "文案已生成。",
+    message: "文案已基于 AI Content 生成。",
     template,
     output,
   };

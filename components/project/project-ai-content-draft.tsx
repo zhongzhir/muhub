@@ -8,6 +8,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type ContentPayload = {
+  mode?: "balanced" | "expressive";
   copy?: {
     oneLiner?: string;
     short?: string;
@@ -407,6 +408,10 @@ export function ProjectAiContentDraft({
               <span className="hidden sm:inline text-zinc-300 dark:text-zinc-600">|</span>
               <span>
                 当前版本：<strong>{isAiOriginalView ? "AI 原始" : "已编辑"}</strong>
+              </span>
+              <span className="hidden sm:inline text-zinc-300 dark:text-zinc-600">|</span>
+              <span>
+                表达模式：<strong>{active.mode === "expressive" ? "增强表达（expressive）" : "平衡表达（balanced）"}</strong>
               </span>
               <span className="hidden sm:inline text-zinc-300 dark:text-zinc-600">|</span>
               <span>

@@ -14,6 +14,8 @@ export type AdminMarketingProjectSnippet = {
   websiteUrl: string | null;
   githubUrl: string | null;
   referenceSources: unknown;
+  aiContent: unknown;
+  aiContentStatus: string | null;
 };
 
 export async function fetchMarketingProjectSnippet(
@@ -38,6 +40,8 @@ export async function fetchMarketingProjectSnippet(
       websiteUrl: true,
       githubUrl: true,
       referenceSources: true,
+      aiContent: true,
+      aiContentStatus: true,
     },
   });
 }

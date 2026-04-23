@@ -26,12 +26,12 @@ export default async function AdminMarketingCopyPage({ searchParams }: { searchP
       <section className="muhub-card space-y-3 p-6">
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">推广文案</h1>
         {!project ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">请先从营销中心传入 `projectId`，再生成规则文案。</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">请先从营销中心传入 `projectId`，再生成 AI 文案。</p>
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">项目：{project.name}</p>
             <MarketingCopyGenerator projectId={project.id} />
-            <p className="text-xs text-zinc-500">文案生成为结构化输出，支持模板切换与快速复制。</p>
+            <p className="text-xs text-zinc-500">文案基于 AI Content 结果生成，支持模板切换与快速复制。</p>
           </div>
         )}
       </section>

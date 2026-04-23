@@ -168,6 +168,11 @@ export function MarketingCopyGenerator({ projectId }: { projectId: string }) {
           </button>
         </div>
         {copyAllMessage ? <p className="mt-1 text-xs text-zinc-500">{copyAllMessage}</p> : null}
+        {activeOutput ? (
+          <p className="mt-1 text-xs text-zinc-500">
+            当前采用：{activeOutput.mode === "expressive" ? "增强表达（expressive）" : "平衡表达（balanced）"}
+          </p>
+        ) : null}
         {!activeOutput ? (
           <p className="mt-2 text-sm text-zinc-500">当前模板还没有生成结果。</p>
         ) : (

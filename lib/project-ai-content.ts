@@ -1,9 +1,11 @@
 import type { Prisma } from "@prisma/client";
 import { getDeepSeekClient } from "@/lib/deepseek";
 import { prisma } from "@/lib/prisma";
+import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 
 export type ProjectAIContent = {
   version: "v1";
+  mode?: "balanced" | "expressive";
   sourceBasis: {
     hasOfficialInfo: boolean;
     hasAiInsight: boolean;
@@ -154,40 +156,61 @@ function normalizeContent(input: unknown, snapshot: ProjectContentSourceSnapshot
 
   return {
     version: "v1",
+    mode: obj.mode === "expressive" ? "expressive" : "balanced",
     sourceBasis: {
       hasOfficialInfo,
       hasAiInsight,
       sourcePriority: priority,
     },
     copy: {
-      oneLiner: clamp(asString(copy.oneLiner) || "信息不足，当前仅能给出保守传播描述。", 120),
-      short: clamp(asString(copy.short) || "信息不足，建议先补充官方信息后再生成传播文案。", 220),
-      medium: clamp(asString(copy.medium) || "信息不足，建议补充项目亮点、目标用户和使用场景。", 500),
-      long: clamp(asString(copy.long) || "当前公开信息较少，暂无法生成完整长文案，请先补充官方介绍与使用场景。", 1200),
+      oneLiner: clamp(
+        normalizeChineseExpression(asString(copy.oneLiner) || "信息不足，当前仅能给出保守传播描述。"),
+        120,
+      ),
+      short: clamp(
+        normalizeChineseExpression(asString(copy.short) || "信息不足，建议先补充官方信息后再生成传播文案。"),
+        220,
+      ),
+      medium: clamp(
+        normalizeChineseExpression(asString(copy.medium) || "信息不足，建议补充项目亮点、目标用户和使用场景。"),
+        500,
+      ),
+      long: clamp(
+        normalizeChineseExpression(
+          asString(copy.long) || "当前公开信息较少，暂无法生成完整长文案，请先补充官方介绍与使用场景。",
+        ),
+        1200,
+      ),
       audienceVersions: {
-        general: clamp(asString(audience.general), 220) || undefined,
-        business: clamp(asString(audience.business), 220) || undefined,
-        creator: clamp(asString(audience.creator), 220) || undefined,
-        developer: clamp(asString(audience.developer), 220) || undefined,
+        general: clamp(normalizeChineseExpression(asString(audience.general)), 220) || undefined,
+        business: clamp(normalizeChineseExpression(asString(audience.business)), 220) || undefined,
+        creator: clamp(normalizeChineseExpression(asString(audience.creator)), 220) || undefined,
+        developer: clamp(normalizeChineseExpression(asString(audience.developer)), 220) || undefined,
       },
     },
     poster: {
-      title: clamp(asString(poster.title) || snapshot.name, 60),
-      subtitle: clamp(asString(poster.subtitle) || "基于公开与官方信息整理的传播草稿", 100),
-      highlights: asStringArray(poster.highlights, 5),
-      targetUsers: clamp(asString(poster.targetUsers) || "信息不足，建议补充目标用户", 120),
-      callToAction: clamp(asString(poster.callToAction) || "欢迎了解项目详情并联系项目方", 120),
-      contactLine: clamp(asString(poster.contactLine), 120) || undefined,
-      linkLine: clamp(asString(poster.linkLine), 180) || undefined,
+      title: clamp(normalizeChineseExpression(asString(poster.title) || snapshot.name), 60),
+      subtitle: clamp(
+        normalizeChineseExpression(asString(poster.subtitle) || "基于公开与官方信息整理的传播草稿"),
+        100,
+      ),
+      highlights: normalizeChineseList(asStringArray(poster.highlights, 5)),
+      targetUsers: clamp(normalizeChineseExpression(asString(poster.targetUsers) || "信息不足，建议补充目标用户"), 120),
+      callToAction: clamp(
+        normalizeChineseExpression(asString(poster.callToAction) || "欢迎了解项目详情并联系项目方"),
+        120,
+      ),
+      contactLine: clamp(normalizeChineseExpression(asString(poster.contactLine)), 120) || undefined,
+      linkLine: clamp(normalizeChineseExpression(asString(poster.linkLine)), 180) || undefined,
     },
-    notes: asStringArray(obj.notes, 8),
+    notes: normalizeChineseList(asStringArray(obj.notes, 8)),
     validation: {
-      basedOn: asStringArray((obj.validation as Record<string, unknown> | undefined)?.basedOn, 5),
-      weakPoints: asStringArray((obj.validation as Record<string, unknown> | undefined)?.weakPoints, 8),
-      verifyBeforeUse: asStringArray(
+      basedOn: normalizeChineseList(asStringArray((obj.validation as Record<string, unknown> | undefined)?.basedOn, 5)),
+      weakPoints: normalizeChineseList(asStringArray((obj.validation as Record<string, unknown> | undefined)?.weakPoints, 8)),
+      verifyBeforeUse: normalizeChineseList(asStringArray(
         (obj.validation as Record<string, unknown> | undefined)?.verifyBeforeUse,
         8,
-      ),
+      )),
     },
     generatedAt: asString(obj.generatedAt) || new Date().toISOString(),
   };
@@ -195,13 +218,17 @@ function normalizeContent(input: unknown, snapshot: ProjectContentSourceSnapshot
 
 export async function generateProjectAIContent(
   snapshot: ProjectContentSourceSnapshot,
+  options?: { mode?: "balanced" | "expressive" },
 ): Promise<ProjectAIContent> {
   const client = getDeepSeekClient();
   const model = process.env.DEEPSEEK_MODEL_CONTENT?.trim() || "deepseek-chat";
   const hasOfficial = Boolean(snapshot.officialInfo);
+  const mode = options?.mode === "expressive" ? "expressive" : "balanced";
   const systemPrompt = [
     "你是 MUHUB 的项目传播表达助手。",
     "你的任务不是评价项目，也不是编造营销故事，而是基于已提供信息生成适合传播的中文草稿。",
+    "你需要先理解项目价值、目标用户与使用场景，再做表达重构，不是机械复述原文。",
+    "可以重组信息顺序，可以提炼更有传播力的中文句子。",
     "只能依据输入内容生成，不得虚构客户、数据、合作关系、融资情况、团队背景。",
     "可以优化表达和提炼亮点，但不能超出事实边界。",
     "不得输出“行业第一”“全球领先”“大量用户”等无依据表述。",
@@ -217,10 +244,17 @@ export async function generateProjectAIContent(
     hasOfficial
       ? "输入中存在 officialInfo，请优先参考官方信息，再参考 aiInsight、sourceSnapshot、raw。"
       : "输入中不存在 officialInfo，请按 aiInsight、sourceSnapshot、raw 的顺序保守生成。",
+    `请基于以下输入生成 ProjectAIContent json。当前表达模式：${mode}。`,
+    mode === "expressive"
+      ? "expressive 模式：表达可以更有传播力，但仍严格禁止虚构任何事实。"
+      : "balanced 模式：表达克制、准确、可直接用于发布前人工校对。",
+    "当存在 officialInfo 时，优先依据 officialInfo.summary/fullDescription/useCases/whoFor；其次 aiInsight；最后 sourceSnapshot/raw。",
+    "short/medium/long 需明显区分用途与长度，audienceVersions 必须体现不同对象差异。",
     "请基于以下输入生成 ProjectAIContent JSON：",
     JSON.stringify(
       {
         version: "v1",
+        mode: "balanced|expressive",
         sourceBasis: {
           hasOfficialInfo: true,
           hasAiInsight: true,

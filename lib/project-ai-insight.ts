@@ -2,6 +2,8 @@ import type { Prisma } from "@prisma/client";
 import { parseGitHubRepoUrl } from "@/lib/github";
 import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import { getDeepSeekClient } from "@/lib/deepseek";
+import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
+import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { prisma } from "@/lib/prisma";
 
 type ActivityLevel = "high" | "medium" | "low" | "unknown";
@@ -481,32 +483,45 @@ function ensureInsightShape(
 
   const parsed: ProjectAIInsight = {
     version: "v1",
-    summary: limitText(safeString(insightObj.summary) || "信息不足，暂无法形成清晰的一句话总结。", 180),
-    whatItIs: limitText(safeString(insightObj.whatItIs) || "信息不足，建议补充官网或项目文档后再生成。", 220),
-    whoFor: safeStringArray(insightObj.whoFor, 6),
-    useCases: safeStringArray(insightObj.useCases, 6),
-    highlights: safeStringArray(insightObj.highlights, 8),
-    valueSignals: safeStringArray(insightObj.valueSignals, 8),
+    summary: limitText(
+      normalizeChineseExpression(safeString(insightObj.summary) || "信息不足，暂无法形成清晰的一句话总结。"),
+      180,
+    ),
+    whatItIs: limitText(
+      normalizeChineseExpression(safeString(insightObj.whatItIs) || "信息不足，建议补充官网或项目文档后再生成。"),
+      220,
+    ),
+    whoFor: normalizeChineseList(safeStringArray(insightObj.whoFor, 6)),
+    useCases: normalizeChineseList(safeStringArray(insightObj.useCases, 6)),
+    highlights: normalizeChineseList(safeStringArray(insightObj.highlights, 8)),
+    valueSignals: normalizeChineseList(safeStringArray(insightObj.valueSignals, 8)),
     activity: {
       level,
-      signals: safeStringArray((insightObj.activity as Record<string, unknown> | undefined)?.signals, 6),
+      signals: normalizeChineseList(
+        safeStringArray((insightObj.activity as Record<string, unknown> | undefined)?.signals, 6),
+      ),
     },
-    risks: safeStringArray(insightObj.risks, 8),
-    suggestions: safeStringArray(insightObj.suggestions, 8),
+    risks: normalizeChineseList(safeStringArray(insightObj.risks, 8)),
+    suggestions: normalizeChineseList(safeStringArray(insightObj.suggestions, 8)),
     completeness: {
       score: completeness.score,
       existing: completeness.existing,
       missing: completeness.missing,
     },
-    sourceNotes: safeStringArray(insightObj.sourceNotes, 8),
+    sourceNotes: normalizeChineseList(safeStringArray(insightObj.sourceNotes, 8)),
     generatedAt: safeString(insightObj.generatedAt) || nowIso,
   };
 
-  const suggestedTags = safeStringArray(obj.suggestedTags, 8);
-  const suggestedCategories: ProjectAISuggestedCategories = {
+  const suggestedTags = normalizeSuggestedTags(safeStringArray(obj.suggestedTags, 8));
+  const normalizedCategories = normalizeSuggestedCategories({
     primary: safeString(categoryObj.primary) || undefined,
     secondary: safeString(categoryObj.secondary) || undefined,
     optional: safeStringArray(categoryObj.optional, 5),
+  });
+  const suggestedCategories: ProjectAISuggestedCategories = {
+    primary: normalizedCategories.primary,
+    secondary: normalizedCategories.secondary,
+    optional: normalizedCategories.optional,
   };
 
   return { insight: parsed, suggestedTags, suggestedCategories };
@@ -611,10 +626,12 @@ export async function generateProjectAIInsight(
       }
       const normalized = ensureInsightShape(parsed, completeness);
       if (!normalized.suggestedTags.length) {
-        normalized.suggestedTags = fallbackSuggest.tags.slice(0, 8);
+        normalized.suggestedTags = normalizeSuggestedTags(fallbackSuggest.tags.slice(0, 8));
       }
       if (!normalized.suggestedCategories.primary) {
-        normalized.suggestedCategories.primary = fallbackSuggest.primaryCategory;
+        normalized.suggestedCategories.primary = normalizeSuggestedCategories({
+          primary: fallbackSuggest.primaryCategory,
+        }).primary;
       }
       if (normalized.insight.activity.level === "unknown") {
         normalized.insight.activity.level = getActivityLevel(snapshot);

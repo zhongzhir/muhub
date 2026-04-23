@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -9,17 +10,17 @@ type ApplyTagsBody = {
   tags?: string[];
 };
 
-function normalizeTags(input: unknown): string[] {
+function parseInputTags(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
-  const unique = new Set<string>();
+  const list: string[] = [];
   for (const item of input) {
     if (typeof item !== "string") continue;
     const tag = item.trim();
     if (!tag) continue;
-    unique.add(tag);
-    if (unique.size >= 20) break;
+    list.push(tag);
+    if (list.length >= 30) break;
   }
-  return [...unique];
+  return list;
 }
 
 export async function POST(
@@ -56,8 +57,8 @@ export async function POST(
     return Response.json({ ok: false, error: "项目不存在或已删除。" }, { status: 404 });
   }
 
-  const suggested = normalizeTags(row.aiSuggestedTags);
-  const selected = normalizeTags(body.tags);
+  const suggested = normalizeSuggestedTags(parseInputTags(row.aiSuggestedTags));
+  const selected = normalizeSuggestedTags(parseInputTags(body.tags));
   const source = selected.length ? selected : suggested;
   if (!source.length) {
     return Response.json({ ok: false, error: "暂无可应用的 AI 推荐标签。" }, { status: 400 });
@@ -66,7 +67,7 @@ export async function POST(
   const nextTags =
     mode === "replace"
       ? source
-      : [...new Set([...row.tags, ...source])];
+      : normalizeSuggestedTags([...row.tags, ...source]);
 
   await prisma.project.update({
     where: { id: row.id },
