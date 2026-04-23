@@ -42,6 +42,23 @@ const CATEGORY_DICT: Record<string, string> = {
   "开源": "open-source",
   "智能体": "ai-agents",
   "效率工具": "productivity",
+  llm: "ai-agents",
+  "大模型": "ai-agents",
+  "llm基础": "ai-agents",
+  "ai / llm": "ai-agents",
+  "ai/llm": "ai-agents",
+  automation: "productivity",
+  "自动化": "productivity",
+  "workflow automation": "productivity",
+  orchestration: "productivity",
+  content: "design",
+  "内容": "design",
+  education: "research",
+  "学习": "research",
+  "教学": "research",
+  books: "research",
+  "书籍": "research",
+  "dev tool": "developer-tools",
 };
 
 const CATEGORY_ZH_LABEL: Record<string, string> = {

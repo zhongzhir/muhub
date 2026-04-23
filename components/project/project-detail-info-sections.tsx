@@ -510,20 +510,16 @@ export function ProjectDetailInfoSections({
         )}
       </section>
 
-      <section className="mt-14 scroll-mt-8 pb-8" aria-labelledby="about-heading">
-        <h2 id="about-heading" className="muhub-page-section-title">
-          项目介绍
-        </h2>
-        {descriptionBody ? (
+      {descriptionBody ? (
+        <section className="mt-14 scroll-mt-8 pb-8" aria-labelledby="about-heading">
+          <h2 id="about-heading" className="muhub-page-section-title">
+            项目介绍
+          </h2>
           <div className="muhub-card p-6 text-zinc-800 dark:text-zinc-200 md:p-8">
             <p className="whitespace-pre-wrap leading-relaxed">{descriptionBody}</p>
           </div>
-        ) : (
-          <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
-            暂无项目介绍
-          </p>
-        )}
-      </section>
+        </section>
+      ) : null}
     </>
   );
 }

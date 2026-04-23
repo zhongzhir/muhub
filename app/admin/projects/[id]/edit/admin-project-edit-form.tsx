@@ -3,13 +3,11 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import { categoryDisplayLabel } from "@/lib/tag-normalization";
 import { useRedirectFromActionState } from "@/components/forms/use-redirect-from-action-state";
 import type { AdminProjectEditInitial } from "@/lib/admin-project-edit";
 import type { ReferenceSourceItem } from "@/lib/discovery/reference-sources";
 import { ensureSinglePrimary } from "@/lib/discovery/reference-sources";
-import { generateSimpleSummary } from "@/lib/project-simple-summary";
 import { PROJECT_CATEGORY_OPTIONS } from "@/lib/projects/project-categories";
 import { formatProjectTagsInput, parseProjectTags } from "@/lib/projects/project-tags";
 import { saveAdminProject, type AdminProjectEditFormState } from "./actions";
@@ -103,16 +101,20 @@ function aiOpsActionLabel(action: string): string {
   return action;
 }
 
-function readSuggestSourceFromForm(): Parameters<typeof suggestAdminProjectClassificationAndTags>[0] {
-  const val = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null)?.value ?? "";
-  return {
-    githubUrl: val("githubUrl"),
-    tagline: val("tagline"),
-    description: val("description"),
-    name: val("name"),
-    websiteUrl: val("websiteUrl"),
-    aiCardSummary: val("aiCardSummary"),
-  };
+function buildProjectDetailFromInsight(insight: InsightView, officialDescription: string, fallbackDescription: string): string {
+  if (officialDescription.trim()) return officialDescription.trim();
+  const blocks: string[] = [];
+  if (insight.whatItIs?.trim()) {
+    blocks.push(insight.whatItIs.trim());
+  }
+  if ((insight.whoFor ?? []).length > 0) {
+    blocks.push(`它更适合：${(insight.whoFor ?? []).slice(0, 5).join("、")}。`);
+  }
+  if ((insight.useCases ?? []).length > 0) {
+    blocks.push(`典型使用场景包括：${(insight.useCases ?? []).slice(0, 5).join("；")}。`);
+  }
+  if (blocks.length === 0) return fallbackDescription.trim();
+  return blocks.join("\n\n");
 }
 
 export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditInitial }) {
@@ -121,12 +123,10 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
   /** 与 `page.tsx` 中 `key={project.dataUpdatedAt}` 配合：保存后 remount，此处无需 effect 同步 props */
   const [categoryValue, setCategoryValue] = useState(initial.category);
   const [tagsValue, setTagsValue] = useState(initial.tags);
-  const [simpleSummaryValue, setSimpleSummaryValue] = useState(initial.simpleSummary);
+  const [descriptionValue, setDescriptionValue] = useState(initial.description);
   const [referenceSources, setReferenceSources] = useState<ReferenceSourceItem[]>(
     initial.referenceSources ?? [],
   );
-  const [classifyHint, setClassifyHint] = useState<string | null>(null);
-  const [summaryGenerating, setSummaryGenerating] = useState(false);
   const [referenceMessage, setReferenceMessage] = useState<string | null>(null);
   const [aiInsightStatus, setAiInsightStatus] = useState(initial.aiInsightStatus || "idle");
   const [aiInsightError, setAiInsightError] = useState(initial.aiInsightError || "");
@@ -169,6 +169,17 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
   const extractedSignals = asRecord(sourceSnapshotView.extractedSignals);
   const mainSources = asStringArray(extractedSignals.mainSources);
   const missingSources = asStringArray(extractedSignals.missingSources);
+  const aiEnhancedDetail = buildProjectDetailFromInsight(
+    insightView,
+    initial.officialInfo.fullDescription,
+    initial.description,
+  );
+
+  useEffect(() => {
+    if (!descriptionValue.trim() && aiEnhancedDetail.trim()) {
+      setDescriptionValue(aiEnhancedDetail);
+    }
+  }, [aiEnhancedDetail, descriptionValue]);
 
   const generateAiInsight = async () => {
     setAiBusy(true);
@@ -212,74 +223,37 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     }
   };
 
-  const applyAiTags = async (mode: "append" | "replace") => {
-    const defaults = aiSuggestedTags.join(", ");
-    const edited = window.prompt("可编辑要应用的标签（逗号分隔）", defaults);
-    if (edited === null) return;
-    const selectedTags = parseProjectTags(edited).slice(0, 8);
-    if (!selectedTags.length) {
-      window.alert("未选择有效标签。");
-      return;
-    }
-    if (mode === "replace" && !window.confirm("将覆盖当前标签，确定继续？")) {
-      return;
-    }
-    const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-tags`, {
+  const applyAiRecommendations = async (mode: "append" | "replace") => {
+    if (mode === "replace" && !window.confirm("将覆盖当前分类与标签，确定继续？")) return;
+    const tagsRes = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-tags`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, tags: selectedTags }),
+      body: JSON.stringify({ mode }),
     });
-    const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; tags?: string[] };
-    if (!res.ok || !json.ok) {
-      window.alert(json.error || "应用推荐标签失败。");
+    const tagsJson = (await tagsRes.json().catch(() => ({}))) as { ok?: boolean; error?: string; tags?: string[] };
+    if (!tagsRes.ok || !tagsJson.ok) {
+      window.alert(tagsJson.error || "应用推荐标签失败。");
       return;
     }
-    const nextTags = formatProjectTagsInput(Array.isArray(json.tags) ? json.tags : selectedTags);
-    setTagsValue(nextTags);
-    router.refresh();
-    window.alert(mode === "replace" ? "已覆盖标签。" : "已追加标签。");
-  };
+    setTagsValue(formatProjectTagsInput(Array.isArray(tagsJson.tags) ? tagsJson.tags : []));
 
-  const applyAiCategories = async (mode: "append" | "replace") => {
-    const primaryDefault = typeof categoriesView.primary === "string" ? categoriesView.primary : "";
-    const secondaryDefault = typeof categoriesView.secondary === "string" ? categoriesView.secondary : "";
-    const optionalDefault = asStringArray(categoriesView.optional).join(", ");
-    const primary = window.prompt("primary 分类（可编辑）", primaryDefault);
-    if (primary === null) return;
-    const secondary = window.prompt("secondary 分类（可编辑，可留空）", secondaryDefault);
-    if (secondary === null) return;
-    const optionalRaw = window.prompt("optional 分类（逗号分隔，可留空）", optionalDefault);
-    if (optionalRaw === null) return;
-    if (mode === "replace" && !window.confirm("将覆盖当前分类，确定继续？")) {
-      return;
-    }
-    const optional = parseProjectTags(optionalRaw).slice(0, 8);
-    const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-categories`, {
+    const categoriesRes = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/apply-ai-categories`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode,
-        categories: {
-          primary: primary.trim(),
-          secondary: secondary.trim(),
-          optional,
-        },
-      }),
+      body: JSON.stringify({ mode }),
     });
-    const json = (await res.json().catch(() => ({}))) as {
+    const categoriesJson = (await categoriesRes.json().catch(() => ({}))) as {
       ok?: boolean;
       error?: string;
       primaryCategory?: string | null;
     };
-    if (!res.ok || !json.ok) {
-      window.alert(json.error || "应用推荐分类失败。");
+    if (!categoriesRes.ok || !categoriesJson.ok) {
+      window.alert(categoriesJson.error || "应用推荐分类失败。");
       return;
     }
-    if (typeof json.primaryCategory === "string" && json.primaryCategory) {
-      setCategoryValue(json.primaryCategory);
-    }
+    if (categoriesJson.primaryCategory) setCategoryValue(categoriesJson.primaryCategory);
     router.refresh();
-    window.alert(mode === "replace" ? "已覆盖分类。" : "已合并分类。");
+    window.alert(mode === "replace" ? "已覆盖为推荐分类与标签。" : "已应用推荐分类与标签。");
   };
 
   const applyAiSummary = async () => {
@@ -304,22 +278,13 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     const json = (await res.json().catch(() => ({}))) as {
       ok?: boolean;
       error?: string;
-      simpleSummary?: string;
       description?: string;
     };
     if (!res.ok || !json.ok) {
       window.alert(json.error || "应用 AI 项目介绍失败。");
       return;
     }
-    const simpleSummaryEl = document.getElementById("simpleSummary") as HTMLTextAreaElement | null;
-    const descEl = document.getElementById("description") as HTMLTextAreaElement | null;
-    if (simpleSummaryEl && json.simpleSummary) {
-      simpleSummaryEl.value = json.simpleSummary;
-      setSimpleSummaryValue(json.simpleSummary);
-    }
-    if (descEl && json.description) {
-      descEl.value = json.description;
-    }
+    if (json.description) setDescriptionValue(json.description);
     router.refresh();
     window.alert("已应用为项目介绍。");
   };
@@ -349,79 +314,6 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     }
   };
 
-  const applySuggestSoft = () => {
-    const hadCategory = categoryValue.trim() !== "";
-    const hadTags = parseProjectTags(tagsValue).length > 0;
-    const result = suggestAdminProjectClassificationAndTags(readSuggestSourceFromForm());
-    const suggestedTagsParsed = parseProjectTags(result.tags.join(", "));
-
-    if (!hadCategory) {
-      setCategoryValue(result.primaryCategory);
-    }
-    if (!hadTags) {
-      setTagsValue(formatProjectTagsInput(suggestedTagsParsed.slice(0, 8)));
-    }
-
-    const parts: string[] = [];
-    if (!hadCategory) {
-      parts.push(`已填入分类「${result.primaryCategory}」`);
-    } else {
-      parts.push("分类未改动（如需替换请清空分类或点击「强制覆盖」）");
-    }
-    if (!hadTags) {
-      parts.push(`已填入标签：${result.tags.join("，")}`);
-    } else {
-      parts.push("标签未改动（已手工填写；如需替换请点击「强制覆盖分类与标签」）");
-    }
-    setClassifyHint(parts.join("。"));
-  };
-
-  const applySuggestForce = () => {
-    if (!window.confirm("将用本次规则结果覆盖当前「项目分类」和「标签」，确定？")) {
-      return;
-    }
-    const result = suggestAdminProjectClassificationAndTags(readSuggestSourceFromForm());
-    const suggestedTagsParsed = parseProjectTags(result.tags.join(", "));
-    setCategoryValue(result.primaryCategory);
-    setTagsValue(formatProjectTagsInput(suggestedTagsParsed.slice(0, 8)));
-    setClassifyHint(`已覆盖为分类「${result.primaryCategory}」，标签：${result.tags.join("，")}`);
-  };
-
-  const generateSummary = async (force: boolean) => {
-    if (!force && simpleSummaryValue.trim()) {
-      if (!window.confirm("当前已填写通俗介绍，是否覆盖？")) {
-        return;
-      }
-    }
-    if (force) {
-      if (!window.confirm("将覆盖当前通俗介绍，确定继续？")) {
-        return;
-      }
-    }
-    setSummaryGenerating(true);
-    try {
-      const val = (id: string) =>
-        (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null)?.value ?? "";
-      const summary = generateSimpleSummary({
-        name: val("name"),
-        tagline: val("tagline"),
-        description: val("description"),
-        primaryCategory: categoryValue,
-        tags: parseProjectTags(tagsValue),
-        referenceSummaries: [
-          ...referenceSources
-            .filter((item) => item.isPrimary)
-            .map((item) => item.summary ?? item.note ?? item.title ?? ""),
-          ...referenceSources
-            .filter((item) => !item.isPrimary)
-            .map((item) => item.summary ?? item.note ?? item.title ?? ""),
-        ].filter(Boolean),
-      });
-      setSimpleSummaryValue(summary);
-    } finally {
-      setSummaryGenerating(false);
-    }
-  };
 
   const moveUpReference = (idx: number) => {
     if (idx <= 0) {
@@ -465,6 +357,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
         name="referenceSourcesJson"
         value={JSON.stringify(referenceSources)}
       />
+      <input type="hidden" name="simpleSummary" value={initial.simpleSummary} />
 
       {state.toast ? (
         <div
@@ -500,7 +393,10 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
         </div>
 
         <div className="grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-600 sm:grid-cols-2 lg:grid-cols-4">
-          <div>当前状态：{statusView.status}</div>
+          <div>
+            当前状态：{statusView.status}
+            {statusView.status === "PUBLISHED" ? <div className="mt-1 font-medium text-green-600">✅ 已发布</div> : null}
+          </div>
           <div>当前可见性：{statusView.visibilityStatus}</div>
           <div>是否公开：{statusView.isPublic ? "是" : "否"}</div>
           <div>发布时间：{formatPublishedAt(statusView.publishedAt)}</div>
@@ -519,44 +415,12 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
           </label>
           <input id="tagline" name="tagline" className={inputClass} defaultValue={initial.tagline} />
         </div>
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="simpleSummary">
-              通俗介绍
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                onClick={() => generateSummary(false)}
-                disabled={summaryGenerating}
-              >
-                {summaryGenerating ? "生成中..." : "自动生成"}
-              </button>
-              <button
-                type="button"
-                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                onClick={() => generateSummary(true)}
-                disabled={summaryGenerating}
-              >
-                覆盖生成
-              </button>
-            </div>
-          </div>
-          <textarea
-            id="simpleSummary"
-            name="simpleSummary"
-            className={`${inputClass} min-h-[96px] resize-y`}
-            value={simpleSummaryValue}
-            onChange={(e) => setSimpleSummaryValue(e.target.value)}
-            placeholder="用非技术语言介绍这个项目：它解决什么问题、适合谁使用。"
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">分类与标签（AI辅助）</h3>
+          <div className="mt-3 grid gap-4 sm:grid-cols-3">
           <div>
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="category">
-              项目分类
+              主分类
             </label>
             <select
               id="category"
@@ -586,25 +450,47 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
               placeholder="AI, 开源, Agent"
             />
           </div>
+          <div>
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="githubUrl">
+              GitHub 链接
+            </label>
+            <input id="githubUrl" name="githubUrl" className={inputClass} defaultValue={initial.githubUrl} />
+          </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <p className="text-xs text-zinc-500">AI 推荐</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {aiSuggestedTags.map((tag) => (
+              <span key={tag} className="rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                {tag}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-zinc-500">
+            推荐分类：{categoryDisplayLabel(typeof categoriesView.primary === "string" ? categoriesView.primary : null)}
+            {typeof categoriesView.secondary === "string" ? ` / ${categoryDisplayLabel(categoriesView.secondary)}` : ""}
+          </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <button
             type="button"
             className="muhub-btn-secondary w-fit px-3 py-2 text-sm"
-            onClick={applySuggestSoft}
+            onClick={() => applyAiRecommendations("append")}
           >
-            自动生成分类与标签
+            应用推荐
           </button>
-          <button type="button" className="text-sm text-zinc-600 underline-offset-4 hover:underline" onClick={applySuggestForce}>
-            强制覆盖分类与标签
+          <button
+            type="button"
+            className="text-sm text-zinc-600 underline-offset-4 hover:underline"
+            onClick={() => applyAiRecommendations("replace")}
+          >
+            覆盖为推荐
           </button>
           <p className="text-xs text-zinc-500">
-            根据当前表单中的 GitHub、简介、详情、名称、官网与动态摘要做规则推断；不会自动执行，也不影响发布校验中的「标签为建议项」。
+            AI 推荐已做标准化与中文化，写入前仍需人工确认。
           </p>
         </div>
-        {classifyHint ? (
-          <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700">{classifyHint}</p>
-        ) : null}
       </section>
 
       <section className="muhub-card space-y-4 p-5 sm:p-6">
@@ -672,7 +558,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
       <section className="muhub-card space-y-4 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">AI 项目认知卡</h2>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">AI 结构化分析（供参考）</h2>
             <p className="mt-1 text-xs text-zinc-500">
               基于当前公开信息整理。仅提供判断依据与信息结构，不代表项目质量评价。
             </p>
@@ -704,7 +590,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
 
         {aiInsightStatus === "idle" ? (
           <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
-            尚未生成 AI 项目认知卡。点击上方按钮开始生成。
+            尚未生成 AI 结构化分析。点击上方按钮开始生成。
           </div>
         ) : null}
         {aiInsightStatus === "pending" ? (
@@ -806,9 +692,8 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
                 </ul>
               </div>
               <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">AI 推荐标签/分类</h3>
-                <p className="mt-2 text-xs text-zinc-500">当前标签</p>
-                <div className="mt-1 flex flex-wrap gap-2">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">当前标签</h3>
+                <div className="mt-2 flex flex-wrap gap-2">
                   {parseProjectTags(tagsValue).map((tag) => (
                     <span
                       key={`cur-${tag}`}
@@ -818,23 +703,6 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
                     </span>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-zinc-500">推荐标签</p>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {aiSuggestedTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded bg-zinc-100 px-2 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-3 text-xs text-zinc-500">推荐分类</p>
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
-                  <li>primary: {categoryDisplayLabel(typeof categoriesView.primary === "string" ? categoriesView.primary : null)}</li>
-                  <li>secondary: {categoryDisplayLabel(typeof categoriesView.secondary === "string" ? categoriesView.secondary : null)}</li>
-                  <li>optional: {asStringArray(categoriesView.optional).map((item) => categoryDisplayLabel(item)).join("、") || "-"}</li>
-                </ul>
               </div>
             </div>
             <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
@@ -859,42 +727,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
                 </pre>
               </div>
             ) : null}
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
-              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">应用推荐到正式数据</h3>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  className="muhub-btn-secondary px-3 py-2 text-sm"
-                  onClick={() => applyAiTags("append")}
-                >
-                  应用推荐标签
-                </button>
-                <button
-                  type="button"
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  onClick={() => applyAiTags("replace")}
-                >
-                  覆盖标签
-                </button>
-                <button
-                  type="button"
-                  className="muhub-btn-secondary px-3 py-2 text-sm"
-                  onClick={() => applyAiCategories("append")}
-                >
-                  应用推荐分类
-                </button>
-                <button
-                  type="button"
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  onClick={() => applyAiCategories("replace")}
-                >
-                  覆盖分类
-                </button>
-              </div>
-              <p className="mt-2 text-xs text-zinc-500">
-                默认采用追加模式，不会自动覆盖已有数据；覆盖模式会再次确认。
-              </p>
-            </div>
+            {/* 分类与标签应用入口已在基础信息模块统一展示 */}
             <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">最近操作记录</h3>
               {initial.aiOpsLogs.length === 0 ? (
@@ -921,18 +754,12 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
 
       <section className="muhub-card space-y-4 p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">外部链接</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-1">
           <div>
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="websiteUrl">
               官网链接
             </label>
             <input id="websiteUrl" name="websiteUrl" className={inputClass} defaultValue={initial.websiteUrl} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="githubUrl">
-              GitHub 链接
-            </label>
-            <input id="githubUrl" name="githubUrl" className={inputClass} defaultValue={initial.githubUrl} />
           </div>
         </div>
         <div>
@@ -951,12 +778,16 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
       </section>
 
       <section className="muhub-card space-y-4 p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">项目详情</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">项目详情（AI增强版）</h2>
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300">
+          <p className="whitespace-pre-wrap">{aiEnhancedDetail || "信息不足，请先生成 AI 结构化分析后应用项目介绍。"}</p>
+        </div>
         <textarea
           id="description"
           name="description"
           className={`${inputClass} min-h-[180px] resize-y`}
-          defaultValue={initial.description}
+          value={descriptionValue}
+          onChange={(e) => setDescriptionValue(e.target.value)}
         />
       </section>
 
@@ -1064,17 +895,23 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
           {pending && state.action === "save" ? "保存中..." : "保存草稿"}
         </button>
         <Link href={`/projects/${initial.slug}`} target="_blank" className="muhub-btn-secondary px-4 py-3">
-          预览
+          {statusView.status === "PUBLISHED" ? "查看项目页" : "预览"}
         </Link>
-        <button
-          type="submit"
-          name="intent"
-          value="publish"
-          disabled={pending}
-          className="muhub-btn-primary px-4 py-3 disabled:opacity-60"
-        >
-          {pending && state.action === "publish" ? "发布中..." : "发布项目"}
-        </button>
+        {statusView.status === "PUBLISHED" ? (
+          <span className="rounded border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            已发布 ✅
+          </span>
+        ) : (
+          <button
+            type="submit"
+            name="intent"
+            value="publish"
+            disabled={pending}
+            className="muhub-btn-primary px-4 py-3 disabled:opacity-60"
+          >
+            {pending && state.action === "publish" ? "发布中..." : "发布项目"}
+          </button>
+        )}
       </div>
     </form>
   );

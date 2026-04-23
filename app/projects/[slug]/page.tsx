@@ -123,6 +123,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     contactEmail: string | null;
   } | null = null;
   let aiSummary: string | null = null;
+  let aiWhatItIs: string | null = null;
+  let aiWhoFor: string[] = [];
+  let aiUseCases: string[] = [];
   let aiContentStatus = "";
   let aiContentUpdatedAt = "";
   let aiContentError = "";
@@ -171,6 +174,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         owners.aiInsight && typeof owners.aiInsight === "object" && typeof (owners.aiInsight as Record<string, unknown>).summary === "string"
           ? ((owners.aiInsight as Record<string, unknown>).summary as string)
           : null;
+      if (owners.aiInsight && typeof owners.aiInsight === "object") {
+        const aiObj = owners.aiInsight as Record<string, unknown>;
+        aiWhatItIs = typeof aiObj.whatItIs === "string" ? aiObj.whatItIs : null;
+        aiWhoFor = Array.isArray(aiObj.whoFor) ? aiObj.whoFor.filter((x): x is string => typeof x === "string") : [];
+        aiUseCases = Array.isArray(aiObj.useCases) ? aiObj.useCases.filter((x): x is string => typeof x === "string") : [];
+      }
       aiContent = owners.aiContent;
       aiContentStatus = owners.aiContentStatus ?? "idle";
       aiContentUpdatedAt = owners.aiContentUpdatedAt?.toISOString() ?? "";
@@ -207,9 +216,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   const socials = sortProjectSocials(data.socials);
 
-  const hasDescription = Boolean(data.description.trim());
-  const descriptionBody = hasDescription ? data.description.trim() : null;
-
   const sourceItems = getProjectSources({
     legacyGithubUrl: data.githubUrl,
     legacyWebsiteUrl: data.websiteUrl,
@@ -245,13 +251,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     data.tagline?.trim() ||
     summary ||
     undefined;
-  const heroSummaryWithSimple = officialSummary || fallbackAiSummary || data.simpleSummary?.trim() || heroSummary;
+  const heroSummaryWithSimple = officialSummary || fallbackAiSummary || heroSummary;
   const summaryForSection =
     (data.simpleSummary?.trim() && data.simpleSummary.trim() !== data.description.trim()
       ? data.simpleSummary.trim()
       : summary && summary.trim() !== data.description.trim()
         ? summary
         : null);
+  const detailParagraphs = officialInfo?.fullDescription?.trim()
+    ? [officialInfo.fullDescription.trim()]
+    : [
+        aiWhatItIs?.trim() || data.description.trim() || "",
+        aiWhoFor.length ? `适合人群：${aiWhoFor.slice(0, 5).join("、")}。` : "",
+        aiUseCases.length ? `使用场景：${aiUseCases.slice(0, 5).join("；")}。` : "",
+      ].filter(Boolean);
   const promoText = buildProjectPromoText({
     name: data.name,
     summary,
@@ -341,11 +354,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <ProjectSummary summary={summaryForSection ?? undefined} />
 
+        <section className="mb-6 rounded-xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
+          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">项目详情</h2>
+          <div className="mt-3 space-y-3 text-zinc-700 dark:text-zinc-300">
+            {detailParagraphs.map((item) => (
+              <p key={item} className="whitespace-pre-wrap leading-relaxed">{item}</p>
+            ))}
+          </div>
+        </section>
+
         <ProjectDetailInfoSections
           data={data}
           socials={socials}
           sourceItems={sourceItems}
-          descriptionBody={descriptionBody}
+          descriptionBody={null}
         />
 
         <ProjectReferenceSources sources={data.referenceSources} />

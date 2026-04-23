@@ -14,7 +14,7 @@ function asList(v: unknown): string[] {
   return normalizeChineseList(v.map((item) => asString(item)).filter(Boolean));
 }
 
-function composeDescription(aiInsight: unknown): { simpleSummary: string; description: string } | null {
+function buildHumanReadableProjectDetail(aiInsight: unknown): { description: string } | null {
   const obj = aiInsight && typeof aiInsight === "object" ? (aiInsight as Record<string, unknown>) : {};
   const whatItIs = normalizeChineseExpression(asString(obj.whatItIs));
   const whoFor = asList(obj.whoFor);
@@ -25,19 +25,17 @@ function composeDescription(aiInsight: unknown): { simpleSummary: string; descri
     return null;
   }
 
-  const simpleSummary = summary || whatItIs || "该项目信息仍有限，建议补充官方描述后再完善介绍。";
   const lines: string[] = [];
   lines.push(whatItIs || summary || "这是一个面向真实业务场景的项目。");
   if (whoFor.length) {
-    lines.push(`它主要适合：${whoFor.slice(0, 4).join("、")}。`);
+    lines.push(`它更适合：${whoFor.slice(0, 4).join("、")}。`);
   }
   if (useCases.length) {
     lines.push(`典型使用场景包括：${useCases.slice(0, 4).join("；")}。`);
   }
-  lines.push("以上内容基于当前 AI 认知整理，发布前请结合官方信息做最终校对。");
+  lines.push("以上内容基于当前 AI 结构化整理，发布前请结合官方信息做最终校对。");
   return {
-    simpleSummary: normalizeChineseExpression(simpleSummary).slice(0, 220),
-    description: normalizeChineseExpression(lines.join(" ")).slice(0, 3000),
+    description: normalizeChineseExpression(lines.join("\n\n")).slice(0, 3000),
   };
 }
 
@@ -58,11 +56,11 @@ export async function POST(
   const { id } = await ctx.params;
   const row = await prisma.project.findFirst({
     where: { id, deletedAt: null },
-    select: { id: true, slug: true, simpleSummary: true, description: true, aiInsight: true },
+    select: { id: true, slug: true, description: true, aiInsight: true },
   });
   if (!row) return Response.json({ ok: false, error: "项目不存在或已删除。" }, { status: 404 });
 
-  const next = composeDescription(row.aiInsight);
+  const next = buildHumanReadableProjectDetail(row.aiInsight);
   if (!next) {
     return Response.json({ ok: false, error: "AI 认知卡中暂无可应用的项目介绍信息。" }, { status: 400 });
   }
@@ -70,7 +68,6 @@ export async function POST(
   await prisma.project.update({
     where: { id: row.id },
     data: {
-      simpleSummary: next.simpleSummary,
       description: next.description,
     },
   });
@@ -82,7 +79,6 @@ export async function POST(
       action: "apply_ai_description",
       mode: "replace",
       before: {
-        simpleSummary: row.simpleSummary ?? "",
         description: row.description ?? "",
       },
       after: next,
