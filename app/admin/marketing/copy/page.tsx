@@ -31,7 +31,7 @@ export default async function AdminMarketingCopyPage({ searchParams }: { searchP
           <div className="space-y-3">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">项目：{project.name}</p>
             <MarketingCopyGenerator projectId={project.id} />
-            <p className="text-xs text-zinc-500">文案基于 AI Content 结果生成，支持模板切换与快速复制。</p>
+            <p className="text-xs text-zinc-500">独立 Marketing AI 链路：支持社交文案与公众号文章，允许表达重组但禁止编造事实。</p>
           </div>
         )}
       </section>
