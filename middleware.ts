@@ -10,6 +10,7 @@ export default NextAuth({
       const protectedRoute =
         path.startsWith("/dashboard") ||
         path.startsWith("/me") ||
+        path.startsWith("/settings") ||
         /^\/projects\/[^/]+\/claim\/?$/.test(path) ||
         path.startsWith("/admin");
 
@@ -26,6 +27,9 @@ export default NextAuth({
       if (path.startsWith("/me")) {
         return true;
       }
+      if (path.startsWith("/settings")) {
+        return true;
+      }
       if (/^\/projects\/[^/]+\/claim\/?$/.test(path)) {
         return true;
       }
@@ -38,5 +42,5 @@ export default NextAuth({
 }).auth;
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/me/:path*", "/projects/:slug/claim", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/me/:path*", "/settings/:path*", "/projects/:slug/claim", "/admin/:path*"],
 };

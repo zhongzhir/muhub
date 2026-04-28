@@ -53,13 +53,21 @@ export class AliyunSmsProvider implements SmsProvider {
 
     const response = await this.client.sendSms(request);
     const body = response.body;
+    console.info("[sms:aliyun] sendSms response", {
+      code: body?.code ?? null,
+      message: body?.message ?? null,
+      requestId: body?.requestId ?? null,
+    });
+
     if (body?.code === "OK") {
       return { ok: true };
     }
 
     return {
       ok: false,
+      code: body?.code ?? "UNKNOWN",
       message: `阿里云短信发送失败 code=${body?.code ?? "UNKNOWN"} message=${body?.message ?? ""}`,
+      requestId: body?.requestId,
     };
   }
 }

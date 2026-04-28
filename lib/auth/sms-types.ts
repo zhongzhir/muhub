@@ -6,7 +6,7 @@ export type SendVerificationCodeInput = {
   purpose: SmsPurpose;
 };
 
-export type SmsSendResult = { ok: true } | { ok: false; message: string };
+export type SmsSendResult = { ok: true } | { ok: false; message: string; code?: string; requestId?: string };
 
 export interface SmsProvider {
   sendVerificationCode(input: SendVerificationCodeInput): Promise<SmsSendResult>;

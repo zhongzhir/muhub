@@ -126,13 +126,20 @@ export default async function ClaimProjectPage({ params, searchParams }: PagePro
         ) : null}
 
         {githubClaimBlocked ? (
-          <p
+          <div
             role="status"
             className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
           >
-            认领 GitHub 公开仓库项目前，请先使用 GitHub 登录或绑定 GitHub
-            账号。手机号登录可用于创建与管理项目；绑定功能即将开放。
-          </p>
+            <p>认领 GitHub 公开仓库项目前，需要先绑定 GitHub 账号。</p>
+            <p className="mt-3">
+              <Link
+                href="/settings/account"
+                className="inline-flex rounded-md bg-amber-900 px-3 py-2 text-xs font-medium text-white hover:bg-amber-800 dark:bg-amber-200 dark:text-amber-950 dark:hover:bg-amber-100"
+              >
+                立即绑定
+              </Link>
+            </p>
+          </div>
         ) : null}
 
         <ClaimProjectForm

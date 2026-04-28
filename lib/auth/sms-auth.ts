@@ -32,6 +32,29 @@ function isPhoneLoginEnabled(): boolean {
   return process.env.PHONE_LOGIN_ENABLED?.trim() !== "false";
 }
 
+function smsProviderType(): string {
+  return process.env.SMS_PROVIDER?.trim().toLowerCase() || (process.env.NODE_ENV === "production" ? "unset" : "dev");
+}
+
+function phoneLast4(phone: string): string {
+  return phone.slice(-4);
+}
+
+function errorDetails(error: unknown): { code: string | null; message: string } {
+  if (error instanceof Error) {
+    const maybeCode = "code" in error && typeof error.code === "string" ? error.code : null;
+    return { code: maybeCode, message: error.message };
+  }
+  if (typeof error === "object" && error !== null) {
+    const record = error as { code?: unknown; message?: unknown };
+    return {
+      code: typeof record.code === "string" ? record.code : null,
+      message: typeof record.message === "string" ? record.message : String(error),
+    };
+  }
+  return { code: null, message: String(error) };
+}
+
 export async function requestPhoneLoginCode(
   rawPhone: string,
   options: RequestPhoneLoginCodeOptions = {},
@@ -99,18 +122,32 @@ export async function requestPhoneLoginCode(
     },
   });
 
+  const providerType = smsProviderType();
+
   try {
-    const send = await getSmsProvider().sendVerificationCode({
+    const provider = getSmsProvider();
+    const send = await provider.sendVerificationCode({
       phone,
       code,
       purpose: "login",
     });
     if (!send.ok) {
-      console.error("[sms] send verification code failed", send.message);
+      console.error("[sms] send verification code failed", {
+        provider: providerType,
+        phoneLast4: phoneLast4(phone),
+        code: send.code ?? null,
+        message: send.message,
+      });
       return { ok: false, error: "send_failed" };
     }
   } catch (error) {
-    console.error("[sms] send verification code failed", error);
+    const details = errorDetails(error);
+    console.error("[sms] send verification code failed", {
+      provider: providerType,
+      phoneLast4: phoneLast4(phone),
+      code: details.code,
+      message: details.message,
+    });
     return { ok: false, error: "send_failed" };
   }
 

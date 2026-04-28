@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { GitHubSignInButton } from "@/components/auth/github-sign-in-button";
 import { PhoneLoginForm } from "@/components/auth/phone-login-form";
 
@@ -13,6 +14,16 @@ function safeCallbackUrl(raw: string | undefined): string {
   return t;
 }
 
+function signInErrorMessage(error: string | undefined): string | null {
+  if (!error) {
+    return null;
+  }
+  if (error === "OAuthAccountNotLinked" || error === "AccountNotLinked") {
+    return "该 GitHub 账号已绑定其他用户，无法绑定到当前账号。";
+  }
+  return "登录遇到问题，请稍后再试或检查环境变量是否配置完整。";
+}
+
 export default async function SignInPage({
   searchParams,
 }: {
@@ -21,6 +32,8 @@ export default async function SignInPage({
   const sp = await searchParams;
   const callbackUrl = safeCallbackUrl(sp.redirect ?? sp.callbackUrl);
   const showPhoneLogin = process.env.PHONE_LOGIN_ENABLED !== "false";
+  const session = await auth();
+  const errorMessage = signInErrorMessage(sp.error);
 
   return (
     <div className="min-h-[70vh] bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -35,16 +48,24 @@ export default async function SignInPage({
           创建项目、管理资料与发布动态前请先登录。可使用 GitHub
           {showPhoneLogin ? " 或手机号验证码" : ""}。
           {showPhoneLogin
-            ? " 认领绑定 GitHub 的公开仓库项目时，目前需使用 GitHub 登录。"
+            ? " 认领绑定 GitHub 的公开仓库项目时，可在账号设置中绑定 GitHub。"
             : null}
         </p>
 
-        {sp.error ? (
+        {errorMessage ? (
           <p
             role="alert"
             className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100"
           >
-            登录遇到问题，请稍后再试或检查环境变量是否配置完整。
+            {errorMessage}
+            {session?.user?.id ? (
+              <>
+                {" "}
+                <Link href="/settings/account" className="font-medium underline underline-offset-4">
+                  返回账号设置
+                </Link>
+              </>
+            ) : null}
           </p>
         ) : null}
 

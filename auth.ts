@@ -1,14 +1,53 @@
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
+import type { Adapter, AdapterAccount } from "next-auth/adapters";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import authConfig from "./auth.config";
 import { prisma } from "@/lib/prisma";
 import { phoneCredentialsProvider } from "@/lib/auth/phone-credentials-provider";
 
+const baseAdapter = PrismaAdapter(prisma);
+
+const adapter = {
+  ...baseAdapter,
+  async linkAccount(account: AdapterAccount): Promise<void> {
+    if (account.provider === "github") {
+      const [sameGithubAccount, userGithubAccount] = await Promise.all([
+        prisma.account.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: "github",
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          select: { userId: true },
+        }),
+        prisma.account.findFirst({
+          where: {
+            provider: "github",
+            userId: account.userId,
+            providerAccountId: { not: account.providerAccountId },
+          },
+          select: { id: true },
+        }),
+      ]);
+
+      if (sameGithubAccount && sameGithubAccount.userId !== account.userId) {
+        throw new Error("该 GitHub 账号已绑定其他用户。");
+      }
+      if (userGithubAccount) {
+        throw new Error("当前用户已绑定其他 GitHub 账号。");
+      }
+    }
+
+    await baseAdapter.linkAccount?.(account);
+  },
+} satisfies Adapter;
+
 const config = {
   ...authConfig,
   providers: [...authConfig.providers, phoneCredentialsProvider()],
-  adapter: PrismaAdapter(prisma),
+  adapter,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   callbacks: {
     ...(authConfig.callbacks ?? {}),
