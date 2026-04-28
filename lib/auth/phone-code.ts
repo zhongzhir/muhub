@@ -12,6 +12,9 @@ export const PHONE_SEND_COOLDOWN_SEC = 60;
 /** 滚动 24 小时内同一手机号最多发送次数 */
 export const PHONE_SEND_MAX_PER_24H = 10;
 
+/** 滚动 1 小时内同一 IP 最多发送次数 */
+export const PHONE_SEND_MAX_PER_IP_HOUR = 30;
+
 /** 单条验证码允许校验失败次数，超过后作废 */
 export const PHONE_VERIFY_MAX_ATTEMPTS = 5;
 
@@ -32,6 +35,10 @@ function codePepper(): string {
 export function hashPhoneVerificationCode(phone: string, code: string): string {
   const p = normalizeMainlandPhone(phone);
   return createHash("sha256").update(`${p}:${code}:${codePepper()}`, "utf8").digest("hex");
+}
+
+export function hashPhoneCodeIp(ip: string): string {
+  return createHash("sha256").update(`ip:${ip.trim()}:${codePepper()}`, "utf8").digest("hex");
 }
 
 export function generateSixDigitCode(): string {

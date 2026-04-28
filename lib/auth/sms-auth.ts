@@ -1,16 +1,15 @@
-/**
- * 手机号验证码登录：生成、落库、调用 {@link SmsProvider}、频控。
- */
 import { prisma } from "@/lib/prisma";
 import { getSmsProvider } from "@/lib/auth/sms-provider";
 import {
   generateSixDigitCode,
+  hashPhoneCodeIp,
   hashPhoneVerificationCode,
   isValidMainlandMobile,
   normalizeMainlandPhone,
   PHONE_CODE_EXPIRES_MINUTES,
   PHONE_CODE_PURPOSE_LOGIN,
   PHONE_SEND_COOLDOWN_SEC,
+  PHONE_SEND_MAX_PER_IP_HOUR,
   PHONE_SEND_MAX_PER_24H,
 } from "@/lib/auth/phone-code";
 
@@ -20,18 +19,23 @@ export type SendPhoneLoginCodeErrorCode =
   | "invalid_phone"
   | "rate_limited_cooldown"
   | "rate_limited_daily"
+  | "rate_limited_ip"
   | "send_failed";
 
-export type SendPhoneLoginCodeResult =
-  | { ok: true; devCode?: string }
-  | { ok: false; error: SendPhoneLoginCodeErrorCode };
+export type SendPhoneLoginCodeResult = { ok: true } | { ok: false; error: SendPhoneLoginCodeErrorCode };
+
+export type RequestPhoneLoginCodeOptions = {
+  ip?: string | null;
+};
 
 function isPhoneLoginEnabled(): boolean {
   return process.env.PHONE_LOGIN_ENABLED?.trim() !== "false";
 }
 
-/** 创建登录验证码并触发发送（经由 provider）；dev 环境可在返回值中带 devCode 便于联调。 */
-export async function requestPhoneLoginCode(rawPhone: string): Promise<SendPhoneLoginCodeResult> {
+export async function requestPhoneLoginCode(
+  rawPhone: string,
+  options: RequestPhoneLoginCodeOptions = {},
+): Promise<SendPhoneLoginCodeResult> {
   if (!isPhoneLoginEnabled()) {
     return { ok: false, error: "disabled" };
   }
@@ -46,6 +50,21 @@ export async function requestPhoneLoginCode(rawPhone: string): Promise<SendPhone
 
   const now = new Date();
   const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const ipHash = options.ip ? hashPhoneCodeIp(options.ip) : null;
+
+  if (ipHash) {
+    const ipHourCount = await prisma.phoneVerificationCode.count({
+      where: {
+        ipHash,
+        purpose: PHONE_CODE_PURPOSE_LOGIN,
+        createdAt: { gte: hourAgo },
+      },
+    });
+    if (ipHourCount >= PHONE_SEND_MAX_PER_IP_HOUR) {
+      return { ok: false, error: "rate_limited_ip" };
+    }
+  }
 
   const dayCount = await prisma.phoneVerificationCode.count({
     where: {
@@ -73,6 +92,7 @@ export async function requestPhoneLoginCode(rawPhone: string): Promise<SendPhone
   await prisma.phoneVerificationCode.create({
     data: {
       phone,
+      ipHash,
       codeHash,
       purpose: PHONE_CODE_PURPOSE_LOGIN,
       expiresAt,
@@ -88,12 +108,10 @@ export async function requestPhoneLoginCode(rawPhone: string): Promise<SendPhone
     if (!send.ok) {
       return { ok: false, error: "send_failed" };
     }
-  } catch {
+  } catch (error) {
+    console.error("[sms] send verification code failed", error);
     return { ok: false, error: "send_failed" };
   }
 
-  const devPayload =
-    process.env.NODE_ENV !== "production" ? { ok: true as const, devCode: code } : { ok: true as const };
-
-  return devPayload;
+  return { ok: true };
 }

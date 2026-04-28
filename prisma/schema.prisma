@@ -535,6 +535,8 @@ model VerificationToken {
 model PhoneVerificationCode {
   id             String    @id @default(cuid())
   phone          String
+  /** 发送请求来源 IP 的 hash；用于限流，不存储原始 IP */
+  ipHash         String?
   codeHash       String
   purpose        String
   expiresAt      DateTime
@@ -544,6 +546,7 @@ model PhoneVerificationCode {
   createdAt      DateTime  @default(now())
 
   @@index([phone, purpose, createdAt])
+  @@index([ipHash, purpose, createdAt])
 }
 
 model Project {

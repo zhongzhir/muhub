@@ -1,10 +1,28 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const SEND_COOLDOWN_SEC = 60;
+
+function sendCodeErrorMessage(error: string | undefined): string {
+  switch (error) {
+    case "invalid_phone":
+      return "请输入正确的 11 位中国大陆手机号";
+    case "rate_limited_cooldown":
+      return "发送过于频繁，请 60 秒后再试";
+    case "rate_limited_daily":
+      return "该手机号今日发送次数已达上限";
+    case "rate_limited_ip":
+      return "当前网络请求过于频繁，请稍后再试";
+    case "disabled":
+      return "手机号登录未启用";
+    case "no_database":
+      return "服务暂不可用，请稍后再试";
+    default:
+      return "验证码发送失败，请稍后重试";
+  }
+}
 
 export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
   const router = useRouter();
@@ -32,7 +50,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
     setHint(null);
     setSending(true);
     try {
-      const res = await fetch("/api/auth/phone/send-code", {
+      const res = await fetch("/api/auth/sms/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: phone.trim() }),
@@ -40,31 +58,14 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
-        devCode?: string;
       };
 
       if (!data.ok) {
-        const msg =
-          data.error === "invalid_phone"
-            ? "请输入正确的 11 位中国大陆手机号"
-            : data.error === "rate_limited_cooldown"
-              ? "发送过于频繁，请 60 秒后再试"
-              : data.error === "rate_limited_daily"
-                ? "该号码 24 小时内发送次数已达上限"
-                : data.error === "disabled"
-                  ? "手机号登录未启用"
-                  : data.error === "no_database"
-                    ? "服务未就绪，请稍后再试"
-                    : "验证码发送失败，请稍后重试";
-        setError(msg);
+        setError(sendCodeErrorMessage(data.error));
         return;
       }
 
-      let msg = "验证码已发送。开发环境请查看服务端日志。";
-      if (typeof data.devCode === "string" && process.env.NODE_ENV !== "production") {
-        msg += ` （调试 devCode：${data.devCode}）`;
-      }
-      setHint(msg);
+      setHint("验证码已发送，请在 5 分钟内输入。");
       setCooldown(SEND_COOLDOWN_SEC);
     } catch {
       setError("网络异常，请稍后再试");
@@ -86,14 +87,17 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
     }
     setLoggingIn(true);
     try {
-      const res = await signIn("phone-login", {
-        phone: p,
-        code: c,
-        redirect: false,
+      const res = await fetch("/api/auth/sms/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: p, code: c }),
       });
-      if (!res?.ok || res.error) {
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
         setError("验证码错误、已过期或校验次数超限，请重新获取验证码");
-        setLoggingIn(false);
         return;
       }
       router.push(callbackUrl);
@@ -121,7 +125,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
           placeholder="11 位中国大陆手机号"
           className={inputClass}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
           maxLength={11}
         />
       </div>
@@ -148,7 +152,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
           onClick={() => void sendCode()}
           className="muhub-btn-outline shrink-0"
         >
-          {cooldown > 0 ? `${cooldown} 秒后可重发` : sending ? "发送中…" : "发送验证码"}
+          {cooldown > 0 ? `${cooldown} 秒后可重发` : sending ? "发送中..." : "发送验证码"}
         </button>
       </div>
 
@@ -169,7 +173,7 @@ export function PhoneLoginForm({ callbackUrl }: { callbackUrl: string }) {
         onClick={() => void login()}
         className="muhub-btn-primary w-full px-5 py-3 disabled:opacity-60"
       >
-        {loggingIn ? "登录中…" : "手机号登录"}
+        {loggingIn ? "登录中..." : "手机号登录"}
       </button>
     </div>
   );

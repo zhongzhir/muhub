@@ -31,7 +31,6 @@ export default async function SignInPage({
           </Link>
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">登录 MUHUB</h1>
-        <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">系统测试中...</p>
         <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
           创建项目、管理资料与发布动态前请先登录。可使用 GitHub
           {showPhoneLogin ? " 或手机号验证码" : ""}。

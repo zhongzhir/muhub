@@ -53,7 +53,7 @@ export default async function PhoneAuthPage({
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">手机号登录</h1>
         <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          使用中国大陆手机号与验证码登录或注册。开发环境验证码见终端日志；非生产环境接口可能返回 devCode 仅供本地调试。
+          使用中国大陆手机号与验证码登录或注册。
         </p>
 
         <section aria-labelledby="phone-flow-heading" className="mt-8">

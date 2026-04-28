@@ -11,12 +11,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid_body" }, { status: 400 });
   }
 
-  const raw =
+  const phone =
     typeof body === "object" && body !== null && "phone" in body
       ? String((body as { phone?: unknown }).phone ?? "")
       : "";
 
-  const result = await requestPhoneLoginCode(raw, { ip: getClientIp(req.headers) });
+  const result = await requestPhoneLoginCode(phone, { ip: getClientIp(req.headers) });
   if (!result.ok) {
     return NextResponse.json(result, { status: sendCodeErrorStatus(result.error) });
   }
