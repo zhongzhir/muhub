@@ -6,7 +6,9 @@ import {
   fetchGiteeRepoApi,
   parseGitHubRepoUrl,
 } from "@/lib/github";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
+import type { ProjectSourceKind } from "@prisma/client";
 
 /** 供「导入」预填写入 query 后由 resolveNewProjectPrefill 消费 */
 export type ImportPrefillFields = {
@@ -17,6 +19,7 @@ export type ImportPrefillFields = {
   giteeUrl: string;
   websiteUrl: string;
   creationSource: string;
+  extraSources?: { kind: ProjectSourceKind; url: string; label?: string | null }[];
 };
 
 export type ImportPrefillActionResult =
@@ -103,6 +106,25 @@ export async function prefillProjectFromImportUrl(rawInput: string): Promise<Imp
         giteeUrl: htmlUrl,
         websiteUrl: homeRaw,
         creationSource: "import",
+      },
+    };
+  }
+
+  const source = parseProjectSourceUrl(trimmed);
+  if (source?.type === "GITCC") {
+    const segments = new URL(source.url).pathname.split("/").filter(Boolean);
+    const fallbackName = segments.at(-1)?.replace(/\.git$/i, "") || "GitCC Project";
+    return {
+      ok: true,
+      fields: {
+        name: fallbackName,
+        tagline: "",
+        description: "",
+        githubUrl: "",
+        giteeUrl: "",
+        websiteUrl: "",
+        creationSource: "import",
+        extraSources: [{ kind: "OTHER", url: source.url, label: "GitCC" }],
       },
     };
   }

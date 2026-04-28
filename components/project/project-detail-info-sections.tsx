@@ -12,6 +12,7 @@ function externalPlatformHeading(platform: string): string {
   const m: Record<string, string> = {
     website: "官网",
     github: "GitHub",
+    gitcc: "GitCC",
     docs: "文档",
     twitter: "X / Twitter",
     youtube: "YouTube",
@@ -26,6 +27,7 @@ function externalPlatformHeading(platform: string): string {
 const EXT_PLATFORM_ORDER = [
   "website",
   "github",
+  "gitcc",
   "docs",
   "producthunt",
   "twitter",

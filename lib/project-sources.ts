@@ -215,7 +215,8 @@ export function getProjectSources(input: {
       kind: item.kind,
       url: item.url,
       isPrimary: item.isPrimary,
-      categoryLabel: mapSourceLabel(item.kind),
+      categoryLabel:
+        item.kind === "OTHER" && item.label?.trim() ? item.label.trim() : mapSourceLabel(item.kind),
       hint: item.label?.trim() || hostHint(item.url),
     });
   };

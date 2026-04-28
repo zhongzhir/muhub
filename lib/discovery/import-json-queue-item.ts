@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { allocateUniqueProjectSlug } from "@/lib/project-allocate-slug";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { inferRepoSourceKind } from "@/lib/project-sources";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import { isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { createProjectActivity } from "@/lib/activity/project-activity-service";
@@ -27,7 +28,7 @@ function taglineFromDescription(description: string | null | undefined): string 
 type ParsedLink = {
   githubUrl: string | null;
   websiteUrl: string | null;
-  primaryRepo: { kind: ProjectSourceKind; url: string } | null;
+  primaryRepo: { kind: ProjectSourceKind; url: string; label?: string | null } | null;
 };
 
 function parseItemLink(item: DiscoveryItem): ParsedLink {
@@ -43,6 +44,7 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
   }
   const host = u.hostname.toLowerCase();
   const parsedRepo = parseRepoUrl(raw);
+  const parsedSource = parseProjectSourceUrl(raw);
 
   if (parsedRepo?.platform === "github" || host === "github.com" || host.endsWith(".github.com")) {
     const githubUrl = normalizeGithubRepoUrl(raw);
@@ -59,6 +61,14 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
       githubUrl: null,
       websiteUrl: null,
       primaryRepo: { kind: "GITEE", url },
+    };
+  }
+
+  if (parsedSource?.type === "GITCC") {
+    return {
+      githubUrl: null,
+      websiteUrl: null,
+      primaryRepo: { kind: "OTHER", url: parsedSource.url, label: "GitCC" },
     };
   }
 
@@ -107,16 +117,16 @@ async function findExistingProject(
     }
   }
 
-  if (link.primaryRepo?.kind === "GITEE") {
-    const byGitee = await prisma.project.findFirst({
+  if (link.primaryRepo) {
+    const bySource = await prisma.project.findFirst({
       where: {
         deletedAt: null,
-        sources: { some: { kind: "GITEE", url: link.primaryRepo.url } },
+        sources: { some: { kind: link.primaryRepo.kind, url: link.primaryRepo.url } },
       },
       select: { id: true, slug: true, name: true },
     });
-    if (byGitee) {
-      return byGitee;
+    if (bySource) {
+      return bySource;
     }
   }
 
@@ -193,7 +203,7 @@ export async function importJsonDiscoveryItem(
 
   const slug = await allocateUniqueProjectSlug(name);
 
-  const sourceCreates: { kind: ProjectSourceKind; url: string; isPrimary: boolean }[] = [];
+  const sourceCreates: { kind: ProjectSourceKind; url: string; isPrimary: boolean; label?: string | null }[] = [];
   if (link.githubUrl) {
     sourceCreates.push({
       kind: inferRepoSourceKind(link.githubUrl),
@@ -205,6 +215,14 @@ export async function importJsonDiscoveryItem(
     sourceCreates.push({
       kind: "GITEE",
       url: link.primaryRepo.url,
+      isPrimary: true,
+    });
+  }
+  if (link.primaryRepo?.kind === "OTHER") {
+    sourceCreates.push({
+      kind: "OTHER",
+      url: link.primaryRepo.url,
+      label: link.primaryRepo.label ?? null,
       isPrimary: true,
     });
   }

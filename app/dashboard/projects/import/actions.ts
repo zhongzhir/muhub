@@ -6,6 +6,7 @@ import {
   fetchGitHubRepoForImport,
   parseGitHubRepoUrl,
 } from "@/lib/github";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 
 export type ImportGitHubFormState = {
   ok: boolean;
@@ -28,6 +29,17 @@ export async function importGitHubRepo(
 
   if (!repoUrl) {
     return { ...initialFail, formError: "请填写 GitHub 仓库地址。" };
+  }
+
+  const source = parseProjectSourceUrl(repoUrl);
+  if (source?.type === "GITCC") {
+    const segments = new URL(source.url).pathname.split("/").filter(Boolean);
+    const name = segments.at(-1)?.replace(/\.git$/i, "") || "GitCC Project";
+    const qs = new URLSearchParams();
+    qs.set("name", name);
+    qs.set("creationSource", "import");
+    qs.set("extraSourcesJson", JSON.stringify([{ kind: "OTHER", url: source.url, label: "GitCC" }]));
+    return { ok: true, redirectPath: `/dashboard/projects/new?${qs.toString()}` };
   }
 
   const parsed = parseGitHubRepoUrl(repoUrl);

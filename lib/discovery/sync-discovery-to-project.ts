@@ -1,5 +1,6 @@
 import type { DiscoveryCandidate, Prisma } from "@prisma/client";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import { tagsFromJson } from "@/lib/discovery/score-candidate";
 
 export const DISCOVERY_ENRICHMENT_LINK_SOURCE = "discovery_enrichment";
@@ -114,15 +115,25 @@ export function buildCoreCandidateLinkSpecs(
   const specs: LinkSpec[] = [];
 
   if (cand.repoUrl?.trim()) {
-    try {
+    const source = parseProjectSourceUrl(cand.repoUrl);
+    if (source?.type === "GITCC") {
       specs.push({
-        platform: "github",
-        url: normalizeGithubRepoUrl(cand.repoUrl),
+        platform: "gitcc",
+        url: source.url,
         isPrimary: true,
-        label: "GitHub",
+        label: "GitCC",
       });
-    } catch {
-      specs.push({ platform: "github", url: cand.repoUrl.trim(), isPrimary: true, label: "GitHub" });
+    } else {
+      try {
+        specs.push({
+          platform: "github",
+          url: normalizeGithubRepoUrl(cand.repoUrl),
+          isPrimary: true,
+          label: "GitHub",
+        });
+      } catch {
+        specs.push({ platform: "github", url: cand.repoUrl.trim(), isPrimary: true, label: "GitHub" });
+      }
     }
   }
 

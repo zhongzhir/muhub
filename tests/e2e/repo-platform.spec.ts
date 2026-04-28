@@ -5,6 +5,7 @@ import {
   normalizeGithubRepoUrl,
 } from "@/lib/discovery/normalize-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
+import { detectProjectSource, parseProjectSourceUrl } from "@/lib/project-source-url";
 
 test.describe("多平台仓库 URL 解析", () => {
   test("GitHub URL 解析为 owner / repo", () => {
@@ -84,5 +85,22 @@ test.describe("多平台仓库 URL 解析", () => {
     expect(
       extractGithubRepoUrlsFromText("GitHub 地址：github.com/readest/readest").normalizedMatches,
     ).toEqual(["https://github.com/readest/readest"]);
+  });
+  test("project source parser supports github.com and gitcc.com", () => {
+    expect(detectProjectSource("https://github.com/vercel/next.js")).toBe("GITHUB");
+    expect(parseProjectSourceUrl("https://github.com/vercel/next.js")).toEqual({
+      type: "GITHUB",
+      url: "https://github.com/vercel/next.js",
+      owner: "vercel",
+      repo: "next.js",
+    });
+
+    expect(detectProjectSource("gitcc.com/acme/demo")).toBe("GITCC");
+    expect(parseProjectSourceUrl("https://www.gitcc.com/acme/demo")).toEqual({
+      type: "GITCC",
+      url: "https://www.gitcc.com/acme/demo",
+      owner: null,
+      repo: null,
+    });
   });
 });

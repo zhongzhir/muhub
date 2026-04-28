@@ -29,7 +29,7 @@ export type NewProjectPrefill = {
   /** import → 写库 `sourceType=import`，否则 manual */
   creationSource: string;
   /** 发现导入等场景：额外来源行（写入 ProjectSource） */
-  extraSources?: { kind: ProjectSourceKind; url: string }[];
+  extraSources?: { kind: ProjectSourceKind; url: string; label?: string | null }[];
 };
 
 export function pickSearchParam(
@@ -46,7 +46,7 @@ export function pickSearchParam(
   return "";
 }
 
-export function parseProjectSourceRowsJson(raw: string): { kind: ProjectSourceKind; url: string }[] {
+export function parseProjectSourceRowsJson(raw: string): { kind: ProjectSourceKind; url: string; label?: string | null }[] {
   if (!raw.trim()) {
     return [];
   }
@@ -58,17 +58,18 @@ export function parseProjectSourceRowsJson(raw: string): { kind: ProjectSourceKi
   }
 }
 
-function parseSuggestedSourcesFromJson(raw: unknown): { kind: ProjectSourceKind; url: string }[] {
+function parseSuggestedSourcesFromJson(raw: unknown): { kind: ProjectSourceKind; url: string; label?: string | null }[] {
   if (!Array.isArray(raw)) {
     return [];
   }
-  const out: { kind: ProjectSourceKind; url: string }[] = [];
+  const out: { kind: ProjectSourceKind; url: string; label?: string | null }[] = [];
   for (const row of raw) {
     if (!row || typeof row !== "object") {
       continue;
     }
     const kind = (row as { kind?: unknown }).kind;
     const url = (row as { url?: unknown }).url;
+    const label = (row as { label?: unknown }).label;
     if (typeof kind !== "string" || typeof url !== "string") {
       continue;
     }
@@ -77,7 +78,11 @@ function parseSuggestedSourcesFromJson(raw: unknown): { kind: ProjectSourceKind;
     }
     try {
       const href = new URL(url.trim()).href;
-      out.push({ kind: kind as ProjectSourceKind, url: href });
+      out.push({
+        kind: kind as ProjectSourceKind,
+        url: href,
+        label: typeof label === "string" && label.trim() ? label.trim() : null,
+      });
     } catch {
       /* skip */
     }
@@ -112,6 +117,7 @@ export function resolveNewProjectPrefill(
   const githubFromImport = pickSearchParam(sp, "import").trim();
   const githubUrlParam = pickSearchParam(sp, "githubUrl").trim();
   const creationSource = pickSearchParam(sp, "creationSource").trim();
+  const extraSources = parseProjectSourceRowsJson(pickSearchParam(sp, "extraSourcesJson"));
 
   return {
     name: pickSearchParam(sp, "name"),
@@ -122,7 +128,7 @@ export function resolveNewProjectPrefill(
     giteeUrl: pickSearchParam(sp, "giteeUrl"),
     websiteUrl: pickSearchParam(sp, "websiteUrl"),
     creationSource: creationSource || "manual",
-    extraSources: [],
+    extraSources,
   };
 }
 

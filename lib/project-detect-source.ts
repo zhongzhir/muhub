@@ -15,6 +15,9 @@ export function detectSourceType(url: string): string {
   if (lower.includes("gitee.com")) {
     return "gitee";
   }
+  if (lower.includes("gitcc.com")) {
+    return "gitcc";
+  }
   if (lower.includes("mp.weixin.qq.com") || lower.includes("weixin.qq.com")) {
     return "wechat";
   }
@@ -51,6 +54,8 @@ export function detectSourceUrlKind(url: string): ProjectSourceKind {
       return "GITHUB";
     case "gitee":
       return "GITEE";
+    case "gitcc":
+      return "OTHER";
     case "wechat":
       return "WECHAT";
     case "xiaohongshu":

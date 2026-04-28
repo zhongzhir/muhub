@@ -54,7 +54,7 @@ function makeExtraRowKey(): string {
   return `es-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-type ExtraSourceRowState = { key: string; kind: ProjectSourceKind; url: string };
+type ExtraSourceRowState = { key: string; kind: ProjectSourceKind; url: string; label?: string | null };
 
 function buildPrefillQuery(fields: NewProjectPrefill): string {
   const q = new URLSearchParams();
@@ -79,6 +79,9 @@ function buildPrefillQuery(fields: NewProjectPrefill): string {
   if (fields.websiteUrl) {
     q.set("websiteUrl", fields.websiteUrl);
   }
+  if (fields.extraSources?.length) {
+    q.set("extraSourcesJson", JSON.stringify(fields.extraSources));
+  }
   if (fields.creationSource) {
     q.set("creationSource", fields.creationSource);
   }
@@ -97,11 +100,12 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
       key: makeExtraRowKey(),
       kind: s.kind,
       url: s.url,
+      label: s.label ?? null,
     })),
   );
 
   const extraSourcesJson = useMemo(() => {
-    const rows: { kind: ProjectSourceKind; url: string }[] = [];
+    const rows: { kind: ProjectSourceKind; url: string; label?: string | null }[] = [];
     for (const r of extraRows) {
       const t = r.url.trim();
       if (!t) {
@@ -117,7 +121,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           continue;
         }
       }
-      rows.push({ kind: r.kind, url: href });
+      rows.push({ kind: r.kind, url: href, label: r.label ?? null });
     }
     return JSON.stringify(rows);
   }, [extraRows]);
@@ -204,6 +208,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
                     giteeUrl: res.fields.giteeUrl,
                     websiteUrl: res.fields.websiteUrl,
                     creationSource: res.fields.creationSource,
+                    extraSources: res.fields.extraSources,
                   });
                   router.replace(`/dashboard/projects/new?${qs}`);
                 });

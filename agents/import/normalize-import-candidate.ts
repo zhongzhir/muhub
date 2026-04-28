@@ -4,6 +4,7 @@
  */
 
 import { parseRepoUrl } from "@/lib/repo-platform"
+import { parseProjectSourceUrl } from "@/lib/project-source-url"
 import type { ImportCandidate } from "./import-types"
 
 /** 宽松 URL：无协议时补 https://；与创建页校验策略一致 */
@@ -62,7 +63,12 @@ export function importCandidateToCreateProjectFormData(candidate: ImportCandidat
     } else if (repo?.platform === "gitee") {
       fd.set("giteeUrl", href)
     } else {
-      fd.set("websiteUrl", href)
+      const source = parseProjectSourceUrl(href)
+      if (source?.type === "GITCC") {
+        fd.set("extraSourcesJson", JSON.stringify([{ kind: "OTHER", url: source.url, label: "GitCC" }]))
+      } else {
+        fd.set("websiteUrl", href)
+      }
     }
   }
 

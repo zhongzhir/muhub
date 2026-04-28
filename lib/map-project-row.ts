@@ -54,6 +54,7 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
   const extOrder = [
     "website",
     "github",
+    "gitcc",
     "docs",
     "twitter",
     "youtube",

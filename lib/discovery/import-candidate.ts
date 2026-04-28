@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { allocateUniqueProjectSlug } from "@/lib/project-allocate-slug";
 import { tagsFromJson } from "@/lib/discovery/score-candidate";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import {
   buildAcceptedEnrichmentLinkSpecs,
@@ -111,11 +112,21 @@ export async function approveDiscoveryCandidateImport(
   );
 
   let githubUrl: string | null = null;
+  let repoSource:
+    | { kind: "GITHUB"; url: string; label: "GitHub" }
+    | { kind: "OTHER"; url: string; label: "GitCC" }
+    | null = null;
   if (cand.repoUrl?.trim()) {
-    try {
-      githubUrl = normalizeGithubRepoUrl(cand.repoUrl);
-    } catch {
-      githubUrl = cand.repoUrl.trim();
+    const source = parseProjectSourceUrl(cand.repoUrl);
+    if (source?.type === "GITHUB") {
+      try {
+        githubUrl = normalizeGithubRepoUrl(cand.repoUrl);
+      } catch {
+        githubUrl = source.url;
+      }
+      repoSource = { kind: "GITHUB", url: githubUrl, label: "GitHub" };
+    } else if (source?.type === "GITCC") {
+      repoSource = { kind: "OTHER", url: source.url, label: "GitCC" };
     }
   }
   let websiteUrl: string | null = null;
@@ -153,6 +164,16 @@ export async function approveDiscoveryCandidateImport(
         discoveredAt,
         importedFromCandidateId: cand.id,
         ...classifySlice,
+        sources: repoSource
+          ? {
+              create: {
+                kind: repoSource.kind,
+                url: repoSource.url,
+                label: repoSource.label,
+                isPrimary: true,
+              },
+            }
+          : undefined,
       },
     });
 

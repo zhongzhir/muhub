@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { parseGitHubRepoUrl } from "@/lib/github";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { createProjectActivity } from "@/lib/activity/project-activity-service";
 
@@ -62,7 +63,9 @@ export async function runGitHubProjectActivity(): Promise<GitHubProjectActivityR
     where: { ...PROJECT_ACTIVE_FILTER },
     select: { id: true, slug: true, name: true, githubUrl: true },
   });
-  const withGithub = projects.filter((p) => p.githubUrl && p.githubUrl.trim());
+  const withGithub = projects.filter(
+    (p) => parseProjectSourceUrl(p.githubUrl ?? "")?.type === "GITHUB",
+  );
   const headers = buildGitHubHeaders();
   const result: GitHubProjectActivityRunSummary = {
     scannedProjects: projects.length,

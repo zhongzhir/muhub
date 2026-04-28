@@ -12,6 +12,7 @@ import { fallbackSlugBase, isValidProjectSlug, slugifyProjectName } from "@/lib/
 import { parseProjectSourceRowsJson } from "@/app/dashboard/projects/new/prefill";
 import { isProjectCategory } from "@/lib/projects/project-categories";
 import { parseProjectTags } from "@/lib/projects/project-tags";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 
 export type CreateProjectFormState = {
   ok: boolean;
@@ -103,10 +104,14 @@ export async function createProject(
   }
 
   let githubUrl: string | null = null;
+  let gitccUrl: string | null = null;
   if (githubUrlRaw) {
-    try {
-      githubUrl = new URL(githubUrlRaw).href;
-    } catch {
+    const source = parseProjectSourceUrl(githubUrlRaw);
+    if (source?.type === "GITHUB") {
+      githubUrl = source.url;
+    } else if (source?.type === "GITCC") {
+      gitccUrl = source.url;
+    } else {
       fieldErrors.githubUrl = "GitHub 仓库链接格式不正确，请以 http:// 或 https:// 开头的完整地址";
     }
   }
@@ -229,12 +234,20 @@ export async function createProject(
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
 
-  const projectSourceRows: { kind: ProjectSourceKind; url: string; isPrimary: boolean }[] = [];
+  const projectSourceRows: { kind: ProjectSourceKind; url: string; isPrimary: boolean; label?: string | null }[] = [];
   if (githubUrl) {
     projectSourceRows.push({
       kind: inferRepoSourceKind(githubUrl),
       url: githubUrl,
       isPrimary: true,
+    });
+  }
+  if (gitccUrl) {
+    projectSourceRows.push({
+      kind: "OTHER",
+      url: gitccUrl,
+      label: "GitCC",
+      isPrimary: !githubUrl,
     });
   }
   if (
@@ -262,7 +275,7 @@ export async function createProject(
 
   const extraSourcesJson = String(formData.get("extraSourcesJson") ?? "").trim();
   for (const row of parseProjectSourceRowsJson(extraSourcesJson)) {
-    projectSourceRows.push({ kind: row.kind, url: row.url, isPrimary: false });
+    projectSourceRows.push({ kind: row.kind, url: row.url, label: row.label ?? null, isPrimary: false });
   }
 
   const dedupedSources: typeof projectSourceRows = [];

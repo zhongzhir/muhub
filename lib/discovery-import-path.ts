@@ -1,3 +1,5 @@
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
+
 /**
  * 从候选跳转至创建项目页，复用 query 预填（与 {@link resolveNewProjectPrefill} 对齐）。
  */
@@ -15,7 +17,12 @@ export function buildDiscoveryImportPath(candidate: {
   p.set("name", candidate.name);
   p.set("tagline", tagline);
   p.set("description", description);
-  p.set("githubUrl", candidate.repoUrl);
+  const source = parseProjectSourceUrl(candidate.repoUrl);
+  if (source?.type === "GITCC") {
+    p.set("extraSourcesJson", JSON.stringify([{ kind: "OTHER", url: source.url, label: "GitCC" }]));
+  } else {
+    p.set("githubUrl", candidate.repoUrl);
+  }
   if (candidate.homepageUrl?.trim()) {
     p.set("websiteUrl", candidate.homepageUrl.trim());
   }

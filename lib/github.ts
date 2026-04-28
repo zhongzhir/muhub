@@ -3,7 +3,8 @@
  * @see https://docs.github.com/en/rest/repos/repos#get-a-repository
  */
 
-import { parseRepoUrl, repoUrlsMatch, normalizeRepoWebUrl } from "@/lib/repo-platform";
+import { repoUrlsMatch, normalizeRepoWebUrl } from "@/lib/repo-platform";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 
 export type GitHubRepoImportPayload = {
   name: string;
@@ -27,8 +28,8 @@ type GitHubApiRepo = {
 
 /** 仅接受 github.com（导入 GitHub 用）；Gitee 请用 {@link parseRepoUrl} */
 export function parseGitHubRepoUrl(raw: string): { owner: string; repo: string } | null {
-  const p = parseRepoUrl(raw);
-  if (!p || p.platform !== "github") {
+  const p = parseProjectSourceUrl(raw);
+  if (!p || p.type !== "GITHUB") {
     return null;
   }
   return { owner: p.owner, repo: p.repo };
