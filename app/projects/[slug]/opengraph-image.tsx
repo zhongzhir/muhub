@@ -7,7 +7,7 @@ import { buildProjectMetaDescription } from "@/lib/seo/project-meta";
 import { SITE_URL } from "@/lib/seo/site";
 
 export const runtime = "nodejs";
-export const alt = "MUHUB Project Profile";
+export const alt = "MUHUB 项目档案";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -92,7 +92,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   if (!loaded) {
     return new ImageResponse(
       cardShell(
-        "MUHUB Project Profile",
+        "MUHUB 项目档案",
         "项目详情暂不可用。请返回 MUHUB 查看更多公开项目。",
         [],
         `${SITE_URL}/projects`,
@@ -110,7 +110,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const highlights = buildProjectHighlights(project);
 
   return new ImageResponse(
-    cardShell(data.name, summary, highlights, `${SITE_URL}/projects/${slug} · MUHUB Project Profile`),
+    cardShell(data.name, summary, highlights, `${SITE_URL}/projects/${slug} · MUHUB 项目档案`),
     { ...size },
   );
 }

@@ -11,9 +11,9 @@ export function buildCommunityShareText(title: string, description: string, url:
   return `我最近在做一个项目：\n\n${title}\n\n${body}\n\n欢迎关注：\n${url}`;
 }
 
-/** Twitter / X 英文短帖 */
+/** 社交平台短帖 */
 export function buildTwitterShareText(title: string, url: string): string {
-  return `Just launched on MUHUB\n\n${title}\n\n${url}`;
+  return `我在 MUHUB 上分享了一个项目：\n\n${title}\n\n${url}`;
 }
 
 export function buildTwitterIntentUrl(text: string): string {

@@ -24,23 +24,21 @@ export type ProjectShareDialogProps = {
   slug: string;
   name: string;
   tagline: string | undefined;
-  /** 无 tagline 时的展示兜底 */
   shareSnippet: string;
   canonicalUrl: string;
-  /** 项目介绍，用于「社群」模板正文 */
   description?: string;
 };
 
 const cardBtn =
   "inline-flex min-h-[2.5rem] flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 sm:min-w-0 sm:flex-1";
 
-const twitterBtn =
+const shareToXBtn =
   "inline-flex min-h-[2.5rem] w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm font-medium text-sky-900 shadow-sm transition hover:border-sky-300 hover:bg-sky-100 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-100 dark:hover:bg-sky-950/60";
 
 const templateLabels: Record<ShareTemplateId, string> = {
   short: "简短",
   community: "社群",
-  twitter: "英文",
+  twitter: "短帖",
 };
 
 export function ProjectShareDialog({
@@ -64,7 +62,6 @@ export function ProjectShareDialog({
   const [textState, setTextState] = useState<"base" | "ok" | "err">("base");
   const [, bumpMetricsRender] = useReducer((x: number) => x + 1, 0);
 
-  /** 弹窗打开时每次渲染从 localStorage 重读，复制/Twitter 后随其它 setState 自然刷新 */
   const localShareTotals = open ? totalShareActions(readProjectShareLocalMetrics(storageId)) : 0;
 
   const descriptionLine = useMemo(
@@ -82,7 +79,7 @@ export function ProjectShareDialog({
     [template, name, canonicalUrl, descriptionLine],
   );
 
-  const twitterIntentHref = useMemo(
+  const xShareHref = useMemo(
     () => buildTwitterIntentUrl(buildTwitterShareText(name, canonicalUrl)),
     [name, canonicalUrl],
   );
@@ -93,25 +90,18 @@ export function ProjectShareDialog({
       window.clearTimeout(timers.current[key]);
     }
     timers.current[key] = window.setTimeout(() => {
-      if (kind === "link") {
-        setLinkState("base");
-      } else {
-        setTextState("base");
-      }
+      if (kind === "link") setLinkState("base");
+      else setTextState("base");
     }, 2400);
   }, []);
 
   const onOpenChangeWrapped = useCallback(
     (next: boolean) => {
       if (!next) {
-        if (timers.current.link) {
-          window.clearTimeout(timers.current.link);
-          timers.current.link = undefined;
-        }
-        if (timers.current.text) {
-          window.clearTimeout(timers.current.text);
-          timers.current.text = undefined;
-        }
+        if (timers.current.link) window.clearTimeout(timers.current.link);
+        if (timers.current.text) window.clearTimeout(timers.current.text);
+        timers.current.link = undefined;
+        timers.current.text = undefined;
         setLinkState("base");
         setTextState("base");
         setTemplate("short");
@@ -147,28 +137,22 @@ export function ProjectShareDialog({
     }
   }, [shareBody, scheduleResetOk, storageId]);
 
-  const onTwitterIntentClick = useCallback(() => {
+  const onXShareClick = useCallback(() => {
     incrementProjectShareLocalMetric(storageId, "twitter");
     bumpMetricsRender();
   }, [storageId]);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onOpenChangeWrapped(false);
-      }
+      if (e.key === "Escape") onOpenChangeWrapped(false);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onOpenChangeWrapped]);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -177,27 +161,17 @@ export function ProjectShareDialog({
   }, [open]);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
     const timerBag = timers;
     return () => {
-      const linkId = timerBag.current.link;
-      const textId = timerBag.current.text;
-      if (linkId) {
-        window.clearTimeout(linkId);
-        timerBag.current.link = undefined;
-      }
-      if (textId) {
-        window.clearTimeout(textId);
-        timerBag.current.text = undefined;
-      }
+      if (timerBag.current.link) window.clearTimeout(timerBag.current.link);
+      if (timerBag.current.text) window.clearTimeout(timerBag.current.text);
+      timerBag.current.link = undefined;
+      timerBag.current.text = undefined;
     };
   }, [open]);
 
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center" role="presentation">
@@ -220,7 +194,7 @@ export function ProjectShareDialog({
             <h3 id={dialogTitleId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               分享项目
             </h3>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">让更多人发现它</p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">复制链接或文案，分享给更多人。</p>
           </div>
           <button
             type="button"
@@ -228,17 +202,12 @@ export function ProjectShareDialog({
             onClick={() => onOpenChangeWrapped(false)}
             aria-label="关闭"
           >
-            <span aria-hidden className="text-lg leading-none">
-              ×
-            </span>
+            <span aria-hidden className="text-lg leading-none">×</span>
           </button>
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">分享效果预览</p>
-          <p className="mt-0.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-            你分享时，对方会看到类似这样的项目信息
-          </p>
+          <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">分享预览</p>
           <div className="mt-2">
             <ProjectShareCard name={name} subtitle={cardSubtitle} slug={slug} />
           </div>
@@ -273,7 +242,7 @@ export function ProjectShareDialog({
 
         <div className="mt-4">
           <p id={previewCopyId} className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            当前将复制的文案
+            当前文案
           </p>
           <div
             className="max-h-28 overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-50/90 dark:border-zinc-600 dark:bg-zinc-800/60"
@@ -287,49 +256,40 @@ export function ProjectShareDialog({
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <button type="button" className={cardBtn} onClick={onCopyLink} data-testid="project-share-copy-link">
-            {linkState === "ok" ? "已复制" : "复制链接"}
+            {linkState === "ok" ? "链接已复制" : "复制链接"}
           </button>
           <button type="button" className={cardBtn} onClick={onCopyShareText} data-testid="project-share-copy-text">
-            {textState === "ok" ? "已复制" : "复制文案"}
+            {textState === "ok" ? "文案已复制" : "复制文案"}
           </button>
         </div>
 
         <a
-          href={twitterIntentHref}
+          href={xShareHref}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${twitterBtn} mt-2`}
+          className={`${shareToXBtn} mt-2`}
           data-testid="project-share-twitter"
-          onClick={onTwitterIntentClick}
+          onClick={onXShareClick}
         >
-          Twitter / X
+          发布到 X
         </a>
-        <p className="mt-1 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-          会用英文短句与项目链接打开发布页，可按需再改后发送。
-        </p>
 
         {linkState === "ok" ? (
           <div className="mt-2 rounded-lg bg-emerald-50/80 px-2.5 py-2 dark:bg-emerald-950/25" role="status">
             <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">链接已复制</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-emerald-800/85 dark:text-emerald-200/90">
-              可以发到群聊、私信或你常用的社交平台。多分享几次，被看到的机会会更高。
-            </p>
           </div>
         ) : null}
 
         {textState === "ok" ? (
           <div className="mt-2 rounded-lg bg-emerald-50/80 px-2.5 py-2 dark:bg-emerald-950/25" role="status">
             <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">文案已复制</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-emerald-800/85 dark:text-emerald-200/90">
-              粘贴后即可发给朋友或社群，按你的语气微调也很好。
-            </p>
           </div>
         ) : null}
 
         {linkState === "err" ? (
           <div className="mt-3" role="alert">
             <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
-              复制失败，请长按下方链接手动复制。
+              复制失败，请手动复制下方链接。
             </p>
             <div className="mt-2">
               <ManualCopyTextarea value={canonicalUrl} hint="项目公开链接" />
@@ -340,7 +300,7 @@ export function ProjectShareDialog({
         {textState === "err" ? (
           <div className="mt-3" role="alert">
             <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
-              复制失败，可长按下方文本手动复制。
+              复制失败，请手动复制下方文案。
             </p>
             <div className="mt-2">
               <ManualCopyTextarea value={shareBody} hint="分享文案" />
@@ -350,28 +310,14 @@ export function ProjectShareDialog({
 
         <p className="mt-4 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
           {localShareTotals === 0 ? (
-            <>这是你第一次在本设备上分享这个项目。</>
+            <>这是你在本设备上第一次分享这个项目。</>
           ) : (
             <>
-              本设备上已累计 <span className="tabular-nums text-zinc-500 dark:text-zinc-400">{localShareTotals}</span>{" "}
-              次分享操作（复制链接、复制文案或打开 Twitter）。
+              本设备已累计进行 <span className="tabular-nums text-zinc-500 dark:text-zinc-400">{localShareTotals}</span>{" "}
+              次分享操作。
             </>
           )}
         </p>
-
-        <div className="mt-6 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 px-3 py-3 dark:border-zinc-700 dark:bg-zinc-800/40">
-          <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">项目名片 / 海报</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-            后续将支持更适合微信与社媒传播的一页式名片与海报（占位说明）。
-          </p>
-          <button
-            type="button"
-            disabled
-            className="mt-3 w-full cursor-not-allowed rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500"
-          >
-            生成项目名片（即将推出）
-          </button>
-        </div>
       </div>
     </div>
   );

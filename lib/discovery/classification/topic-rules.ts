@@ -28,7 +28,7 @@ const TOPIC_MAP: Record<string, TopicRule> = {
     typeBoost: "Model / Infra",
     evidence: "matched topic: machine-learning",
   },
-  "open-source": { tag: "Open Source", evidence: "matched topic: open-source" },
+  "open-source": { tag: "开源项目", evidence: "matched topic: open-source" },
   automation: {
     tag: "Automation",
     typeBoost: "Workflow Tool",

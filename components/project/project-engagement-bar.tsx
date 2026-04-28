@@ -121,7 +121,7 @@ export function ProjectEngagementBar({
           }}
         >
           <span aria-hidden>⭐</span>
-          <span>{eng.viewerHasFollowed ? "Unfollow" : "Follow Project"}</span>
+          <span>{eng.viewerHasFollowed ? "取消关注" : "关注项目"}</span>
           <span className="tabular-nums">{eng.followCount}</span>
         </button>
       </span>

@@ -83,7 +83,7 @@ const CATEGORY_RULES: Array<{ cat: ProjectCategory; patterns: RegExp[]; weight: 
 
 const TAG_SIGNALS: Array<{ tag: string; pattern: RegExp }> = [
   { tag: "GitHub", pattern: /github\.com/i },
-  { tag: "Open Source", pattern: /\b(open source|opensource|oss|开源)\b/i },
+  { tag: "开源项目", pattern: /\b(open source|opensource|oss|开源)\b/i },
   { tag: "AI", pattern: /\b(ai|llm|gpt|claude|gemini|machine learning|ml\b|大模型|人工智能)\b/i },
   { tag: "Agent", pattern: /\b(agent|agents|agentic|智能体)\b/i },
   { tag: "Infra", pattern: /\b(infra|kubernetes|docker|deploy|gpu|推理)\b/i },

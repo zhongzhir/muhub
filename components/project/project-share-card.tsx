@@ -35,7 +35,7 @@ export function ProjectShareCard({ name, subtitle, slug }: ProjectShareCardProps
         {subtitle.trim() ? subtitle : "在 MUHUB 查看项目详情与动态"}
       </p>
       <p className="mt-3 break-all font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-        <span className="text-zinc-400 dark:text-zinc-500">slug </span>
+        <span className="text-zinc-400 dark:text-zinc-500">项目地址 </span>
         {slug}
       </p>
     </div>

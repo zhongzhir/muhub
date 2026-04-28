@@ -13,15 +13,15 @@ export const PROJECT_CATEGORIES = [
 export type ProjectCategory = (typeof PROJECT_CATEGORIES)[number];
 
 const PROJECT_CATEGORY_LABELS: Record<ProjectCategory, string> = {
-  "ai-agents": "AI Agents",
-  "developer-tools": "Developer Tools",
-  "open-source": "Open Source",
-  research: "Research",
-  infra: "Infra",
-  datasets: "Datasets",
-  design: "Design",
-  productivity: "Productivity",
-  other: "Other",
+  "ai-agents": "AI 智能体",
+  "developer-tools": "开发者工具",
+  "open-source": "开源项目",
+  research: "研究项目",
+  infra: "基础设施",
+  datasets: "数据集",
+  design: "设计工具",
+  productivity: "效率工具",
+  other: "其他",
 };
 
 export const PROJECT_CATEGORY_OPTIONS: Array<{ value: ProjectCategory; label: string }> =
@@ -79,7 +79,7 @@ export function normalizePrimaryCategoryToSlug(raw: string | null | undefined): 
 
 export function getProjectCategoryLabel(
   category: string | null | undefined,
-  fallback = "Other",
+  fallback = "其他",
 ): string {
   if (!category?.trim()) {
     return fallback;

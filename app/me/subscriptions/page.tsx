@@ -34,7 +34,7 @@ export default async function ContentSubscriptionsPage() {
         <header className="mb-10">
           <h1 className="text-3xl font-semibold tracking-tight">项目内容订阅</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            你在项目页主动点击「Follow Project」形成的订阅关系；列表按订阅时间倒序，不包含推荐、算法排序或 AI。
+            你在项目页主动点击「关注项目」形成的订阅关系；列表按订阅时间倒序，不包含推荐、算法排序或 AI。
           </p>
         </header>
 
@@ -45,7 +45,7 @@ export default async function ContentSubscriptionsPage() {
           >
             <p className="text-base font-medium text-zinc-800 dark:text-zinc-200">暂无订阅</p>
             <p className="mx-auto mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-              在任意项目详情页使用「Follow Project」即可在此处查看与管理。
+              在任意项目详情页使用「关注项目」即可在此处查看与管理。
             </p>
             <Link
               href="/projects"

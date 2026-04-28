@@ -47,7 +47,7 @@ export default async function ContentFollowingFeedPage() {
           <div className="rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-10 text-center text-sm text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900/40 dark:text-zinc-400">
             <p>你还没有订阅任何项目。</p>
             <p className="mt-2">
-              在项目详情页点击 <span className="font-medium">Follow Project</span>，或前往{" "}
+              在项目详情页点击 <span className="font-medium">关注项目</span>，或前往{" "}
               <Link href="/me/subscriptions" className="underline-offset-2 hover:underline">
                 管理订阅
               </Link>

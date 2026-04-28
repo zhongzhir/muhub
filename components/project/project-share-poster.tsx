@@ -7,7 +7,6 @@ import { QRCodeCanvas } from "qrcode.react";
 export type ProjectSharePosterProps = {
   slug: string;
   name: string;
-  /** 海报用一句话/短简介 */
   intro: string;
   summary?: string;
   highlights?: string[];
@@ -24,6 +23,7 @@ export type ProjectSharePosterProps = {
   } | null;
   projectPageUrl: string;
   githubUrl?: string | null;
+  gitccUrl?: string | null;
   websiteUrl?: string | null;
 };
 
@@ -41,6 +41,7 @@ export function ProjectSharePoster({
   latestActivity,
   projectPageUrl,
   githubUrl,
+  gitccUrl,
   websiteUrl,
 }: ProjectSharePosterProps) {
   const [open, setOpen] = useState(false);
@@ -49,9 +50,7 @@ export function ProjectSharePoster({
 
   const downloadPng = useCallback(async () => {
     const el = posterRef.current;
-    if (!el) {
-      return;
-    }
+    if (!el) return;
     setBusy(true);
     try {
       const canvas = await html2canvas(el, {
@@ -70,6 +69,7 @@ export function ProjectSharePoster({
   }, [slug]);
 
   const gh = githubUrl?.trim() || "";
+  const gitcc = gitccUrl?.trim() || "";
   const web = websiteUrl?.trim() || "";
   const introLines = summary?.trim() || intro.trim() || "在 MUHUB 查看项目主页与动态";
   const badgeList = (highlights ?? []).slice(0, 4);
@@ -77,8 +77,7 @@ export function ProjectSharePoster({
   return (
     <>
       <button type="button" className={actionBtnClass} onClick={() => setOpen(true)}>
-        <span aria-hidden>🖼️</span>
-        Share Poster
+        分享海报
       </button>
 
       {open ? (
@@ -94,13 +93,12 @@ export function ProjectSharePoster({
             aria-labelledby="poster-dialog-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2
-              id="poster-dialog-title"
-              className="text-base font-semibold text-zinc-900 dark:text-zinc-50"
-            >
+            <h2 id="poster-dialog-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
               分享海报
             </h2>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">预览下方海报，可下载 PNG 后自行分发</p>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              预览下方海报，可下载图片后自行分享。
+            </p>
 
             <div className="mt-4 flex justify-center overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-100 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
               <div className="origin-top scale-[0.72] sm:scale-[0.85]">
@@ -109,11 +107,10 @@ export function ProjectSharePoster({
                   style={{ width: POSTER_WIDTH }}
                   className="box-border bg-white p-8 text-left text-zinc-900 shadow-sm"
                 >
-                  {/* 原生 img 便于 html2canvas 同源截屏；勿改为 next/image */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/brand/logo-horizontal.svg" alt="MUHUB" className="h-7 w-auto object-contain object-left" />
                   <h3 className="mt-6 text-2xl font-bold leading-tight tracking-tight">{name}</h3>
-                  <p className="mt-4 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap break-words">
+                  <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-700">
                     {introLines}
                   </p>
 
@@ -132,9 +129,7 @@ export function ProjectSharePoster({
 
                   {latestActivity ? (
                     <div className="mt-5 rounded-md border border-zinc-200 bg-zinc-50 p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                        最新动态 · {latestActivity.type}
-                      </p>
+                      <p className="text-[11px] font-semibold text-zinc-500">最新动态</p>
                       <p className="mt-1 text-sm font-medium text-zinc-800">{latestActivity.title}</p>
                       {latestActivity.summary ? (
                         <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{latestActivity.summary}</p>
@@ -143,24 +138,28 @@ export function ProjectSharePoster({
                     </div>
                   ) : null}
 
-                  <div className="mt-6 space-y-2 border-t border-zinc-200 pt-5 text-sm">
-                    {gh ? (
-                      <p className="break-all">
-                        <span className="font-semibold text-zinc-800">GitHub </span>
-                        <span className="text-blue-700">{gh}</span>
-                      </p>
-                    ) : (
-                      <p className="text-zinc-400">GitHub：未配置</p>
-                    )}
-                    {web ? (
-                      <p className="break-all">
-                        <span className="font-semibold text-zinc-800">官网 </span>
-                        <span className="text-blue-700">{web}</span>
-                      </p>
-                    ) : (
-                      <p className="text-zinc-400">官网：未配置</p>
-                    )}
-                  </div>
+                  {(web || gh || gitcc) ? (
+                    <div className="mt-6 space-y-2 border-t border-zinc-200 pt-5 text-sm">
+                      {web ? (
+                        <p className="break-all">
+                          <span className="font-semibold text-zinc-800">官网 </span>
+                          <span className="text-blue-700">{web}</span>
+                        </p>
+                      ) : null}
+                      {gh ? (
+                        <p className="break-all">
+                          <span className="font-semibold text-zinc-800">GitHub </span>
+                          <span className="text-blue-700">{gh}</span>
+                        </p>
+                      ) : null}
+                      {gitcc ? (
+                        <p className="break-all">
+                          <span className="font-semibold text-zinc-800">GitCC </span>
+                          <span className="text-blue-700">{gitcc}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   <div className="mt-8 flex items-end justify-between gap-4 border-t border-zinc-200 pt-6">
                     <p className="min-w-0 flex-1 break-all text-[11px] leading-snug text-zinc-500">
@@ -189,7 +188,7 @@ export function ProjectSharePoster({
                 className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
                 onClick={() => void downloadPng()}
               >
-                {busy ? "生成中…" : "下载 PNG"}
+                {busy ? "生成中…" : "下载海报"}
               </button>
             </div>
           </div>

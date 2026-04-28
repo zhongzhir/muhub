@@ -12,21 +12,21 @@ export function formatRelativeUpdateTime(input?: string | Date | null): string {
   const dayMs = 24 * 60 * 60 * 1000;
   const days = Math.floor(diffMs / dayMs);
 
-  if (days <= 0) return "updated today";
-  if (days < 7) return `updated ${days} day${days > 1 ? "s" : ""} ago`;
+  if (days <= 0) return "今天更新";
+  if (days < 7) return `${days} 天前更新`;
   if (days < 30) {
     const weeks = Math.max(1, Math.floor(days / 7));
-    return `updated ${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    return `${weeks} 周前更新`;
   }
   const months = Math.max(1, Math.floor(days / 30));
-  return `updated ${months} month${months > 1 ? "s" : ""} ago`;
+  return `${months} 个月前更新`;
 }
 
 export function getProjectActivityStatus(input?: string | Date | null): string {
   const d = toDate(input);
   if (!d) return "";
   const days = Math.floor((Date.now() - d.getTime()) / (24 * 60 * 60 * 1000));
-  if (days <= 7) return "Active this week";
-  if (days <= 30) return "Recently updated";
-  return "Quiet recently";
+  if (days <= 7) return "本周活跃";
+  if (days <= 30) return "近期更新";
+  return "近期较安静";
 }

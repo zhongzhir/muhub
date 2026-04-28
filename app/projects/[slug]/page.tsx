@@ -227,6 +227,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       isPrimary: Boolean(s.isPrimary),
     })),
   });
+  const gitccUrl =
+    sourceItems.find((item) => item.categoryLabel === "GitCC" || item.url.includes("gitcc.com"))?.url ??
+    null;
 
   const canonicalProjectUrl = projectCanonicalUrl(slug);
   const shareSnippet = buildProjectShareSnippet(data);
@@ -314,6 +317,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               posterLatestActivity={projectActivities[0] ?? null}
               promoText={promoText}
               githubUrl={data.githubUrl}
+              gitccUrl={gitccUrl}
               websiteUrl={data.websiteUrl}
               showManageLink={showManageLink}
               claimHref={claimHref}

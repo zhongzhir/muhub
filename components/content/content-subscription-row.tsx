@@ -61,7 +61,7 @@ export function ContentSubscriptionRow({ row }: { row: ContentSubscriptionWithPr
             });
           }}
         >
-          {pending ? "处理中…" : "Unfollow"}
+          {pending ? "处理中…" : "取消关注"}
         </button>
       </div>
     </article>

@@ -16,19 +16,16 @@ export type ProjectHeroPublicActionsProps = {
   shareSnippet: string;
   canonicalUrl: string;
   description?: string;
-  /** 当前用户可管理该项目时显示「进入管理」 */
   showManageLink: boolean;
-  /** 对外认领入口（例如非管理者可见） */
   claimHref?: string;
-  /** 分享海报用短文案（tagline / 简介截断） */
   posterIntro: string;
   posterSummary?: string;
   posterHighlights?: string[];
   posterLatestActivity?: ProjectActivity | null;
   promoText: string;
   githubUrl?: string | null;
+  gitccUrl?: string | null;
   websiteUrl?: string | null;
-  /** 点赞/关注（仅正式库项目可交互） */
   engagement?: {
     projectId: string | null;
     interactive: boolean;
@@ -56,15 +53,17 @@ export function ProjectHeroPublicActions({
   posterLatestActivity,
   promoText,
   githubUrl,
+  gitccUrl,
   websiteUrl,
   engagement,
 }: ProjectHeroPublicActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
+  const repoLabel = githubUrl?.includes("gitee.com") ? "查看 Gitee" : "查看 GitHub";
 
   return (
     <>
       <div
-        className="flex flex-wrap items-start gap-4"
+        className="flex flex-wrap items-start gap-x-4 gap-y-2"
         data-testid="project-hero-public-actions"
       >
         {engagement ? (
@@ -77,90 +76,63 @@ export function ProjectHeroPublicActions({
             signInCallbackPath={engagement.signInCallbackPath}
           />
         ) : null}
-        <div className="min-w-[220px]">
-          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Project Links
-          </p>
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-            {websiteUrl?.trim() ? (
-              <a
-                href={websiteUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={inlineActionClass}
-              >
-                Visit Website
-              </a>
-            ) : null}
-            {githubUrl?.trim() ? (
-              <a
-                href={githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={inlineActionClass}
-              >
-                View GitHub
-              </a>
-            ) : null}
-          </div>
-        </div>
-        <div className="min-w-[220px]">
-          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Promote
-          </p>
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-            <button type="button" className={inlineActionClass} onClick={() => setShareOpen(true)}>
-              <span aria-hidden>📤</span>
-              Share
-            </button>
-            <ProjectSharePoster
-              slug={slug}
-              name={name}
-              intro={posterIntro}
-              summary={posterSummary}
-              highlights={posterHighlights}
-              latestActivity={
-                posterLatestActivity
-                  ? {
-                      type: posterLatestActivity.type,
-                      title: posterLatestActivity.title,
-                      occurredAt: posterLatestActivity.occurredAt,
-                      summary: posterLatestActivity.summary ?? undefined,
-                    }
-                  : null
-              }
-              projectPageUrl={canonicalUrl}
-              githubUrl={githubUrl}
-              websiteUrl={websiteUrl}
-            />
-            <ProjectCopyPromo text={promoText} />
-          </div>
-        </div>
-        {(showManageLink || claimHref) && (
-          <div className="min-w-[160px]">
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Manage
-            </p>
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+
+        {websiteUrl?.trim() ? (
+          <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className={inlineActionClass}>
+            访问官网
+          </a>
+        ) : null}
+        {githubUrl?.trim() ? (
+          <a href={githubUrl} target="_blank" rel="noopener noreferrer" className={inlineActionClass}>
+            {repoLabel}
+          </a>
+        ) : null}
+        {gitccUrl?.trim() ? (
+          <a href={gitccUrl} target="_blank" rel="noopener noreferrer" className={inlineActionClass}>
+            查看 GitCC
+          </a>
+        ) : null}
+
+        <button type="button" className={inlineActionClass} onClick={() => setShareOpen(true)}>
+          分享
+        </button>
+        <ProjectSharePoster
+          slug={slug}
+          name={name}
+          intro={posterIntro}
+          summary={posterSummary}
+          highlights={posterHighlights}
+          latestActivity={
+            posterLatestActivity
+              ? {
+                  type: posterLatestActivity.type,
+                  title: posterLatestActivity.title,
+                  occurredAt: posterLatestActivity.occurredAt,
+                  summary: posterLatestActivity.summary ?? undefined,
+                }
+              : null
+          }
+          projectPageUrl={canonicalUrl}
+          githubUrl={githubUrl}
+          gitccUrl={gitccUrl}
+          websiteUrl={websiteUrl}
+        />
+        <ProjectCopyPromo text={promoText} />
+
         {showManageLink ? (
           <Link
             href={`/dashboard/projects/${encodeURIComponent(slug)}`}
             className={inlineActionClass}
             data-testid="project-hero-enter-manage"
           >
-            <span aria-hidden>⚙️</span>
             管理
           </Link>
         ) : null}
         {claimHref ? (
           <Link href={claimHref} className={inlineActionClass} data-testid="project-hero-claim">
-            <span aria-hidden>📋</span>
             认领
           </Link>
         ) : null}
-            </div>
-          </div>
-        )}
       </div>
       <ProjectShareDialog
         open={shareOpen}

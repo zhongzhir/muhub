@@ -60,7 +60,7 @@ export function ProjectDetailHero({
         <p className="text-xs font-semibold uppercase tracking-wide text-teal-800/90 dark:text-teal-400/90">
           <span>项目主页</span>
           <span className="mx-1 text-zinc-400">·</span>
-          <span>MUHUB Project Profile</span>
+          <span>MUHUB 项目档案</span>
         </p>
 
         <h1

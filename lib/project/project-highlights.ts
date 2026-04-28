@@ -9,11 +9,11 @@ export function buildProjectHighlights(project: HighlightProjectInput) {
   const highlights: string[] = [];
 
   if ((project.stars ?? 0) > 1000) {
-    highlights.push("Popular");
+    highlights.push("热门项目");
   }
 
   if (project.lastCommitAt) {
-    highlights.push("Active");
+    highlights.push("活跃项目");
   }
 
   if (project.topics?.includes("ai")) {
@@ -25,7 +25,7 @@ export function buildProjectHighlights(project: HighlightProjectInput) {
   }
 
   if (project.openSource) {
-    highlights.push("Open Source");
+    highlights.push("开源项目");
   }
 
   return highlights;

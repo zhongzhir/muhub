@@ -62,6 +62,30 @@ function groupExternalLinks(links: NonNullable<ProjectPageView["externalLinks"]>
   return out;
 }
 
+function normalizedUrlKey(url: string | null | undefined): string | null {
+  if (!url?.trim()) {
+    return null;
+  }
+  try {
+    const u = new URL(url.trim());
+    u.hash = "";
+    let out = u.toString();
+    if (out.endsWith("/") && u.pathname !== "/") {
+      out = out.slice(0, -1);
+    }
+    return out.toLowerCase();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+
+function isPrimaryCodeOrWebsiteSource(item: ProjectSourceDisplayItem): boolean {
+  if (item.kind === "GITHUB" || item.kind === "WEBSITE") {
+    return true;
+  }
+  return item.kind === "OTHER" && item.categoryLabel.toLowerCase() === "gitcc";
+}
+
 type Props = {
   data: ProjectPageView;
   socials: ProjectPageView["socials"];
@@ -79,6 +103,23 @@ export function ProjectDetailInfoSections({
   githubRefreshSlot,
 }: Props) {
   const showManageRepoActions = Boolean(githubRefreshSlot);
+  const topLinkKeys = new Set(
+    [data.websiteUrl, data.githubUrl, ...sourceItems.filter(isPrimaryCodeOrWebsiteSource).map((s) => s.url)]
+      .map(normalizedUrlKey)
+      .filter((x): x is string => Boolean(x)),
+  );
+  const visibleExternalLinks = (data.externalLinks ?? []).filter((link) => {
+    const platform = link.platform.toLowerCase();
+    if (platform === "website" || platform === "github" || platform === "gitcc") {
+      return false;
+    }
+    const key = normalizedUrlKey(link.url);
+    return !key || !topLinkKeys.has(key);
+  });
+  const visibleSourceItems = sourceItems.filter((item) => {
+    const key = normalizedUrlKey(item.url);
+    return !key || !topLinkKeys.has(key);
+  });
   return (
     <>
       {data.aiCardSummary?.trim() ? (
@@ -175,7 +216,7 @@ export function ProjectDetailInfoSections({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {data.primaryCategory?.trim() ? (
               <span className="muhub-badge muhub-badge--category">
-                Category · {getProjectCategoryLabel(data.primaryCategory.trim(), data.primaryCategory.trim())}
+                分类 · {getProjectCategoryLabel(data.primaryCategory.trim(), data.primaryCategory.trim())}
               </span>
             ) : null}
             {(data.categories ?? [])
@@ -200,7 +241,7 @@ export function ProjectDetailInfoSections({
         </section>
       ) : null}
 
-      {data.externalLinks && data.externalLinks.length > 0 ? (
+      {visibleExternalLinks.length > 0 ? (
         <section
           className="mt-10 scroll-mt-8"
           aria-labelledby="project-external-links-heading"
@@ -210,7 +251,7 @@ export function ProjectDetailInfoSections({
             外部链接
           </h2>
           <div className="space-y-8">
-            {groupExternalLinks(data.externalLinks).map((group) => (
+            {groupExternalLinks(visibleExternalLinks).map((group) => (
               <div key={group.heading}>
                 <h3 className="muhub-form-legend mb-3 text-left">{group.heading}</h3>
                 <ul className="grid gap-3 sm:grid-cols-2">
@@ -248,7 +289,7 @@ export function ProjectDetailInfoSections({
         </section>
       ) : null}
 
-      {sourceItems.length > 0 ? (
+      {false && visibleSourceItems.length > 0 ? (
         <section
           className="mt-12 scroll-mt-8"
           aria-labelledby="project-ops-info-heading"
@@ -259,7 +300,7 @@ export function ProjectDetailInfoSections({
           </h2>
           <div className="muhub-card overflow-hidden">
             <div className="space-y-2.5 px-6 py-5 text-sm">
-              {sourceItems.map((s) => (
+              {visibleSourceItems.map((s) => (
                 <div
                   key={s.id ? s.id : `${s.kind}-${s.url}`}
                   className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-b border-zinc-100 pb-2 last:border-b-0 last:pb-0 dark:border-zinc-800/80"
@@ -283,6 +324,7 @@ export function ProjectDetailInfoSections({
         </section>
       ) : null}
 
+      <>
       <section
         className="mt-12 scroll-mt-8"
         aria-labelledby="project-sources-heading"
@@ -291,13 +333,18 @@ export function ProjectDetailInfoSections({
         <h2 id="project-sources-heading" className="muhub-page-section-title">
           项目信息源
         </h2>
-        {sourceItems.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
+        {visibleSourceItems.length === 0 ? (
+          <>
+          <p className="hidden">
             暂无信息源。在创建或编辑项目时补充仓库、官网、文档等链接后将在此展示。
           </p>
+          <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/30">
+            官网、代码仓库等主要链接已在页面顶部展示。
+          </p>
+          </>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2">
-            {sourceItems.map((s) => (
+            {visibleSourceItems.map((s) => (
               <li key={s.id ? `${s.id}` : `${s.kind}-${s.url}`}>
                 <a
                   href={s.url}
@@ -334,6 +381,7 @@ export function ProjectDetailInfoSections({
           </ul>
         )}
       </section>
+      </>
 
       <section className="mt-12 scroll-mt-8" aria-labelledby="repo-data-heading" data-testid="github-snapshot-section">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
