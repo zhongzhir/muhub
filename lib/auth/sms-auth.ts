@@ -106,6 +106,7 @@ export async function requestPhoneLoginCode(
       purpose: "login",
     });
     if (!send.ok) {
+      console.error("[sms] send verification code failed", send.message);
       return { ok: false, error: "send_failed" };
     }
   } catch (error) {

@@ -43,6 +43,8 @@
     "activity:github": "node ./node_modules/tsx/dist/cli.mjs scripts/run-project-activity.ts"
   },
   "dependencies": {
+    "@alicloud/dysmsapi20170525": "^4.5.1",
+    "@alicloud/openapi-client": "^0.4.15",
     "@auth/prisma-adapter": "^2.7.4",
     "@prisma/client": "^6.19.2",
     "dotenv": "^17.4.2",
