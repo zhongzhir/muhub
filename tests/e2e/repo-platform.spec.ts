@@ -5,7 +5,11 @@ import {
   normalizeGithubRepoUrl,
 } from "@/lib/discovery/normalize-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
-import { detectProjectSource, parseProjectSourceUrl } from "@/lib/project-source-url";
+import {
+  detectProjectSource,
+  extractProjectSourceUrlsFromText,
+  parseProjectSourceUrl,
+} from "@/lib/project-source-url";
 
 test.describe("多平台仓库 URL 解析", () => {
   test("GitHub URL 解析为 owner / repo", () => {
@@ -102,5 +106,16 @@ test.describe("多平台仓库 URL 解析", () => {
       owner: null,
       repo: null,
     });
+  });
+
+  test("批量项目来源提取支持 GitHub 和 GitCC", () => {
+    expect(
+      extractProjectSourceUrlsFromText(
+        "项目 A https://github.com/lucide-icons/lucide，项目 B https://www.gitcc.com/tokenfree/gvv-ai-erp",
+      ).map((item) => ({ type: item.source.type, url: item.source.url })),
+    ).toEqual([
+      { type: "GITHUB", url: "https://github.com/lucide-icons/lucide" },
+      { type: "GITCC", url: "https://www.gitcc.com/tokenfree/gvv-ai-erp" },
+    ]);
   });
 });

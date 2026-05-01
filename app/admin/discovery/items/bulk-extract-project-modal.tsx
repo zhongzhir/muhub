@@ -12,9 +12,12 @@ const inputClass =
   "mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-blue-500 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
 
 type ExtractedItem = {
-  githubUrl: string;
-  owner: string;
-  repo: string;
+  sourceType: "GITHUB" | "GITCC";
+  sourceUrl: string;
+  sourceLabel: "GitHub" | "GitCC";
+  githubUrl: string | null;
+  owner: string | null;
+  repo: string | null;
   projectName: string;
   summary: string | null;
   stars: number;
@@ -70,7 +73,7 @@ export function BulkExtractProjectModal() {
               <div>
                 <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">批量提取项目</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  粘贴公众号文章正文，自动提取 GitHub 项目并批量加入发现队列。
+                  粘贴文章正文，自动提取 GitHub / GitCC 等项目链接并批量加入发现队列。
                 </p>
                 <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
                   提取规则版本：2026-04-16-b
@@ -141,7 +144,8 @@ export function BulkExtractProjectModal() {
                       <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/30">
                         <tr>
                           <th className="px-3 py-2">选择</th>
-                          <th className="px-3 py-2">GitHub URL</th>
+                          <th className="px-3 py-2">来源</th>
+                          <th className="px-3 py-2">项目链接</th>
                           <th className="px-3 py-2">项目名</th>
                           <th className="px-3 py-2">简介</th>
                           <th className="px-3 py-2">Stars</th>
@@ -151,21 +155,22 @@ export function BulkExtractProjectModal() {
                       </thead>
                       <tbody>
                         {items.map((item) => {
-                          const checked = selectedUrls.includes(item.githubUrl);
+                          const checked = selectedUrls.includes(item.sourceUrl);
                           const disabled = item.status !== "ready";
                           return (
-                            <tr key={item.githubUrl} className="border-b border-zinc-100 dark:border-zinc-800">
+                            <tr key={item.sourceUrl} className="border-b border-zinc-100 dark:border-zinc-800">
                               <td className="px-3 py-2">
                                 <input
                                   type="checkbox"
                                   checked={checked}
                                   disabled={disabled}
-                                  onChange={() => toggleSelect(item.githubUrl)}
+                                  onChange={() => toggleSelect(item.sourceUrl)}
                                 />
                               </td>
+                              <td className="px-3 py-2">{item.sourceLabel}</td>
                               <td className="px-3 py-2">
-                                <a href={item.githubUrl} target="_blank" rel="noreferrer" className="underline">
-                                  {item.githubUrl}
+                                <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+                                  {item.sourceUrl}
                                 </a>
                               </td>
                               <td className="px-3 py-2">{item.projectName || "-"}</td>
@@ -236,7 +241,7 @@ export function BulkExtractProjectModal() {
                       setItems(result.items);
                       const defaultSelected = result.items
                         .filter((x) => x.status === "ready")
-                        .map((x) => x.githubUrl);
+                        .map((x) => x.sourceUrl);
                       setSelectedUrls(defaultSelected);
                       setFeedback({
                         kind: "ok",
@@ -246,7 +251,7 @@ export function BulkExtractProjectModal() {
                   });
                 }}
               >
-                {pending ? "提取中..." : "提取 GitHub 项目"}
+                {pending ? "提取中..." : "提取项目链接"}
               </button>
 
               <button

@@ -14,6 +14,11 @@ export type ParsedProjectSourceUrl =
       repo: null;
     };
 
+export type ExtractedProjectSourceUrl = {
+  rawUrl: string;
+  source: ParsedProjectSourceUrl;
+};
+
 function withDefaultProtocol(raw: string): string {
   const s = raw.trim();
   if (!s) {
@@ -93,4 +98,35 @@ export function parseProjectSourceUrl(url: string): ParsedProjectSourceUrl | nul
   }
 
   return { type: "EXTERNAL", url: u.toString(), owner: null, repo: null };
+}
+
+function stripTrailingUrlPunctuation(raw: string): string {
+  return raw
+    .trim()
+    .replace(/[),.;:!?，。；：！？、）】》]+$/u, "");
+}
+
+export function extractProjectSourceUrlsFromText(text: string): ExtractedProjectSourceUrl[] {
+  const matches =
+    text.match(
+      /(?:https?:\/\/|www\.|github\.com\/|gitcc\.com\/)[^\s<>"'`，。；：！？、（）【】《》]+/giu,
+    ) ?? [];
+  const seen = new Set<string>();
+  const out: ExtractedProjectSourceUrl[] = [];
+
+  for (const match of matches) {
+    const rawUrl = stripTrailingUrlPunctuation(match);
+    const source = parseProjectSourceUrl(rawUrl);
+    if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
+      continue;
+    }
+    const key = `${source.type}:${source.url.toLowerCase()}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    out.push({ rawUrl, source });
+  }
+
+  return out;
 }

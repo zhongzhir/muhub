@@ -21,10 +21,13 @@ import { runGitHubDiscoveryV3 } from "@/agents/discovery/github/github-discovery
 import { runRssDiscovery } from "@/agents/discovery/rss/rss-discovery";
 import { runGitHubProjectActivity } from "@/agents/activity/github-activity";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
-import { extractGithubRepoUrlsFromText, normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
+import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { prisma } from "@/lib/prisma";
 import { slugifyProjectName } from "@/lib/project-slug";
-import { parseRepoUrl } from "@/lib/repo-platform";
+import {
+  extractProjectSourceUrlsFromText,
+  parseProjectSourceUrl,
+} from "@/lib/project-source-url";
 
 const REVALIDATE = "/admin/discovery/items";
 const execFileAsync = promisify(execFile);
@@ -87,9 +90,12 @@ export type ParseManualGithubProjectResult =
   | {
       ok: true;
       parsed: {
-        githubUrl: string;
-        owner: string;
-        repo: string;
+        sourceType: "GITHUB" | "GITCC";
+        sourceUrl: string;
+        sourceLabel: "GitHub" | "GitCC";
+        githubUrl: string | null;
+        owner: string | null;
+        repo: string | null;
         title: string;
         summary: string | null;
         homepage: string | null;
@@ -109,9 +115,12 @@ export type ImportManualGithubProjectResult =
   | { ok: false; error: string };
 
 type BulkExtractedGithubProject = {
-  githubUrl: string;
-  owner: string;
-  repo: string;
+  sourceType: "GITHUB" | "GITCC";
+  sourceUrl: string;
+  sourceLabel: "GitHub" | "GitCC";
+  githubUrl: string | null;
+  owner: string | null;
+  repo: string | null;
   projectName: string;
   summary: string | null;
   stars: number;
@@ -141,12 +150,14 @@ export type BulkAddGithubProjectsToQueueResult =
     }
   | { ok: false; error: string };
 
-function extractGithubRepoUrlsFromArticleText(articleBody: string): string[] {
-  return extractGithubRepoUrlsFromText(articleBody).normalizedMatches;
+function extractProjectSourceUrlsFromArticleText(articleBody: string): string[] {
+  return extractProjectSourceUrlsFromText(articleBody).map((item) => item.source.url);
 }
 
 function createManualDiscoveryItem(input: {
-  githubUrl: string;
+  sourceType: "GITHUB" | "GITCC";
+  sourceUrl: string;
+  githubUrl?: string | null;
   websiteUrl?: string | null;
   title: string;
   summary?: string | null;
@@ -157,18 +168,22 @@ function createManualDiscoveryItem(input: {
   repo?: string;
 }): DiscoveryItem {
   const now = new Date().toISOString();
+  const sourceLabel = input.sourceType === "GITHUB" ? "GitHub" : "GitCC";
   return {
     id: `manual-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     sourceType: "manual",
     title: input.title.trim(),
-    url: input.githubUrl,
+    url: input.sourceUrl,
     description: input.summary?.trim() || undefined,
     status: "new",
     createdAt: now,
     meta: {
-      source: "manual-github",
-      sourceKey: "manual-github",
-      githubUrl: input.githubUrl,
+      source: input.sourceType === "GITHUB" ? "manual-github" : "manual-gitcc",
+      sourceKey: input.sourceType === "GITHUB" ? "manual-github" : "manual-gitcc",
+      sourceType: input.sourceType,
+      sourceLabel,
+      sourceUrl: input.sourceUrl,
+      githubUrl: input.githubUrl ?? null,
       websiteUrl: input.websiteUrl?.trim() || null,
       note: input.note?.trim() || null,
       language: input.language?.trim() || null,
@@ -180,17 +195,34 @@ function createManualDiscoveryItem(input: {
 }
 
 async function findExistingProjectByPriority(input: {
-  githubUrl: string;
+  githubUrl?: string | null;
+  source?: { kind: "GITHUB" | "OTHER"; url: string; label?: string | null } | null;
   websiteUrl?: string | null;
   title: string;
   repo: string;
 }): Promise<ExistingProjectHit | null> {
-  const byGithub = await prisma.project.findFirst({
-    where: { deletedAt: null, githubUrl: input.githubUrl },
-    select: { id: true, slug: true, name: true },
-  });
-  if (byGithub) {
-    return { ...byGithub, reason: "githubUrl" };
+  const githubUrl = input.githubUrl?.trim() || null;
+  if (githubUrl) {
+    const byGithub = await prisma.project.findFirst({
+      where: { deletedAt: null, githubUrl },
+      select: { id: true, slug: true, name: true },
+    });
+    if (byGithub) {
+      return { ...byGithub, reason: "githubUrl" };
+    }
+  }
+
+  if (input.source?.url) {
+    const bySource = await prisma.project.findFirst({
+      where: {
+        deletedAt: null,
+        sources: { some: { kind: input.source.kind, url: input.source.url } },
+      },
+      select: { id: true, slug: true, name: true },
+    });
+    if (bySource) {
+      return { ...bySource, reason: "githubUrl" };
+    }
   }
 
   const websiteUrl = input.websiteUrl?.trim() || null;
@@ -533,27 +565,67 @@ export async function parseManualGithubProjectAction(input: {
     return { ok: false, error: "未配置 DATABASE_URL，无法执行解析。" };
   }
   const rawGithubUrl = input.githubUrl?.trim() || "";
-  const parsed = parseRepoUrl(rawGithubUrl);
-  if (!parsed || parsed.platform !== "github") {
-    return { ok: false, error: "GitHub URL 无效，请输入 github.com/{owner}/{repo}" };
+  const source = parseProjectSourceUrl(rawGithubUrl);
+  if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
+    return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
   }
-  try {
-    const normalizedGithubUrl = normalizeGithubRepoUrl(`https://github.com/${parsed.owner}/${parsed.repo}`);
-    const repoData = await fetchGithubRepo(parsed.owner, parsed.repo);
+  if (source.type === "GITCC") {
     const websiteFromInput = input.websiteUrl?.trim() || "";
-    const websiteUrl = websiteFromInput || repoData.homepage || null;
+    const fallbackName = source.url
+      .replace(/\/+$/g, "")
+      .split("/")
+      .filter(Boolean)
+      .pop() ?? "GitCC 项目";
+    const title = fallbackName || "GitCC 项目";
     const duplicate = await findExistingProjectByPriority({
-      githubUrl: normalizedGithubUrl,
-      websiteUrl,
-      title: repoData.name,
-      repo: parsed.repo,
+      githubUrl: null,
+      source: { kind: "OTHER", url: source.url, label: "GitCC" },
+      websiteUrl: websiteFromInput || null,
+      title,
+      repo: title,
     });
     return {
       ok: true,
       parsed: {
+        sourceType: "GITCC",
+        sourceUrl: source.url,
+        sourceLabel: "GitCC",
+        githubUrl: null,
+        owner: null,
+        repo: null,
+        title,
+        summary: "已识别为 GitCC 来源，可直接加入发现队列或导入为外部项目。",
+        homepage: null,
+        stargazersCount: 0,
+        language: null,
+      },
+      duplicate,
+    };
+  }
+  if (source.type !== "GITHUB") {
+    return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
+  }
+  try {
+    const normalizedGithubUrl = normalizeGithubRepoUrl(source.url);
+    const repoData = await fetchGithubRepo(source.owner, source.repo);
+    const websiteFromInput = input.websiteUrl?.trim() || "";
+    const websiteUrl = websiteFromInput || repoData.homepage || null;
+    const duplicate = await findExistingProjectByPriority({
+      githubUrl: normalizedGithubUrl,
+      source: { kind: "GITHUB", url: normalizedGithubUrl, label: "GitHub" },
+      websiteUrl,
+      title: repoData.name,
+      repo: source.repo,
+    });
+    return {
+      ok: true,
+      parsed: {
+        sourceType: "GITHUB",
+        sourceUrl: normalizedGithubUrl,
+        sourceLabel: "GitHub",
         githubUrl: normalizedGithubUrl,
-        owner: parsed.owner,
-        repo: parsed.repo,
+        owner: source.owner,
+        repo: source.repo,
         title: repoData.name,
         summary: repoData.description,
         homepage: repoData.homepage,
@@ -590,17 +662,25 @@ export async function addManualGithubToQueueAction(input: {
     return { ok: false, error: "请先登录后再操作。" };
   }
   const githubUrlRaw = input.githubUrl?.trim() || "";
-  const parsed = parseRepoUrl(githubUrlRaw);
-  if (!parsed || parsed.platform !== "github") {
-    return { ok: false, error: "GitHub URL 无效，请输入 github.com/{owner}/{repo}" };
+  const source = parseProjectSourceUrl(githubUrlRaw);
+  if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
+    return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
   }
-  const title = input.title?.trim() || parsed.repo;
-  const githubUrl = normalizeGithubRepoUrl(`https://github.com/${parsed.owner}/${parsed.repo}`);
+  const githubUrl = source.type === "GITHUB" ? normalizeGithubRepoUrl(source.url) : null;
+  const title =
+    input.title?.trim() ||
+    (source.type === "GITHUB"
+      ? source.repo
+      : source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目");
   const duplicate = await findExistingProjectByPriority({
     githubUrl,
+    source:
+      source.type === "GITHUB"
+        ? { kind: "GITHUB", url: githubUrl!, label: "GitHub" }
+        : { kind: "OTHER", url: source.url, label: "GitCC" },
     websiteUrl: input.websiteUrl?.trim() || null,
     title,
-    repo: parsed.repo,
+    repo: source.repo ?? title,
   });
   if (duplicate) {
     return { ok: false, error: `该项目已存在：/projects/${duplicate.slug}` };
@@ -608,6 +688,8 @@ export async function addManualGithubToQueueAction(input: {
 
   try {
     const item = createManualDiscoveryItem({
+      sourceType: source.type,
+      sourceUrl: githubUrl ?? source.url,
       githubUrl,
       websiteUrl: input.websiteUrl,
       title,
@@ -615,8 +697,8 @@ export async function addManualGithubToQueueAction(input: {
       note: input.note,
       language: input.language ?? null,
       stars: input.stargazersCount ?? 0,
-      owner: input.owner || parsed.owner,
-      repo: input.repo || parsed.repo,
+      owner: input.owner || source.owner || undefined,
+      repo: input.repo || source.repo || undefined,
     });
     const created = await appendDiscoveryItem(item);
     revalidatePath(REVALIDATE);
@@ -646,17 +728,25 @@ export async function importManualGithubProjectAction(input: {
     return { ok: false, error: "请先登录后再操作。" };
   }
   const githubUrlRaw = input.githubUrl?.trim() || "";
-  const parsed = parseRepoUrl(githubUrlRaw);
-  if (!parsed || parsed.platform !== "github") {
-    return { ok: false, error: "GitHub URL 无效，请输入 github.com/{owner}/{repo}" };
+  const source = parseProjectSourceUrl(githubUrlRaw);
+  if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
+    return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
   }
-  const title = input.title?.trim() || parsed.repo;
-  const githubUrl = normalizeGithubRepoUrl(`https://github.com/${parsed.owner}/${parsed.repo}`);
+  const githubUrl = source.type === "GITHUB" ? normalizeGithubRepoUrl(source.url) : null;
+  const title =
+    input.title?.trim() ||
+    (source.type === "GITHUB"
+      ? source.repo
+      : source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目");
   const duplicate = await findExistingProjectByPriority({
     githubUrl,
+    source:
+      source.type === "GITHUB"
+        ? { kind: "GITHUB", url: githubUrl!, label: "GitHub" }
+        : { kind: "OTHER", url: source.url, label: "GitCC" },
     websiteUrl: input.websiteUrl?.trim() || null,
     title,
-    repo: parsed.repo,
+    repo: source.repo ?? title,
   });
   if (duplicate) {
     return {
@@ -669,6 +759,8 @@ export async function importManualGithubProjectAction(input: {
 
   try {
     const item = createManualDiscoveryItem({
+      sourceType: source.type,
+      sourceUrl: githubUrl ?? source.url,
       githubUrl,
       websiteUrl: input.websiteUrl,
       title,
@@ -676,8 +768,8 @@ export async function importManualGithubProjectAction(input: {
       note: input.note,
       language: input.language ?? null,
       stars: input.stargazersCount ?? 0,
-      owner: input.owner || parsed.owner,
-      repo: input.repo || parsed.repo,
+      owner: input.owner || source.owner || undefined,
+      repo: input.repo || source.repo || undefined,
     });
     const result = await importJsonDiscoveryItem(item);
     revalidatePath(REVALIDATE);
@@ -706,46 +798,64 @@ export async function extractGithubProjectsFromArticleAction(input: {
   if (!body) {
     return { ok: false, error: "请先粘贴文章正文。" };
   }
-  const extraction = extractGithubRepoUrlsFromText(body);
-  const rawMatches = extraction.rawMatches;
-  const urls = extraction.normalizedMatches;
-  console.log("[extractGithubProjectsFromArticleAction] raw matches:", rawMatches);
-  console.log("[extractGithubProjectsFromArticleAction] normalized matches:", urls);
-  if (urls.length === 0) {
-    return { ok: false, error: "正文中未识别到有效的 GitHub 仓库链接。" };
+  const extracted = extractProjectSourceUrlsFromText(body);
+  console.log(
+    "[extractGithubProjectsFromArticleAction] project source matches:",
+    extracted.map((item) => item.source.url),
+  );
+  if (extracted.length === 0) {
+    return { ok: false, error: "正文中未识别到有效的项目来源链接，目前支持 GitHub 和 GitCC。" };
   }
 
   const items: BulkExtractedGithubProject[] = [];
-  for (const githubUrl of urls) {
-    const parsed = parseRepoUrl(githubUrl);
-    if (!parsed || parsed.platform !== "github") {
+  for (const { source } of extracted) {
+    if (source.type === "GITCC") {
+      const projectName =
+        source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目";
+      const duplicate = await findExistingProjectByPriority({
+        githubUrl: null,
+        source: { kind: "OTHER", url: source.url, label: "GitCC" },
+        websiteUrl: null,
+        title: projectName,
+        repo: projectName,
+      });
       items.push({
-        githubUrl,
-        owner: "",
-        repo: "",
-        projectName: "",
-        summary: null,
+        sourceType: "GITCC",
+        sourceUrl: source.url,
+        sourceLabel: "GitCC",
+        githubUrl: null,
+        owner: null,
+        repo: null,
+        projectName,
+        summary: "已识别为 GitCC 来源，可加入发现队列或导入为外部项目。",
         stars: 0,
         language: null,
         websiteUrl: null,
-        status: "error",
-        errorMessage: "GitHub URL 无效",
-        duplicateProject: null,
+        status: duplicate ? "duplicate" : "ready",
+        duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
       });
       continue;
     }
+    if (source.type !== "GITHUB") {
+      continue;
+    }
+    const githubUrl = normalizeGithubRepoUrl(source.url);
     try {
-      const repoData = await fetchGithubRepo(parsed.owner, parsed.repo);
+      const repoData = await fetchGithubRepo(source.owner, source.repo);
       const duplicate = await findExistingProjectByPriority({
         githubUrl,
+        source: { kind: "GITHUB", url: githubUrl, label: "GitHub" },
         websiteUrl: repoData.homepage || null,
         title: repoData.name,
-        repo: parsed.repo,
+        repo: source.repo,
       });
       items.push({
+        sourceType: "GITHUB",
+        sourceUrl: githubUrl,
+        sourceLabel: "GitHub",
         githubUrl,
-        owner: parsed.owner,
-        repo: parsed.repo,
+        owner: source.owner,
+        repo: source.repo,
         projectName: repoData.name,
         summary: repoData.description,
         stars: repoData.stargazers_count,
@@ -757,10 +867,13 @@ export async function extractGithubProjectsFromArticleAction(input: {
     } catch (error) {
       const message = error instanceof Error ? error.message : "解析失败";
       items.push({
+        sourceType: "GITHUB",
+        sourceUrl: githubUrl,
+        sourceLabel: "GitHub",
         githubUrl,
-        owner: parsed.owner,
-        repo: parsed.repo,
-        projectName: parsed.repo,
+        owner: source.owner,
+        repo: source.repo,
+        projectName: source.repo,
         summary: null,
         stars: 0,
         language: null,
@@ -778,8 +891,8 @@ export async function extractGithubProjectsFromArticleAction(input: {
   return {
     ok: true,
     items,
-    totalUrls: rawMatches.length,
-    uniqueRepoUrls: urls.length,
+    totalUrls: extracted.length,
+    uniqueRepoUrls: extracted.length,
   };
 }
 
@@ -797,7 +910,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   if (!body) {
     return { ok: false, error: "请先粘贴文章正文。" };
   }
-  const allowed = new Set(extractGithubRepoUrlsFromArticleText(body));
+  const allowed = new Set(extractProjectSourceUrlsFromArticleText(body));
   const selected = Array.from(
     new Set((input.selectedGithubUrls ?? []).map((x) => x.trim()).filter((x) => x && allowed.has(x))),
   );
@@ -811,33 +924,83 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   const sourceName = input.sourceName?.trim() || null;
   const articleTitle = input.articleTitle?.trim() || null;
 
-  for (const githubUrl of selected) {
-    const parsed = parseRepoUrl(githubUrl);
-    if (!parsed || parsed.platform !== "github") {
+  for (const sourceUrl of selected) {
+    const source = parseProjectSourceUrl(sourceUrl);
+    if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
       failed += 1;
       continue;
     }
     try {
-      const repoData = await fetchGithubRepo(parsed.owner, parsed.repo);
+      if (source.type === "GITCC") {
+        const projectName =
+          source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目";
+        const existing = await findExistingProjectByPriority({
+          githubUrl: null,
+          source: { kind: "OTHER", url: source.url, label: "GitCC" },
+          websiteUrl: null,
+          title: projectName,
+          repo: projectName,
+        });
+        if (existing) {
+          duplicate += 1;
+          continue;
+        }
+        const item = createManualDiscoveryItem({
+          sourceType: "GITCC",
+          sourceUrl: source.url,
+          githubUrl: null,
+          title: projectName,
+          summary: "已识别为 GitCC 来源，可导入为外部项目。",
+          language: null,
+          stars: 0,
+        });
+        item.meta = {
+          ...(item.meta ?? {}),
+          source: "wechat-article",
+          sourceType: "wechat",
+          sourceName,
+          articleTitle,
+          extractedFrom: "article_text",
+          projectSourceType: "GITCC",
+          sourceUrl: source.url,
+        };
+        const appended = await appendDiscoveryItem(item);
+        if (appended.duplicate) {
+          duplicate += 1;
+        } else {
+          success += 1;
+        }
+        continue;
+      }
+
+      if (source.type !== "GITHUB") {
+        failed += 1;
+        continue;
+      }
+      const githubUrl = normalizeGithubRepoUrl(source.url);
+      const repoData = await fetchGithubRepo(source.owner, source.repo);
       const existing = await findExistingProjectByPriority({
         githubUrl,
+        source: { kind: "GITHUB", url: githubUrl, label: "GitHub" },
         websiteUrl: repoData.homepage || null,
         title: repoData.name,
-        repo: parsed.repo,
+        repo: source.repo,
       });
       if (existing) {
         duplicate += 1;
         continue;
       }
       const item = createManualDiscoveryItem({
+        sourceType: "GITHUB",
+        sourceUrl: githubUrl,
         githubUrl,
         websiteUrl: repoData.homepage || null,
         title: repoData.name,
         summary: repoData.description,
         language: repoData.language,
         stars: repoData.stargazers_count,
-        owner: parsed.owner,
-        repo: parsed.repo,
+        owner: source.owner,
+        repo: source.repo,
       });
       item.meta = {
         ...(item.meta ?? {}),
@@ -847,6 +1010,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
         articleTitle,
         extractedFrom: "article_text",
         githubUrl,
+        sourceUrl: githubUrl,
       };
       const appended = await appendDiscoveryItem(item);
       if (appended.duplicate) {

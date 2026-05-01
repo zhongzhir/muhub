@@ -13,9 +13,12 @@ const inputClass =
   "mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-blue-500 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
 
 type ParsedState = {
-  githubUrl: string;
-  owner: string;
-  repo: string;
+  sourceType: "GITHUB" | "GITCC";
+  sourceUrl: string;
+  sourceLabel: "GitHub" | "GitCC";
+  githubUrl: string | null;
+  owner: string | null;
+  repo: string | null;
   title: string;
   summary: string | null;
   homepage: string | null;
@@ -28,7 +31,7 @@ export function ManualAddProjectModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [githubUrl, setGithubUrl] = useState("");
+  const [projectUrl, setProjectUrl] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [note, setNote] = useState("");
   const [parsed, setParsed] = useState<ParsedState | null>(null);
@@ -40,7 +43,7 @@ export function ManualAddProjectModal() {
   const normalizedWebsite = useMemo(() => websiteUrl.trim(), [websiteUrl]);
 
   function resetForm() {
-    setGithubUrl("");
+    setProjectUrl("");
     setWebsiteUrl("");
     setNote("");
     setParsed(null);
@@ -66,10 +69,10 @@ export function ManualAddProjectModal() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                  一键添加项目（GitHub URL）
+                  一键添加项目
                 </h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  粘贴 GitHub URL，自动解析并选择加入发现队列或直接导入项目。
+                  粘贴 GitHub / GitCC 项目链接，自动解析并选择加入发现队列或直接导入项目。
                 </p>
               </div>
               <button
@@ -86,12 +89,12 @@ export function ManualAddProjectModal() {
 
             <div className="mt-4 grid gap-3">
               <label className="text-sm">
-                GitHub URL（必填）
+                项目链接（必填）
                 <input
                   className={inputClass}
-                  placeholder="https://github.com/{owner}/{repo}"
-                  value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/{owner}/{repo} 或 https://www.gitcc.com/…"
+                  value={projectUrl}
+                  onChange={(e) => setProjectUrl(e.target.value)}
                 />
               </label>
               <label className="text-sm">
@@ -124,7 +127,7 @@ export function ManualAddProjectModal() {
                   startTransition(() => {
                     void (async () => {
                       const result = await parseManualGithubProjectAction({
-                        githubUrl: githubUrl.trim(),
+                        githubUrl: projectUrl.trim(),
                         websiteUrl: normalizedWebsite || undefined,
                       });
                       if (!result.ok) {
@@ -133,6 +136,9 @@ export function ManualAddProjectModal() {
                         return;
                       }
                       setParsed({
+                        sourceType: result.parsed.sourceType,
+                        sourceUrl: result.parsed.sourceUrl,
+                        sourceLabel: result.parsed.sourceLabel,
                         githubUrl: result.parsed.githubUrl,
                         owner: result.parsed.owner,
                         repo: result.parsed.repo,
@@ -169,13 +175,13 @@ export function ManualAddProjectModal() {
                   startTransition(() => {
                     void (async () => {
                       const result = await addManualGithubToQueueAction({
-                        githubUrl: parsed.githubUrl,
+                        githubUrl: parsed.sourceUrl,
                         websiteUrl: normalizedWebsite || parsed.homepage || undefined,
                         note,
                         title: parsed.title,
                         summary: parsed.summary,
-                        owner: parsed.owner,
-                        repo: parsed.repo,
+                        owner: parsed.owner ?? undefined,
+                        repo: parsed.repo ?? undefined,
                         language: parsed.language,
                         stargazersCount: parsed.stargazersCount,
                       });
@@ -204,13 +210,13 @@ export function ManualAddProjectModal() {
                   startTransition(() => {
                     void (async () => {
                       const result = await importManualGithubProjectAction({
-                        githubUrl: parsed.githubUrl,
+                        githubUrl: parsed.sourceUrl,
                         websiteUrl: normalizedWebsite || parsed.homepage || undefined,
                         note,
                         title: parsed.title,
                         summary: parsed.summary,
-                        owner: parsed.owner,
-                        repo: parsed.repo,
+                        owner: parsed.owner ?? undefined,
+                        repo: parsed.repo ?? undefined,
                         language: parsed.language,
                         stargazersCount: parsed.stargazersCount,
                       });
@@ -231,10 +237,11 @@ export function ManualAddProjectModal() {
             {parsed ? (
               <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-zinc-300">
                 <p>项目：{parsed.title}</p>
-                <p>仓库：{parsed.owner}/{parsed.repo}</p>
+                <p>来源：{parsed.sourceLabel}</p>
+                {parsed.owner && parsed.repo ? <p>仓库：{parsed.owner}/{parsed.repo}</p> : null}
                 <p>Stars：{parsed.stargazersCount}</p>
                 <p>语言：{parsed.language || "-"}</p>
-                <p className="truncate">GitHub URL：{parsed.githubUrl}</p>
+                <p className="truncate">项目链接：{parsed.sourceUrl}</p>
                 <p className="truncate">官网 URL：{normalizedWebsite || parsed.homepage || "-"}</p>
                 {parsed.summary ? <p className="mt-1 line-clamp-2">简介：{parsed.summary}</p> : null}
                 {duplicateHit ? (
