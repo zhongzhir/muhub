@@ -83,6 +83,7 @@ enum ProjectSourceKind {
   BLOG
   TWITTER
   WECHAT
+  WECHAT_ARTICLE
   XIAOHONGSHU
   DOUYIN
   ZHIHU
@@ -778,6 +779,9 @@ model ProjectSource {
   kind      ProjectSourceKind
   url       String
   label     String?
+  title     String?
+  content   String?           @db.Text
+  summary   String?           @db.Text
   isPrimary Boolean           @default(false)
   createdAt DateTime          @default(now())
 

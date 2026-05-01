@@ -3,7 +3,7 @@
  */
 import type { DiscoveryItem } from "@/agents/discovery/discovery-types";
 import { updateDiscoveryAiStatus } from "@/agents/discovery/discovery-store";
-import type { ProjectSourceKind } from "@prisma/client";
+import type { Prisma, ProjectSourceKind } from "@prisma/client";
 import { parseRepoUrl } from "@/lib/repo-platform";
 import { prisma } from "@/lib/prisma";
 import { allocateUniqueProjectSlug } from "@/lib/project-allocate-slug";
@@ -30,6 +30,69 @@ type ParsedLink = {
   websiteUrl: string | null;
   primaryRepo: { kind: ProjectSourceKind; url: string; label?: string | null } | null;
 };
+
+type ArticleSourceInput = {
+  title: string;
+  content: string;
+  summary: string | null;
+  url: string;
+};
+
+function stringMeta(meta: Record<string, unknown> | undefined, key: string): string {
+  const value = meta?.[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function articleSourceFromItem(item: DiscoveryItem): ArticleSourceInput | null {
+  const content = stringMeta(item.meta, "articleBody");
+  if (!content) {
+    return null;
+  }
+  const title =
+    stringMeta(item.meta, "articleTitle") ||
+    stringMeta(item.meta, "sourceName") ||
+    "公众号文章";
+  const summary = stringMeta(item.meta, "sourceName") || null;
+  return {
+    title,
+    content,
+    summary,
+    url: item.url,
+  };
+}
+
+async function ensureArticleProjectSource(
+  tx: Prisma.TransactionClient,
+  projectId: string,
+  article: ArticleSourceInput | null,
+): Promise<void> {
+  if (!article) {
+    return;
+  }
+  const exists = await tx.projectSource.findFirst({
+    where: {
+      projectId,
+      kind: "WECHAT_ARTICLE",
+      title: article.title,
+    },
+    select: { id: true },
+  });
+  if (exists) {
+    return;
+  }
+  await tx.projectSource.create({
+    data: {
+      projectId,
+      kind: "WECHAT_ARTICLE",
+      url: article.url,
+      label: "公众号文章",
+      title: article.title,
+      content: article.content,
+      summary: article.summary,
+      isPrimary: false,
+    },
+  });
+}
 
 function parseItemLink(item: DiscoveryItem): ParsedLink {
   const raw = item.url.trim();
@@ -169,6 +232,7 @@ export async function importJsonDiscoveryItem(
   }
 
   const link = parseItemLink(item);
+  const articleSource = articleSourceFromItem(item);
 
   if (item.status === "imported" && item.projectSlug?.trim()) {
     const exists = await prisma.project.findFirst({
@@ -189,6 +253,9 @@ export async function importJsonDiscoveryItem(
 
   const existing = await findExistingProject(item, link);
   if (existing) {
+    await prisma.$transaction(async (tx) => {
+      await ensureArticleProjectSource(tx, existing.id, articleSource);
+    });
     return {
       slug: existing.slug,
       projectId: existing.id,
@@ -203,7 +270,15 @@ export async function importJsonDiscoveryItem(
 
   const slug = await allocateUniqueProjectSlug(name);
 
-  const sourceCreates: { kind: ProjectSourceKind; url: string; isPrimary: boolean; label?: string | null }[] = [];
+  const sourceCreates: {
+    kind: ProjectSourceKind;
+    url: string;
+    isPrimary: boolean;
+    label?: string | null;
+    title?: string | null;
+    content?: string | null;
+    summary?: string | null;
+  }[] = [];
   if (link.githubUrl) {
     sourceCreates.push({
       kind: inferRepoSourceKind(link.githubUrl),
@@ -231,6 +306,17 @@ export async function importJsonDiscoveryItem(
       kind: "WEBSITE",
       url: link.websiteUrl,
       isPrimary: !link.githubUrl && link.primaryRepo?.kind !== "GITEE",
+    });
+  }
+  if (articleSource) {
+    sourceCreates.push({
+      kind: "WECHAT_ARTICLE",
+      url: articleSource.url,
+      label: "公众号文章",
+      title: articleSource.title,
+      content: articleSource.content,
+      summary: articleSource.summary,
+      isPrimary: false,
     });
   }
 

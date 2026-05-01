@@ -86,6 +86,15 @@ function isPrimaryCodeOrWebsiteSource(item: ProjectSourceDisplayItem): boolean {
   return item.kind === "OTHER" && item.categoryLabel.toLowerCase() === "gitcc";
 }
 
+function isArticleUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === "mp.weixin.qq.com" || host.endsWith(".mp.weixin.qq.com");
+  } catch {
+    return false;
+  }
+}
+
 type Props = {
   data: ProjectPageView;
   socials: ProjectPageView["socials"];
@@ -117,6 +126,9 @@ export function ProjectDetailInfoSections({
     return !key || !topLinkKeys.has(key);
   });
   const visibleSourceItems = sourceItems.filter((item) => {
+    if (item.kind === "WECHAT_ARTICLE") {
+      return true;
+    }
     const key = normalizedUrlKey(item.url);
     return !key || !topLinkKeys.has(key);
   });
@@ -344,14 +356,14 @@ export function ProjectDetailInfoSections({
           </>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2">
-            {visibleSourceItems.map((s) => (
+            {visibleSourceItems.map((s) => {
+              const article = s.kind === "WECHAT_ARTICLE";
+              const articleHref = article && isArticleUrl(s.url) ? s.url : null;
+              return (
               <li key={s.id ? `${s.id}` : `${s.kind}-${s.url}`}>
-                <a
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <div
                   data-testid="project-source-link"
-                  className="muhub-card muhub-card--interactive flex h-full flex-col p-4"
+                  className="muhub-card flex h-full flex-col p-4"
                 >
                   <div className="flex items-start gap-3">
                     <span
@@ -372,12 +384,48 @@ export function ProjectDetailInfoSections({
                       {s.hint ? (
                         <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">{s.hint}</p>
                       ) : null}
-                      <p className="mt-2 break-all text-xs text-blue-600 dark:text-blue-400">{s.url}</p>
+                      {article ? (
+                        <>
+                          {s.summary ? (
+                            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{s.summary}</p>
+                          ) : null}
+                          {articleHref ? (
+                            <a
+                              href={articleHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-flex text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                            >
+                              查看原文
+                            </a>
+                          ) : null}
+                          {s.content ? (
+                            <details className="mt-3">
+                              <summary className="cursor-pointer text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                                展开正文
+                              </summary>
+                              <p className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap text-xs leading-5 text-zinc-600 dark:text-zinc-300">
+                                {s.content}
+                              </p>
+                            </details>
+                          ) : null}
+                        </>
+                      ) : (
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 block break-all text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                        >
+                          {s.url}
+                        </a>
+                      )}
                     </div>
                   </div>
-                </a>
+                </div>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </section>

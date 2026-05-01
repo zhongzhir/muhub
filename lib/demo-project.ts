@@ -30,6 +30,9 @@ export type DemoProjectSource = {
   kind: ProjectSourceKind;
   url: string;
   label?: string;
+  title?: string | null;
+  content?: string | null;
+  summary?: string | null;
   isPrimary?: boolean;
 };
 

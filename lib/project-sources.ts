@@ -10,6 +10,9 @@ export type ProjectSourceDisplayItem = {
   categoryLabel: string;
   /** 次要文案：自定义 label 或 Host */
   hint?: string;
+  title?: string | null;
+  content?: string | null;
+  summary?: string | null;
   isPrimary: boolean;
 };
 
@@ -21,6 +24,7 @@ const KIND_ORDER: ProjectSourceKind[] = [
   "BLOG",
   "TWITTER",
   "WECHAT",
+  "WECHAT_ARTICLE",
   "XIAOHONGSHU",
   "DOUYIN",
   "ZHIHU",
@@ -37,6 +41,7 @@ const LABELS: Record<ProjectSourceKind, string> = {
   BLOG: "博客",
   TWITTER: "X / Twitter",
   WECHAT: "公众号",
+  WECHAT_ARTICLE: "公众号文章",
   XIAOHONGSHU: "小红书",
   DOUYIN: "抖音",
   ZHIHU: "知乎",
@@ -81,6 +86,7 @@ export function mapSourceEmoji(kind: ProjectSourceKind): string {
     case "TWITTER":
       return "𝕏";
     case "WECHAT":
+    case "WECHAT_ARTICLE":
       return "💬";
     case "XIAOHONGSHU":
       return "📕";
@@ -131,6 +137,10 @@ export function normalizeSourceType(raw: string): ProjectSourceKind | null {
     case "gongzhonghao":
     case "公众号":
       return "WECHAT";
+    case "wechat_article":
+    case "wechat-article":
+    case "公众号文章":
+      return "WECHAT_ARTICLE";
     case "xiaohongshu":
     case "xhs":
     case "小红书":
@@ -169,6 +179,9 @@ export type ProjectSourceRowInput = {
   kind: ProjectSourceKind;
   url: string;
   label: string | null;
+  title?: string | null;
+  content?: string | null;
+  summary?: string | null;
   isPrimary: boolean;
 };
 
@@ -190,6 +203,9 @@ type SourceAddInput = {
   kind: ProjectSourceKind;
   url: string;
   label?: string | null;
+  title?: string | null;
+  content?: string | null;
+  summary?: string | null;
   isPrimary: boolean;
 };
 
@@ -216,8 +232,13 @@ export function getProjectSources(input: {
       url: item.url,
       isPrimary: item.isPrimary,
       categoryLabel:
-        item.kind === "OTHER" && item.label?.trim() ? item.label.trim() : mapSourceLabel(item.kind),
-      hint: item.label?.trim() || hostHint(item.url),
+        (item.kind === "OTHER" || item.kind === "WECHAT_ARTICLE") && item.label?.trim()
+          ? item.label.trim()
+          : mapSourceLabel(item.kind),
+      hint: item.title?.trim() || item.label?.trim() || hostHint(item.url),
+      title: item.title?.trim() || null,
+      content: item.content?.trim() || null,
+      summary: item.summary?.trim() || null,
     });
   };
 
@@ -227,6 +248,9 @@ export function getProjectSources(input: {
       kind: r.kind,
       url: r.url,
       label: r.label,
+      title: r.title,
+      content: r.content,
+      summary: r.summary,
       isPrimary: r.isPrimary,
     });
   }

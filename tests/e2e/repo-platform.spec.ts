@@ -5,6 +5,8 @@ import {
   normalizeGithubRepoUrl,
 } from "@/lib/discovery/normalize-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
+import { computeProjectSourceLevel, type ProjectInsightSourceSnapshot } from "@/lib/project-ai-insight";
+import { getProjectSources } from "@/lib/project-sources";
 import {
   detectProjectSource,
   extractProjectSourceUrlsFromText,
@@ -117,5 +119,67 @@ test.describe("多平台仓库 URL 解析", () => {
       { type: "GITHUB", url: "https://github.com/lucide-icons/lucide" },
       { type: "GITCC", url: "https://www.gitcc.com/tokenfree/gvv-ai-erp" },
     ]);
+  });
+
+  test("公众号文章来源可作为项目信息源展示和 AI 输入依据", () => {
+    const sources = getProjectSources({
+      rows: [
+        {
+          kind: "WECHAT_ARTICLE",
+          url: "https://github.com/lucide-icons/lucide",
+          label: "公众号文章",
+          title: "Lucide 图标库介绍",
+          content: "Lucide 是一个开源图标库，适合开发者在 Web 应用中使用。",
+          summary: "公众号文章正文",
+          isPrimary: false,
+        },
+      ],
+    });
+    expect(sources[0]).toMatchObject({
+      kind: "WECHAT_ARTICLE",
+      categoryLabel: "公众号文章",
+      title: "Lucide 图标库介绍",
+      content: "Lucide 是一个开源图标库，适合开发者在 Web 应用中使用。",
+    });
+
+    const snapshot = {
+      base: {
+        projectId: "p1",
+        name: "Lucide",
+        tagline: null,
+        description: null,
+        website: null,
+        github: null,
+        tags: [],
+        categories: [],
+        recentActivities: [],
+      },
+      github: { facts: {}, readmeSummary: null },
+      website: {
+        facts: {},
+        hasPricing: false,
+        hasDocs: false,
+        hasContact: false,
+        hasDemo: false,
+        hasContent: false,
+        hasKeySections: false,
+      },
+      socials: {
+        accounts: {},
+        exists: { twitter: false, discord: false, telegram: false, linkedin: false },
+      },
+      extractedSignals: { mainSources: ["公众号文章"], missingSources: [] },
+      sourceContents: [
+        {
+          kind: "WECHAT_ARTICLE",
+          label: "公众号文章",
+          title: "Lucide 图标库介绍",
+          url: "https://github.com/lucide-icons/lucide",
+          summary: "公众号文章正文",
+          content: "Lucide 是一个开源图标库，适合开发者在 Web 应用中使用。",
+        },
+      ],
+    } satisfies ProjectInsightSourceSnapshot;
+    expect(computeProjectSourceLevel(snapshot)).toBe("B");
   });
 });

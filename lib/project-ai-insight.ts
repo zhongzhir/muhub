@@ -126,6 +126,14 @@ export type ProjectInsightSourceSnapshot = {
     mainSources: string[];
     missingSources: string[];
   };
+  sourceContents: Array<{
+    kind: string;
+    label: string | null;
+    title: string | null;
+    url: string | null;
+    summary: string | null;
+    content: string | null;
+  }>;
 };
 
 type InsightGenerateResult = {
@@ -284,6 +292,9 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
   const row = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
     include: {
+      sources: {
+        orderBy: [{ kind: "asc" }, { createdAt: "desc" }],
+      },
       socialAccounts: true,
       externalLinks: true,
       updates: {
@@ -330,8 +341,30 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
   const hasDemo = websiteText.includes("demo") || websiteText.includes("演示");
   const hasContent = Boolean((websiteFacts.description ?? "").trim()) || Boolean((websiteFacts.title ?? "").trim());
   const hasKeySections = hasPricing || hasDocs || hasContact || hasDemo;
+  const sourceContents = row.sources
+    .filter((source) => {
+      if (source.kind === "WECHAT_ARTICLE") {
+        return Boolean(source.content?.trim());
+      }
+      return Boolean(source.summary?.trim() || source.title?.trim() || source.url?.trim());
+    })
+    .sort((a, b) => {
+      if (a.kind === "WECHAT_ARTICLE" && b.kind !== "WECHAT_ARTICLE") return -1;
+      if (a.kind !== "WECHAT_ARTICLE" && b.kind === "WECHAT_ARTICLE") return 1;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    })
+    .slice(0, 3)
+    .map((source) => ({
+      kind: source.kind,
+      label: source.label ?? null,
+      title: source.title ?? null,
+      url: source.url || null,
+      summary: source.summary ?? null,
+      content: source.content ? limitText(source.content, 5000) : null,
+    }));
 
   const mainSources: string[] = [];
+  if (sourceContents.some((source) => source.kind === "WECHAT_ARTICLE")) mainSources.push("公众号文章");
   if (row.githubUrl) mainSources.push("GitHub");
   if (row.websiteUrl) mainSources.push("官网");
   if (row.description?.trim() || row.tagline?.trim()) mainSources.push("项目描述");
@@ -395,6 +428,7 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
       mainSources,
       missingSources,
     },
+    sourceContents,
   };
 }
 
@@ -404,8 +438,8 @@ export function computeProjectCompleteness(snapshot: ProjectInsightSourceSnapsho
     { name: "GitHub", ok: Boolean(snapshot.base.github), weight: 9 },
     { name: "一句话介绍", ok: Boolean(snapshot.base.tagline?.trim()), weight: 9 },
     { name: "详细介绍", ok: Boolean(snapshot.base.description?.trim()), weight: 10 },
-    { name: "使用场景说明", ok: Boolean(snapshot.base.description?.trim()), weight: 9 },
-    { name: "目标用户说明", ok: Boolean(snapshot.base.description?.trim()), weight: 9 },
+    { name: "使用场景说明", ok: Boolean(snapshot.base.description?.trim() || snapshot.sourceContents.length), weight: 9 },
+    { name: "目标用户说明", ok: Boolean(snapshot.base.description?.trim() || snapshot.sourceContents.length), weight: 9 },
     {
       name: "联系方式",
       ok: Boolean(snapshot.socials.accounts.twitter || snapshot.socials.accounts.linkedin || snapshot.socials.accounts.telegram || snapshot.socials.accounts.wechatOfficialAccount),
@@ -456,7 +490,10 @@ export function computeProjectSourceLevel(snapshot: ProjectInsightSourceSnapshot
   const hasWebsite = Boolean(snapshot.base.website);
   const hasSocial = Object.values(snapshot.socials.exists).some(Boolean);
   const hasDescription = Boolean(snapshot.base.tagline?.trim() || snapshot.base.description?.trim());
+  const hasArticle = snapshot.sourceContents.some((source) => source.kind === "WECHAT_ARTICLE" && source.content?.trim());
 
+  if (hasArticle && (hasGithub || hasWebsite)) return hasSocial ? "A" : "B";
+  if (hasArticle) return "B";
   if (hasGithub && hasWebsite && hasSocial) return "A";
   if (hasGithub && hasWebsite) return "B";
   if (hasGithub) return "C";
@@ -553,7 +590,29 @@ export async function generateProjectAIInsight(
     "输出必须是合法 json，不要输出 markdown。",
     "你必须输出 json。",
   ].join("\n");
+  const sourceContext = snapshot.sourceContents
+    .map((source, index) => {
+      const sourceName =
+        source.kind === "WECHAT_ARTICLE"
+          ? "公众号"
+          : source.label?.trim() || source.kind;
+      return [
+        `【来源${index + 1}：${sourceName}】`,
+        source.title ? `标题：${source.title}` : null,
+        source.url ? `链接：${source.url}` : null,
+        source.summary ? `摘要：${source.summary}` : null,
+        source.content ? `正文：${source.content}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
   const prompt = [
+    `【项目名称】\n${snapshot.base.name}`,
+    snapshot.base.tagline ? `【一句话介绍】\n${snapshot.base.tagline}` : null,
+    snapshot.base.description ? `【项目基础描述】\n${limitText(snapshot.base.description, 1600)}` : null,
+    sourceContext || null,
+    "【任务】\n请结构化分析该项目，重点识别功能、目标用户、使用场景、亮点、价值信号和信息不足点。",
     "请基于以下项目公开信息，输出 json，字段结构如下：",
     JSON.stringify(
       {
@@ -584,7 +643,7 @@ export async function generateProjectAIInsight(
     ),
     "注意：completeness 的 score/existing/missing 必须与输入一致，不要改写。",
     `输入快照：${JSON.stringify(snapshot)}`,
-  ].join("\n\n");
+  ].filter(Boolean).join("\n\n");
 
   let lastErr = "";
   let emptyContentAttempts = 0;

@@ -58,6 +58,9 @@ export default async function ShareProjectPage({ params }: PageProps) {
       kind: s.kind,
       url: s.url,
       label: s.label ?? null,
+      title: s.title ?? null,
+      content: s.content ?? null,
+      summary: s.summary ?? null,
       isPrimary: Boolean(s.isPrimary),
     })),
   });

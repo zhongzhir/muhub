@@ -224,6 +224,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       kind: s.kind,
       url: s.url,
       label: s.label ?? null,
+      title: s.title ?? null,
+      content: s.content ?? null,
+      summary: s.summary ?? null,
       isPrimary: Boolean(s.isPrimary),
     })),
   });
