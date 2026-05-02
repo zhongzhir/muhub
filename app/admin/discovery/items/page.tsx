@@ -72,6 +72,12 @@ export default async function AdminDiscoveryJsonQueuePage() {
           <div className="space-y-1">
             <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">运营工具</p>
             <div className="flex flex-wrap items-start gap-2">
+              <Link
+                href="/admin/discovery/mobile"
+                className="rounded border border-zinc-300 bg-white px-2.5 py-1 text-xs text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+              >
+                手机采集箱
+              </Link>
               <ManualAddProjectModal />
               <BulkExtractProjectModal />
               <DiscoveryRunActions />

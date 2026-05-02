@@ -41,6 +41,15 @@ function readMetaNumber(meta: Record<string, unknown> | undefined, key: string):
   return null;
 }
 
+function isHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function statusBadgeClass(status: DiscoveryItem["status"]) {
   switch (status) {
     case "new":
@@ -249,14 +258,18 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 />
               </td>
               <td className="px-4 py-3 font-medium">
-                <a
-                  href={row.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                >
-                  {row.title}
-                </a>
+                {isHttpUrl(row.url) ? (
+                  <a
+                    href={row.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                  >
+                    {row.title}
+                  </a>
+                ) : (
+                  <span>{row.title}</span>
+                )}
                 {row.description ? (
                   <p className="mt-1 max-w-md text-xs font-normal text-zinc-500 dark:text-zinc-400">
                     {row.description}

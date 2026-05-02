@@ -155,6 +155,12 @@ export default async function AdminDiscoveryListPage({
             JSON 发现队列
           </Link>
           <Link
+            href="/admin/discovery/mobile"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+          >
+            手机采集箱
+          </Link>
+          <Link
             href="/admin/discovery/sources"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >
