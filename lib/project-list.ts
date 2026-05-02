@@ -360,7 +360,12 @@ export async function fetchPlazaSpotlights(): Promise<PlazaSpotlights | null> {
       prisma.project.findMany({
         where: {
           ...PROJECT_PLAZA_FILTER,
-          OR: [{ primaryCategory: "ai-agents" }, { primaryCategory: "AI Agent" }, { tags: { has: "Agent" } }],
+          OR: [
+            { primaryCategory: "ai_agent" },
+            { primaryCategory: "ai-agents" },
+            { primaryCategory: "AI Agent" },
+            { tags: { has: "Agent" } },
+          ],
         },
         select: plazaSelect,
         orderBy: { updatedAt: "desc" },

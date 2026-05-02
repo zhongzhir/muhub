@@ -1,27 +1,60 @@
 export const PROJECT_CATEGORIES = [
-  "ai-agents",
-  "developer-tools",
-  "open-source",
+  "ai_agent",
+  "developer_tool",
+  "open_source",
   "research",
-  "infra",
-  "datasets",
-  "design",
+  "infrastructure",
+  "data_model",
+  "design_creative",
   "productivity",
+  "content_media",
+  "culture_art",
+  "education_learning",
+  "consumer_brand",
+  "ecommerce_local",
+  "travel_event",
+  "community",
+  "enterprise_service",
+  "finance_investment",
+  "health_medical",
+  "hardware_robotics",
+  "game_entertainment",
   "other",
 ] as const;
 
 export type ProjectCategory = (typeof PROJECT_CATEGORIES)[number];
 
 const PROJECT_CATEGORY_LABELS: Record<ProjectCategory, string> = {
-  "ai-agents": "AI 智能体",
-  "developer-tools": "开发者工具",
-  "open-source": "开源项目",
-  research: "研究项目",
-  infra: "基础设施",
-  datasets: "数据集",
-  design: "设计工具",
-  productivity: "效率工具",
-  other: "其他",
+  ai_agent: "AI \u4e0e\u667a\u80fd\u4f53",
+  developer_tool: "\u5f00\u53d1\u8005\u5de5\u5177",
+  open_source: "\u5f00\u6e90\u9879\u76ee",
+  research: "\u7814\u7a76\u9879\u76ee",
+  infrastructure: "\u57fa\u7840\u8bbe\u65bd",
+  data_model: "\u6570\u636e\u4e0e\u6a21\u578b",
+  design_creative: "\u8bbe\u8ba1\u4e0e\u521b\u610f\u5de5\u5177",
+  productivity: "\u6548\u7387\u4e0e\u529e\u516c\u5de5\u5177",
+  content_media: "\u5185\u5bb9\u4e0e\u5a92\u4f53",
+  culture_art: "\u6587\u5316\u4e0e\u827a\u672f",
+  education_learning: "\u6559\u80b2\u4e0e\u5b66\u4e60",
+  consumer_brand: "\u6d88\u8d39\u54c1\u724c",
+  ecommerce_local: "\u7535\u5546\u4e0e\u672c\u5730\u751f\u6d3b",
+  travel_event: "\u6587\u65c5\u4e0e\u6d3b\u52a8",
+  community: "\u793e\u533a\u4e0e\u793e\u7fa4",
+  enterprise_service: "\u4f01\u4e1a\u670d\u52a1",
+  finance_investment: "\u91d1\u878d\u4e0e\u6295\u8d44",
+  health_medical: "\u5065\u5eb7\u4e0e\u533b\u7597",
+  hardware_robotics: "\u786c\u4ef6\u4e0e\u673a\u5668\u4eba",
+  game_entertainment: "\u6e38\u620f\u4e0e\u5a31\u4e50",
+  other: "\u5176\u4ed6",
+};
+
+const LEGACY_CATEGORY_LABELS: Record<string, string> = {
+  "ai-agents": "AI \u4e0e\u667a\u80fd\u4f53",
+  "developer-tools": "\u5f00\u53d1\u8005\u5de5\u5177",
+  "open-source": "\u5f00\u6e90\u9879\u76ee",
+  infra: "\u57fa\u7840\u8bbe\u65bd",
+  datasets: "\u6570\u636e\u4e0e\u6a21\u578b",
+  design: "\u8bbe\u8ba1\u4e0e\u521b\u610f\u5de5\u5177",
 };
 
 export const PROJECT_CATEGORY_OPTIONS: Array<{ value: ProjectCategory; label: string }> =
@@ -37,30 +70,82 @@ export function isProjectCategory(value: string | null | undefined): value is Pr
   return (PROJECT_CATEGORIES as readonly string[]).includes(value);
 }
 
-/**
- * Discovery / 关键词分类写入的「主类型」可读串（见 keyword-rules PRIMARY_TYPE_ORDER），
- * 与前台/运营下拉使用的 slug（PROJECT_CATEGORIES）不一致时需映射。
- */
 const LEGACY_CLASSIFICATION_PRIMARY_TO_SLUG: Record<string, ProjectCategory> = {
-  "ai agent": "ai-agents",
-  "ai agents": "ai-agents",
+  "ai-agents": "ai_agent",
+  "ai agent": "ai_agent",
+  "ai agents": "ai_agent",
+  "ai \u667a\u80fd\u4f53": "ai_agent",
+  "ai \u4e0e\u667a\u80fd\u4f53": "ai_agent",
+  agent: "ai_agent",
+  agents: "ai_agent",
+  llm: "ai_agent",
+  "ai / llm": "ai_agent",
+  "ai/llm": "ai_agent",
+  "\u5927\u6a21\u578b": "ai_agent",
+
+  "developer-tools": "developer_tool",
+  "developer tool": "developer_tool",
+  "developer tools": "developer_tool",
+  devtool: "developer_tool",
+  "dev tool": "developer_tool",
+  "\u5f00\u53d1\u8005\u5de5\u5177": "developer_tool",
+
+  "open-source": "open_source",
+  "open source": "open_source",
+  opensource: "open_source",
+  oss: "open_source",
+  "\u5f00\u6e90\u9879\u76ee": "open_source",
+  "\u5f00\u6e90": "open_source",
+
+  infra: "infrastructure",
+  infrastructure: "infrastructure",
+  "model / infra": "infrastructure",
+  "model/infra": "infrastructure",
+  "\u57fa\u7840\u8bbe\u65bd": "infrastructure",
+
+  datasets: "data_model",
+  dataset: "data_model",
+  "data model": "data_model",
+  "data/model": "data_model",
+  "rag tool": "data_model",
+  "\u6570\u636e\u96c6": "data_model",
+  "\u6570\u636e\u4e0e\u6a21\u578b": "data_model",
+
+  design: "design_creative",
+  "design tool": "design_creative",
+  "\u8bbe\u8ba1\u5de5\u5177": "design_creative",
+  "\u8bbe\u8ba1\u4e0e\u521b\u610f\u5de5\u5177": "design_creative",
+
   "workflow tool": "productivity",
-  "rag tool": "datasets",
-  devtool: "developer-tools",
-  "developer tools": "developer-tools",
-  "model / infra": "infra",
-  "model/infra": "infra",
-  "media ai": "other",
-  "general ai tool": "other",
+  productivity: "productivity",
+  "\u6548\u7387\u5de5\u5177": "productivity",
+  "\u6548\u7387\u4e0e\u529e\u516c\u5de5\u5177": "productivity",
+
+  content: "content_media",
+  media: "content_media",
+  "content media": "content_media",
+  "\u5185\u5bb9": "content_media",
+  "\u5185\u5bb9\u4e0e\u5a92\u4f53": "content_media",
+
+  education: "education_learning",
+  learning: "education_learning",
+  "\u6559\u80b2": "education_learning",
+  "\u5b66\u4e60": "education_learning",
+  "\u6559\u80b2\u4e0e\u5b66\u4e60": "education_learning",
+
+  enterprise: "enterprise_service",
+  "enterprise service": "enterprise_service",
+  "\u4f01\u4e1a\u670d\u52a1": "enterprise_service",
+
+  "media ai": "content_media",
+  "general ai tool": "ai_agent",
+  other: "other",
+  "\u5176\u4ed6": "other",
 };
 
-/**
- * 将数据库或表单中的分类字符串归一为 `PROJECT_CATEGORIES` 中的 slug。
- * 空串、仅空白、「未分类」占位视为未选择（null）。
- */
 export function normalizePrimaryCategoryToSlug(raw: string | null | undefined): ProjectCategory | null {
   const trimmed = raw?.trim();
-  if (!trimmed) {
+  if (!trimmed || trimmed === "uncategorized" || trimmed === "\u672a\u5206\u7c7b") {
     return null;
   }
   if (isProjectCategory(trimmed)) {
@@ -79,7 +164,7 @@ export function normalizePrimaryCategoryToSlug(raw: string | null | undefined): 
 
 export function getProjectCategoryLabel(
   category: string | null | undefined,
-  fallback = "其他",
+  fallback = "\u5176\u4ed6",
 ): string {
   if (!category?.trim()) {
     return fallback;
@@ -87,6 +172,14 @@ export function getProjectCategoryLabel(
   const key = category.trim();
   if (isProjectCategory(key)) {
     return PROJECT_CATEGORY_LABELS[key];
+  }
+  const legacy = LEGACY_CATEGORY_LABELS[key];
+  if (legacy) {
+    return legacy;
+  }
+  const normalized = normalizePrimaryCategoryToSlug(key);
+  if (normalized) {
+    return PROJECT_CATEGORY_LABELS[normalized];
   }
   return key;
 }

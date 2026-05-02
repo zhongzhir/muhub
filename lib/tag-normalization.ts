@@ -2,76 +2,150 @@ import { normalizePrimaryCategoryToSlug, PROJECT_CATEGORY_OPTIONS } from "@/lib/
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 
 const TAG_DICT: Record<string, string> = {
-  automation: "自动化",
-  workflow: "工作流",
-  orchestration: "编排",
-  agent: "智能体",
-  agents: "智能体",
+  automation: "\u81ea\u52a8\u5316",
+  workflow: "\u5de5\u4f5c\u6d41",
+  orchestration: "\u7f16\u6392",
+  agent: "\u667a\u80fd\u4f53",
+  agents: "\u667a\u80fd\u4f53",
   "ai agent": "AI Agent",
   "ai agents": "AI Agent",
-  "open source": "开源",
-  opensource: "开源",
-  "developer tool": "开发工具",
-  "developer tools": "开发工具",
-  productivity: "效率工具",
-  enterprise: "企业服务",
-  "business automation": "企业自动化",
-  "knowledge base": "知识库",
-  "customer support": "客服",
-  marketing: "营销",
-  content: "内容",
-  analytics: "数据分析",
+  "open source": "\u5f00\u6e90",
+  opensource: "\u5f00\u6e90",
+  "developer tool": "\u5f00\u53d1\u8005\u5de5\u5177",
+  "developer tools": "\u5f00\u53d1\u8005\u5de5\u5177",
+  productivity: "\u6548\u7387\u5de5\u5177",
+  enterprise: "\u4f01\u4e1a\u670d\u52a1",
+  "business automation": "\u4f01\u4e1a\u81ea\u52a8\u5316",
+  "knowledge base": "\u77e5\u8bc6\u5e93",
+  "customer support": "\u5ba2\u670d",
+  marketing: "\u8425\u9500",
+  content: "\u5185\u5bb9",
+  analytics: "\u6570\u636e\u5206\u6790",
 };
 
 const CATEGORY_DICT: Record<string, string> = {
-  "ai agents": "ai-agents",
-  "ai agent": "ai-agents",
-  agent: "ai-agents",
-  agents: "ai-agents",
-  "developer tools": "developer-tools",
-  "developer tool": "developer-tools",
-  "open source": "open-source",
-  opensource: "open-source",
-  productivity: "productivity",
+  "ai agents": "ai_agent",
+  "ai agent": "ai_agent",
+  "ai \u667a\u80fd\u4f53": "ai_agent",
+  "ai \u4e0e\u667a\u80fd\u4f53": "ai_agent",
+  agent: "ai_agent",
+  agents: "ai_agent",
+  llm: "ai_agent",
+  "ai / llm": "ai_agent",
+  "ai/llm": "ai_agent",
+  "\u5927\u6a21\u578b": "ai_agent",
+
+  "developer tools": "developer_tool",
+  "developer tool": "developer_tool",
+  "dev tool": "developer_tool",
+  devtool: "developer_tool",
+  "\u5f00\u53d1\u8005\u5de5\u5177": "developer_tool",
+
+  "open source": "open_source",
+  opensource: "open_source",
+  oss: "open_source",
+  "\u5f00\u6e90": "open_source",
+  "\u5f00\u6e90\u9879\u76ee": "open_source",
+
   research: "research",
-  infra: "infra",
-  datasets: "datasets",
-  design: "design",
-  other: "other",
-  "开发工具": "developer-tools",
-  "开源": "open-source",
-  "智能体": "ai-agents",
-  "效率工具": "productivity",
-  llm: "ai-agents",
-  "大模型": "ai-agents",
-  "llm基础": "ai-agents",
-  "ai / llm": "ai-agents",
-  "ai/llm": "ai-agents",
+  "\u7814\u7a76": "research",
+  "\u7814\u7a76\u9879\u76ee": "research",
+
+  infra: "infrastructure",
+  infrastructure: "infrastructure",
+  "\u57fa\u7840\u8bbe\u65bd": "infrastructure",
+
+  datasets: "data_model",
+  dataset: "data_model",
+  "data model": "data_model",
+  "\u6570\u636e\u96c6": "data_model",
+  "\u6570\u636e\u4e0e\u6a21\u578b": "data_model",
+
+  design: "design_creative",
+  "design tool": "design_creative",
+  "\u8bbe\u8ba1": "design_creative",
+  "\u8bbe\u8ba1\u5de5\u5177": "design_creative",
+  "\u8bbe\u8ba1\u4e0e\u521b\u610f\u5de5\u5177": "design_creative",
+
+  productivity: "productivity",
   automation: "productivity",
-  "自动化": "productivity",
-  "workflow automation": "productivity",
-  orchestration: "productivity",
-  content: "design",
-  "内容": "design",
-  education: "research",
-  "学习": "research",
-  "教学": "research",
-  books: "research",
-  "书籍": "research",
-  "dev tool": "developer-tools",
+  "\u6548\u7387\u5de5\u5177": "productivity",
+  "\u6548\u7387\u4e0e\u529e\u516c\u5de5\u5177": "productivity",
+  "\u5de5\u4f5c\u6d41": "productivity",
+
+  content: "content_media",
+  media: "content_media",
+  "\u5185\u5bb9": "content_media",
+  "\u5185\u5bb9\u4e0e\u5a92\u4f53": "content_media",
+
+  culture: "culture_art",
+  art: "culture_art",
+  "\u6587\u5316": "culture_art",
+  "\u827a\u672f": "culture_art",
+  "\u6587\u5316\u4e0e\u827a\u672f": "culture_art",
+
+  education: "education_learning",
+  learning: "education_learning",
+  books: "education_learning",
+  "\u6559\u80b2": "education_learning",
+  "\u5b66\u4e60": "education_learning",
+  "\u6559\u5b66": "education_learning",
+  "\u4e66\u7c4d": "education_learning",
+
+  consumer: "consumer_brand",
+  brand: "consumer_brand",
+  "\u6d88\u8d39\u54c1\u724c": "consumer_brand",
+
+  ecommerce: "ecommerce_local",
+  local: "ecommerce_local",
+  "\u7535\u5546": "ecommerce_local",
+  "\u672c\u5730\u751f\u6d3b": "ecommerce_local",
+
+  travel: "travel_event",
+  event: "travel_event",
+  "\u6587\u65c5": "travel_event",
+  "\u6d3b\u52a8": "travel_event",
+
+  community: "community",
+  "\u793e\u533a": "community",
+  "\u793e\u7fa4": "community",
+
+  enterprise: "enterprise_service",
+  "enterprise service": "enterprise_service",
+  "\u4f01\u4e1a\u670d\u52a1": "enterprise_service",
+
+  finance: "finance_investment",
+  investment: "finance_investment",
+  "\u91d1\u878d": "finance_investment",
+  "\u6295\u8d44": "finance_investment",
+
+  health: "health_medical",
+  medical: "health_medical",
+  "\u5065\u5eb7": "health_medical",
+  "\u533b\u7597": "health_medical",
+
+  hardware: "hardware_robotics",
+  robotics: "hardware_robotics",
+  robot: "hardware_robotics",
+  "\u786c\u4ef6": "hardware_robotics",
+  "\u673a\u5668\u4eba": "hardware_robotics",
+
+  game: "game_entertainment",
+  entertainment: "game_entertainment",
+  "\u6e38\u620f": "game_entertainment",
+  "\u5a31\u4e50": "game_entertainment",
+
+  other: "other",
+  "\u5176\u4ed6": "other",
+
+  "ai-agents": "ai_agent",
+  "developer-tools": "developer_tool",
+  "open-source": "open_source",
 };
 
-const CATEGORY_ZH_LABEL: Record<string, string> = {
-  "ai-agents": "AI 智能体",
-  "developer-tools": "开发工具",
-  "open-source": "开源",
-  research: "研究",
-  infra: "基础设施",
-  datasets: "数据集",
-  design: "设计",
-  productivity: "效率工具",
-  other: "其他",
-};
+const CATEGORY_ZH_LABEL: Record<string, string> = Object.fromEntries(
+  PROJECT_CATEGORY_OPTIONS.map((item) => [item.value, item.label]),
+);
 
 function normalizeKey(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -116,5 +190,7 @@ export function normalizeSuggestedCategories(input: {
 
 export function categoryDisplayLabel(value: string | null | undefined): string {
   if (!value) return "-";
-  return CATEGORY_ZH_LABEL[value] ?? value;
+  const slug = normalizePrimaryCategoryToSlug(value);
+  if (slug) return CATEGORY_ZH_LABEL[slug] ?? slug;
+  return value;
 }

@@ -92,9 +92,7 @@ export async function POST(
     : [];
   const incoming = uniqueStrings([primary, secondary, ...optional].filter(Boolean) as string[], 10);
   const merged = mode === "replace" ? incoming : uniqueStrings([...existing, ...incoming], 10);
-  const nextPrimary = mode === "replace"
-    ? (primary || secondary || optional[0] || null)
-    : (row.primaryCategory || primary || secondary || optional[0] || null);
+  const nextPrimary = row.primaryCategory || primary || secondary || optional[0] || null;
 
   await prisma.project.update({
     where: { id: row.id },

@@ -20,7 +20,7 @@ export type AdminClassifySuggestResult = {
 
 const CATEGORY_RULES: Array<{ cat: ProjectCategory; patterns: RegExp[]; weight: number }> = [
   {
-    cat: "ai-agents",
+    cat: "ai_agent",
     weight: 5,
     patterns: [
       /\b(agent|agents|agentic|multi-agent|multiagent|langchain|langgraph|crewai|autogen|swarm)\b/i,
@@ -30,7 +30,7 @@ const CATEGORY_RULES: Array<{ cat: ProjectCategory; patterns: RegExp[]; weight: 
     ],
   },
   {
-    cat: "datasets",
+    cat: "data_model",
     weight: 4,
     patterns: [
       /\b(dataset|datasets|benchmark|benchmarks|corpus|embedding|vector db|vector database|rag\b)\b/i,
@@ -39,7 +39,7 @@ const CATEGORY_RULES: Array<{ cat: ProjectCategory; patterns: RegExp[]; weight: 
     ],
   },
   {
-    cat: "infra",
+    cat: "infrastructure",
     weight: 4,
     patterns: [
       /\b(infra|infrastructure|kubernetes|k8s|docker|deploy|deployment|gpu|inference server|vllm|onnx)\b/i,
@@ -48,7 +48,7 @@ const CATEGORY_RULES: Array<{ cat: ProjectCategory; patterns: RegExp[]; weight: 
     ],
   },
   {
-    cat: "developer-tools",
+    cat: "developer_tool",
     weight: 4,
     patterns: [
       /\b(devtool|dev tool|developer tool|sdk|cli|vscode|jetbrains|linter|formatter|npm package|library)\b/i,
@@ -65,12 +65,12 @@ const CATEGORY_RULES: Array<{ cat: ProjectCategory; patterns: RegExp[]; weight: 
     ],
   },
   {
-    cat: "open-source",
+    cat: "open_source",
     weight: 3,
     patterns: [/\b(open source|opensource|oss|apache-2|mit license|gpl)\b/i, /\b(开源)\b/],
   },
   {
-    cat: "design",
+    cat: "design_creative",
     weight: 3,
     patterns: [/\b(figma|sketch|ui kit|design system|prototype)\b/i, /\b(设计|界面|原型)\b/],
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { categoryDisplayLabel } from "@/lib/tag-normalization";
@@ -122,6 +122,10 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
   const [state, formAction, pending] = useActionState(saveAdminProject, initialState);
   /** 与 `page.tsx` 中 `key={project.dataUpdatedAt}` 配合：保存后 remount，此处无需 effect 同步 props */
   const [categoryValue, setCategoryValue] = useState(initial.category);
+  const [categorySaveStatus, setCategorySaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const categorySaveSeq = useRef(0);
   const [tagsValue, setTagsValue] = useState(initial.tags);
   const [descriptionValue, setDescriptionValue] = useState(initial.description);
   const [referenceSources, setReferenceSources] = useState<ReferenceSourceItem[]>(
@@ -174,6 +178,35 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     initial.officialInfo.fullDescription,
     initial.description,
   );
+
+  const saveCategoryValue = async (nextCategory: string) => {
+    const seq = categorySaveSeq.current + 1;
+    categorySaveSeq.current = seq;
+    setCategoryValue(nextCategory);
+    setCategorySaveStatus("saving");
+    try {
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/category`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: nextCategory }),
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        primaryCategory?: string | null;
+      };
+      if (!res.ok || !json.ok) {
+        throw new Error("save failed");
+      }
+      if (categorySaveSeq.current === seq) {
+        setCategoryValue(json.primaryCategory ?? "");
+        setCategorySaveStatus("saved");
+      }
+    } catch {
+      if (categorySaveSeq.current === seq) {
+        setCategorySaveStatus("error");
+      }
+    }
+  };
 
   useEffect(() => {
     if (!descriptionValue.trim() && aiEnhancedDetail.trim()) {
@@ -427,7 +460,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
               name="category"
               className={inputClass}
               value={categoryValue}
-              onChange={(e) => setCategoryValue(e.target.value)}
+              onChange={(e) => void saveCategoryValue(e.target.value)}
             >
               <option value="">未分类</option>
               {PROJECT_CATEGORY_OPTIONS.map((item) => (
@@ -436,6 +469,15 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
                 </option>
               ))}
             </select>
+            <p className="mt-1 min-h-4 text-xs text-zinc-500 dark:text-zinc-400">
+              {categorySaveStatus === "saving"
+                ? "保存中..."
+                : categorySaveStatus === "saved"
+                  ? "已保存"
+                  : categorySaveStatus === "error"
+                    ? "保存失败"
+                    : ""}
+            </p>
           </div>
           <div>
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tags">
@@ -567,7 +609,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
             <button
               type="button"
               onClick={generateAiInsight}
-              disabled={aiBusy}
+              disabled={aiBusy || categorySaveStatus === "saving"}
               className="muhub-btn-secondary px-3 py-2 text-sm disabled:opacity-60"
             >
               {aiBusy ? "生成中..." : aiInsightStatus === "success" ? "重新生成" : "生成 AI 认知卡"}
