@@ -143,10 +143,10 @@ export default async function AdminDiscoveryListPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/admin/projects"
+            href="/admin/discovery?importStatus=PENDING&sort=firstSeenAt&order=desc"
             className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white dark:border-zinc-200 dark:bg-zinc-100 dark:text-zinc-900"
           >
-            正式项目列表
+            待筛选项目列表
           </Link>
           <Link
             href="/admin/discovery/items"

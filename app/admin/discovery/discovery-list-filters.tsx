@@ -19,7 +19,7 @@ export function DiscoveryListFilters(props: {
   const cur = useMemo(() => new URLSearchParams(paramString), [paramString]);
 
   const reviewStatus = cur.get("reviewStatus") ?? "";
-  const importStatus = cur.get("importStatus") ?? "";
+  const importStatus = cur.get("importStatus") ?? "PENDING";
   const sourceKey = cur.get("sourceKey") ?? "";
   const sourceType = cur.get("sourceType") ?? "";
   const externalType = cur.get("externalType") ?? "";
@@ -41,13 +41,13 @@ export function DiscoveryListFilters(props: {
   return (
     <div className="flex flex-wrap gap-3 text-sm">
       <label className="flex items-center gap-2">
-        <span className="text-zinc-500">审核</span>
+        <span className="text-zinc-500">{"\u5ba1\u6838"}</span>
         <select
           className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-900"
           value={reviewStatus}
           onChange={(e) => navigate({ reviewStatus: e.target.value || undefined })}
         >
-          <option value="">全部</option>
+          <option value="">{"\u5168\u90e8"}</option>
           {REVIEW.map((v) => (
             <option key={v} value={v}>
               {v}
@@ -56,14 +56,15 @@ export function DiscoveryListFilters(props: {
         </select>
       </label>
       <label className="flex items-center gap-2">
-        <span className="text-zinc-500">导入</span>
+        <span className="text-zinc-500">{"\u5bfc\u5165"}</span>
         <select
           className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-900"
           value={importStatus}
           onChange={(e) => navigate({ importStatus: e.target.value || undefined })}
         >
-          <option value="">全部</option>
-          {IMPORT.map((v) => (
+          <option value="PENDING">{"\u5f85\u5bfc\u5165"}</option>
+          <option value="ALL">{"\u5168\u90e8"}</option>
+          {IMPORT.filter((v) => v !== "PENDING").map((v) => (
             <option key={v} value={v}>
               {v}
             </option>
@@ -71,13 +72,13 @@ export function DiscoveryListFilters(props: {
         </select>
       </label>
       <label className="flex items-center gap-2">
-        <span className="text-zinc-500">来源 key</span>
+        <span className="text-zinc-500">{"\u6765\u6e90 key"}</span>
         <select
           className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-900"
           value={sourceKey}
           onChange={(e) => navigate({ sourceKey: e.target.value || undefined })}
         >
-          <option value="">全部</option>
+          <option value="">{"\u5168\u90e8"}</option>
           {sources.map((s) => (
             <option key={s.key} value={s.key}>
               {s.name} ({s.key})
@@ -86,13 +87,13 @@ export function DiscoveryListFilters(props: {
         </select>
       </label>
       <label className="flex items-center gap-2">
-        <span className="text-zinc-500">来源类型</span>
+        <span className="text-zinc-500">{"\u6765\u6e90\u7c7b\u578b"}</span>
         <select
           className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-900"
           value={sourceType}
           onChange={(e) => navigate({ sourceType: e.target.value || undefined })}
         >
-          <option value="">全部</option>
+          <option value="">{"\u5168\u90e8"}</option>
           {DISCOVERY_SOURCE_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
@@ -101,7 +102,7 @@ export function DiscoveryListFilters(props: {
         </select>
       </label>
       <label className="flex items-center gap-2">
-        <span className="text-zinc-500">类型</span>
+        <span className="text-zinc-500">{"\u7c7b\u578b"}</span>
         <input
           className="w-28 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 dark:border-zinc-600 dark:bg-zinc-900"
           placeholder="github / producthunt_product"
@@ -118,39 +119,33 @@ export function DiscoveryListFilters(props: {
           className="rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-600"
           onClick={() => navigate({ externalType: extType.trim() || undefined })}
         >
-          应用
+          {"\u5e94\u7528"}
         </button>
       </label>
       <span className="text-zinc-500">
-        排序：
-        <Link
-          className="ml-2 underline"
-          href={buildSortHref(paramString, "score", "desc")}
-        >
-          分数↓
+        {"\u6392\u5e8f\uff1a"}
+        <Link className="ml-2 underline" href={buildSortHref(paramString, "firstSeenAt", "desc")}>
+          {"\u6700\u65b0\u4f18\u5148"}
         </Link>
         <span className="mx-1 text-zinc-300">|</span>
-        <Link
-          className="underline"
-          href={buildSortHref(paramString, "reviewPriority", "desc")}
-        >
-          审核优先级↓
+        <Link className="underline" href={buildSortHref(paramString, "score", "desc")}>
+          {"\u5206\u6570\u2193"}
+        </Link>
+        <span className="mx-1 text-zinc-300">|</span>
+        <Link className="underline" href={buildSortHref(paramString, "reviewPriority", "desc")}>
+          {"\u5ba1\u6838\u4f18\u5148\u7ea7\u2193"}
         </Link>
         <span className="mx-1 text-zinc-300">|</span>
         <Link className="underline" href={buildSortHref(paramString, "stars", "desc")}>
-          stars↓
+          {"stars\u2193"}
         </Link>
         <span className="mx-1 text-zinc-300">|</span>
         <Link className="underline" href={buildSortHref(paramString, "lastSeenAt", "desc")}>
-          lastSeen↓
+          {"lastSeen\u2193"}
         </Link>
         <span className="mx-1 text-zinc-300">|</span>
         <Link className="underline" href={buildSortHref(paramString, "repoUpdatedAt", "desc")}>
-          repoUpd↓
-        </Link>
-        <span className="mx-1 text-zinc-300">|</span>
-        <Link className="underline" href={buildSortHref(paramString, "firstSeenAt", "desc")}>
-          firstSeen↓
+          {"repoUpd\u2193"}
         </Link>
       </span>
     </div>

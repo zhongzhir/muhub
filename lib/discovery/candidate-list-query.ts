@@ -100,7 +100,7 @@ export function discoveryCandidateWhereFromSearchParams(
     parts.push({ reviewStatus: rs as DiscoveryReviewStatus });
   }
 
-  const im = sp.get("importStatus")?.trim();
+  const im = sp.get("importStatus")?.trim() || "PENDING";
   if (im && DISCOVERY_IMPORT_STATUSES.includes(im as DiscoveryImportStatus)) {
     parts.push({ importStatus: im as DiscoveryImportStatus });
   }
@@ -310,7 +310,7 @@ export function discoveryCandidateOrderByFromParams(
   orderRaw: string | null | undefined,
 ): Prisma.DiscoveryCandidateOrderByWithRelationInput {
   const order = orderRaw === "asc" ? "asc" : "desc";
-  const sort = (sortRaw ?? "score").trim();
+  const sort = (sortRaw ?? "firstSeenAt").trim();
 
   const field: DiscoveryCandidateSortField =
     sort === "reviewPriority" ||
