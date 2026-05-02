@@ -4,6 +4,7 @@ import { allocateUniqueProjectSlug } from "@/lib/project-allocate-slug";
 import { tagsFromJson } from "@/lib/discovery/score-candidate";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
+import { classifyProjectUrl } from "@/lib/project-url-classifier";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import {
   buildAcceptedEnrichmentLinkSpecs,
@@ -135,6 +136,15 @@ export async function approveDiscoveryCandidateImport(
       websiteUrl = new URL(cand.website.trim()).href;
     } catch {
       websiteUrl = null;
+    }
+  }
+  if (!websiteUrl && repoSource?.label === "GitCC") {
+    websiteUrl = repoSource.url;
+  }
+  if (!websiteUrl && cand.externalUrl?.trim()) {
+    const classifiedExternal = classifyProjectUrl(cand.externalUrl);
+    if (classifiedExternal?.role === "platform_project_page") {
+      websiteUrl = classifiedExternal.url;
     }
   }
 
@@ -305,6 +315,7 @@ export async function mergeDiscoveryCandidateToProject(
       discoverySource: true,
       discoverySourceId: true,
       referenceSources: true,
+      websiteUrl: true,
     },
   });
   if (!project) {
@@ -350,6 +361,18 @@ export async function mergeDiscoveryCandidateToProject(
       data.discoverySource = cand.source.type;
       data.discoverySourceId = cand.source.key;
       data.discoveredAt = new Date();
+    }
+
+    if (!project.websiteUrl?.trim()) {
+      const repoSource = cand.repoUrl?.trim() ? parseProjectSourceUrl(cand.repoUrl) : null;
+      if (repoSource?.type === "GITCC") {
+        data.websiteUrl = repoSource.url;
+      } else if (cand.externalUrl?.trim()) {
+        const classifiedExternal = classifyProjectUrl(cand.externalUrl);
+        if (classifiedExternal?.role === "platform_project_page") {
+          data.websiteUrl = classifiedExternal.url;
+        }
+      }
     }
 
     await tx.project.update({

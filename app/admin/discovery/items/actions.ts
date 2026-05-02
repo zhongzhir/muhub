@@ -28,6 +28,7 @@ import {
   extractProjectSourceUrlsFromText,
   parseProjectSourceUrl,
 } from "@/lib/project-source-url";
+import { isSourceArticleUrl } from "@/lib/project-url-classifier";
 
 const REVALIDATE = "/admin/discovery/items";
 const execFileAsync = promisify(execFile);
@@ -152,6 +153,17 @@ export type BulkAddGithubProjectsToQueueResult =
 
 function extractProjectSourceUrlsFromArticleText(articleBody: string): string[] {
   return extractProjectSourceUrlsFromText(articleBody).map((item) => item.source.url);
+}
+
+function firstSourceArticleUrlFromText(text: string): string | null {
+  const matches = text.match(/https?:\/\/[^\s<>"'`，。；：！？、（）【】]+/gi) ?? [];
+  for (const match of matches) {
+    const url = match.replace(/[),.;:!?，。；：！？、）】]+$/u, "");
+    if (isSourceArticleUrl(url)) {
+      return url;
+    }
+  }
+  return null;
 }
 
 function createManualDiscoveryItem(input: {
@@ -580,7 +592,7 @@ export async function parseManualGithubProjectAction(input: {
     const duplicate = await findExistingProjectByPriority({
       githubUrl: null,
       source: { kind: "OTHER", url: source.url, label: "GitCC" },
-      websiteUrl: websiteFromInput || null,
+      websiteUrl: websiteFromInput || source.url,
       title,
       repo: title,
     });
@@ -595,7 +607,7 @@ export async function parseManualGithubProjectAction(input: {
         repo: null,
         title,
         summary: "已识别为 GitCC 来源，可直接加入发现队列或导入为外部项目。",
-        homepage: null,
+        homepage: source.url,
         stargazersCount: 0,
         language: null,
       },
@@ -678,7 +690,7 @@ export async function addManualGithubToQueueAction(input: {
       source.type === "GITHUB"
         ? { kind: "GITHUB", url: githubUrl!, label: "GitHub" }
         : { kind: "OTHER", url: source.url, label: "GitCC" },
-    websiteUrl: input.websiteUrl?.trim() || null,
+    websiteUrl: input.websiteUrl?.trim() || (source.type === "GITCC" ? source.url : null),
     title,
     repo: source.repo ?? title,
   });
@@ -691,7 +703,7 @@ export async function addManualGithubToQueueAction(input: {
       sourceType: source.type,
       sourceUrl: githubUrl ?? source.url,
       githubUrl,
-      websiteUrl: input.websiteUrl,
+      websiteUrl: input.websiteUrl || (source.type === "GITCC" ? source.url : undefined),
       title,
       summary: input.summary,
       note: input.note,
@@ -744,7 +756,7 @@ export async function importManualGithubProjectAction(input: {
       source.type === "GITHUB"
         ? { kind: "GITHUB", url: githubUrl!, label: "GitHub" }
         : { kind: "OTHER", url: source.url, label: "GitCC" },
-    websiteUrl: input.websiteUrl?.trim() || null,
+    websiteUrl: input.websiteUrl?.trim() || (source.type === "GITCC" ? source.url : null),
     title,
     repo: source.repo ?? title,
   });
@@ -762,7 +774,7 @@ export async function importManualGithubProjectAction(input: {
       sourceType: source.type,
       sourceUrl: githubUrl ?? source.url,
       githubUrl,
-      websiteUrl: input.websiteUrl,
+      websiteUrl: input.websiteUrl || (source.type === "GITCC" ? source.url : undefined),
       title,
       summary: input.summary,
       note: input.note,
@@ -815,7 +827,7 @@ export async function extractGithubProjectsFromArticleAction(input: {
       const duplicate = await findExistingProjectByPriority({
         githubUrl: null,
         source: { kind: "OTHER", url: source.url, label: "GitCC" },
-        websiteUrl: null,
+        websiteUrl: source.url,
         title: projectName,
         repo: projectName,
       });
@@ -830,7 +842,7 @@ export async function extractGithubProjectsFromArticleAction(input: {
         summary: "已识别为 GitCC 来源，可加入发现队列或导入为外部项目。",
         stars: 0,
         language: null,
-        websiteUrl: null,
+        websiteUrl: source.url,
         status: duplicate ? "duplicate" : "ready",
         duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
       });
@@ -923,6 +935,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   let failed = 0;
   const sourceName = input.sourceName?.trim() || null;
   const articleTitle = input.articleTitle?.trim() || null;
+  const sourceArticleUrl = firstSourceArticleUrlFromText(body);
 
   for (const sourceUrl of selected) {
     const source = parseProjectSourceUrl(sourceUrl);
@@ -937,7 +950,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
         const existing = await findExistingProjectByPriority({
           githubUrl: null,
           source: { kind: "OTHER", url: source.url, label: "GitCC" },
-          websiteUrl: null,
+          websiteUrl: source.url,
           title: projectName,
           repo: projectName,
         });
@@ -949,6 +962,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
           sourceType: "GITCC",
           sourceUrl: source.url,
           githubUrl: null,
+          websiteUrl: source.url,
           title: projectName,
           summary: "已识别为 GitCC 来源，可导入为外部项目。",
           language: null,
@@ -961,8 +975,15 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
           sourceName,
           articleTitle,
           articleBody: body,
+          sourceArticleUrl,
           extractedFrom: "article_text",
           projectSourceType: "GITCC",
+          primaryProjectUrl: source.url,
+          projectPageUrl: source.url,
+          websiteUrl: source.url,
+          externalLinks: [
+            { platform: "gitcc", label: "GitCC 项目页", url: source.url, primary: true },
+          ],
           sourceUrl: source.url,
         };
         const appended = await appendDiscoveryItem(item);
@@ -1010,8 +1031,10 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
         sourceName,
         articleTitle,
         articleBody: body,
+        sourceArticleUrl,
         extractedFrom: "article_text",
         githubUrl,
+        primaryProjectUrl: githubUrl,
         sourceUrl: githubUrl,
       };
       const appended = await appendDiscoveryItem(item);

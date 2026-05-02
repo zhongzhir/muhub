@@ -10,6 +10,11 @@ import { allocateUniqueProjectSlug } from "@/lib/project-allocate-slug";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { inferRepoSourceKind } from "@/lib/project-sources";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
+import {
+  classifyProjectUrl,
+  isProjectPrimaryUrl,
+  isSourceArticleUrl,
+} from "@/lib/project-url-classifier";
 import { isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { createProjectActivity } from "@/lib/activity/project-activity-service";
@@ -29,6 +34,7 @@ type ParsedLink = {
   githubUrl: string | null;
   websiteUrl: string | null;
   primaryRepo: { kind: ProjectSourceKind; url: string; label?: string | null } | null;
+  externalLinks: Array<{ platform: string; url: string; label: string; isPrimary: boolean }>;
 };
 
 type ArticleSourceInput = {
@@ -43,6 +49,43 @@ function stringMeta(meta: Record<string, unknown> | undefined, key: string): str
   return typeof value === "string" ? value.trim() : "";
 }
 
+function firstHttpUrlFromText(text: string): string | null {
+  const match = text.match(/https?:\/\/[^\s<>"'`，。；：！？、（）【】]+/i);
+  return match?.[0]?.replace(/[),.;:!?，。；：！？、）】]+$/u, "") ?? null;
+}
+
+function sourceArticleUrlFromItem(item: DiscoveryItem): string | null {
+  const candidates = [
+    stringMeta(item.meta, "sourceArticleUrl"),
+    stringMeta(item.meta, "articleUrl"),
+    stringMeta(item.meta, "extractedUrl"),
+    item.url,
+    firstHttpUrlFromText(stringMeta(item.meta, "articleBody")),
+  ];
+  for (const candidate of candidates) {
+    if (candidate && isSourceArticleUrl(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function projectUrlFromItem(item: DiscoveryItem): string {
+  const candidates = [
+    stringMeta(item.meta, "primaryProjectUrl"),
+    stringMeta(item.meta, "projectPageUrl"),
+    stringMeta(item.meta, "websiteUrl"),
+    stringMeta(item.meta, "sourceUrl"),
+    item.url,
+  ];
+  for (const candidate of candidates) {
+    if (candidate && isProjectPrimaryUrl(candidate) && !isSourceArticleUrl(candidate)) {
+      return candidate;
+    }
+  }
+  return item.url.trim();
+}
+
 function articleSourceFromItem(item: DiscoveryItem): ArticleSourceInput | null {
   const content = stringMeta(item.meta, "articleBody");
   if (!content) {
@@ -53,11 +96,15 @@ function articleSourceFromItem(item: DiscoveryItem): ArticleSourceInput | null {
     stringMeta(item.meta, "sourceName") ||
     "公众号文章";
   const summary = stringMeta(item.meta, "sourceName") || null;
+  const sourceArticleUrl = sourceArticleUrlFromItem(item);
+  if (!sourceArticleUrl) {
+    return null;
+  }
   return {
     title,
     content,
     summary,
-    url: item.url,
+    url: sourceArticleUrl,
   };
 }
 
@@ -95,9 +142,12 @@ async function ensureArticleProjectSource(
 }
 
 function parseItemLink(item: DiscoveryItem): ParsedLink {
-  const raw = item.url.trim();
+  const raw = projectUrlFromItem(item);
   if (!raw) {
     throw new Error("条目缺少有效 URL");
+  }
+  if (isSourceArticleUrl(raw)) {
+    throw new Error("条目缺少项目主页或平台项目页链接，不能把来源文章当作项目地址导入。");
   }
   let u: URL;
   try {
@@ -108,6 +158,7 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
   const host = u.hostname.toLowerCase();
   const parsedRepo = parseRepoUrl(raw);
   const parsedSource = parseProjectSourceUrl(raw);
+  const classified = classifyProjectUrl(raw);
 
   if (parsedRepo?.platform === "github" || host === "github.com" || host.endsWith(".github.com")) {
     const githubUrl = normalizeGithubRepoUrl(raw);
@@ -115,6 +166,7 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
       githubUrl,
       websiteUrl: null,
       primaryRepo: { kind: "GITHUB", url: githubUrl },
+      externalLinks: [],
     };
   }
 
@@ -124,14 +176,34 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
       githubUrl: null,
       websiteUrl: null,
       primaryRepo: { kind: "GITEE", url },
+      externalLinks: [],
     };
   }
 
   if (parsedSource?.type === "GITCC") {
     return {
       githubUrl: null,
-      websiteUrl: null,
+      websiteUrl: parsedSource.url,
       primaryRepo: { kind: "OTHER", url: parsedSource.url, label: "GitCC" },
+      externalLinks: [
+        { platform: "gitcc", url: parsedSource.url, label: "GitCC 项目页", isPrimary: true },
+      ],
+    };
+  }
+
+  if (classified?.role === "platform_project_page") {
+    return {
+      githubUrl: null,
+      websiteUrl: classified.url,
+      primaryRepo: { kind: "OTHER", url: classified.url, label: classified.label },
+      externalLinks: [
+        {
+          platform: classified.platform,
+          url: classified.url,
+          label: classified.label,
+          isPrimary: true,
+        },
+      ],
     };
   }
 
@@ -139,7 +211,44 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
     githubUrl: null,
     websiteUrl: u.href,
     primaryRepo: null,
+    externalLinks: [],
   };
+}
+
+async function createExternalLinks(
+  tx: Prisma.TransactionClient,
+  projectId: string,
+  links: Array<{ platform: string; url: string; label: string; isPrimary: boolean }>,
+): Promise<void> {
+  const seen = new Set<string>();
+  for (const link of links) {
+    const url = link.url.trim();
+    if (!url) {
+      continue;
+    }
+    const key = `${link.platform}:${url.toLowerCase()}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    const exists = await tx.projectExternalLink.findFirst({
+      where: { projectId, url },
+      select: { id: true },
+    });
+    if (exists) {
+      continue;
+    }
+    await tx.projectExternalLink.create({
+      data: {
+        projectId,
+        platform: link.platform,
+        url,
+        label: link.label,
+        isPrimary: link.isPrimary,
+        source: "discovery-json-import",
+      },
+    });
+  }
 }
 
 async function findExistingProject(
@@ -254,7 +363,17 @@ export async function importJsonDiscoveryItem(
   const existing = await findExistingProject(item, link);
   if (existing) {
     await prisma.$transaction(async (tx) => {
+      if (link.websiteUrl) {
+        await tx.project.updateMany({
+          where: {
+            id: existing.id,
+            OR: [{ websiteUrl: null }, { websiteUrl: "" }],
+          },
+          data: { websiteUrl: link.websiteUrl },
+        });
+      }
       await ensureArticleProjectSource(tx, existing.id, articleSource);
+      await createExternalLinks(tx, existing.id, link.externalLinks);
     });
     return {
       slug: existing.slug,
@@ -320,29 +439,33 @@ export async function importJsonDiscoveryItem(
     });
   }
 
-  const project = await prisma.project.create({
-    data: {
-      name,
-      slug,
-      tagline,
-      description,
-      githubUrl: link.githubUrl,
-      websiteUrl: link.websiteUrl,
-      tags: [],
-      sourceType: "discovery-json-queue",
-      status: "DRAFT",
-      isPublic: false,
-      visibilityStatus: "DRAFT",
-      discoverySource: item.sourceType,
-      discoverySourceId: item.id,
-      discoveredAt: new Date(item.createdAt),
-      sources: sourceCreates.length
-        ? {
-            create: sourceCreates,
-          }
-        : undefined,
-    },
-    select: { id: true, slug: true },
+  const project = await prisma.$transaction(async (tx) => {
+    const created = await tx.project.create({
+      data: {
+        name,
+        slug,
+        tagline,
+        description,
+        githubUrl: link.githubUrl,
+        websiteUrl: link.websiteUrl,
+        tags: [],
+        sourceType: "discovery-json-queue",
+        status: "DRAFT",
+        isPublic: false,
+        visibilityStatus: "DRAFT",
+        discoverySource: item.sourceType,
+        discoverySourceId: item.id,
+        discoveredAt: new Date(item.createdAt),
+        sources: sourceCreates.length
+          ? {
+              create: sourceCreates,
+            }
+          : undefined,
+      },
+      select: { id: true, slug: true },
+    });
+    await createExternalLinks(tx, created.id, link.externalLinks);
+    return created;
   });
 
   await createProjectActivity({
