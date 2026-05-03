@@ -21,6 +21,7 @@ import { runGitHubDiscoveryV3 } from "@/agents/discovery/github/github-discovery
 import { runRssDiscovery } from "@/agents/discovery/rss/rss-discovery";
 import { runGitHubProjectActivity } from "@/agents/activity/github-activity";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
+import { isSourceMaterialDiscoveryItem } from "@/lib/discovery/mobile-capture";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { prisma } from "@/lib/prisma";
 import { slugifyProjectName } from "@/lib/project-slug";
@@ -340,6 +341,12 @@ export async function importDiscoveryItemAction(id: string): Promise<ImportDisco
   const item = await readDiscoveryItemById(id);
   if (!item) {
     return { ok: false, message: "条目不存在或已被删除。" };
+  }
+  if (isSourceMaterialDiscoveryItem(item)) {
+    return {
+      ok: false,
+      message: "该条目是待提取素材，不是项目候选。请先使用“批量提取项目”提取真实项目后再导入。",
+    };
   }
 
   try {

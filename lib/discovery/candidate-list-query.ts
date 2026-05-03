@@ -72,6 +72,16 @@ function nonEmptyStringField(
   };
 }
 
+function sourceMaterialWhere(): Prisma.DiscoveryCandidateWhereInput {
+  return {
+    OR: [
+      { metadataJson: { path: ["meta", "itemKind"], equals: "source_material" } },
+      { metadataJson: { path: ["meta", "needsExtraction"], equals: true } },
+      { metadataJson: { path: ["meta", "captureType"], equals: "mobile" } },
+    ],
+  };
+}
+
 /**
  * 从查询串构造 Prisma where（管理端列表与 GET /api/admin/discovery/candidates 共用）
  */
@@ -79,6 +89,12 @@ export function discoveryCandidateWhereFromSearchParams(
   sp: URLSearchParams,
 ): Prisma.DiscoveryCandidateWhereInput {
   const parts: Prisma.DiscoveryCandidateWhereInput[] = [];
+  const material = sp.get("material")?.trim();
+  if (material === "source_material") {
+    parts.push(sourceMaterialWhere());
+  } else if (material !== "all") {
+    parts.push({ NOT: sourceMaterialWhere() });
+  }
 
   const sourceId = sp.get("sourceId")?.trim();
   if (sourceId) {

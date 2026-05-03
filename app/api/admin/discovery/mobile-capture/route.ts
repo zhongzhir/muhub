@@ -36,6 +36,8 @@ export async function POST(req: Request) {
 
   const result = await createMobileCaptureItem({ title, content, sourceNote });
   revalidatePath("/admin/discovery/items");
+  revalidatePath("/admin/discovery/mobile");
+  revalidatePath("/admin/discovery");
 
   return Response.json({
     ok: true,

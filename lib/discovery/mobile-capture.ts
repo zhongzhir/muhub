@@ -43,6 +43,46 @@ function hostnameFromUrl(url: string | null): string | null {
   }
 }
 
+function sourceMaterialTypeFromUrl(
+  extractedUrl: string | null,
+  isWechatArticle: boolean,
+): "wechat_article_link" | "article_link" | "pasted_text" {
+  if (isWechatArticle) {
+    return "wechat_article_link";
+  }
+  if (extractedUrl) {
+    return "article_link";
+  }
+  return "pasted_text";
+}
+
+function materialTitle(
+  inputTitle: string | undefined,
+  content: string,
+  extractedUrl: string | null,
+  isWechatArticle: boolean,
+): string {
+  const title = inputTitle?.trim();
+  if (title) {
+    return title;
+  }
+  if (isWechatArticle) {
+    return "微信公众号文章链接";
+  }
+  if (extractedUrl) {
+    return "文章链接";
+  }
+  return titleFromContent(content) || "pasted text";
+}
+
+export function isSourceMaterialDiscoveryItem(item: Pick<DiscoveryItem, "meta">): boolean {
+  return (
+    item.meta?.itemKind === "source_material" ||
+    item.meta?.needsExtraction === true ||
+    item.meta?.captureType === "mobile"
+  );
+}
+
 export async function createMobileCaptureItem(
   input: CreateMobileCaptureInput,
 ): Promise<CreateMobileCaptureResult> {
@@ -55,9 +95,10 @@ export async function createMobileCaptureItem(
   const now = new Date().toISOString();
   const extractedUrl = extractFirstUrl(content);
   const host = hostnameFromUrl(extractedUrl);
-  const title = input.title?.trim() || host || titleFromContent(content);
-  const sourceNote = input.sourceNote?.trim() || "";
   const isWechatArticle = Boolean(host?.toLowerCase().includes("mp.weixin.qq.com"));
+  const title = materialTitle(input.title, content, extractedUrl, isWechatArticle);
+  const sourceNote = input.sourceNote?.trim() || "";
+  const sourceMaterialType = sourceMaterialTypeFromUrl(extractedUrl, isWechatArticle);
   const url = extractedUrl || `mobile-capture://${id}`;
 
   const item: DiscoveryItem = {
@@ -73,6 +114,9 @@ export async function createMobileCaptureItem(
       sourceKey: "mobile-capture",
       sourceLabel: "手机采集箱",
       captureType: "mobile",
+      itemKind: "source_material",
+      needsExtraction: true,
+      sourceMaterialType,
       sourceNote: sourceNote || null,
       extractedUrl,
       isWechatArticle,

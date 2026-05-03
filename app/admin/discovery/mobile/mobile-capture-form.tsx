@@ -64,15 +64,20 @@ export function MobileCaptureForm() {
           {feedback.ok ? (
             <div className="space-y-1">
               <p>
-                已保存到采集箱{feedback.duplicate ? "，已有相同链接记录未重复写入" : ""}。
+                已保存到手机采集箱，待提取项目{feedback.duplicate ? "，已有相同链接记录未重复写入" : ""}。
               </p>
               <p className="text-xs">
                 {feedback.extractedUrl ? `URL: ${feedback.extractedUrl}` : "未检测到 URL"}
                 {feedback.isWechatArticle ? " · 微信公众号文章" : ""}
               </p>
-              <Link href="/admin/discovery/items" className="inline-block underline underline-offset-4">
-                去 Discovery Items 查看
-              </Link>
+              <div className="flex flex-wrap gap-3 text-xs">
+                <Link href="/admin/discovery/items" className="inline-block underline underline-offset-4">
+                  去 JSON 队列/批量提取项目
+                </Link>
+                <Link href="/admin/discovery?material=source_material" className="inline-block underline underline-offset-4">
+                  查看待提取素材
+                </Link>
+              </div>
             </div>
           ) : (
             feedback.error

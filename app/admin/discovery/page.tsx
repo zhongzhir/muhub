@@ -161,6 +161,12 @@ export default async function AdminDiscoveryListPage({
             手机采集箱
           </Link>
           <Link
+            href="/admin/discovery?material=source_material&importStatus=PENDING&sort=firstSeenAt&order=desc"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+          >
+            待提取素材
+          </Link>
+          <Link
             href="/admin/discovery/sources"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >
