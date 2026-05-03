@@ -4,6 +4,7 @@ import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-cl
 import { getDeepSeekClient } from "@/lib/deepseek";
 import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
+import { buildProjectEvidenceContext, type ProjectEvidenceContext } from "@/lib/project-evidence-context";
 import { prisma } from "@/lib/prisma";
 
 type ActivityLevel = "high" | "medium" | "low" | "unknown";
@@ -134,6 +135,7 @@ export type ProjectInsightSourceSnapshot = {
     summary: string | null;
     content: string | null;
   }>;
+  evidenceContext: ProjectEvidenceContext | null;
 };
 
 type InsightGenerateResult = {
@@ -289,6 +291,7 @@ async function fetchWebsiteFacts(websiteUrl: string | null) {
 }
 
 export async function buildProjectInsightSourceSnapshot(projectId: string): Promise<ProjectInsightSourceSnapshot | null> {
+  const evidenceContext = await buildProjectEvidenceContext(projectId);
   const row = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
     include: {
@@ -363,8 +366,20 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
       content: source.content ? limitText(source.content, 5000) : null,
     }));
 
+  const evidenceSourceContents = evidenceContext?.sources.map((source) => ({
+    kind: source.kind,
+    label: source.label,
+    title: source.title,
+    url: source.url,
+    summary: source.summary,
+    content: source.content,
+  })) ?? [];
+  const mergedSourceContents = evidenceSourceContents.length ? evidenceSourceContents : sourceContents;
+
   const mainSources: string[] = [];
-  if (sourceContents.some((source) => source.kind === "WECHAT_ARTICLE")) mainSources.push("公众号文章");
+  if (mergedSourceContents.some((source) => source.kind === "WECHAT_ARTICLE")) mainSources.push("公众号文章");
+  if (evidenceContext?.official) mainSources.push("人工/官方信息");
+  if (evidenceContext?.links.length) mainSources.push("项目外部链接");
   if (row.githubUrl) mainSources.push("GitHub");
   if (row.websiteUrl) mainSources.push("官网");
   if (row.description?.trim() || row.tagline?.trim()) mainSources.push("项目描述");
@@ -428,7 +443,8 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
       mainSources,
       missingSources,
     },
-    sourceContents,
+    sourceContents: mergedSourceContents,
+    evidenceContext,
   };
 }
 
@@ -491,11 +507,15 @@ export function computeProjectSourceLevel(snapshot: ProjectInsightSourceSnapshot
   const hasSocial = Object.values(snapshot.socials.exists).some(Boolean);
   const hasDescription = Boolean(snapshot.base.tagline?.trim() || snapshot.base.description?.trim());
   const hasArticle = snapshot.sourceContents.some((source) => source.kind === "WECHAT_ARTICLE" && source.content?.trim());
+  const hasOfficial = Boolean(snapshot.evidenceContext?.official);
+  const hasExternalLinks = Boolean(snapshot.evidenceContext?.links.length);
+  const hasRichSources = snapshot.sourceContents.filter((source) => source.content?.trim() || source.summary?.trim()).length >= 2;
 
-  if (hasArticle && (hasGithub || hasWebsite)) return hasSocial ? "A" : "B";
-  if (hasArticle) return "B";
+  if ((hasArticle || hasOfficial) && (hasGithub || hasWebsite || hasExternalLinks)) return hasSocial || hasRichSources ? "A" : "B";
+  if (hasArticle || hasOfficial || hasRichSources) return "B";
   if (hasGithub && hasWebsite && hasSocial) return "A";
   if (hasGithub && hasWebsite) return "B";
+  if (hasWebsite || hasExternalLinks) return "C";
   if (hasGithub) return "C";
   if (hasDescription) return "D";
   return "E";
@@ -577,6 +597,7 @@ export async function generateProjectAIInsight(
     name: snapshot.base.name,
     websiteUrl: snapshot.base.website ?? "",
     aiCardSummary: "",
+    evidenceContext: snapshot.evidenceContext?.promptText ?? "",
   });
   const systemPrompt = [
     "你是 MUHUB 的项目公开信息整理助手。",
@@ -612,6 +633,7 @@ export async function generateProjectAIInsight(
     snapshot.base.tagline ? `【一句话介绍】\n${snapshot.base.tagline}` : null,
     snapshot.base.description ? `【项目基础描述】\n${limitText(snapshot.base.description, 1600)}` : null,
     sourceContext || null,
+    snapshot.evidenceContext?.promptText ? `【Project Evidence Context V1】\n${snapshot.evidenceContext.promptText}` : null,
     "【任务】\n请结构化分析该项目，重点识别功能、目标用户、使用场景、亮点、价值信号和信息不足点。",
     "请基于以下项目公开信息，输出 json，字段结构如下：",
     JSON.stringify(

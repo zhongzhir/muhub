@@ -16,6 +16,7 @@ export type ClassificationInput = {
   repoUrl: string | null;
   language: string | null;
   enrichmentLinks?: { platform: string; url: string }[];
+  evidenceText?: string | null;
 };
 
 export type ClassificationResult = {
@@ -56,7 +57,8 @@ export function classifyDiscoveryCandidate(input: ClassificationInput): Classifi
       input.enrichmentLinks.map((l) => `${l.platform} ${l.url}`).join(" ").toLowerCase()
     : "";
 
-  const haystack = [titleLower, summaryLower, descLower, urls, linksText].join("\n");
+  const evidenceLower = (input.evidenceText ?? "").toLowerCase();
+  const haystack = [titleLower, summaryLower, descLower, urls, linksText, evidenceLower].join("\n");
 
   const typeWeights: Record<string, number> = {};
   const evidence: string[] = [];
@@ -75,6 +77,8 @@ export function classifyDiscoveryCandidate(input: ClassificationInput): Classifi
         where = "summary";
       } else if (descLower.includes(needle)) {
         where = "description";
+      } else if (evidenceLower.includes(needle)) {
+        where = "multi-source evidence";
       }
       typeWeights[rule.type] = (typeWeights[rule.type] ?? 0) + rule.weight;
       evidence.push(`matched keyword (${where}): ${needle.trim()}`);

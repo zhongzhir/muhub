@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { persistReviewPriorityForCandidateId } from "@/lib/discovery/persist-review-priority";
+import { buildDiscoveryCandidateEvidenceText } from "@/lib/project-evidence-context";
 import { classifyDiscoveryCandidate } from "./classify-candidate";
 
 export type RunClassificationResult = {
@@ -25,8 +26,14 @@ export async function runDiscoveryClassification(
       website: true,
       docsUrl: true,
       repoUrl: true,
+      externalUrl: true,
+      externalType: true,
+      sourceKey: true,
       language: true,
-      enrichmentLinks: { select: { platform: true, url: true } },
+      metadataJson: true,
+      referenceSources: true,
+      rawPayloadJson: true,
+      enrichmentLinks: { select: { platform: true, url: true, evidenceText: true } },
     },
   });
   if (!row) {
@@ -39,6 +46,22 @@ export async function runDiscoveryClassification(
   logs.push(`[job] ${job.id} started`);
 
   try {
+    const evidenceText = buildDiscoveryCandidateEvidenceText({
+      title: row.title,
+      summary: row.summary,
+      descriptionRaw: row.descriptionRaw,
+      website: row.website,
+      docsUrl: row.docsUrl,
+      repoUrl: row.repoUrl,
+      externalUrl: row.externalUrl,
+      externalType: row.externalType,
+      sourceKey: row.sourceKey,
+      metadataJson: row.metadataJson,
+      referenceSources: row.referenceSources,
+      rawPayloadJson: row.rawPayloadJson,
+      enrichmentLinks: row.enrichmentLinks,
+    });
+
     const result = classifyDiscoveryCandidate({
       title: row.title,
       summary: row.summary,
@@ -49,6 +72,7 @@ export async function runDiscoveryClassification(
       repoUrl: row.repoUrl,
       language: row.language,
       enrichmentLinks: row.enrichmentLinks,
+      evidenceText,
     });
 
     await prisma.discoveryCandidate.update({

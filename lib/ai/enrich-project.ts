@@ -1,6 +1,7 @@
 import { generateProjectDescription, generateProjectTags, isAiConfigured } from "@/lib/ai/project-ai";
 import { updateDiscoveryAiStatus } from "@/agents/discovery/discovery-store";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
+import { buildProjectEvidenceContext } from "@/lib/project-evidence-context";
 import { prisma } from "@/lib/prisma";
 
 type AiEnrichmentStatus = "scheduled" | "done" | "failed";
@@ -107,31 +108,42 @@ export async function enrichProjectWithAi(slug: string): Promise<void> {
     return;
   }
 
+  const needSummary =
+    eligibleSourceForDescription(project.sourceType) &&
+    (!project.tagline || !project.tagline.trim());
+
   const needDesc =
     eligibleSourceForDescription(project.sourceType) &&
     (!project.description || !project.description.trim());
 
   const needTags =
     eligibleSourceForTags(project.sourceType) &&
-    project.githubUrl?.trim() &&
     (!project.tags || project.tags.length === 0);
 
-  if (!needDesc && !needTags) {
+  if (!needSummary && !needDesc && !needTags) {
     await updateProjectAiStatus(project.id, "done", null);
     await updateDiscoveryStatusIfNeeded(project, "done");
     return;
   }
 
-  const patch: { description?: string; tags?: string[] } = {};
+  const patch: { tagline?: string; description?: string; tags?: string[] } = {};
+  const evidenceContext = await buildProjectEvidenceContext(project.id);
 
-  if (needDesc) {
+  if (needSummary || needDesc) {
     const desc = await generateProjectDescription({
       name: project.name,
       tagline: project.tagline,
       githubUrl: project.githubUrl,
+      evidenceContext: evidenceContext?.promptText ?? null,
     });
     if (desc?.trim()) {
-      patch.description = desc.trim();
+      const normalized = desc.trim();
+      if (needSummary) {
+        patch.tagline = normalized.split(/\r?\n/)[0]?.trim().slice(0, 180) || normalized.slice(0, 180);
+      }
+      if (needDesc) {
+        patch.description = normalized;
+      }
     }
   }
 
@@ -140,6 +152,7 @@ export async function enrichProjectWithAi(slug: string): Promise<void> {
       name: project.name,
       tagline: project.tagline,
       githubUrl: project.githubUrl,
+      evidenceContext: evidenceContext?.promptText ?? null,
     });
     if (tags && tags.length > 0) {
       patch.tags = tags;

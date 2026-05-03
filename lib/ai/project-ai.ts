@@ -74,6 +74,7 @@ export type ProjectDescriptionInput = {
   name: string;
   tagline?: string | null;
   githubUrl?: string | null;
+  evidenceContext?: string | null;
 };
 
 /** 1–3 行中文简介：是什么、用途、技术领域 */
@@ -82,6 +83,9 @@ export async function generateProjectDescription(input: ProjectDescriptionInput)
     `项目名称：${input.name}`,
     input.tagline?.trim() ? `一句话：${input.tagline.trim()}` : null,
     input.githubUrl?.trim() ? `仓库地址：${input.githubUrl.trim()}` : null,
+    input.evidenceContext?.trim()
+      ? `Project Evidence Context V1:\n${input.evidenceContext.trim().slice(0, 14000)}`
+      : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -104,6 +108,7 @@ export type ProjectTagsInput = {
   name: string;
   tagline?: string | null;
   githubUrl?: string | null;
+  evidenceContext?: string | null;
 };
 
 function parseJsonArray(raw: string): string[] | null {
@@ -133,6 +138,9 @@ export async function generateProjectTags(input: ProjectTagsInput): Promise<stri
     `项目名称：${input.name}`,
     input.tagline?.trim() ? `一句话：${input.tagline.trim()}` : null,
     input.githubUrl?.trim() ? `仓库：${input.githubUrl.trim()}` : null,
+    input.evidenceContext?.trim()
+      ? `Project Evidence Context V1:\n${input.evidenceContext.trim().slice(0, 14000)}`
+      : null,
   ]
     .filter(Boolean)
     .join("\n");

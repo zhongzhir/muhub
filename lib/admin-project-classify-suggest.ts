@@ -10,6 +10,7 @@ export type AdminClassifySuggestInput = {
   websiteUrl: string;
   /** README 不可得时的摘要代理（动态摘要等） */
   aiCardSummary: string;
+  evidenceContext?: string;
 };
 
 export type AdminClassifySuggestResult = {
@@ -103,6 +104,7 @@ function buildHaystack(input: AdminClassifySuggestInput): string {
     input.name,
     input.websiteUrl,
     input.aiCardSummary,
+    input.evidenceContext ?? "",
   ]
     .map((s) => s.trim())
     .filter(Boolean);
@@ -215,6 +217,7 @@ export function suggestAdminProjectClassificationAndTags(
     input.name,
     input.websiteUrl,
     input.aiCardSummary,
+    input.evidenceContext ?? "",
   ]
     .map((s) => s.trim())
     .filter(Boolean)
