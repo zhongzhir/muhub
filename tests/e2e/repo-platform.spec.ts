@@ -179,6 +179,7 @@ test.describe("多平台仓库 URL 解析", () => {
           content: "Lucide 是一个开源图标库，适合开发者在 Web 应用中使用。",
         },
       ],
+      evidenceContext: null,
     } satisfies ProjectInsightSourceSnapshot;
     expect(computeProjectSourceLevel(snapshot)).toBe("B");
   });
