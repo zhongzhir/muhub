@@ -212,69 +212,79 @@ export function ProjectDetailInfoSections({
         </section>
       ) : null}
 
-      {visibleSourceItems.length > 0 ? (
-        <section className="mt-12 scroll-mt-8" aria-labelledby="project-sources-heading" data-testid="project-sources-section">
-          <h2 id="project-sources-heading" className="muhub-page-section-title">
-            项目信息源
-          </h2>
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {visibleSourceItems.map((source) => {
-              const sourceSummary = shortSummary(source.summary);
-              const wechat = isWeChatArticle(source);
-              return (
-                <li key={source.id ? `${source.id}` : `${source.kind}-${source.url}`}>
-                  <div data-testid="project-source-link" className="muhub-card flex h-full flex-col p-4">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-lg dark:bg-zinc-800" aria-hidden>
-                        {mapSourceEmoji(source.kind)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-zinc-900 dark:text-zinc-50">{sourceTypeLabel(source)}</span>
-                          {source.isPrimary ? <span className="muhub-badge muhub-badge--amber text-[10px] uppercase tracking-wide">主源</span> : null}
-                        </div>
-                        {(() => {
-                          const titleText = (source.title || source.hint || "").trim();
-                          if (!titleText) return null;
-                          // 公众号来源：若 title/hint 实际是 URL 或域名，不展示，避免暴露原文链接
-                          if (wechat) {
-                            const looksLikeUrl =
-                              /^https?:\/\//i.test(titleText) ||
-                              /(^|\.)mp\.weixin\.qq\.com/i.test(titleText) ||
-                              /^[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(titleText);
-                            if (looksLikeUrl) return null;
-                          }
-                          return (
-                            <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{titleText}</p>
-                          );
-                        })()}
-                        {sourceSummary ? <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{sourceSummary}</p> : null}
-                        {wechat ? (
-                          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
-                            已作为信息来源整理
-                          </p>
-                        ) : (
-                          <a
-                            href={source.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-flex break-all text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+      {(() => {
+        // 公众号来源前台不展示卡片（仅作为内部信息源用于内容整理）
+        const publicSources = visibleSourceItems.filter((item) => !isWeChatArticle(item));
+        const hasAnyConfigured = visibleSourceItems.length > 0;
+        if (!hasAnyConfigured) return null;
+        return (
+          <section
+            className="mt-12 scroll-mt-8"
+            aria-labelledby="project-sources-heading"
+            data-testid="project-sources-section"
+          >
+            <h2 id="project-sources-heading" className="muhub-page-section-title">
+              项目信息源
+            </h2>
+            {publicSources.length > 0 ? (
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {publicSources.map((source) => {
+                  const sourceSummary = shortSummary(source.summary);
+                  const titleText = (source.title || source.hint || "").trim();
+                  return (
+                    <li key={source.id ? `${source.id}` : `${source.kind}-${source.url}`}>
+                      <div
+                        data-testid="project-source-link"
+                        className="muhub-card flex h-full flex-col p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-lg dark:bg-zinc-800"
+                            aria-hidden
                           >
-                            查看来源
-                          </a>
-                        )}
+                            {mapSourceEmoji(source.kind)}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                                {sourceTypeLabel(source)}
+                              </span>
+                              {source.isPrimary ? (
+                                <span className="muhub-badge muhub-badge--amber text-[10px] uppercase tracking-wide">
+                                  主源
+                                </span>
+                              ) : null}
+                            </div>
+                            {titleText ? (
+                              <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
+                                {titleText}
+                              </p>
+                            ) : null}
+                            {sourceSummary ? (
+                              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{sourceSummary}</p>
+                            ) : null}
+                            <a
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-flex break-all text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                            >
+                              查看来源
+                            </a>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-            本页基于公开信息整理，来源版权归原作者所有。
-          </p>
-        </section>
-      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+            <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+              本项目页基于网络公开信息整理，如有侵权，请联系我们。
+            </p>
+          </section>
+        );
+      })()}
 
       {data.githubSnapshot || data.githubUrl?.trim() ? (
         <section className="mt-12 scroll-mt-8" aria-labelledby="repo-data-heading" data-testid="github-snapshot-section">
