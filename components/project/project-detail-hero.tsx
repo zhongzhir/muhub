@@ -3,7 +3,6 @@ import Link from "next/link";
 import { projectPublicPathPrefix } from "@/lib/seo/site";
 import { formatListDate } from "@/lib/format-date";
 import ProjectHeroMetrics from "@/components/project/project-hero-metrics";
-import ProjectHeroLatestActivity from "@/components/project/project-hero-latest-activity";
 
 export type ProjectDetailHeroProps = {
   slug: string;
@@ -14,16 +13,6 @@ export type ProjectDetailHeroProps = {
   stars?: number;
   lastCommitAt?: string | Date | null;
   contributors?: number;
-  latestActivity?: {
-    title: string;
-    type:
-      | "project_imported"
-      | "project_profile_updated"
-      | "github_repo_updated"
-      | "github_release_detected"
-      | "official_update_detected";
-    occurredAt: string;
-  } | null;
   createdAt: Date;
   /** 公开页：分享、进入管理等（通常为客户端岛） */
   actions?: ReactNode;
@@ -38,7 +27,6 @@ export function ProjectDetailHero({
   stars,
   lastCommitAt,
   contributors,
-  latestActivity,
   createdAt,
   actions,
 }: ProjectDetailHeroProps) {
@@ -85,8 +73,6 @@ export function ProjectDetailHero({
         ) : null}
 
         <ProjectHeroMetrics stars={stars} updatedAt={lastCommitAt} contributors={contributors} />
-
-        <ProjectHeroLatestActivity activity={latestActivity} />
 
         {highlights?.length ? (
           <div className="mt-3 flex flex-wrap gap-2">

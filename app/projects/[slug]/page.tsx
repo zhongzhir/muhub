@@ -30,6 +30,18 @@ import { userOperatorLabel } from "@/lib/project-ai-content-edit-summary";
 
 export const dynamic = "force-dynamic";
 
+/** 过滤明显被截断的 AI 文本：以单字、半角逗号、左引号等收尾，没有完整句号/问号/感叹号/右括号。 */
+function endsWithBrokenChar(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return true;
+  if (trimmed.length < 12) return false;
+  const last = trimmed.slice(-1);
+  const properEndings = /[。！？!?\.\)）」』】"”]/;
+  if (properEndings.test(last)) return false;
+  // 中文字符 / 英文字母收尾且没有标点 → 视为被截断
+  return /[一-龥A-Za-z，,、:：；;]/.test(last);
+}
+
 function buildShareProjectInput(data: {
   description: string;
   tagline?: string;
@@ -253,19 +265,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     summary ||
     undefined;
   const heroSummaryWithSimple = officialSummary || fallbackAiSummary || heroSummary;
-  const summaryForSection =
-    (data.simpleSummary?.trim() && data.simpleSummary.trim() !== data.description.trim()
-      ? data.simpleSummary.trim()
-      : summary && summary.trim() !== data.description.trim()
-        ? summary
-        : null);
-  const detailParagraphs = officialInfo?.fullDescription?.trim()
-    ? [officialInfo.fullDescription.trim()]
-    : [
-        aiWhatItIs?.trim() || data.description.trim() || "",
-        aiWhoFor.length ? `适合人群：${aiWhoFor.slice(0, 5).join("、")}。` : "",
-        aiUseCases.length ? `使用场景：${aiUseCases.slice(0, 5).join("；")}。` : "",
-      ].filter(Boolean);
+
+  // 详情正文：人工/官方 > 项目描述 > AI 结构化分析 > 简介，按优先级择一展示，避免重复。
+  const officialDetailBody = officialInfo?.fullDescription?.trim() || null;
+  const descriptionBody = data.description.trim() || null;
+  const aiDetailBody = aiWhatItIs?.trim() && !endsWithBrokenChar(aiWhatItIs.trim()) ? aiWhatItIs.trim() : null;
+  const fallbackBody = data.simpleSummary?.trim() || null;
+  const detailMain =
+    officialDetailBody || descriptionBody || aiDetailBody || fallbackBody || "";
+  const detailParagraphs = [
+    detailMain,
+    aiWhoFor.length ? `适合人群：${aiWhoFor.slice(0, 5).join("、")}。` : "",
+    aiUseCases.length ? `使用场景：${aiUseCases.slice(0, 5).join("；")}。` : "",
+  ].filter(Boolean);
   const promoText = buildProjectPromoText({
     name: data.name,
     summary,
@@ -291,15 +303,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           stars={data.githubSnapshot?.stars ?? undefined}
           lastCommitAt={data.githubSnapshot?.lastCommitAt ?? null}
           contributors={data.githubSnapshot?.contributorsCount ?? undefined}
-          latestActivity={
-            projectActivities[0]
-              ? {
-                  title: projectActivities[0].title,
-                  type: projectActivities[0].type,
-                  occurredAt: projectActivities[0].occurredAt,
-                }
-              : null
-          }
           createdAt={data.createdAt}
           actions={
             <ProjectHeroPublicActions
@@ -334,17 +337,16 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <ProjectActivitySection activities={projectActivities} />
 
-        <section className="mb-6 rounded-xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">项目详情</h2>
-          <div className="mt-3 space-y-3 text-zinc-700 dark:text-zinc-300">
-            {detailParagraphs.map((item) => (
-              <p key={item} className="whitespace-pre-wrap leading-relaxed">{item}</p>
-            ))}
-            {summaryForSection ? (
-              <p className="whitespace-pre-wrap leading-relaxed">{summaryForSection}</p>
-            ) : null}
-          </div>
-        </section>
+        {detailParagraphs.length > 0 ? (
+          <section className="mb-6 rounded-xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">项目详情</h2>
+            <div className="mt-3 space-y-3 text-zinc-700 dark:text-zinc-300">
+              {detailParagraphs.map((item) => (
+                <p key={item} className="whitespace-pre-wrap leading-relaxed">{item}</p>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <ProjectDetailInfoSections
           data={data}

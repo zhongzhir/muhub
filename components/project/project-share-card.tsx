@@ -25,16 +25,20 @@ export function ProjectShareCard({
       data-testid="project-share-card"
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
+        <div className="flex min-w-0 items-center gap-2">
+          <div
+            aria-hidden
+            className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900"
+            style={{ width: 32, height: 32 }}
+          >
             M
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">MUHUB</p>
             <p className="text-[11px] text-zinc-400">项目推荐卡</p>
           </div>
         </div>
-        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
           项目档案
         </span>
       </div>

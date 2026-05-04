@@ -245,10 +245,10 @@ export function ProjectShareDialog({
             当前文案
           </p>
           <div
-            className="max-h-32 overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-50/90 dark:border-zinc-600 dark:bg-zinc-800/60"
+            className="rounded-xl border border-zinc-200/90 bg-zinc-50/90 dark:border-zinc-600 dark:bg-zinc-800/60"
             aria-labelledby={previewCopyId}
           >
-            <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap break-words p-3 text-[12px] leading-relaxed text-zinc-700 dark:text-zinc-200">
+            <pre className="max-h-60 min-h-[7.5rem] overflow-y-auto whitespace-pre-wrap break-words p-3 text-[12px] leading-relaxed text-zinc-700 dark:text-zinc-200">
               {shareBody}
             </pre>
           </div>

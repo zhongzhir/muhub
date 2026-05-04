@@ -75,7 +75,7 @@ function isPrimaryCodeOrWebsiteSource(item: ProjectSourceDisplayItem): boolean {
   return item.kind === "OTHER" && item.categoryLabel.toLowerCase() === "gitcc";
 }
 
-function isArticleUrl(url: string): boolean {
+function isWeChatArticleUrl(url: string): boolean {
   try {
     const host = new URL(url).hostname.toLowerCase();
     return host === "mp.weixin.qq.com" || host.endsWith(".mp.weixin.qq.com");
@@ -84,8 +84,12 @@ function isArticleUrl(url: string): boolean {
   }
 }
 
+function isWeChatArticle(item: ProjectSourceDisplayItem): boolean {
+  return item.kind === "WECHAT_ARTICLE" || isWeChatArticleUrl(item.url);
+}
+
 function sourceTypeLabel(item: ProjectSourceDisplayItem): string {
-  if (item.kind === "WECHAT_ARTICLE" || isArticleUrl(item.url)) return "公众号文章";
+  if (isWeChatArticle(item)) return "公众号文章";
   return item.categoryLabel;
 }
 
@@ -216,6 +220,7 @@ export function ProjectDetailInfoSections({
           <ul className="grid gap-4 sm:grid-cols-2">
             {visibleSourceItems.map((source) => {
               const sourceSummary = shortSummary(source.summary);
+              const wechat = isWeChatArticle(source);
               return (
                 <li key={source.id ? `${source.id}` : `${source.kind}-${source.url}`}>
                   <div data-testid="project-source-link" className="muhub-card flex h-full flex-col p-4">
@@ -228,18 +233,36 @@ export function ProjectDetailInfoSections({
                           <span className="font-semibold text-zinc-900 dark:text-zinc-50">{sourceTypeLabel(source)}</span>
                           {source.isPrimary ? <span className="muhub-badge muhub-badge--amber text-[10px] uppercase tracking-wide">主源</span> : null}
                         </div>
-                        {source.title || source.hint ? (
-                          <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{source.title || source.hint}</p>
-                        ) : null}
+                        {(() => {
+                          const titleText = (source.title || source.hint || "").trim();
+                          if (!titleText) return null;
+                          // 公众号来源：若 title/hint 实际是 URL 或域名，不展示，避免暴露原文链接
+                          if (wechat) {
+                            const looksLikeUrl =
+                              /^https?:\/\//i.test(titleText) ||
+                              /(^|\.)mp\.weixin\.qq\.com/i.test(titleText) ||
+                              /^[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(titleText);
+                            if (looksLikeUrl) return null;
+                          }
+                          return (
+                            <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{titleText}</p>
+                          );
+                        })()}
                         {sourceSummary ? <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{sourceSummary}</p> : null}
-                        <a
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-flex break-all text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                        >
-                          查看原文
-                        </a>
+                        {wechat ? (
+                          <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+                            已作为信息来源整理
+                          </p>
+                        ) : (
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-flex break-all text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                          >
+                            查看来源
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type CSSProperties } from "react";
 import html2canvas from "html2canvas";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -42,6 +42,205 @@ function formatPosterDate(value: string): string {
   }
 }
 
+// 海报内部仅使用十六进制颜色 + 内联样式，避免 TailwindCSS v4 的 oklch() 颜色
+// 让 html2canvas 解析失败导致下载报错。
+const posterStyles = {
+  root: {
+    width: POSTER_WIDTH,
+    boxSizing: "border-box",
+    background: "#ffffff",
+    color: "#18181b",
+    padding: 32,
+    fontFamily:
+      "system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    textAlign: "left",
+  } satisfies CSSProperties,
+  headerRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+  } satisfies CSSProperties,
+  brandRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  } satisfies CSSProperties,
+  logo: {
+    width: 36,
+    height: 36,
+    flex: "0 0 36px",
+    borderRadius: 12,
+    background: "#18181b",
+    color: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: 0,
+  } satisfies CSSProperties,
+  brandName: {
+    fontSize: 14,
+    fontWeight: 700,
+    letterSpacing: "0.02em",
+    color: "#18181b",
+    margin: 0,
+  } satisfies CSSProperties,
+  brandSubtitle: {
+    fontSize: 11,
+    color: "#71717a",
+    margin: "2px 0 0",
+  } satisfies CSSProperties,
+  pill: {
+    borderRadius: 999,
+    border: "1px solid #e4e4e7",
+    padding: "4px 12px",
+    fontSize: 11,
+    fontWeight: 500,
+    color: "#52525b",
+    whiteSpace: "nowrap",
+  } satisfies CSSProperties,
+  title: {
+    marginTop: 32,
+    fontSize: 36,
+    fontWeight: 800,
+    lineHeight: 1.15,
+    color: "#0a0a0a",
+    wordBreak: "break-word",
+  } satisfies CSSProperties,
+  intro: {
+    marginTop: 16,
+    fontSize: 16,
+    lineHeight: 1.6,
+    color: "#3f3f46",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+  } satisfies CSSProperties,
+  chipRow: {
+    marginTop: 20,
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+  } satisfies CSSProperties,
+  chip: {
+    borderRadius: 999,
+    border: "1px solid #d4d4d8",
+    padding: "6px 12px",
+    fontSize: 12,
+    fontWeight: 500,
+    color: "#3f3f46",
+  } satisfies CSSProperties,
+  useCaseBox: {
+    marginTop: 24,
+    background: "#f4f4f5",
+    borderRadius: 12,
+    padding: 16,
+  } satisfies CSSProperties,
+  useCaseLabel: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "#71717a",
+    margin: 0,
+  } satisfies CSSProperties,
+  useCaseList: {
+    marginTop: 8,
+    paddingLeft: 0,
+    listStyle: "none",
+    color: "#3f3f46",
+    fontSize: 14,
+    lineHeight: 1.6,
+  } satisfies CSSProperties,
+  activityBox: {
+    marginTop: 20,
+    border: "1px solid #e4e4e7",
+    borderRadius: 12,
+    padding: 16,
+    background: "#ffffff",
+  } satisfies CSSProperties,
+  activityLabel: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "#71717a",
+    margin: 0,
+  } satisfies CSSProperties,
+  activityTitle: {
+    marginTop: 4,
+    fontSize: 14,
+    fontWeight: 600,
+    color: "#27272a",
+  } satisfies CSSProperties,
+  activitySummary: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#52525b",
+    lineHeight: 1.5,
+  } satisfies CSSProperties,
+  activityDate: {
+    marginTop: 4,
+    fontSize: 11,
+    color: "#71717a",
+  } satisfies CSSProperties,
+  linksWrap: {
+    marginTop: 24,
+    paddingTop: 20,
+    borderTop: "1px solid #e4e4e7",
+    fontSize: 14,
+    color: "#27272a",
+  } satisfies CSSProperties,
+  linkLine: {
+    marginTop: 8,
+    wordBreak: "break-all",
+  } satisfies CSSProperties,
+  linkLabel: {
+    fontWeight: 600,
+    color: "#27272a",
+    marginRight: 4,
+  } satisfies CSSProperties,
+  linkValue: {
+    color: "#1d4ed8",
+  } satisfies CSSProperties,
+  footerRow: {
+    marginTop: 32,
+    paddingTop: 24,
+    borderTop: "1px solid #e4e4e7",
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 16,
+  } satisfies CSSProperties,
+  footerInfo: {
+    minWidth: 0,
+    flex: 1,
+  } satisfies CSSProperties,
+  footerUrl: {
+    fontSize: 11,
+    lineHeight: 1.4,
+    color: "#71717a",
+    wordBreak: "break-all",
+    margin: 0,
+  } satisfies CSSProperties,
+  footerSlogan: {
+    marginTop: 16,
+    fontSize: 14,
+    fontWeight: 600,
+    color: "#27272a",
+  } satisfies CSSProperties,
+  qrWrap: {
+    flex: "0 0 auto",
+    border: "1px solid #e4e4e7",
+    borderRadius: 8,
+    background: "#ffffff",
+    padding: 8,
+    textAlign: "center",
+  } satisfies CSSProperties,
+  qrCaption: {
+    marginTop: 4,
+    fontSize: 10,
+    color: "#71717a",
+  } satisfies CSSProperties,
+};
+
 export function ProjectSharePoster({
   slug,
   name,
@@ -63,18 +262,29 @@ export function ProjectSharePoster({
 
   const downloadPng = useCallback(async () => {
     const el = posterRef.current;
-    if (!el) return;
+    if (!el) {
+      setError("海报尚未生成，请稍后再试。");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
       const canvas = await html2canvas(el, {
         backgroundColor: "#ffffff",
         scale: 2,
-        useCORS: false,
+        useCORS: true,
         allowTaint: false,
         logging: false,
+        // 强制使用海报实际尺寸，避免外层 transform: scale() 对捕获的影响。
+        width: el.offsetWidth,
+        height: el.offsetHeight,
+        windowWidth: el.offsetWidth,
+        windowHeight: el.offsetHeight,
       });
       const dataUrl = canvas.toDataURL("image/png");
+      if (!dataUrl || dataUrl === "data:,") {
+        throw new Error("生成的图像数据为空");
+      }
       const link = document.createElement("a");
       link.download = `muhub-${slug}-poster.png`;
       link.href = dataUrl;
@@ -83,7 +293,8 @@ export function ProjectSharePoster({
       link.remove();
     } catch (e) {
       console.error("[ProjectSharePoster] download failed", e);
-      setError("下载失败，请稍后重试。");
+      const message = e instanceof Error ? e.message : String(e);
+      setError(`下载失败：${message || "未知错误"}`);
     } finally {
       setBusy(false);
     }
@@ -126,38 +337,27 @@ export function ProjectSharePoster({
 
             <div className="mt-4 flex justify-center overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-100 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
               <div className="origin-top scale-[0.72] sm:scale-[0.85]">
-                <div
-                  ref={posterRef}
-                  style={{ width: POSTER_WIDTH }}
-                  className="box-border bg-white p-8 text-left text-zinc-900 shadow-sm"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-sm font-bold text-white">
+                <div ref={posterRef} style={posterStyles.root}>
+                  <div style={posterStyles.headerRow}>
+                    <div style={posterStyles.brandRow}>
+                      <div style={posterStyles.logo} aria-hidden>
                         M
                       </div>
                       <div>
-                        <p className="text-sm font-bold tracking-wide">MUHUB</p>
-                        <p className="text-[11px] text-zinc-500">项目档案</p>
+                        <p style={posterStyles.brandName}>MUHUB</p>
+                        <p style={posterStyles.brandSubtitle}>项目档案</p>
                       </div>
                     </div>
-                    <span className="rounded-full border border-zinc-200 px-3 py-1 text-[11px] font-medium text-zinc-600">
-                      发现好项目
-                    </span>
+                    <span style={posterStyles.pill}>发现好项目</span>
                   </div>
 
-                  <h3 className="mt-8 text-4xl font-black leading-tight tracking-normal">{name}</h3>
-                  <p className="mt-4 whitespace-pre-wrap break-words text-base leading-relaxed text-zinc-700">
-                    {introText}
-                  </p>
+                  <h3 style={posterStyles.title}>{name}</h3>
+                  <p style={posterStyles.intro}>{introText}</p>
 
                   {chips.length > 0 ? (
-                    <div className="mt-5 flex flex-wrap gap-2">
+                    <div style={posterStyles.chipRow}>
                       {chips.map((h) => (
-                        <span
-                          key={h}
-                          className="rounded-full border border-zinc-300 px-3 py-1.5 text-[12px] font-medium text-zinc-700"
-                        >
+                        <span key={h} style={posterStyles.chip}>
                           {h.startsWith("#") ? h : `#${h}`}
                         </span>
                       ))}
@@ -165,58 +365,60 @@ export function ProjectSharePoster({
                   ) : null}
 
                   {useCases.length > 0 ? (
-                    <div className="mt-6 rounded-xl bg-zinc-50 p-4">
-                      <p className="text-[11px] font-semibold text-zinc-500">适合谁 / 使用场景</p>
-                      <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-zinc-700">
+                    <div style={posterStyles.useCaseBox}>
+                      <p style={posterStyles.useCaseLabel}>适合谁 / 使用场景</p>
+                      <ul style={posterStyles.useCaseList}>
                         {useCases.map((item) => (
-                          <li key={item}>• {item}</li>
+                          <li key={item} style={{ marginTop: 6 }}>
+                            • {item}
+                          </li>
                         ))}
                       </ul>
                     </div>
                   ) : null}
 
                   {latestActivity ? (
-                    <div className="mt-5 rounded-xl border border-zinc-200 bg-white p-4">
-                      <p className="text-[11px] font-semibold text-zinc-500">最新动态</p>
-                      <p className="mt-1 text-sm font-semibold text-zinc-800">{latestActivity.title}</p>
+                    <div style={posterStyles.activityBox}>
+                      <p style={posterStyles.activityLabel}>最新动态</p>
+                      <p style={posterStyles.activityTitle}>{latestActivity.title}</p>
                       {latestActivity.summary ? (
-                        <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{latestActivity.summary}</p>
+                        <p style={posterStyles.activitySummary}>{latestActivity.summary}</p>
                       ) : null}
-                      <p className="mt-1 text-[11px] text-zinc-500">{formatPosterDate(latestActivity.occurredAt)}</p>
+                      <p style={posterStyles.activityDate}>{formatPosterDate(latestActivity.occurredAt)}</p>
                     </div>
                   ) : null}
 
                   {(web || gh || gitcc) ? (
-                    <div className="mt-6 space-y-2 border-t border-zinc-200 pt-5 text-sm">
+                    <div style={posterStyles.linksWrap}>
                       {web ? (
-                        <p className="break-all">
-                          <span className="font-semibold text-zinc-800">官网 </span>
-                          <span className="text-blue-700">{web}</span>
+                        <p style={posterStyles.linkLine}>
+                          <span style={posterStyles.linkLabel}>官网</span>
+                          <span style={posterStyles.linkValue}>{web}</span>
                         </p>
                       ) : null}
                       {gh ? (
-                        <p className="break-all">
-                          <span className="font-semibold text-zinc-800">GitHub </span>
-                          <span className="text-blue-700">{gh}</span>
+                        <p style={posterStyles.linkLine}>
+                          <span style={posterStyles.linkLabel}>GitHub</span>
+                          <span style={posterStyles.linkValue}>{gh}</span>
                         </p>
                       ) : null}
                       {gitcc ? (
-                        <p className="break-all">
-                          <span className="font-semibold text-zinc-800">GitCC </span>
-                          <span className="text-blue-700">{gitcc}</span>
+                        <p style={posterStyles.linkLine}>
+                          <span style={posterStyles.linkLabel}>GitCC</span>
+                          <span style={posterStyles.linkValue}>{gitcc}</span>
                         </p>
                       ) : null}
                     </div>
                   ) : null}
 
-                  <div className="mt-8 flex items-end justify-between gap-4 border-t border-zinc-200 pt-6">
-                    <div className="min-w-0 flex-1">
-                      <p className="break-all text-[11px] leading-snug text-zinc-500">{projectPageUrl}</p>
-                      <p className="mt-4 text-sm font-semibold text-zinc-800">发现好项目，上 MUHUB</p>
+                  <div style={posterStyles.footerRow}>
+                    <div style={posterStyles.footerInfo}>
+                      <p style={posterStyles.footerUrl}>{projectPageUrl}</p>
+                      <p style={posterStyles.footerSlogan}>发现好项目，上 MUHUB</p>
                     </div>
-                    <div className="shrink-0 rounded-lg border border-zinc-200 bg-white p-2 text-center">
+                    <div style={posterStyles.qrWrap}>
                       <QRCodeCanvas value={projectPageUrl} size={104} level="M" includeMargin={false} />
-                      <span className="mt-1 block text-[10px] text-zinc-500">扫码访问</span>
+                      <span style={posterStyles.qrCaption}>扫码访问</span>
                     </div>
                   </div>
                 </div>
