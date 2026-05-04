@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { ProjectDetailHero } from "@/components/project/project-detail-hero";
@@ -20,11 +19,8 @@ import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 import { readSiteContentForProjectSlug } from "@/agents/growth/site-content-store";
 import { ProjectRelatedContent } from "@/components/content/project-related-content";
-import { ProjectTimeline } from "@/components/content/project-timeline";
-import { buildProjectTimelineItems } from "@/lib/content/project-timeline";
 import { readProjectPublicActivities } from "@/lib/activity/project-activity-service";
 import { ProjectActivitySection } from "@/components/project/project-activity";
-import ProjectSummary from "@/components/project/project-summary";
 import { buildProjectHighlights } from "@/lib/project/project-highlights";
 import { buildProjectSummary } from "@/lib/project/project-summary";
 import { buildProjectPromoText } from "@/lib/project/project-promo-text";
@@ -225,7 +221,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       url: s.url,
       label: s.label ?? null,
       title: s.title ?? null,
-      content: s.content ?? null,
+      content: null,
       summary: s.summary ?? null,
       isPrimary: Boolean(s.isPrimary),
     })),
@@ -244,7 +240,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   const { projectId, engagement } = await getProjectEngagementForSlug(slug, session?.user?.id);
   const relatedSiteContent = await readSiteContentForProjectSlug(slug);
-  const timelineItems = buildProjectTimelineItems(slug, data.updates, relatedSiteContent);
   const projectActivities = await readProjectPublicActivities(slug, 5);
   const project = buildShareProjectInput(data);
   const highlights = buildProjectHighlights(project);
@@ -314,6 +309,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               shareSnippet={shareSnippet}
               canonicalUrl={canonicalProjectUrl}
               description={descriptionForShare}
+              tags={data.tags}
+              category={data.primaryCategory}
               posterIntro={posterIntro}
               posterSummary={summary ?? undefined}
               posterHighlights={highlights}
@@ -335,31 +332,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           }
         />
 
-        {session?.user?.id ? (
-          <p className="-mt-2 mb-8 text-right text-xs text-zinc-500 dark:text-zinc-400">
-            <Link href="/me/subscriptions" className="underline-offset-2 hover:underline">
-              我的项目订阅
-            </Link>
-          </p>
-        ) : null}
-
         <ProjectActivitySection activities={projectActivities} />
-
-        <section className="mb-6 rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
-              {officialSummary ? "官方信息" : "AI整理"}
-            </span>
-            {!officialSummary && fallbackAiSummary ? (
-              <span className="text-xs text-zinc-500">当前优先展示 AI 整理摘要</span>
-            ) : null}
-          </div>
-          <p className="mt-2 text-zinc-700 dark:text-zinc-300">
-            {officialSummary || fallbackAiSummary || "信息不足"}
-          </p>
-        </section>
-
-        <ProjectSummary summary={summaryForSection ?? undefined} />
 
         <section className="mb-6 rounded-xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
           <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">项目详情</h2>
@@ -367,6 +340,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             {detailParagraphs.map((item) => (
               <p key={item} className="whitespace-pre-wrap leading-relaxed">{item}</p>
             ))}
+            {summaryForSection ? (
+              <p className="whitespace-pre-wrap leading-relaxed">{summaryForSection}</p>
+            ) : null}
           </div>
         </section>
 
@@ -379,15 +355,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <ProjectReferenceSources sources={data.referenceSources} />
 
-        <ProjectUpdates
-          slug={slug}
-          updates={data.updates}
-          fromDb={fromDb}
-          canManage={false}
-          presentation="public"
-        />
-
-        <ProjectTimeline items={timelineItems} />
+        {projectActivities.length === 0 ? (
+          <ProjectUpdates
+            slug={slug}
+            updates={data.updates}
+            fromDb={fromDb}
+            canManage={false}
+            presentation="public"
+          />
+        ) : null}
 
         <ProjectRelatedContent items={relatedSiteContent} />
 

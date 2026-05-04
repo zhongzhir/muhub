@@ -1,9 +1,9 @@
-export type ProjectShareMetricAction = "copyLink" | "copyText" | "twitter";
+export type ProjectShareMetricAction = "copyLink" | "copyText" | "weibo";
 
 export type ProjectShareLocalMetrics = {
   copyLink: number;
   copyText: number;
-  twitter: number;
+  weibo: number;
 };
 
 const STORAGE_PREFIX = "muhub:project-share:v1:";
@@ -11,7 +11,7 @@ const STORAGE_PREFIX = "muhub:project-share:v1:";
 const emptyMetrics = (): ProjectShareLocalMetrics => ({
   copyLink: 0,
   copyText: 0,
-  twitter: 0,
+  weibo: 0,
 });
 
 function safeParse(raw: string | null): ProjectShareLocalMetrics | null {
@@ -26,8 +26,9 @@ function safeParse(raw: string | null): ProjectShareLocalMetrics | null {
     const o = v as Record<string, unknown>;
     const copyLink = typeof o.copyLink === "number" && Number.isFinite(o.copyLink) ? Math.max(0, Math.floor(o.copyLink)) : 0;
     const copyText = typeof o.copyText === "number" && Number.isFinite(o.copyText) ? Math.max(0, Math.floor(o.copyText)) : 0;
-    const twitter = typeof o.twitter === "number" && Number.isFinite(o.twitter) ? Math.max(0, Math.floor(o.twitter)) : 0;
-    return { copyLink, copyText, twitter };
+    const legacyTwitter = typeof o.twitter === "number" && Number.isFinite(o.twitter) ? Math.max(0, Math.floor(o.twitter)) : 0;
+    const weibo = typeof o.weibo === "number" && Number.isFinite(o.weibo) ? Math.max(0, Math.floor(o.weibo)) : legacyTwitter;
+    return { copyLink, copyText, weibo };
   } catch {
     return null;
   }
@@ -83,5 +84,5 @@ export function incrementProjectShareLocalMetric(
 }
 
 export function totalShareActions(m: ProjectShareLocalMetrics): number {
-  return m.copyLink + m.copyText + m.twitter;
+  return m.copyLink + m.copyText + m.weibo;
 }

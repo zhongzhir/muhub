@@ -25,12 +25,22 @@ export type ProjectSharePosterProps = {
   githubUrl?: string | null;
   gitccUrl?: string | null;
   websiteUrl?: string | null;
+  tags?: string[];
+  category?: string | null;
 };
 
 const POSTER_WIDTH = 520;
 
 const actionBtnClass =
   "inline-flex max-w-full shrink-0 items-baseline gap-1 rounded-md px-1 py-0.5 text-sm text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200";
+
+function formatPosterDate(value: string): string {
+  try {
+    return new Date(value).toLocaleDateString("zh-CN");
+  } catch {
+    return value.slice(0, 10);
+  }
+}
 
 export function ProjectSharePoster({
   slug,
@@ -43,26 +53,37 @@ export function ProjectSharePoster({
   githubUrl,
   gitccUrl,
   websiteUrl,
+  tags,
+  category,
 }: ProjectSharePosterProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const posterRef = useRef<HTMLDivElement>(null);
 
   const downloadPng = useCallback(async () => {
     const el = posterRef.current;
     if (!el) return;
     setBusy(true);
+    setError("");
     try {
       const canvas = await html2canvas(el, {
         backgroundColor: "#ffffff",
         scale: 2,
-        useCORS: true,
+        useCORS: false,
+        allowTaint: false,
         logging: false,
       });
+      const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.download = `muhub-${slug}-poster.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      link.remove();
+    } catch (e) {
+      console.error("[ProjectSharePoster] download failed", e);
+      setError("下载失败，请稍后重试。");
     } finally {
       setBusy(false);
     }
@@ -71,13 +92,16 @@ export function ProjectSharePoster({
   const gh = githubUrl?.trim() || "";
   const gitcc = gitccUrl?.trim() || "";
   const web = websiteUrl?.trim() || "";
-  const introLines = summary?.trim() || intro.trim() || "在 MUHUB 查看项目主页与动态";
-  const badgeList = (highlights ?? []).slice(0, 4);
+  const introText = summary?.trim() || intro.trim() || "在 MUHUB 查看项目主页与最新动态。";
+  const chips = [category, ...(tags ?? []), ...(highlights ?? [])]
+    .filter((item): item is string => Boolean(item?.trim()))
+    .slice(0, 4);
+  const useCases = (highlights ?? []).slice(0, 3);
 
   return (
     <>
       <button type="button" className={actionBtnClass} onClick={() => setOpen(true)}>
-        分享海报
+        海报
       </button>
 
       {open ? (
@@ -94,10 +118,10 @@ export function ProjectSharePoster({
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="poster-dialog-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              分享海报
+              海报
             </h2>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              预览下方海报，可下载图片后自行分享。
+              预览下方海报，可下载 PNG 后自行分享。
             </p>
 
             <div className="mt-4 flex justify-center overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-100 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
@@ -107,34 +131,58 @@ export function ProjectSharePoster({
                   style={{ width: POSTER_WIDTH }}
                   className="box-border bg-white p-8 text-left text-zinc-900 shadow-sm"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/brand/logo-horizontal.svg" alt="MUHUB" className="h-7 w-auto object-contain object-left" />
-                  <h3 className="mt-6 text-2xl font-bold leading-tight tracking-tight">{name}</h3>
-                  <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-700">
-                    {introLines}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-sm font-bold text-white">
+                        M
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold tracking-wide">MUHUB</p>
+                        <p className="text-[11px] text-zinc-500">项目档案</p>
+                      </div>
+                    </div>
+                    <span className="rounded-full border border-zinc-200 px-3 py-1 text-[11px] font-medium text-zinc-600">
+                      发现好项目
+                    </span>
+                  </div>
+
+                  <h3 className="mt-8 text-4xl font-black leading-tight tracking-normal">{name}</h3>
+                  <p className="mt-4 whitespace-pre-wrap break-words text-base leading-relaxed text-zinc-700">
+                    {introText}
                   </p>
 
-                  {badgeList.length > 0 ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {badgeList.map((h) => (
+                  {chips.length > 0 ? (
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {chips.map((h) => (
                         <span
                           key={h}
-                          className="rounded-full border border-zinc-300 px-2.5 py-1 text-[11px] font-medium text-zinc-700"
+                          className="rounded-full border border-zinc-300 px-3 py-1.5 text-[12px] font-medium text-zinc-700"
                         >
-                          {h}
+                          {h.startsWith("#") ? h : `#${h}`}
                         </span>
                       ))}
                     </div>
                   ) : null}
 
+                  {useCases.length > 0 ? (
+                    <div className="mt-6 rounded-xl bg-zinc-50 p-4">
+                      <p className="text-[11px] font-semibold text-zinc-500">适合谁 / 使用场景</p>
+                      <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-zinc-700">
+                        {useCases.map((item) => (
+                          <li key={item}>• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
                   {latestActivity ? (
-                    <div className="mt-5 rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                    <div className="mt-5 rounded-xl border border-zinc-200 bg-white p-4">
                       <p className="text-[11px] font-semibold text-zinc-500">最新动态</p>
-                      <p className="mt-1 text-sm font-medium text-zinc-800">{latestActivity.title}</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-800">{latestActivity.title}</p>
                       {latestActivity.summary ? (
                         <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{latestActivity.summary}</p>
                       ) : null}
-                      <p className="mt-1 text-[11px] text-zinc-500">{latestActivity.occurredAt}</p>
+                      <p className="mt-1 text-[11px] text-zinc-500">{formatPosterDate(latestActivity.occurredAt)}</p>
                     </div>
                   ) : null}
 
@@ -162,17 +210,24 @@ export function ProjectSharePoster({
                   ) : null}
 
                   <div className="mt-8 flex items-end justify-between gap-4 border-t border-zinc-200 pt-6">
-                    <p className="min-w-0 flex-1 break-all text-[11px] leading-snug text-zinc-500">
-                      {projectPageUrl}
-                    </p>
-                    <div className="shrink-0 text-center">
-                      <QRCodeCanvas value={projectPageUrl} size={112} level="M" includeMargin={false} />
+                    <div className="min-w-0 flex-1">
+                      <p className="break-all text-[11px] leading-snug text-zinc-500">{projectPageUrl}</p>
+                      <p className="mt-4 text-sm font-semibold text-zinc-800">发现好项目，上 MUHUB</p>
+                    </div>
+                    <div className="shrink-0 rounded-lg border border-zinc-200 bg-white p-2 text-center">
+                      <QRCodeCanvas value={projectPageUrl} size={104} level="M" includeMargin={false} />
                       <span className="mt-1 block text-[10px] text-zinc-500">扫码访问</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            {error ? (
+              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
 
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button
@@ -187,6 +242,7 @@ export function ProjectSharePoster({
                 disabled={busy}
                 className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
                 onClick={() => void downloadPng()}
+                data-testid="project-poster-download"
               >
                 {busy ? "生成中…" : "下载海报"}
               </button>

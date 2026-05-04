@@ -16,6 +16,8 @@ export type ProjectHeroPublicActionsProps = {
   shareSnippet: string;
   canonicalUrl: string;
   description?: string;
+  tags?: string[];
+  category?: string | null;
   showManageLink: boolean;
   claimHref?: string;
   posterIntro: string;
@@ -45,6 +47,8 @@ export function ProjectHeroPublicActions({
   shareSnippet,
   canonicalUrl,
   description,
+  tags,
+  category,
   showManageLink,
   claimHref,
   posterIntro,
@@ -116,6 +120,8 @@ export function ProjectHeroPublicActions({
           githubUrl={githubUrl}
           gitccUrl={gitccUrl}
           websiteUrl={websiteUrl}
+          tags={tags}
+          category={category}
         />
         <ProjectCopyPromo text={promoText} />
 
@@ -143,6 +149,8 @@ export function ProjectHeroPublicActions({
         shareSnippet={shareSnippet}
         canonicalUrl={canonicalUrl}
         description={description}
+        tags={tags}
+        category={category}
       />
     </>
   );

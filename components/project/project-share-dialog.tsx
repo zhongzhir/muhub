@@ -10,9 +10,9 @@ import {
   resolveProjectShareStorageId,
   totalShareActions,
 } from "@/lib/share/project-share-local-metrics";
+import { buildWeiboShareUrl } from "@/lib/share/weibo";
 import {
-  buildTwitterIntentUrl,
-  buildTwitterShareText,
+  buildWeiboShareText,
   getShareTextByTemplate,
   resolveCommunityDescriptionBody,
   type ShareTemplateId,
@@ -27,18 +27,20 @@ export type ProjectShareDialogProps = {
   shareSnippet: string;
   canonicalUrl: string;
   description?: string;
+  tags?: string[];
+  category?: string | null;
 };
 
-const cardBtn =
-  "inline-flex min-h-[2.5rem] flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800 sm:min-w-0 sm:flex-1";
+const actionBtn =
+  "inline-flex min-h-[2.5rem] flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-center text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-800";
 
-const shareToXBtn =
-  "inline-flex min-h-[2.5rem] w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm font-medium text-sky-900 shadow-sm transition hover:border-sky-300 hover:bg-sky-100 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-100 dark:hover:bg-sky-950/60";
+const weiboBtn =
+  "inline-flex min-h-[2.5rem] w-full items-center justify-center rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-800 shadow-sm transition hover:border-red-300 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100 dark:hover:bg-red-950/50";
 
 const templateLabels: Record<ShareTemplateId, string> = {
   short: "简短",
   community: "社群",
-  twitter: "短帖",
+  weibo: "微博",
 };
 
 export function ProjectShareDialog({
@@ -50,13 +52,15 @@ export function ProjectShareDialog({
   shareSnippet,
   canonicalUrl,
   description,
+  tags,
+  category,
 }: ProjectShareDialogProps) {
   const dialogTitleId = useId();
   const templateGroupId = useId();
   const previewCopyId = useId();
   const storageId = useMemo(() => resolveProjectShareStorageId(slug, canonicalUrl), [slug, canonicalUrl]);
 
-  const [template, setTemplate] = useState<ShareTemplateId>("short");
+  const [template, setTemplate] = useState<ShareTemplateId>("community");
   const timers = useRef<{ link?: number; text?: number }>({});
   const [linkState, setLinkState] = useState<"base" | "ok" | "err">("base");
   const [textState, setTextState] = useState<"base" | "ok" | "err">("base");
@@ -70,7 +74,7 @@ export function ProjectShareDialog({
   );
 
   const cardSubtitle = useMemo(
-    () => tagline?.trim() || shareSnippet.trim() || descriptionLine.slice(0, 160),
+    () => tagline?.trim() || descriptionLine || shareSnippet.trim(),
     [tagline, shareSnippet, descriptionLine],
   );
 
@@ -79,9 +83,9 @@ export function ProjectShareDialog({
     [template, name, canonicalUrl, descriptionLine],
   );
 
-  const xShareHref = useMemo(
-    () => buildTwitterIntentUrl(buildTwitterShareText(name, canonicalUrl)),
-    [name, canonicalUrl],
+  const weiboShareHref = useMemo(
+    () => buildWeiboShareUrl(canonicalUrl, buildWeiboShareText(name, descriptionLine, canonicalUrl)),
+    [name, canonicalUrl, descriptionLine],
   );
 
   const scheduleResetOk = useCallback((kind: "link" | "text") => {
@@ -104,7 +108,7 @@ export function ProjectShareDialog({
         timers.current.text = undefined;
         setLinkState("base");
         setTextState("base");
-        setTemplate("short");
+        setTemplate("community");
       }
       onOpenChange(next);
     },
@@ -137,8 +141,8 @@ export function ProjectShareDialog({
     }
   }, [shareBody, scheduleResetOk, storageId]);
 
-  const onXShareClick = useCallback(() => {
-    incrementProjectShareLocalMetric(storageId, "twitter");
+  const onWeiboShareClick = useCallback(() => {
+    incrementProjectShareLocalMetric(storageId, "weibo");
     bumpMetricsRender();
   }, [storageId]);
 
@@ -160,17 +164,6 @@ export function ProjectShareDialog({
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const timerBag = timers;
-    return () => {
-      if (timerBag.current.link) window.clearTimeout(timerBag.current.link);
-      if (timerBag.current.text) window.clearTimeout(timerBag.current.text);
-      timerBag.current.link = undefined;
-      timerBag.current.text = undefined;
-    };
-  }, [open]);
-
   if (!open) return null;
 
   return (
@@ -178,14 +171,14 @@ export function ProjectShareDialog({
       <button
         type="button"
         aria-label="关闭分享面板"
-        className="absolute inset-0 bg-zinc-950/50 backdrop-blur-[1px]"
+        className="absolute inset-0 bg-zinc-950/55 backdrop-blur-[2px]"
         onClick={() => onOpenChangeWrapped(false)}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={dialogTitleId}
-        className="relative z-10 max-h-[min(92vh,40rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900"
+        className="relative z-10 max-h-[min(92vh,42rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900"
         data-testid="project-share-panel"
         onClick={(e) => e.stopPropagation()}
       >
@@ -194,7 +187,7 @@ export function ProjectShareDialog({
             <h3 id={dialogTitleId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               分享项目
             </h3>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">复制链接或文案，分享给更多人。</p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">复制链接、文案，或发布到微博。</p>
           </div>
           <button
             type="button"
@@ -209,7 +202,14 @@ export function ProjectShareDialog({
         <div className="mt-5">
           <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">分享预览</p>
           <div className="mt-2">
-            <ProjectShareCard name={name} subtitle={cardSubtitle} slug={slug} />
+            <ProjectShareCard
+              name={name}
+              subtitle={cardSubtitle}
+              slug={slug}
+              canonicalUrl={canonicalUrl}
+              tags={tags}
+              category={category}
+            />
           </div>
         </div>
 
@@ -245,33 +245,33 @@ export function ProjectShareDialog({
             当前文案
           </p>
           <div
-            className="max-h-28 overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-50/90 dark:border-zinc-600 dark:bg-zinc-800/60"
+            className="max-h-32 overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-50/90 dark:border-zinc-600 dark:bg-zinc-800/60"
             aria-labelledby={previewCopyId}
           >
-            <pre className="max-h-28 overflow-y-auto whitespace-pre-wrap break-words p-3 text-[12px] leading-relaxed text-zinc-700 dark:text-zinc-200">
+            <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap break-words p-3 text-[12px] leading-relaxed text-zinc-700 dark:text-zinc-200">
               {shareBody}
             </pre>
           </div>
         </div>
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <button type="button" className={cardBtn} onClick={onCopyLink} data-testid="project-share-copy-link">
+          <button type="button" className={actionBtn} onClick={onCopyLink} data-testid="project-share-copy-link">
             {linkState === "ok" ? "链接已复制" : "复制链接"}
           </button>
-          <button type="button" className={cardBtn} onClick={onCopyShareText} data-testid="project-share-copy-text">
+          <button type="button" className={actionBtn} onClick={onCopyShareText} data-testid="project-share-copy-text">
             {textState === "ok" ? "文案已复制" : "复制文案"}
           </button>
         </div>
 
         <a
-          href={xShareHref}
+          href={weiboShareHref}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${shareToXBtn} mt-2`}
-          data-testid="project-share-twitter"
-          onClick={onXShareClick}
+          className={`${weiboBtn} mt-2`}
+          data-testid="project-share-weibo"
+          onClick={onWeiboShareClick}
         >
-          发布到 X
+          发布到微博
         </a>
 
         {linkState === "ok" ? (
@@ -288,9 +288,7 @@ export function ProjectShareDialog({
 
         {linkState === "err" ? (
           <div className="mt-3" role="alert">
-            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
-              复制失败，请手动复制下方链接。
-            </p>
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">复制失败，请手动复制下方链接。</p>
             <div className="mt-2">
               <ManualCopyTextarea value={canonicalUrl} hint="项目公开链接" />
             </div>
@@ -299,9 +297,7 @@ export function ProjectShareDialog({
 
         {textState === "err" ? (
           <div className="mt-3" role="alert">
-            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
-              复制失败，请手动复制下方文案。
-            </p>
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">复制失败，请手动复制下方文案。</p>
             <div className="mt-2">
               <ManualCopyTextarea value={shareBody} hint="分享文案" />
             </div>
