@@ -1,4 +1,4 @@
-import type { ProjectStatus } from "@prisma/client";
+import type { ProjectSourceKind, ProjectStatus } from "@prisma/client";
 import { normalizeReferenceSources, type ReferenceSourceItem } from "@/lib/discovery/reference-sources";
 import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
 import { prisma } from "@/lib/prisma";
@@ -32,6 +32,29 @@ export type AdminProjectEditInitial = {
   discoverySourceId: string;
   importedFromCandidateId: string;
   externalLinksText: string;
+  externalLinks: Array<{
+    id: string;
+    platform: string;
+    url: string;
+    label: string;
+    isPrimary: boolean;
+    isVerified: boolean;
+    source: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  projectSources: Array<{
+    id: string;
+    kind: ProjectSourceKind;
+    title: string;
+    url: string;
+    label: string;
+    summary: string;
+    content: string;
+    isPrimary: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }>;
   referenceSources: ReferenceSourceItem[];
   readinessMessages: string[];
   aiInsightStatus: string;
@@ -228,7 +251,20 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
       externalLinks: {
         orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
       },
-      sources: { select: { kind: true } },
+      sources: {
+        orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          kind: true,
+          title: true,
+          url: true,
+          label: true,
+          summary: true,
+          content: true,
+          isPrimary: true,
+          createdAt: true,
+        },
+      },
       aiOpsLogs: {
         orderBy: { createdAt: "desc" },
         take: 10,
@@ -311,6 +347,29 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
     externalLinksText: row.externalLinks
       .map((item) => [item.platform, item.url, item.label ?? "", item.isPrimary ? "primary" : ""].join(", "))
       .join("\n"),
+    externalLinks: row.externalLinks.map((item) => ({
+      id: item.id,
+      platform: item.platform,
+      url: item.url,
+      label: item.label ?? "",
+      isPrimary: item.isPrimary,
+      isVerified: item.isVerified,
+      source: item.source ?? "",
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    })),
+    projectSources: row.sources.map((item) => ({
+      id: item.id,
+      kind: item.kind,
+      title: item.title ?? "",
+      url: item.url,
+      label: item.label ?? "",
+      summary: item.summary ?? "",
+      content: item.content ?? "",
+      isPrimary: item.isPrimary,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: "",
+    })),
     referenceSources: normalizeReferenceSources(row.referenceSources),
     readinessMessages: publishReadinessMessages(readiness),
     aiInsightStatus: row.aiInsightStatus ?? "idle",

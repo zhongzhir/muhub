@@ -117,6 +117,50 @@ function buildProjectDetailFromInsight(insight: InsightView, officialDescription
   return blocks.join("\n\n");
 }
 
+type ProjectSourceRow = AdminProjectEditInitial["projectSources"][number];
+
+type ProjectSourceFormState = {
+  kind: string;
+  title: string;
+  url: string;
+  label: string;
+  summary: string;
+  content: string;
+  isPrimary: boolean;
+};
+
+const emptyProjectSourceForm: ProjectSourceFormState = {
+  kind: "WEBSITE",
+  title: "",
+  url: "",
+  label: "",
+  summary: "",
+  content: "",
+  isPrimary: false,
+};
+
+const projectSourceKindOptions = [
+  { value: "WEBSITE", label: "WEBSITE / 官网" },
+  { value: "GITHUB", label: "GITHUB" },
+  { value: "GITCC", label: "GITCC / GitCC 项目页" },
+  { value: "WECHAT_ARTICLE", label: "WECHAT_ARTICLE / 微信公众号文章" },
+  { value: "PLATFORM_PAGE", label: "PLATFORM_PAGE / 平台项目页" },
+  { value: "MEDIA_ARTICLE", label: "MEDIA_ARTICLE / 媒体报道" },
+  { value: "DOCS", label: "DOCS / 文档" },
+  { value: "SOCIAL", label: "SOCIAL / 社交媒体" },
+  { value: "MANUAL", label: "MANUAL / 手动资料" },
+  { value: "OTHER", label: "OTHER / 其它" },
+];
+
+function formatDateTime(value: string) {
+  return value ? value.replace("T", " ").slice(0, 19) : "—";
+}
+
+function isWechatArticleSource(form: ProjectSourceFormState) {
+  const haystack = [form.kind, form.label, form.url].join(" ").toLowerCase();
+  return haystack.includes("wechat") || haystack.includes("weixin") || haystack.includes("mp.weixin.qq.com") || haystack.includes("公众号");
+}
+
 export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditInitial }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(saveAdminProject, initialState);
@@ -151,6 +195,11 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
   const [claimReviewBusy, setClaimReviewBusy] = useState(false);
   const [claimStatus, setClaimStatus] = useState(initial.claimStatusView.claimStatus);
   const [pendingClaimId, setPendingClaimId] = useState(initial.claimStatusView.pendingClaimId);
+  const [projectSources, setProjectSources] = useState<ProjectSourceRow[]>(initial.projectSources);
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
+  const [sourceForm, setSourceForm] = useState<ProjectSourceFormState>(emptyProjectSourceForm);
+  const [sourceMessage, setSourceMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [sourceBusy, setSourceBusy] = useState(false);
 
   useRedirectFromActionState(state.redirectPath);
 
@@ -178,6 +227,67 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
     initial.officialInfo.fullDescription,
     initial.description,
   );
+  const showWechatSourceHint = isWechatArticleSource(sourceForm);
+
+  const resetSourceForm = () => {
+    setEditingSourceId(null);
+    setSourceForm(emptyProjectSourceForm);
+  };
+
+  const editProjectSource = (source: ProjectSourceRow) => {
+    setEditingSourceId(source.id);
+    setSourceForm({
+      kind: source.kind,
+      title: source.title,
+      url: source.url,
+      label: source.label,
+      summary: source.summary,
+      content: source.content,
+      isPrimary: source.isPrimary,
+    });
+    setSourceMessage(null);
+  };
+
+  const saveProjectSource = async () => {
+    setSourceBusy(true);
+    setSourceMessage(null);
+    try {
+      const res = await fetch(`/api/admin/projects/${encodeURIComponent(initial.id)}/sources`, {
+        method: editingSourceId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceId: editingSourceId,
+          ...sourceForm,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        source?: ProjectSourceRow;
+      };
+      if (!res.ok || !json.ok || !json.source) {
+        throw new Error(json.error || "来源保存失败，请检查输入后重试。");
+      }
+      setProjectSources((prev) => {
+        const next = editingSourceId
+          ? prev.map((item) => (item.id === json.source!.id ? json.source! : item))
+          : [json.source!, ...prev];
+        return json.source!.isPrimary
+          ? next.map((item) => ({ ...item, isPrimary: item.id === json.source!.id }))
+          : next;
+      });
+      setSourceMessage({ kind: "success", text: "来源已保存，建议重新生成 AI结构化分析。" });
+      resetSourceForm();
+      router.refresh();
+    } catch (error) {
+      setSourceMessage({
+        kind: "error",
+        text: error instanceof Error ? error.message : "来源保存失败，请检查输入后重试。",
+      });
+    } finally {
+      setSourceBusy(false);
+    }
+  };
 
   const saveCategoryValue = async (nextCategory: string) => {
     const seq = categorySaveSeq.current + 1;
@@ -536,6 +646,244 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
       </section>
 
       <section className="muhub-card space-y-4 p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">外部链接</h2>
+        <div className="grid gap-4 sm:grid-cols-1">
+          <div>
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="websiteUrl">
+              官网链接
+            </label>
+            <input id="websiteUrl" name="websiteUrl" className={inputClass} defaultValue={initial.websiteUrl} />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="externalLinksText">
+            其它外部链接
+          </label>
+          <textarea
+            id="externalLinksText"
+            name="externalLinksText"
+            className={`${inputClass} min-h-[120px] resize-y`}
+            defaultValue={initial.externalLinksText}
+            placeholder="每行一条，格式：平台, URL, 标签(可选), primary(可选)"
+          />
+          <p className="mt-1 text-xs text-zinc-500">例如：docs, https://example.com/docs, 文档, primary</p>
+        </div>
+      </section>
+
+      <section className="muhub-card space-y-5 p-5 sm:p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">项目信息来源</h2>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            项目来源用于支撑 AI 结构化分析、信息补全和人工核验。可添加公众号文章、官网、平台项目页、媒体报道、文档、手动资料等。
+          </p>
+        </div>
+
+        {sourceMessage ? (
+          <div
+            className={`rounded-xl px-4 py-3 text-sm ${
+              sourceMessage.kind === "success"
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border border-red-200 bg-red-50 text-red-700"
+            }`}
+          >
+            {sourceMessage.text}
+          </div>
+        ) : null}
+
+        {projectSources.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-6 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/40">
+            暂无 ProjectSource。直接导入的项目可先在下方补充公众号正文、官网、GitCC 项目页或媒体报道，再重新生成 AI结构化分析。
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {projectSources.map((source) => (
+              <div key={source.id} className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded bg-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                        {source.kind}
+                      </span>
+                      {source.isPrimary ? (
+                        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
+                          primary
+                        </span>
+                      ) : null}
+                      {source.label ? <span className="text-xs text-zinc-500">{source.label}</span> : null}
+                    </div>
+                    <p className="mt-2 font-medium text-zinc-900 dark:text-zinc-100">{source.title || "未填写标题"}</p>
+                    {source.url ? (
+                      <a href={source.url} target="_blank" rel="noreferrer" className="mt-1 block break-all text-xs text-blue-600 underline dark:text-blue-400">
+                        {source.url}
+                      </a>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => editProjectSource(source)}
+                    className="rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 hover:bg-white dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    编辑
+                  </button>
+                </div>
+                {source.summary ? (
+                  <p className="mt-3 whitespace-pre-wrap text-xs text-zinc-600 dark:text-zinc-400">{source.summary}</p>
+                ) : null}
+                <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-500">
+                  <span>{source.content.trim() ? `正文 ${source.content.trim().length} 字` : "未保存正文"}</span>
+                  <span>createdAt: {formatDateTime(source.createdAt)}</span>
+                  <span>updatedAt: {source.updatedAt ? formatDateTime(source.updatedAt) : "—"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {initial.externalLinks.length > 0 ? (
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">相关外部链接</h3>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {initial.externalLinks.map((link) => (
+                <div key={link.id} className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs dark:border-zinc-700 dark:bg-zinc-900/40">
+                  <div className="flex flex-wrap items-center gap-2 text-zinc-600 dark:text-zinc-300">
+                    <span>{link.platform}</span>
+                    {link.label ? <span>/ {link.label}</span> : null}
+                    {link.isPrimary ? <span className="text-emerald-700 dark:text-emerald-300">primary</span> : null}
+                  </div>
+                  <a href={link.url} target="_blank" rel="noreferrer" className="mt-1 block break-all text-blue-600 underline dark:text-blue-400">
+                    {link.url}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              {editingSourceId ? "编辑来源" : "新增来源"}
+            </h3>
+            {editingSourceId ? (
+              <button type="button" onClick={resetSourceForm} className="rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 dark:border-zinc-600 dark:text-zinc-300">
+                取消编辑
+              </button>
+            ) : null}
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="projectSourceKind">
+                来源类型 kind
+              </label>
+              <select
+                id="projectSourceKind"
+                className={inputClass}
+                value={sourceForm.kind}
+                onChange={(e) => setSourceForm((prev) => ({ ...prev, kind: e.target.value }))}
+              >
+                {projectSourceKindOptions.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="projectSourceTitle">
+                标题 title
+              </label>
+              <input
+                id="projectSourceTitle"
+                className={inputClass}
+                value={sourceForm.title}
+                onChange={(e) => setSourceForm((prev) => ({ ...prev, title: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="projectSourceUrl">
+                URL
+              </label>
+              <input
+                id="projectSourceUrl"
+                className={inputClass}
+                value={sourceForm.url}
+                onChange={(e) => setSourceForm((prev) => ({ ...prev, url: e.target.value }))}
+                placeholder={sourceForm.kind === "MANUAL" ? "手动资料可留空" : "https://..."}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="projectSourceLabel">
+                label
+              </label>
+              <input
+                id="projectSourceLabel"
+                className={inputClass}
+                value={sourceForm.label}
+                onChange={(e) => setSourceForm((prev) => ({ ...prev, label: e.target.value }))}
+                placeholder="如：GitCC、媒体报道、公众号"
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="projectSourceSummary">
+              summary
+            </label>
+            <textarea
+              id="projectSourceSummary"
+              className={`${inputClass} min-h-[90px] resize-y`}
+              value={sourceForm.summary}
+              onChange={(e) => setSourceForm((prev) => ({ ...prev, summary: e.target.value }))}
+            />
+          </div>
+          <div className="mt-4">
+            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="projectSourceContent">
+              content 正文
+            </label>
+            {showWechatSourceHint ? (
+              <p className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                公众号文章通常无法稳定自动抓取全文，请手动粘贴正文。保存后可重新生成 AI结构化分析。
+              </p>
+            ) : null}
+            <textarea
+              id="projectSourceContent"
+              className={`${inputClass} min-h-[220px] resize-y`}
+              value={sourceForm.content}
+              onChange={(e) => setSourceForm((prev) => ({ ...prev, content: e.target.value }))}
+              placeholder="粘贴公众号文章正文、项目页介绍、媒体报道摘录或人工整理资料。"
+            />
+            <p className="mt-1 text-xs text-zinc-500">当前正文长度：{sourceForm.content.trim().length} 字</p>
+          </div>
+          <label className="mt-4 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              checked={sourceForm.isPrimary}
+              onChange={(e) => setSourceForm((prev) => ({ ...prev, isPrimary: e.target.checked }))}
+              className="h-4 w-4 rounded border-zinc-300"
+            />
+            设为主要来源 isPrimary
+          </label>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={saveProjectSource}
+              disabled={sourceBusy}
+              className="muhub-btn-secondary px-4 py-2 text-sm disabled:opacity-60"
+            >
+              {sourceBusy ? "保存中..." : editingSourceId ? "保存来源修改" : "新增来源"}
+            </button>
+            <button
+              type="button"
+              onClick={generateAiInsight}
+              disabled={aiBusy || sourceBusy}
+              className="rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {aiBusy ? "生成中..." : "重新生成 AI结构化分析"}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="muhub-card space-y-4 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">项目认领状态</h2>
@@ -792,31 +1140,6 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
             </div>
           </div>
         ) : null}
-      </section>
-
-      <section className="muhub-card space-y-4 p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">外部链接</h2>
-        <div className="grid gap-4 sm:grid-cols-1">
-          <div>
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="websiteUrl">
-              官网链接
-            </label>
-            <input id="websiteUrl" name="websiteUrl" className={inputClass} defaultValue={initial.websiteUrl} />
-          </div>
-        </div>
-        <div>
-          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="externalLinksText">
-            其它外部链接
-          </label>
-          <textarea
-            id="externalLinksText"
-            name="externalLinksText"
-            className={`${inputClass} min-h-[120px] resize-y`}
-            defaultValue={initial.externalLinksText}
-            placeholder="每行一条，格式：平台, URL, 标签(可选), primary(可选)"
-          />
-          <p className="mt-1 text-xs text-zinc-500">例如：docs, https://example.com/docs, 文档, primary</p>
-        </div>
       </section>
 
       <section className="muhub-card space-y-4 p-5 sm:p-6">

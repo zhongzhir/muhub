@@ -140,6 +140,9 @@ export default async function AdminDiscoveryListPage({
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             先在这里筛选候选项目，再收录为正式项目并进入项目编辑页继续保存草稿、检查并发布。
           </p>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            当前试运营主流程：项目发现队列 → 导入项目草稿 → 项目编辑页补全来源与 AI分析 → 发布。/admin/discovery 待筛选工作台暂作为高级筛选视图。
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
