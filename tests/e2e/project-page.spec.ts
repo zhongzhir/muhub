@@ -23,9 +23,10 @@ test.describe("项目详情页：关键入口存在", () => {
     await page.goto(`/projects/${encodeURIComponent(slug)}`);
     await page.waitForURL(/\/projects\/[^/?#]+\/?$/);
 
-    // 关键模块：详情头部 + 信息源 + 动态区（使用稳定 testid，避免文案调整导致脆弱失败）
+    // 关键模块：详情头部 + 操作区 + 公开信息占位（使用稳定 testid，避免文案调整导致脆弱失败）
     await expect(page.getByText("项目主页", { exact: true })).toBeVisible();
-    await expect(page.getByTestId("project-sources-section")).toBeVisible();
-    await expect(page.getByTestId("project-updates-section")).toBeVisible();
+    await expect(page.getByTestId("project-hero-public-actions")).toBeVisible();
+    await expect(page.getByTestId("project-official-media-section")).toBeVisible();
+    await expect(page.getByTestId("project-operations-info-section")).toBeVisible();
   });
 });

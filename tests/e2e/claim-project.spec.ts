@@ -1,14 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { loginAsE2EUser } from "./helpers/auth";
 import { getCreateProjectSubmitButton } from "./helpers/new-project-form";
-import {
-  waitForDashboardProjectUrl,
-  waitForProjectDetailUrl,
-  waitForProjectSlugAfterCreate,
-} from "./helpers/wait-project-after-create";
+import { waitForProjectSlugAfterCreate } from "./helpers/wait-project-after-create";
 
 test.describe("项目认领", () => {
-  test("未认领项目可填写 GitHub 地址完成认领", async ({ page }) => {
+  test("未认领项目可提交人工认领申请", async ({ page }) => {
     test.setTimeout(120_000);
     test.skip(
       !process.env.DATABASE_URL?.trim() ||
@@ -30,19 +26,20 @@ test.describe("项目认领", () => {
 
     await page.goto(`/projects/${encodeURIComponent(slug)}/claim`);
     await expect(page.getByRole("heading", { name: "认领项目" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: projectName })).toBeVisible();
 
-    await page.getByTestId("repo-url-input").fill(github);
-    await page.getByRole("button", { name: "认领项目" }).click();
+    await page.locator("#claimantName").fill("E2E 认领联系人");
+    await page.locator("#claimantRole").selectOption("项目创始人");
+    await page.locator("#contactEmail").fill(`claim-${Date.now()}@example.com`);
+    await page.locator("#proofUrl").fill("https://github.com/octocat");
+    await page.locator("#message").fill("E2E 人工认领申请");
+    await page.getByRole("button", { name: "提交认领申请" }).click();
 
-    await waitForProjectDetailUrl(page, slug);
-
-    await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible({
-      timeout: 60_000,
-    });
-
-    await page.goto(`/dashboard/projects/${encodeURIComponent(slug)}`);
-    await waitForDashboardProjectUrl(page, slug);
-    await expect(page.getByRole("link", { name: "编辑项目" })).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByTestId("claim-project-button")).toHaveCount(0);
+    await expect(page.getByTestId("claim-success")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId("claim-success")).toContainText("认领申请已提交");
+    await expect(page.getByRole("link", { name: "返回项目页" })).toHaveAttribute(
+      "href",
+      `/projects/${encodeURIComponent(slug)}`,
+    );
   });
 });

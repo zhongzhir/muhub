@@ -34,7 +34,11 @@ function getPublicProjectDetailText(project: {
   simpleSummary?: string | null;
   tagline?: string | null;
 }): string {
-  return project.description?.trim() || project.simpleSummary?.trim() || project.tagline?.trim() || "";
+  const description = project.description?.trim();
+  if (description) return description;
+  const simpleSummary = project.simpleSummary?.trim();
+  if (simpleSummary && simpleSummary !== project.tagline?.trim()) return simpleSummary;
+  return "";
 }
 
 function buildShareProjectInput(data: {

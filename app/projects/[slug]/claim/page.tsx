@@ -65,8 +65,11 @@ export default async function ClaimProjectPage({ params }: PageProps) {
         <section className="mb-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
           <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">项目认领</p>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-            {project.name}
+            认领项目
           </h1>
+          <h2 className="mt-4 text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+            {project.name}
+          </h2>
           <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">{summary}</p>
           <p className="mt-5 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             认领项目后，你可以向 MUHUB 提交项目方身份信息。审核通过后，项目方可补充官方信息、运营数据和项目动态。
