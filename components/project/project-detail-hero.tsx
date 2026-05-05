@@ -32,76 +32,90 @@ export function ProjectDetailHero({
 }: ProjectDetailHeroProps) {
   const pathPrefix = projectPublicPathPrefix();
   const publicPath = `${pathPrefix}${slug}`;
-
-  const actionBarClass =
-    "mt-6 flex flex-wrap items-baseline gap-x-4 gap-y-2 border-t border-zinc-200/80 pt-6 dark:border-zinc-800";
-
-  const backClass =
-    "inline-flex shrink-0 items-baseline gap-1 rounded-md px-0.5 py-0.5 text-sm text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200";
+  const initial = name.trim()[0]?.toUpperCase() ?? "P";
 
   return (
     <section
-      className="muhub-detail-hero relative overflow-hidden px-6 py-8 md:px-10 md:py-10"
+      className="muhub-detail-hero overflow-hidden rounded-2xl border border-zinc-200/60 bg-white shadow-lg dark:border-zinc-800/80 dark:bg-zinc-950"
       aria-labelledby="project-detail-title"
     >
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal-800/90 dark:text-teal-400/90">
-          <span>项目主页</span>
-          <span className="mx-1 text-zinc-400">·</span>
-          <span>MUHUB 项目档案</span>
-        </p>
+      {/* ── 深色沉浸式顶部 ─────────────────────────────────────────── */}
+      <div className="relative bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 px-7 pb-8 pt-7 md:px-10 md:pb-10 md:pt-9">
+        {/* 面包屑导航 */}
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">
+            <span className="text-teal-400">MUHUB</span>
+            <span className="mx-1.5 text-zinc-700">·</span>
+            <span>项目档案</span>
+          </p>
+          <Link
+            href="/"
+            className="flex items-center gap-1 text-[11px] font-medium text-zinc-600 transition hover:text-zinc-300"
+          >
+            <span aria-hidden>←</span>
+            返回首页
+          </Link>
+        </div>
 
-        <h1
-          id="project-detail-title"
-          className="mt-2 text-4xl font-bold tracking-tight text-zinc-950 md:text-6xl dark:text-zinc-50"
-        >
-          {name}
-        </h1>
+        {/* 头像 + 名称 */}
+        <div className="mt-6 flex items-end gap-4">
+          <div
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-2xl font-bold tracking-tight text-white shadow-inner"
+            aria-hidden
+          >
+            {initial}
+          </div>
+          <h1
+            id="project-detail-title"
+            className="text-3xl font-bold leading-tight tracking-tight text-white md:text-4xl"
+          >
+            {name}
+          </h1>
+        </div>
 
+        {/* 简介 / summary */}
         {(summary?.trim() || tagline?.trim()) ? (
-          <>
-            <h2 id="project-tagline-heading" className="sr-only">
-              项目简介
-            </h2>
-            <p
-              className="mt-2 line-clamp-2 max-w-3xl text-sm leading-relaxed text-gray-600 dark:text-zinc-400"
-              aria-labelledby="project-tagline-heading"
-            >
-              {summary?.trim() || tagline}
-            </p>
-          </>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300">
+            {summary?.trim() || tagline}
+          </p>
         ) : null}
 
+        {/* 数据指标行 */}
         <ProjectHeroMetrics stars={stars} updatedAt={lastCommitAt} contributors={contributors} />
 
+        {/* Highlight 标签 */}
         {highlights?.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {highlights.slice(0, 4).map((h) => (
-              <span key={h} className="rounded-md border px-2 py-1 text-xs">
+              <span
+                key={h}
+                className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-[11px] font-medium text-zinc-300"
+              >
                 {h}
               </span>
             ))}
           </div>
         ) : null}
-
-        <dl className="mt-6 grid gap-2.5 text-sm text-zinc-600 dark:text-zinc-400">
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="shrink-0 text-xs font-medium text-zinc-500">项目访问地址</dt>
-            <dd className="break-all font-mono text-zinc-800 dark:text-zinc-200">{publicPath}</dd>
-          </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="shrink-0 text-xs font-medium text-zinc-500">创建时间</dt>
-            <dd>{formatListDate(createdAt)}</dd>
-          </div>
-        </dl>
       </div>
 
-      <div className={actionBarClass} role="toolbar" aria-label="项目快捷操作">
-        <Link href="/" className={backClass}>
-          <span aria-hidden>←</span>
-          返回首页
-        </Link>
-        {actions}
+      {/* ── 信息条 + 操作栏 ─────────────────────────────────────────── */}
+      <div className="border-t border-zinc-100 bg-zinc-50/60 px-7 py-5 md:px-10 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+        <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-zinc-500">
+          <div className="flex min-w-0 gap-1.5">
+            <dt className="shrink-0 font-medium text-zinc-400">访问地址</dt>
+            <dd className="min-w-0 break-all font-mono text-zinc-600 dark:text-zinc-300">
+              {publicPath}
+            </dd>
+          </div>
+          <div className="flex gap-1.5">
+            <dt className="font-medium text-zinc-400">收录时间</dt>
+            <dd className="text-zinc-600 dark:text-zinc-300">{formatListDate(createdAt)}</dd>
+          </div>
+        </dl>
+
+        <div className="mt-4" role="toolbar" aria-label="项目快捷操作">
+          {actions}
+        </div>
       </div>
     </section>
   );

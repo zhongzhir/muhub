@@ -68,6 +68,8 @@ export default async function ShareProjectPage({ params }: PageProps) {
   const initial = projectShareInitial(data.name);
   const canonicalProjectUrl = projectCanonicalUrl(slug);
   const weiboShareHref = buildWeiboShareUrl(canonicalProjectUrl, buildProjectShareSocialLine(data));
+  const xShareText = `${data.name}${data.tagline ? ` — ${data.tagline}` : ""}\n${canonicalProjectUrl}`;
+  const xShareHref = `https://x.com/intent/tweet?text=${encodeURIComponent(xShareText)}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 via-zinc-100 to-zinc-200 px-4 py-8 text-zinc-900 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900 dark:text-zinc-50 sm:py-12">
@@ -295,20 +297,38 @@ export default async function ShareProjectPage({ params }: PageProps) {
 
           {/* 6. 复制分享链接 CTA */}
           <footer className="border-t border-zinc-100 bg-zinc-50/90 px-6 py-8 dark:border-zinc-800 dark:bg-zinc-900/90">
-            <p className="mb-4 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              复制链接，将本名片发给投资人、合作方或客户
+            <p className="mb-1 text-center text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+              分享这份项目名片
             </p>
-            <div className="mx-auto flex w-full max-w-md min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+            <p className="mb-5 text-center text-xs text-zinc-500 dark:text-zinc-400">
+              复制链接发给投资人、合作方或客户，或直接分享到社交平台
+            </p>
+            {/* 主 CTA：复制链接 */}
+            <div className="mx-auto w-full max-w-xs">
               <CopyLinkButton />
+            </div>
+            {/* 社交平台按钮 */}
+            <div className="mx-auto mt-3 flex w-full max-w-xs flex-col gap-2">
               <a
                 href={weiboShareHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[3.25rem] w-full items-center justify-center rounded-xl border border-zinc-300 bg-white px-5 py-3.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 sm:w-auto sm:min-h-0 sm:min-w-[200px] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200 dark:hover:bg-red-950/50"
               >
                 分享到微博
               </a>
+              <a
+                href={xShareHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              >
+                分享到 X (Twitter)
+              </a>
             </div>
+            <p className="mt-5 text-center text-[11px] text-zinc-400 dark:text-zinc-600">
+              微信分享：在手机上打开此页，点击右上角 → 发送给朋友
+            </p>
           </footer>
         </article>
       </div>

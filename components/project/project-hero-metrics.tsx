@@ -9,19 +9,43 @@ type Props = {
 export default function ProjectHeroMetrics({ stars, updatedAt, contributors }: Props) {
   const updatedText = formatRelativeUpdateTime(updatedAt);
   const activityStatus = getProjectActivityStatus(updatedAt);
+  const hasMetrics = stars || updatedText || contributors;
+
+  if (!hasMetrics && !activityStatus) return null;
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-zinc-400">
-      {stars ? <div>⭐ {stars.toLocaleString()} stars</div> : null}
+    <div className="mt-5 flex flex-wrap items-center gap-2.5">
+      {stars ? (
+        <div className="flex items-baseline gap-1.5 rounded-lg border border-white/10 bg-white/8 px-3 py-1.5">
+          <span className="text-sm font-semibold tabular-nums text-white">
+            {stars.toLocaleString()}
+          </span>
+          <span className="text-[10px] font-medium text-zinc-500">Stars</span>
+        </div>
+      ) : null}
 
-      {updatedText ? <div>🔄 {updatedText}</div> : null}
+      {updatedText ? (
+        <div className="flex items-baseline gap-1.5 rounded-lg border border-white/10 bg-white/8 px-3 py-1.5">
+          <span className="text-sm font-semibold text-white">{updatedText}</span>
+          <span className="text-[10px] font-medium text-zinc-500">更新</span>
+        </div>
+      ) : null}
 
-      {contributors ? <div>👥 {contributors} contributors</div> : null}
+      {contributors ? (
+        <div className="flex items-baseline gap-1.5 rounded-lg border border-white/10 bg-white/8 px-3 py-1.5">
+          <span className="text-sm font-semibold tabular-nums text-white">{contributors}</span>
+          <span className="text-[10px] font-medium text-zinc-500">贡献者</span>
+        </div>
+      ) : null}
 
       {activityStatus ? (
-        <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
-          {activityStatus}
-        </span>
+        <div className="flex items-center gap-1.5 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-1.5">
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-emerald-400"
+            aria-hidden
+          />
+          <span className="text-[11px] font-medium text-emerald-300">{activityStatus}</span>
+        </div>
       ) : null}
     </div>
   );
