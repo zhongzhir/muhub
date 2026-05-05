@@ -31,7 +31,7 @@ test.describe("GitHub 手动刷新快照", () => {
 
     const section = page.getByTestId("github-snapshot-section");
     await expect(section.getByRole("heading", { name: "仓库数据" })).toBeVisible();
-    await expect(section.getByText("暂无仓库快照数据")).toBeVisible();
+    await expect(section.getByText("暂无代码仓库数据")).toBeVisible();
 
     await page.getByTestId("refresh-github-snapshot").click();
     await waitForDashboardProjectUrl(page, slug);

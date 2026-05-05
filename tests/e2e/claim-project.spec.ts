@@ -36,10 +36,10 @@ test.describe("项目认领", () => {
     await page.getByRole("button", { name: "提交认领申请" }).click();
 
     const success = page.getByTestId("claim-success");
-    const errorAlert = page.getByRole("alert");
-    await expect(success.or(errorAlert)).toBeVisible({ timeout: 60_000 });
-    if (await errorAlert.isVisible()) {
-      const message = (await errorAlert.textContent())?.trim() ?? "unknown error";
+    const formErrorAlert = page.locator('[data-testid="project-claim-form"] [role="alert"]').first();
+    await expect(success.or(formErrorAlert)).toBeVisible({ timeout: 60_000 });
+    if (await formErrorAlert.isVisible()) {
+      const message = (await formErrorAlert.textContent())?.trim() ?? "unknown error";
       throw new Error(`认领提交未成功，页面返回错误：${message}`);
     }
     await expect(success).toContainText(/认领申请已提交|认领申请已存在/);

@@ -24,6 +24,7 @@ test.describe("项目动态", () => {
 
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
+    await page.locator("#description").fill("E2E: 项目动态发布链路测试");
     await getCreateProjectSubmitButton(page).click();
     const slug = await waitForProjectSlugAfterCreate(page);
 

@@ -30,6 +30,7 @@ test.describe("AI Native 第一阶段（UI 与降级）", () => {
     const projectName = `AI 降级测-${id}`;
     await page.goto("/dashboard/projects/new");
     await page.locator("#name").fill(projectName);
+    await page.locator("#description").fill("E2E: 无 OPENAI key 时也可创建项目");
     await getCreateProjectSubmitButton(page).click();
     await waitForProjectSlugAfterCreate(page);
     await expect(page.getByRole("heading", { name: projectName })).toBeVisible();

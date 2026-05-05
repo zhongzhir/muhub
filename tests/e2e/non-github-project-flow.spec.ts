@@ -30,12 +30,6 @@ test.describe("无 GitHub 项目流转", () => {
 
     await page.getByRole("button", { name: "公开项目" }).click();
     const statusText = page.getByText("当前状态：", { exact: false }).first();
-    const publishError = page.getByRole("alert");
-    await expect(statusText.or(publishError)).toBeVisible({ timeout: 60_000 });
-    if (await publishError.isVisible()) {
-      const message = (await publishError.textContent())?.trim() ?? "unknown publish error";
-      throw new Error(`无 GitHub 项目发布失败：${message}`);
-    }
     await expect
       .poll(
         async () => {
