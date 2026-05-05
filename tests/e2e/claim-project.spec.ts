@@ -15,7 +15,7 @@ test.describe("项目认领", () => {
 
     await loginAsE2EUser(page);
 
-    const projectName = `认领测试项目-${Date.now()}`;
+    const projectName = `claim-e2e-project-${Date.now()}`;
     const github = "https://github.com/octocat/Hello-World";
 
     await page.goto("/dashboard/projects/new");
