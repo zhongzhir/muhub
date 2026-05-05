@@ -43,6 +43,7 @@ npm run test:e2e
 npm run test:e2e:public
 npm run test:e2e:admin
 npx playwright test tests/e2e/project-page.spec.ts
+npx playwright test tests/e2e/non-github-project-flow.spec.ts
 ```
 
 ### UI 模式 / headed（可选）
@@ -93,3 +94,17 @@ MUHUB_ADMIN_DEV_ALLOW_ALL=true
 - 不做数据准备/复杂 fixture；项目详情用例在无项目数据时会跳过
 - admin 强依赖本地 `.env` 配置（见上）；不满足则 skip
 - 不做 CI/CD 集成（本任务范围外）
+
+## 无 GitHub 项目规则校验（脚本级）
+
+为避免未来误把 GitHub 设回必填，仓库提供脚本级快速校验：
+
+```bash
+npm run test:verify:non-github-flow
+```
+
+该脚本会验证：
+
+- 发布校验在有公开来源（如官网）时允许 `githubUrl = null`
+- 发布阻塞项不包含 GitHub 必填错误
+- 公开详情来源构建逻辑可处理 `githubUrl = null`
