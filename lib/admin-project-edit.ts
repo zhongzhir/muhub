@@ -216,11 +216,8 @@ export function validateProjectForPublish(input: ParsedAdminProjectInput): Publi
   if (!input.tagline?.trim() && !input.description?.trim()) {
     blockingErrors.push("至少补充一句话简介或项目详情");
   }
-  if (!input.primaryCategory?.trim()) {
-    blockingErrors.push("请选择项目分类");
-  }
   if (!input.websiteUrl && !input.githubUrl && input.externalLinks.length === 0) {
-    blockingErrors.push("至少补充一个官网、GitHub 或外部链接");
+    blockingErrors.push("至少补充一个公开来源链接");
   }
 
   const completeness = computeProjectCompleteness(

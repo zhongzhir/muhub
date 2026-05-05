@@ -1243,7 +1243,7 @@ export function AdminProjectEditForm({ initial }: { initial: AdminProjectEditIni
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs text-zinc-600">
           发布阻塞项：
           {" "}
-          项目名称、项目分类、一句话简介或项目详情至少一项、官网/GitHub/外部链接至少一项。
+          项目名称、一句话简介或项目详情至少一项、至少一个公开来源链接（官网/GitHub/外部链接）。
           {" "}
           其它提示仅为建议项，不会阻塞发布。
         </div>

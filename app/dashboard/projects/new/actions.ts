@@ -161,6 +161,21 @@ export async function createProject(
     }
   }
 
+  const extraSourcesJson = String(formData.get("extraSourcesJson") ?? "").trim();
+  const extraSourceRows = parseProjectSourceRowsJson(extraSourcesJson);
+  const hasPublicSourceInput =
+    Boolean(githubUrlRaw) ||
+    Boolean(giteeUrlRaw) ||
+    Boolean(websiteUrlRaw) ||
+    Boolean(docsUrlRaw) ||
+    Boolean(blogUrlRaw) ||
+    Boolean(twitterUrlRaw) ||
+    extraSourceRows.length > 0;
+  const hasProjectIntroInput = Boolean(tagline) || Boolean(description);
+  if (!hasPublicSourceInput && !hasProjectIntroInput) {
+    fieldErrors.websiteUrl = "请至少补充一个公开来源链接，或填写项目介绍/一句话介绍。";
+  }
+
   if (Object.keys(fieldErrors).length > 0) {
     return { ...initialFail, fieldErrors };
   }
@@ -273,8 +288,7 @@ export async function createProject(
     projectSourceRows.push({ kind: "TWITTER", url: twitterUrl, isPrimary: false });
   }
 
-  const extraSourcesJson = String(formData.get("extraSourcesJson") ?? "").trim();
-  for (const row of parseProjectSourceRowsJson(extraSourcesJson)) {
+  for (const row of extraSourceRows) {
     projectSourceRows.push({ kind: row.kind, url: row.url, label: row.label ?? null, isPrimary: false });
   }
 

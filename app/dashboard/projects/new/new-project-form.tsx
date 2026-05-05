@@ -165,9 +165,8 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <fieldset className="muhub-card space-y-3 p-4 sm:p-5">
           <legend className={sectionTitle}>导入</legend>
           <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            输入 GitHub / Gitee / 官网等链接，系统会尽量预填项目信息。目前优先支持{" "}
-            <strong className="font-medium text-zinc-600 dark:text-zinc-300">代码仓库</strong>{" "}
-            链接，其他来源将逐步支持。
+            输入 GitHub / GitCC / 官网 / 平台页等公开链接，系统会尽量预填项目信息。
+            GitHub 是重要信息源，但不是必填。
           </p>
           <label className="sr-only" htmlFor="import-source-url">
             导入来源链接
@@ -179,7 +178,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
               type="url"
               inputMode="url"
               autoComplete="off"
-              placeholder="https://github.com/owner/repo 或 Gitee 仓库地址"
+              placeholder="https://github.com/owner/repo 或 GitCC/官网/平台页链接"
               value={importUrl}
               disabled={importPending}
               onChange={(e) => {
@@ -261,6 +260,9 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
           placeholder="支持多行描述（可选）"
           defaultValue={p.description || undefined}
         />
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          GitHub 是重要信息源，但不是必填项。没有 GitHub 的项目也可以通过官网、媒体报道、公众号文章、平台项目页等公开信息收录。
+        </p>
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="tags">
           标签
@@ -290,7 +292,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
       <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
         <legend className={sectionTitle}>项目链接</legend>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="githubUrl">
-          GitHub 仓库链接
+          GitHub 仓库（可选）
         </label>
         <input
           id="githubUrl"
@@ -318,7 +320,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
         <FieldError message={state.fieldErrors?.giteeUrl} />
 
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="websiteUrl">
-          官网链接
+          项目主页 / 官网 / 平台页
         </label>
         <input
           id="websiteUrl"
@@ -372,7 +374,7 @@ export function NewProjectForm({ prefill }: { prefill?: NewProjectPrefill }) {
       </fieldset>
 
       <fieldset className="muhub-card space-y-4 p-5 sm:p-6">
-        <legend className={sectionTitle}>项目来源（可多条）</legend>
+        <legend className={sectionTitle}>公开来源链接（可多条）</legend>
         <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
           除上方主仓库与官网外，可补充公众号、小红书、文档等链接；提交时写入「信息源」。在输入框失焦时会按链接自动修正类型。
         </p>

@@ -18,7 +18,7 @@ export default async function NewProjectPage({
             返回首页
           </Link>
           <Link href="/dashboard/projects/import" className="underline-offset-4 hover:underline">
-            从 GitHub 导入
+            从公开来源导入
           </Link>
         </p>
         <h1 className="mb-8 text-2xl font-semibold tracking-tight">创建项目</h1>

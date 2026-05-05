@@ -368,93 +368,91 @@ export function ProjectDetailInfoSections({
         );
       })()}
 
-      {data.githubSnapshot || data.githubUrl?.trim() ? (
-        <section className="mt-12 scroll-mt-8" aria-labelledby="repo-data-heading" data-testid="github-snapshot-section">
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 id="repo-data-heading" className="muhub-page-section-title mb-0">
-              代码仓库数据
-            </h2>
-            {githubRefreshSlot}
-          </div>
-          <div className="muhub-card p-6 md:p-8">
-            {!data.githubSnapshot ? (
-              <div>
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">暂无仓库快照数据</p>
-                <p className="mt-2 text-sm text-zinc-500">
-                  {data.githubUrl?.trim()
-                    ? "点击「刷新仓库数据」从 GitHub / Gitee 拉取指标。"
-                    : "请项目维护者在编辑页配置代码仓库地址后再刷新。"}
-                </p>
-              </div>
-            ) : (
-              <>
-                <p className="font-mono text-sm text-zinc-800 dark:text-zinc-200" data-testid="github-snapshot-repo">
-                  {data.githubSnapshot.repoFullName}
-                </p>
-                <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">
-                  <span className="text-zinc-500">平台</span>
-                  <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
-                  <span data-testid="github-snapshot-platform">
-                    {repoPlatformDisplayLabel(
-                      data.githubSnapshot.repoPlatform ?? parseRepoUrl(data.githubUrl ?? "")?.platform,
-                    )}
-                  </span>
-                </p>
-                {data.githubUrl ? (
-                  <a href={data.githubUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-sm font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400">
-                    打开仓库
-                  </a>
-                ) : null}
-                <p className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                  <span data-testid="github-snapshot-activity" className="muhub-badge muhub-badge--success px-3 py-1 text-xs font-semibold">
-                    {computeGithubActivity(data.githubSnapshot).label}
-                  </span>
-                </p>
-                <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-3">
-                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-stars">
-                    <dt className="text-xs font-medium text-zinc-500">星标</dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.stars}</dd>
-                  </div>
-                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-forks">
-                    <dt className="text-xs font-medium text-zinc-500">Forks</dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.forks}</dd>
-                  </div>
-                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-issues">
-                    <dt className="text-xs font-medium text-zinc-500">待处理议题</dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.openIssues}</dd>
-                  </div>
-                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-watchers">
-                    <dt className="text-xs font-medium text-zinc-500">Watchers</dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.watchers}</dd>
-                  </div>
-                  <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50">
-                    <dt className="text-xs font-medium text-zinc-500">贡献者</dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.contributorsCount}</dd>
-                  </div>
-                  <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
-                    <dt className="text-xs font-medium text-zinc-500">最近提交</dt>
-                    <dd className="mt-1 font-medium" data-testid="github-snapshot-last-commit">
-                      {data.githubSnapshot.lastCommitAt ? data.githubSnapshot.lastCommitAt.toLocaleString("zh-CN") : "暂无"}
-                    </dd>
-                  </div>
-                  <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
-                    <dt className="text-xs font-medium text-zinc-500">最新版本</dt>
-                    <dd className="mt-1 font-medium" data-testid="github-snapshot-release">
-                      {data.githubSnapshot.latestReleaseTag
-                        ? `${data.githubSnapshot.latestReleaseTag}${
-                            data.githubSnapshot.latestReleaseAt
-                              ? ` · ${data.githubSnapshot.latestReleaseAt.toLocaleString("zh-CN")}`
-                              : ""
-                          }`
-                        : "—"}
-                    </dd>
-                  </div>
-                </dl>
-              </>
-            )}
-          </div>
-        </section>
-      ) : null}
+      <section className="mt-12 scroll-mt-8" aria-labelledby="repo-data-heading" data-testid="github-snapshot-section">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 id="repo-data-heading" className="muhub-page-section-title mb-0">
+            代码仓库数据
+          </h2>
+          {githubRefreshSlot}
+        </div>
+        <div className="muhub-card p-6 md:p-8">
+          {!data.githubSnapshot ? (
+            <div>
+              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">暂无代码仓库数据</p>
+              <p className="mt-2 text-sm text-zinc-500">
+                {data.githubUrl?.trim()
+                  ? "点击「刷新仓库数据」从 GitHub / Gitee 拉取指标。"
+                  : "当前项目未配置 GitHub 仓库，不影响其它信息展示。"}
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="font-mono text-sm text-zinc-800 dark:text-zinc-200" data-testid="github-snapshot-repo">
+                {data.githubSnapshot.repoFullName}
+              </p>
+              <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">
+                <span className="text-zinc-500">平台</span>
+                <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
+                <span data-testid="github-snapshot-platform">
+                  {repoPlatformDisplayLabel(
+                    data.githubSnapshot.repoPlatform ?? parseRepoUrl(data.githubUrl ?? "")?.platform,
+                  )}
+                </span>
+              </p>
+              {data.githubUrl ? (
+                <a href={data.githubUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-sm font-medium text-blue-600 underline-offset-4 hover:underline dark:text-blue-400">
+                  打开仓库
+                </a>
+              ) : null}
+              <p className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                <span data-testid="github-snapshot-activity" className="muhub-badge muhub-badge--success px-3 py-1 text-xs font-semibold">
+                  {computeGithubActivity(data.githubSnapshot).label}
+                </span>
+              </p>
+              <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-3">
+                <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-stars">
+                  <dt className="text-xs font-medium text-zinc-500">星标</dt>
+                  <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.stars}</dd>
+                </div>
+                <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-forks">
+                  <dt className="text-xs font-medium text-zinc-500">Forks</dt>
+                  <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.forks}</dd>
+                </div>
+                <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-issues">
+                  <dt className="text-xs font-medium text-zinc-500">待处理议题</dt>
+                  <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.openIssues}</dd>
+                </div>
+                <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50" data-testid="github-snapshot-watchers">
+                  <dt className="text-xs font-medium text-zinc-500">Watchers</dt>
+                  <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.watchers}</dd>
+                </div>
+                <div className="rounded-lg bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50">
+                  <dt className="text-xs font-medium text-zinc-500">贡献者</dt>
+                  <dd className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{data.githubSnapshot.contributorsCount}</dd>
+                </div>
+                <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
+                  <dt className="text-xs font-medium text-zinc-500">最近提交</dt>
+                  <dd className="mt-1 font-medium" data-testid="github-snapshot-last-commit">
+                    {data.githubSnapshot.lastCommitAt ? data.githubSnapshot.lastCommitAt.toLocaleString("zh-CN") : "暂无"}
+                  </dd>
+                </div>
+                <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
+                  <dt className="text-xs font-medium text-zinc-500">最新版本</dt>
+                  <dd className="mt-1 font-medium" data-testid="github-snapshot-release">
+                    {data.githubSnapshot.latestReleaseTag
+                      ? `${data.githubSnapshot.latestReleaseTag}${
+                          data.githubSnapshot.latestReleaseAt
+                            ? ` · ${data.githubSnapshot.latestReleaseAt.toLocaleString("zh-CN")}`
+                            : ""
+                        }`
+                      : "—"}
+                  </dd>
+                </div>
+              </dl>
+            </>
+          )}
+        </div>
+      </section>
 
       <section className="mt-12 scroll-mt-8" aria-labelledby="official-media-heading" data-testid="project-official-media-section">
         <h2 id="official-media-heading" className="muhub-page-section-title">

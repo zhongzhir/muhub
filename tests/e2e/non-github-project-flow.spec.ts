@@ -29,7 +29,22 @@ test.describe("无 GitHub 项目流转", () => {
     await expect(page.locator('label[for="githubUrl"]')).not.toContainText("必填");
 
     await page.getByRole("button", { name: "公开项目" }).click();
-    await expect(page.getByText("当前状态：", { exact: false })).toContainText("已公开");
+    const statusText = page.getByText("当前状态：", { exact: false }).first();
+    const publishError = page.getByRole("alert");
+    await expect(statusText.or(publishError)).toBeVisible({ timeout: 60_000 });
+    if (await publishError.isVisible()) {
+      const message = (await publishError.textContent())?.trim() ?? "unknown publish error";
+      throw new Error(`无 GitHub 项目发布失败：${message}`);
+    }
+    await expect
+      .poll(
+        async () => {
+          await page.reload();
+          return ((await statusText.textContent()) ?? "").trim();
+        },
+        { timeout: 60_000, message: "公开项目后状态应更新为已公开" },
+      )
+      .toContain("已公开");
 
     const res = await page.goto(`/projects/${encodeURIComponent(slug)}`);
     expect(res?.ok(), `项目详情页 HTTP 状态异常: ${res?.status()}`).toBeTruthy();

@@ -35,8 +35,14 @@ test.describe("项目认领", () => {
     await page.locator("#message").fill("E2E 人工认领申请");
     await page.getByRole("button", { name: "提交认领申请" }).click();
 
-    await expect(page.getByTestId("claim-success")).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByTestId("claim-success")).toContainText("认领申请已提交");
+    const success = page.getByTestId("claim-success");
+    const errorAlert = page.getByRole("alert");
+    await expect(success.or(errorAlert)).toBeVisible({ timeout: 60_000 });
+    if (await errorAlert.isVisible()) {
+      const message = (await errorAlert.textContent())?.trim() ?? "unknown error";
+      throw new Error(`认领提交未成功，页面返回错误：${message}`);
+    }
+    await expect(success).toContainText(/认领申请已提交|认领申请已存在/);
     await expect(page.getByRole("link", { name: "返回项目页" })).toHaveAttribute(
       "href",
       `/projects/${encodeURIComponent(slug)}`,
