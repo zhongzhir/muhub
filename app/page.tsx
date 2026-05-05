@@ -4,12 +4,12 @@ import GeoFaq from "@/components/home/geo-faq";
 import Features from "@/components/home/features";
 import { ProjectClaimCta } from "@/components/home/project-claim-cta";
 import { ProjectCard } from "@/components/project-card";
-import { fetchHomepageLatestProjects } from "@/lib/project-list";
+import { getCachedHomepageLatestProjects } from "@/lib/cache/project-cache";
 import { type ProjectActivity, readRecentPublicActivities } from "@/lib/activity/project-activity-service";
 import { RecentProjectActivitySection } from "@/components/home/recent-project-activity";
 
 export default async function HomePage() {
-  const latestProjects = await fetchHomepageLatestProjects(6);
+  const latestProjects = await getCachedHomepageLatestProjects(6);
   const recentActivities = await readRecentPublicActivities(8);
   // fallback: 当 Activity 数据不足时，使用真实 Project.updatedAt 兜底，后续应由 Activity 全量覆盖。
   const fallbackActivities: ProjectActivity[] =

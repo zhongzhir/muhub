@@ -25,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = {
     id: session?.user?.id,
     email: session?.user?.email,
+    // role 由 auth.ts session callback 透传，类型已在 next-auth.d.ts 声明
     role: (session?.user as { role?: string | null } | undefined)?.role ?? null,
   };
 

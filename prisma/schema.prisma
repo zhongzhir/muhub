@@ -171,6 +171,12 @@ enum DiscoveryImportStatus {
   FAILED
 }
 
+/** 系统角色：USER（普通用户）/ ADMIN（后台管理员） */
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -179,6 +185,12 @@ model User {
   image         String?
   /** 手机号登录展示与查询；身份以 Account(provider=phone) 为准 */
   phone         String?   @unique
+  /**
+   * 系统角色。
+   * 默认 USER；提升为 ADMIN 后无需重启服务即可生效（下次 session 刷新时自动载入）。
+   * 旧有 ADMIN_USER_IDS / ADMIN_EMAILS 环境变量仍作为 bootstrap 后备（首次部署时可用其指定初始管理员）。
+   */
+  role          UserRole  @default(USER)
 
   accounts Account[]
   sessions Session[]
@@ -196,6 +208,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([role])
 }
 
 /** Discovery V2：可配置的抓取来源（GitHub Topic / Trending 等） */

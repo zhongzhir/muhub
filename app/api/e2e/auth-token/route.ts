@@ -8,12 +8,35 @@ const E2E_USER_EMAIL = "e2e-playwright@muhub.internal";
 
 /**
  * 仅用于 E2E：在持有 E2E_TEST_SECRET 时签发与 NextAuth JWT 会话一致的 cookie 值。
- * 生产环境勿配置 E2E_TEST_SECRET；未配置时本路由返回 404。
+ *
+ * 安全策略（三层防护）：
+ *  1. 生产环境（NODE_ENV=production）下若未配置 E2E_TEST_SECRET，直接 404。
+ *  2. E2E_TEST_SECRET 必须 ≥ 32 字符，防止弱口令被猜测。
+ *  3. 请求头 x-e2e-secret 须与 E2E_TEST_SECRET 完全匹配。
+ *
+ * ⚠️  生产部署时请勿设置 E2E_TEST_SECRET 环境变量。
  */
 export async function POST(req: Request) {
   const gate = process.env.E2E_TEST_SECRET?.trim();
-  if (!gate || req.headers.get("x-e2e-secret") !== gate) {
+
+  // 生产环境：未配置则直接封闭
+  if (process.env.NODE_ENV === "production" && !gate) {
     return new NextResponse(null, { status: 404 });
+  }
+
+  // 弱口令检测：< 32 字符视为未配置
+  if (!gate || gate.length < 32) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  const incoming = req.headers.get("x-e2e-secret");
+  if (incoming !== gate) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  // 生产环境调用时记录审计日志（不泄露 secret）
+  if (process.env.NODE_ENV === "production") {
+    console.warn("[e2e/auth-token] called in production – verify this is intentional");
   }
 
   const secret = process.env.AUTH_SECRET?.trim();

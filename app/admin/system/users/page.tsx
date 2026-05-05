@@ -29,6 +29,7 @@ export default async function AdminSystemUsersPage({
       id: true,
       name: true,
       email: true,
+      role: true,
       createdAt: true,
       sessions: {
         orderBy: { expires: "desc" },
@@ -51,7 +52,13 @@ export default async function AdminSystemUsersPage({
           用户管理
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          最小用户列表，只读展示，不提供编辑/删除操作。
+          只读展示。提升管理员请在数据库执行：
+        </p>
+        <pre className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 font-mono text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+          {`UPDATE "User" SET role = 'ADMIN' WHERE email = 'your@email.com';`}
+        </pre>
+        <p className="text-xs text-zinc-500">
+          变更后用户下次刷新会话（重新登录或前端调用 session update）即可生效，无需重启服务。
         </p>
       </header>
 
@@ -79,7 +86,7 @@ export default async function AdminSystemUsersPage({
               <th className="px-3 py-2">名称</th>
               <th className="px-3 py-2">邮箱</th>
               <th className="px-3 py-2">注册时间</th>
-              <th className="px-3 py-2">管理员</th>
+              <th className="px-3 py-2">角色</th>
               <th className="px-3 py-2">最近会话</th>
             </tr>
           </thead>
@@ -93,11 +100,13 @@ export default async function AdminSystemUsersPage({
             ) : (
               users.map((user) => {
                 const latestSessionExpiry = user.sessions[0]?.expires ?? null;
+                // 使用 DB role 判定，环境变量白名单作后备
                 const isAdmin = isMuHubAdminUser({
                   id: user.id,
                   email: user.email,
-                  role: null,
+                  role: user.role,
                 });
+                const roleLabel = user.role === "ADMIN" ? "ADMIN" : "USER";
                 return (
                   <tr key={user.id} className="border-t border-zinc-100 dark:border-zinc-800/80">
                     <td className="px-3 py-2 font-mono text-xs text-zinc-600 dark:text-zinc-300">
@@ -116,7 +125,7 @@ export default async function AdminSystemUsersPage({
                             : "border-zinc-300 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300"
                         }`}
                       >
-                        {isAdmin ? "是" : "否"}
+                        {roleLabel}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-xs text-zinc-500">

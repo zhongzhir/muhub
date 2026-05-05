@@ -51,15 +51,34 @@ const config = {
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   callbacks: {
     ...(authConfig.callbacks ?? {}),
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user?.id) {
         token.sub = user.id;
+      }
+      // 首次登录或 session 刷新时，从 DB 读取最新 role 写入 JWT
+      // trigger === "update" 时（前端主动刷新）也重新载入，以确保权限变更及时生效
+      if (token.sub && (user?.id || trigger === "update")) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { role: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+          }
+        } catch {
+          /* DB 错误时保留 token 中已有的 role，不清空 */
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
+        // 从 JWT 读取缓存的 role（避免每次请求都查 DB）
+        if (token.role !== undefined) {
+          session.user.role = token.role;
+        }
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
