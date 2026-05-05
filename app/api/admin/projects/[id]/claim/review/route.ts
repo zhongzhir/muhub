@@ -26,38 +26,26 @@ export async function POST(
   }
 
   const pendingClaim = await prisma.projectClaim.findFirst({
-    where: { projectId: id, status: "pending" },
+    where: { projectId: id, status: { in: ["pending", "PENDING", "REVIEWING"] } },
     orderBy: { createdAt: "asc" },
-    select: { id: true, userId: true },
+    select: { id: true },
   });
   if (!pendingClaim) {
     return Response.json({ ok: false, error: "没有待审核认领请求。" }, { status: 404 });
   }
 
   const reviewedAt = new Date();
-  await prisma.$transaction(async (tx) => {
-    await tx.projectClaim.update({
-      where: { id: pendingClaim.id },
-      data: {
-        status: body.action === "approve" ? "approved" : "rejected",
-        reviewedAt,
-      },
-    });
-    if (body.action === "approve") {
-      await tx.project.update({
-        where: { id },
-        data: {
-          claimStatus: "CLAIMED",
-          claimedByUserId: pendingClaim.userId,
-          claimedAt: reviewedAt,
-        },
-      });
-    }
+  await prisma.projectClaim.update({
+    where: { id: pendingClaim.id },
+    data: {
+      status: body.action === "approve" ? "APPROVED" : "REJECTED",
+      reviewedAt,
+    },
   });
 
   return Response.json({
     ok: true,
     projectId: id,
-    status: body.action === "approve" ? "approved" : "rejected",
+    status: body.action === "approve" ? "APPROVED" : "REJECTED",
   });
 }

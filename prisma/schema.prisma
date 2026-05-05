@@ -676,18 +676,34 @@ model ProjectContentEditLog {
 }
 
 model ProjectClaim {
-  id         String   @id @default(cuid())
-  projectId  String
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  userId     String
+  id               String   @id @default(cuid())
+  projectId        String
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectSlug      String?
+  projectName      String?
+  claimantName     String?
+  claimantRole     String?
+  organizationName String?
+  contactEmail     String?
+  contactWechat    String?
+  contactPhone     String?
+  proofUrl         String?
+  message          String?  @db.Text
+  status           String   @default("PENDING")
+
+  /** Legacy authenticated GitHub-claim fields kept nullable for old records and routes. */
+  userId     String?
   userEmail  String?
-  status     String
   reason     String?
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
   reviewedAt DateTime?
 
+  @@index([projectId])
   @@index([projectId, createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ProjectOfficialInfo {

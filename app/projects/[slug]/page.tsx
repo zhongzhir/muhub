@@ -23,23 +23,18 @@ import { readProjectPublicActivities } from "@/lib/activity/project-activity-ser
 import { ProjectActivitySection } from "@/components/project/project-activity";
 import { buildProjectHighlights } from "@/lib/project/project-highlights";
 import { buildProjectSummary } from "@/lib/project/project-summary";
-import { buildProjectPromoText } from "@/lib/project/project-promo-text";
 import { ProjectOfficialInfoEditor } from "@/components/project/project-official-info-editor";
 import { ProjectAiContentDraft } from "@/components/project/project-ai-content-draft";
 import { userOperatorLabel } from "@/lib/project-ai-content-edit-summary";
 
 export const dynamic = "force-dynamic";
 
-/** 过滤明显被截断的 AI 文本：以单字、半角逗号、左引号等收尾，没有完整句号/问号/感叹号/右括号。 */
-function endsWithBrokenChar(text: string): boolean {
-  const trimmed = text.trim();
-  if (!trimmed) return true;
-  if (trimmed.length < 12) return false;
-  const last = trimmed.slice(-1);
-  const properEndings = /[。！？!?\.\)）」』】"”]/;
-  if (properEndings.test(last)) return false;
-  // 中文字符 / 英文字母收尾且没有标点 → 视为被截断
-  return /[一-龥A-Za-z，,、:：；;]/.test(last);
+function getPublicProjectDetailText(project: {
+  description?: string | null;
+  simpleSummary?: string | null;
+  tagline?: string | null;
+}): string {
+  return project.description?.trim() || project.simpleSummary?.trim() || project.tagline?.trim() || "";
 }
 
 function buildShareProjectInput(data: {
@@ -130,10 +125,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     discord: string | null;
     contactEmail: string | null;
   } | null = null;
-  let aiSummary: string | null = null;
-  let aiWhatItIs: string | null = null;
-  let aiWhoFor: string[] = [];
-  let aiUseCases: string[] = [];
   let aiContentStatus = "";
   let aiContentUpdatedAt = "";
   let aiContentError = "";
@@ -150,7 +141,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         id: true,
         createdById: true,
         claimedByUserId: true,
-        aiInsight: true,
         aiContent: true,
         aiContentStatus: true,
         aiContentUpdatedAt: true,
@@ -178,16 +168,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       projectIdForOfficial = owners.id;
       showManageLink = canManageProject(session?.user?.id, owners);
       isClaimedOwner = Boolean(session?.user?.id && owners.claimedByUserId === session.user.id);
-      aiSummary =
-        owners.aiInsight && typeof owners.aiInsight === "object" && typeof (owners.aiInsight as Record<string, unknown>).summary === "string"
-          ? ((owners.aiInsight as Record<string, unknown>).summary as string)
-          : null;
-      if (owners.aiInsight && typeof owners.aiInsight === "object") {
-        const aiObj = owners.aiInsight as Record<string, unknown>;
-        aiWhatItIs = typeof aiObj.whatItIs === "string" ? aiObj.whatItIs : null;
-        aiWhoFor = Array.isArray(aiObj.whoFor) ? aiObj.whoFor.filter((x): x is string => typeof x === "string") : [];
-        aiUseCases = Array.isArray(aiObj.useCases) ? aiObj.useCases.filter((x): x is string => typeof x === "string") : [];
-      }
       aiContent = owners.aiContent;
       aiContentStatus = owners.aiContentStatus ?? "idle";
       aiContentUpdatedAt = owners.aiContentUpdatedAt?.toISOString() ?? "";
@@ -257,38 +237,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const highlights = buildProjectHighlights(project);
   const summary = buildProjectSummary(project);
   const officialSummary = officialInfo?.summary?.trim() || null;
-  const fallbackAiSummary = aiSummary?.trim() || null;
   const heroSummary =
     officialSummary ||
-    fallbackAiSummary ||
     data.tagline?.trim() ||
     summary ||
     undefined;
-  const heroSummaryWithSimple = officialSummary || fallbackAiSummary || heroSummary;
+  const heroSummaryWithSimple = officialSummary || heroSummary;
 
-  // 详情正文：人工/官方 > 项目描述 > AI 结构化分析 > 简介，按优先级择一展示，避免重复。
-  const officialDetailBody = officialInfo?.fullDescription?.trim() || null;
-  const descriptionBody = data.description.trim() || null;
-  const aiDetailBody = aiWhatItIs?.trim() && !endsWithBrokenChar(aiWhatItIs.trim()) ? aiWhatItIs.trim() : null;
-  const fallbackBody = data.simpleSummary?.trim() || null;
-  const detailMain =
-    officialDetailBody || descriptionBody || aiDetailBody || fallbackBody || "";
-  const detailParagraphs = [
-    detailMain,
-    aiWhoFor.length ? `适合人群：${aiWhoFor.slice(0, 5).join("、")}。` : "",
-    aiUseCases.length ? `使用场景：${aiUseCases.slice(0, 5).join("；")}。` : "",
-  ].filter(Boolean);
-  const promoText = buildProjectPromoText({
-    name: data.name,
-    summary,
-    highlights,
-    latestActivity: projectActivities?.[0] ?? null,
-    projectUrl: `${SITE_URL}/projects/${slug}`,
-  });
-  const claimHref =
-    fromDb && process.env.DATABASE_URL?.trim() && !showManageLink
-      ? `/projects/${encodeURIComponent(slug)}/claim`
-      : undefined;
+  const publicDetailText = getPublicProjectDetailText(data);
+  const claimHref = `/projects/${encodeURIComponent(slug)}/claim`;
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -318,7 +275,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               posterSummary={summary ?? undefined}
               posterHighlights={highlights}
               posterLatestActivity={projectActivities[0] ?? null}
-              promoText={promoText}
               githubUrl={data.githubUrl}
               gitccUrl={gitccUrl}
               websiteUrl={data.websiteUrl}
@@ -337,14 +293,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
         <ProjectActivitySection activities={projectActivities} />
 
-        {detailParagraphs.length > 0 ? (
+        {publicDetailText ? (
           <section className="mb-6 rounded-xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">项目详情</h2>
-            <div className="mt-3 space-y-3 text-zinc-700 dark:text-zinc-300">
-              {detailParagraphs.map((item) => (
-                <p key={item} className="whitespace-pre-wrap leading-relaxed">{item}</p>
-              ))}
-            </div>
+            <p className="mt-3 whitespace-pre-wrap leading-relaxed text-zinc-700 dark:text-zinc-300">{publicDetailText}</p>
           </section>
         ) : null}
 

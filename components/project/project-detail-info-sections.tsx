@@ -99,6 +99,104 @@ function shortSummary(value: string | null | undefined): string | null {
   return text.length > 140 ? `${text.slice(0, 139)}…` : text;
 }
 
+type OfficialMediaItem = {
+  key: string;
+  label: string;
+  title: string;
+  url: string;
+};
+
+const OFFICIAL_MEDIA_EXTERNAL_PLATFORMS = new Set([
+  "website",
+  "gitcc",
+  "weibo",
+  "twitter",
+  "x",
+  "producthunt",
+  "bilibili",
+  "xiaohongshu",
+  "douyin",
+  "wechat",
+  "wechat_official",
+  "youtube",
+  "discord",
+]);
+
+function officialMediaPlatformLabel(platform: string): string {
+  const p = platform.toLowerCase();
+  const labels: Record<string, string> = {
+    website: "官网",
+    gitcc: "GitCC",
+    weibo: "微博",
+    twitter: "X / Twitter",
+    x: "X / Twitter",
+    producthunt: "Product Hunt",
+    bilibili: "B 站",
+    xiaohongshu: "小红书",
+    douyin: "抖音",
+    wechat: "公众号",
+    wechat_official: "公众号",
+    youtube: "YouTube",
+    discord: "Discord / 社区",
+  };
+  return labels[p] ?? externalPlatformHeading(platform);
+}
+
+function pushOfficialMediaItem(
+  items: OfficialMediaItem[],
+  seen: Set<string>,
+  input: { label: string; title?: string | null; url?: string | null },
+) {
+  const url = input.url?.trim();
+  if (!url) return;
+  const key = normalizedUrlKey(url) ?? url.toLowerCase();
+  if (seen.has(key)) return;
+  seen.add(key);
+  items.push({
+    key,
+    label: input.label,
+    title: input.title?.trim() || input.label,
+    url,
+  });
+}
+
+function buildOfficialMediaItems(
+  data: ProjectPageView,
+  socials: ProjectPageView["socials"],
+  sourceItems: ProjectSourceDisplayItem[],
+): OfficialMediaItem[] {
+  const items: OfficialMediaItem[] = [];
+  const seen = new Set<string>();
+  pushOfficialMediaItem(items, seen, { label: "官网", title: "项目官网", url: data.websiteUrl });
+
+  for (const source of sourceItems) {
+    const isGitCc = source.categoryLabel.toLowerCase() === "gitcc" || source.url.includes("gitcc.com");
+    if (isGitCc) {
+      pushOfficialMediaItem(items, seen, { label: "GitCC", title: source.title || "GitCC 项目页", url: source.url });
+    }
+  }
+
+  for (const link of data.externalLinks ?? []) {
+    const platform = link.platform.toLowerCase();
+    if (!OFFICIAL_MEDIA_EXTERNAL_PLATFORMS.has(platform)) continue;
+    pushOfficialMediaItem(items, seen, {
+      label: officialMediaPlatformLabel(platform),
+      title: link.label || officialMediaPlatformLabel(platform),
+      url: link.url,
+    });
+  }
+
+  for (const social of socials) {
+    pushOfficialMediaItem(items, seen, {
+      label: socialPlatformLabel(social.platform),
+      title: social.accountName || socialPlatformLabel(social.platform),
+      url: social.accountUrl,
+    });
+  }
+
+  return items;
+}
+
 type Props = {
   data: ProjectPageView;
   socials: ProjectPageView["socials"];
@@ -130,26 +228,10 @@ export function ProjectDetailInfoSections({
     const key = normalizedUrlKey(item.url);
     return !key || !topLinkKeys.has(key);
   });
+  const officialMediaItems = buildOfficialMediaItems(data, socials, sourceItems);
 
   return (
     <>
-      {data.aiCardSummary?.trim() ? (
-        <section
-          className="muhub-prose-panel muhub-prose-panel--accent-secondary mt-8 md:px-8"
-          data-testid="project-ai-summary"
-          aria-labelledby="project-ai-card-heading"
-        >
-          <h2
-            id="project-ai-card-heading"
-            className="muhub-form-legend text-left text-[var(--muhub-secondary-700)] dark:text-[var(--muhub-secondary-300)]"
-          >
-            AI 项目摘要
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
-            {data.aiCardSummary.trim()}
-          </p>
-        </section>
-      ) : null}
 
       {(data.tags?.length ||
         data.primaryCategory?.trim() ||
@@ -374,30 +456,46 @@ export function ProjectDetailInfoSections({
         </section>
       ) : null}
 
-      {socials.length > 0 ? (
-        <section className="mt-14 scroll-mt-8" aria-labelledby="social-heading">
-          <h2 id="social-heading" className="muhub-page-section-title">
-            社媒
-          </h2>
-          <ul className="flex flex-wrap gap-2">
-            {socials.map((social) => (
-              <li key={`${social.platform}-${social.accountName}`}>
-                {social.accountUrl ? (
-                  <a href={social.accountUrl} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full flex-col rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800">
-                    <span className="text-xs font-medium text-zinc-500">{socialPlatformLabel(social.platform)}</span>
-                    <span className="mt-0.5 truncate font-medium text-zinc-900 dark:text-zinc-100">{social.accountName}</span>
+      <section className="mt-12 scroll-mt-8" aria-labelledby="official-media-heading" data-testid="project-official-media-section">
+        <h2 id="official-media-heading" className="muhub-page-section-title">
+          官方媒体
+        </h2>
+        <div className="muhub-card p-6 md:p-8">
+          {officialMediaItems.length > 0 ? (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {officialMediaItems.map((item) => (
+                <li key={item.key}>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-full flex-col rounded-lg border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm transition hover:border-zinc-200 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/60 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
+                  >
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{item.label}</span>
+                    <span className="mt-1 font-medium text-zinc-900 dark:text-zinc-100">{item.title}</span>
+                    <span className="mt-2 break-all text-xs text-blue-600 dark:text-blue-400">{item.url}</span>
                   </a>
-                ) : (
-                  <span className="inline-flex flex-col rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800/80">
-                    <span className="text-xs font-medium text-zinc-500">{socialPlatformLabel(social.platform)}</span>
-                    <span className="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">{social.accountName}</span>
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              暂无官方媒体信息。后续将展示项目方官网、公众号、新媒体账号等公开入口。
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-12 scroll-mt-8" aria-labelledby="operations-info-heading" data-testid="project-operations-info-section">
+        <h2 id="operations-info-heading" className="muhub-page-section-title">
+          运营信息
+        </h2>
+        <div className="muhub-card p-6 md:p-8">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            暂无运营信息。后续将展示项目方主动披露的运营数据、更新动态、用户规模、融资进展等信息。
+          </p>
+        </div>
+      </section>
 
       {descriptionBody ? (
         <section className="mt-14 scroll-mt-8 pb-8" aria-labelledby="about-heading">

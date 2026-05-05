@@ -33,6 +33,15 @@ export default function AdminSystemHomePage() {
             用户、项目、Discovery 与运营日志的最小统计看板。
           </p>
         </Link>
+        <Link
+          href="/admin/system/claims"
+          className="muhub-card block space-y-2 p-5 transition hover:border-zinc-400 dark:hover:border-zinc-600"
+        >
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">项目认领</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            查看项目方或相关人员提交的认领申请，并进行人工审核状态跟进。
+          </p>
+        </Link>
       </div>
     </div>
   );

@@ -7,7 +7,6 @@ import { ProjectEngagementBar } from "@/components/project/project-engagement-ba
 import { ProjectShareDialog } from "@/components/project/project-share-dialog";
 import { ProjectSharePoster } from "@/components/project/project-share-poster";
 import type { ProjectActivity } from "@/lib/activity/project-activity-service";
-import ProjectCopyPromo from "@/components/project/project-copy-promo";
 
 export type ProjectHeroPublicActionsProps = {
   slug: string;
@@ -24,7 +23,6 @@ export type ProjectHeroPublicActionsProps = {
   posterSummary?: string;
   posterHighlights?: string[];
   posterLatestActivity?: ProjectActivity | null;
-  promoText: string;
   githubUrl?: string | null;
   gitccUrl?: string | null;
   websiteUrl?: string | null;
@@ -39,6 +37,9 @@ export type ProjectHeroPublicActionsProps = {
 
 const inlineActionClass =
   "inline-flex max-w-full shrink-0 items-baseline gap-1 rounded-md px-1 py-0.5 text-sm text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200";
+
+const claimActionClass =
+  "inline-flex max-w-full shrink-0 items-baseline gap-1 rounded-md border border-emerald-200 px-2.5 py-1 text-sm font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-700/70 dark:text-emerald-300 dark:hover:bg-emerald-950/40";
 
 export function ProjectHeroPublicActions({
   slug,
@@ -55,7 +56,6 @@ export function ProjectHeroPublicActions({
   posterSummary,
   posterHighlights,
   posterLatestActivity,
-  promoText,
   githubUrl,
   gitccUrl,
   websiteUrl,
@@ -123,8 +123,6 @@ export function ProjectHeroPublicActions({
           tags={tags}
           category={category}
         />
-        <ProjectCopyPromo text={promoText} />
-
         {showManageLink ? (
           <Link
             href={`/dashboard/projects/${encodeURIComponent(slug)}`}
@@ -135,7 +133,7 @@ export function ProjectHeroPublicActions({
           </Link>
         ) : null}
         {claimHref ? (
-          <Link href={claimHref} className={inlineActionClass} data-testid="project-hero-claim">
+          <Link href={claimHref} className={claimActionClass} data-testid="project-hero-claim">
             认领
           </Link>
         ) : null}

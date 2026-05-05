@@ -393,11 +393,11 @@ export async function fetchAdminProjectForEdit(id: string): Promise<AdminProject
     claimStatusView: {
       claimStatus: row.claimStatus,
       claimedByUserId: row.claimedByUserId ?? "",
-      pendingClaimId: row.claimRequests[0]?.status === "pending" ? row.claimRequests[0].id : "",
-      pendingClaimUserEmail: row.claimRequests[0]?.status === "pending" ? (row.claimRequests[0].userEmail ?? "") : "",
-      pendingClaimReason: row.claimRequests[0]?.status === "pending" ? (row.claimRequests[0].reason ?? "") : "",
+      pendingClaimId: ["pending", "PENDING", "REVIEWING"].includes(row.claimRequests[0]?.status ?? "") ? row.claimRequests[0].id : "",
+      pendingClaimUserEmail: ["pending", "PENDING", "REVIEWING"].includes(row.claimRequests[0]?.status ?? "") ? (row.claimRequests[0].userEmail ?? "") : "",
+      pendingClaimReason: ["pending", "PENDING", "REVIEWING"].includes(row.claimRequests[0]?.status ?? "") ? (row.claimRequests[0].reason ?? "") : "",
       pendingClaimCreatedAt:
-        row.claimRequests[0]?.status === "pending" ? row.claimRequests[0].createdAt.toISOString() : "",
+        ["pending", "PENDING", "REVIEWING"].includes(row.claimRequests[0]?.status ?? "") ? row.claimRequests[0].createdAt.toISOString() : "",
     },
     officialInfo: {
       summary: row.officialInfo?.summary ?? "",

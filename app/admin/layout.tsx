@@ -141,6 +141,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               >
                 数据概览
               </Link>
+              <Link
+                href="/admin/system/claims"
+                className="text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                项目认领
+              </Link>
             </NavGroup>
           </nav>
         </div>
