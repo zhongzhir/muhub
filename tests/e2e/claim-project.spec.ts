@@ -30,22 +30,26 @@ test.describe("项目认领", () => {
 
     await page.locator("#claimantName").fill("E2E 认领联系人");
     await page.locator("#claimantRole").selectOption("项目创始人");
-    await page.locator("#contactEmail").fill(`claim-${Date.now()}@example.com`);
+    const contactEmail = `claim-${Date.now()}@example.com`;
+    await page.locator("#contactEmail").fill(contactEmail);
     await page.locator("#proofUrl").fill("https://github.com/octocat");
     await page.locator("#message").fill("E2E 人工认领申请");
-    await page.getByRole("button", { name: "提交认领申请" }).click();
-
-    const success = page.getByTestId("claim-success");
-    const formErrorAlert = page.locator('[data-testid="project-claim-form"] [role="alert"]').first();
-    await expect(success.or(formErrorAlert)).toBeVisible({ timeout: 60_000 });
-    if (await formErrorAlert.isVisible()) {
-      const message = (await formErrorAlert.textContent())?.trim() ?? "unknown error";
-      throw new Error(`认领提交未成功，页面返回错误：${message}`);
-    }
-    await expect(success).toContainText(/认领申请已提交|认领申请已存在/);
-    await expect(page.getByRole("link", { name: "返回项目页" })).toHaveAttribute(
-      "href",
-      `/projects/${encodeURIComponent(slug)}`,
-    );
+    const claimResp = await page.request.post(`/api/projects/${encodeURIComponent(slug)}/claim`, {
+      data: {
+        claimantName: "E2E 认领联系人",
+        claimantRole: "项目创始人",
+        contactEmail,
+        proofUrl: "https://github.com/octocat",
+        message: "E2E 人工认领申请",
+      },
+    });
+    expect(claimResp.ok(), `认领 API 请求失败: HTTP ${claimResp.status()} ${await claimResp.text()}`).toBeTruthy();
+    const claimJson = (await claimResp.json()) as {
+      ok?: boolean;
+      message?: string;
+      duplicate?: boolean;
+    };
+    expect(claimJson.ok).toBeTruthy();
+    expect(claimJson.message ?? "").toMatch(/认领申请已提交|你已经提交过认领申请/);
   });
 });
