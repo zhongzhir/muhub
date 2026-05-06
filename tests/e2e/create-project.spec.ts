@@ -31,7 +31,7 @@ test.describe("创建项目链路", () => {
       new RegExp(`^${expectedSlug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(-\\d+)?$`),
     );
     await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible();
-    await expect(page.getByText("项目主页", { exact: true })).toBeVisible();
+    await expect(page.getByText("项目详情", { exact: true })).toBeVisible();
     await expect(page.getByText("这是 Playwright 创建链路的项目介绍正文。")).toBeVisible();
 
     const sources = page.getByTestId("project-sources-section");

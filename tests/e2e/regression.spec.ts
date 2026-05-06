@@ -15,7 +15,7 @@ test.describe("木哈布 回归", () => {
 
   test("项目详情 demo", async ({ page }) => {
     await page.goto("/projects/demo");
-    await expect(page.getByText("项目主页", { exact: true })).toBeVisible();
+    await expect(page.getByText("项目详情", { exact: true })).toBeVisible();
     await expect(page.getByTestId("project-sources-section")).toBeVisible();
     const section = page.getByTestId("project-updates-section");
     await expect(section).toBeVisible();

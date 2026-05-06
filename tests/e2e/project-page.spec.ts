@@ -24,7 +24,7 @@ test.describe("项目详情页：关键入口存在", () => {
     await page.waitForURL(/\/projects\/[^/?#]+\/?$/);
 
     // 关键模块：详情头部 + 操作区 + 公开信息占位（使用稳定 testid，避免文案调整导致脆弱失败）
-    await expect(page.getByText("项目主页", { exact: true })).toBeVisible();
+    await expect(page.getByText("项目详情", { exact: true })).toBeVisible();
     await expect(page.getByTestId("project-hero-public-actions")).toBeVisible();
     await expect(page.getByTestId("project-official-media-section")).toBeVisible();
     await expect(page.getByTestId("project-operations-info-section")).toBeVisible();

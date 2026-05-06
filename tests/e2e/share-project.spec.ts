@@ -18,7 +18,7 @@ test("分享名片页：亮点优先、当前进展、信息源与复制链接",
 
   const sources = page.getByTestId("share-project-sources");
   await expect(sources).toBeVisible();
-  await expect(page.getByRole("heading", { name: "项目信息源" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Project Sources" })).toBeVisible();
   const sourceLinks = page.getByTestId("share-source-link");
   if ((await sourceLinks.count()) > 0) {
     await expect(sourceLinks.first()).toBeVisible();
