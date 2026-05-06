@@ -25,6 +25,8 @@ import { buildProjectHighlights } from "@/lib/project/project-highlights";
 import { buildProjectSummary } from "@/lib/project/project-summary";
 import { ProjectOfficialInfoEditor } from "@/components/project/project-official-info-editor";
 import { ProjectAiContentDraft } from "@/components/project/project-ai-content-draft";
+import { ProjectProConnect } from "@/components/project/project-pro-connect";
+import { ProjectSpreadContent } from "@/components/project/project-spread-content";
 import { userOperatorLabel } from "@/lib/project-ai-content-edit-summary";
 
 export const dynamic = "force-dynamic";
@@ -128,6 +130,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     twitter: string | null;
     discord: string | null;
     contactEmail: string | null;
+    collaborationNeeds: string;
+    hiringNeeds: string;
   } | null = null;
   let aiContentStatus = "";
   let aiContentUpdatedAt = "";
@@ -164,6 +168,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             twitter: true,
             discord: true,
             contactEmail: true,
+            businessInfo: true,
           },
         },
       },
@@ -201,6 +206,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             twitter: owners.officialInfo.twitter,
             discord: owners.officialInfo.discord,
             contactEmail: owners.officialInfo.contactEmail,
+            collaborationNeeds: (() => {
+              const bi = owners.officialInfo.businessInfo;
+              return bi && typeof bi === "object" && !Array.isArray(bi) && typeof (bi as Record<string, unknown>).collaborationNeeds === "string"
+                ? ((bi as Record<string, unknown>).collaborationNeeds as string)
+                : "";
+            })(),
+            hiringNeeds: (() => {
+              const bi = owners.officialInfo.businessInfo;
+              return bi && typeof bi === "object" && !Array.isArray(bi) && typeof (bi as Record<string, unknown>).hiringNeeds === "string"
+                ? ((bi as Record<string, unknown>).hiringNeeds as string)
+                : "";
+            })(),
           }
         : null;
     }
@@ -304,6 +321,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </section>
         ) : null}
 
+        {data.claimStatus === "CLAIMED" && (officialInfo?.contactEmail || officialInfo?.website || data.websiteUrl) ? (
+          <div className="mb-6">
+            <ProjectProConnect
+              projectName={data.name}
+              projectSlug={slug}
+              contactEmail={officialInfo?.contactEmail}
+              websiteUrl={officialInfo?.website || data.websiteUrl}
+              useCases={officialInfo?.useCases}
+              whoFor={officialInfo?.whoFor}
+              claimStatus="CLAIMED"
+            />
+          </div>
+        ) : null}
+
         <ProjectDetailInfoSections
           data={data}
           socials={socials}
@@ -326,6 +357,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         <ProjectRelatedContent items={relatedSiteContent} />
 
         {isClaimedOwner && projectIdForOfficial ? (
+          <div className="mt-6">
+            <ProjectSpreadContent
+              projectId={projectIdForOfficial}
+              content={aiContent && typeof aiContent === "object" ? (aiContent as Record<string, unknown>) : null}
+              draft={aiContentDraft && typeof aiContentDraft === "object" ? (aiContentDraft as Record<string, unknown>) : null}
+              status={aiContentStatus || "idle"}
+            />
+          </div>
+        ) : null}
+
+        {isClaimedOwner && projectIdForOfficial ? (
           <div className="mt-8">
             <ProjectOfficialInfoEditor
               projectId={projectIdForOfficial}
@@ -338,6 +380,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 contactEmail: officialInfo?.contactEmail ?? "",
                 useCases: officialInfo?.useCases ?? [],
                 whoFor: officialInfo?.whoFor ?? [],
+                collaborationNeeds: officialInfo?.collaborationNeeds ?? "",
+                hiringNeeds: officialInfo?.hiringNeeds ?? "",
               }}
             />
           </div>
