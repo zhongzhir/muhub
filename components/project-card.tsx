@@ -123,14 +123,17 @@ export function ProjectCard({
   const publicHref = `/projects/${encodeURIComponent(project.slug)}`;
   const isPlaza = variant === "plaza";
 
+  const isClaimed = project.claimStatus === "CLAIMED";
+
   const shellClass = `relative flex h-full flex-col muhub-card ${
     isPlaza ? "muhub-card--interactive" : ""
-  }`;
+  }${isPlaza && isClaimed ? " border-l-2 border-l-teal-500" : ""}`;
 
   return (
     <article
       data-testid="project-card"
       data-variant={variant}
+      data-claimed={isPlaza && isClaimed ? "true" : undefined}
       className={shellClass}
     >
       {isPlaza ? (
@@ -143,6 +146,14 @@ export function ProjectCard({
         </Link>
       ) : null}
 
+      {isPlaza && isClaimed ? (
+        <span
+          aria-hidden
+          className="absolute right-3 top-3 z-20 h-2 w-2 rounded-full bg-teal-500 ring-2 ring-white dark:ring-zinc-900"
+          title="官方认领主页"
+        />
+      ) : null}
+
       <div
         className={`flex h-full flex-1 flex-col p-5 ${
           isPlaza ? "relative z-10 pointer-events-none" : ""
@@ -152,6 +163,11 @@ export function ProjectCard({
           <h3 className="text-lg font-bold leading-snug tracking-tight text-zinc-950 line-clamp-2 sm:text-xl dark:text-zinc-50">
             {project.name}
           </h3>
+          {isPlaza && isClaimed ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300">
+              ✦ 官方
+            </span>
+          ) : null}
           {!isPlaza && project.visibilityStatus ? (
             <span className={`shrink-0 ${visibilityPill(project.visibilityStatus).className}`}>
               {visibilityPill(project.visibilityStatus).text}
@@ -201,29 +217,4 @@ export function ProjectCard({
           </div>
         </div>
 
-        <div className={`mt-auto pt-3 ${isPlaza ? "border-t border-zinc-100 dark:border-zinc-800/80" : ""}`}>
-          <ProjectLinks project={project} isPlaza={isPlaza} />
-        </div>
-      </div>
-
-      {isPlaza ? null : (
-        <div className="relative z-10 mt-auto grid gap-2 border-t border-zinc-100 px-5 pb-5 pt-4 sm:grid-cols-2 dark:border-zinc-800">
-          <Link
-            href={dashHref}
-            className="muhub-btn-primary min-h-[2.5rem] w-full text-center"
-            data-testid="project-card-manage"
-          >
-            管理项目
-          </Link>
-          <Link
-            href={publicHref}
-            className="muhub-btn-secondary min-h-[2.5rem] w-full text-center font-medium"
-            data-testid="project-card-public"
-          >
-            查看项目
-          </Link>
-        </div>
-      )}
-    </article>
-  );
-}
+        <div className={`mt-auto pt-3 ${isPlaza ? "border-t border-zinc-100 dark:border-zinc-

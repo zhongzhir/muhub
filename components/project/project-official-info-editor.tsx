@@ -13,6 +13,8 @@ type Props = {
     contactEmail: string;
     useCases: string[];
     whoFor: string[];
+    collaborationNeeds: string;
+    hiringNeeds: string;
   };
 };
 
@@ -23,6 +25,8 @@ export function ProjectOfficialInfoEditor({ projectId, initial }: Props) {
   const [twitter, setTwitter] = useState(initial.twitter);
   const [discord, setDiscord] = useState(initial.discord);
   const [contactEmail, setContactEmail] = useState(initial.contactEmail);
+  const [collaborationNeeds, setCollaborationNeeds] = useState(initial.collaborationNeeds);
+  const [hiringNeeds, setHiringNeeds] = useState(initial.hiringNeeds);
   const [useCases, setUseCases] = useState(initial.useCases.join("，"));
   const [whoFor, setWhoFor] = useState(initial.whoFor.join("，"));
   const [saving, setSaving] = useState(false);
@@ -42,6 +46,8 @@ export function ProjectOfficialInfoEditor({ projectId, initial }: Props) {
           contactEmail,
           useCases: useCases.split(/[，,]/).map((item) => item.trim()).filter(Boolean),
           whoFor: whoFor.split(/[，,]/).map((item) => item.trim()).filter(Boolean),
+          collaborationNeeds,
+          hiringNeeds,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
@@ -66,10 +72,4 @@ export function ProjectOfficialInfoEditor({ projectId, initial }: Props) {
       <input className="muhub-input" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="官网" />
       <input className="muhub-input" value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="Twitter" />
       <input className="muhub-input" value={discord} onChange={(e) => setDiscord(e.target.value)} placeholder="Discord" />
-      <input className="muhub-input" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="联系邮箱" />
-      <button type="button" onClick={save} disabled={saving} className="muhub-btn-secondary px-3 py-2 text-sm disabled:opacity-60">
-        {saving ? "保存中..." : "保存官方信息"}
-      </button>
-    </section>
-  );
-}
+      <input className="muhub-input" value={contactEmail} onChange={(e) => setContactEmail(e

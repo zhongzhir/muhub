@@ -60,7 +60,23 @@ export async function POST(
     contactEmail?: string;
     teamInfo?: unknown;
     businessInfo?: unknown;
+    collaborationNeeds?: string;
+    hiringNeeds?: string;
   };
+
+  // Merge collaborationNeeds / hiringNeeds into businessInfo JSON
+  const existingBusinessInfo =
+    body.businessInfo && typeof body.businessInfo === "object" && !Array.isArray(body.businessInfo)
+      ? (body.businessInfo as Record<string, unknown>)
+      : {};
+  const mergedBusinessInfo: Record<string, unknown> = {
+    ...existingBusinessInfo,
+    collaborationNeeds:
+      typeof body.collaborationNeeds === "string" ? body.collaborationNeeds.trim().slice(0, 1000) : (existingBusinessInfo.collaborationNeeds ?? ""),
+    hiringNeeds:
+      typeof body.hiringNeeds === "string" ? body.hiringNeeds.trim().slice(0, 1000) : (existingBusinessInfo.hiringNeeds ?? ""),
+  };
+
   const data = {
     summary: typeof body.summary === "string" ? body.summary.trim().slice(0, 300) : null,
     fullDescription:
@@ -73,7 +89,7 @@ export async function POST(
     contactEmail:
       typeof body.contactEmail === "string" ? body.contactEmail.trim().slice(0, 120) : null,
     teamInfo: body.teamInfo ?? null,
-    businessInfo: body.businessInfo ?? null,
+    businessInfo: mergedBusinessInfo,
   };
 
   const saved = await prisma.projectOfficialInfo.upsert({
@@ -88,23 +104,4 @@ export async function POST(
       website: data.website,
       twitter: data.twitter,
       discord: data.discord,
-      contactEmail: data.contactEmail,
-      teamInfo: (data.teamInfo ?? {}) as Prisma.InputJsonValue,
-      businessInfo: (data.businessInfo ?? {}) as Prisma.InputJsonValue,
-    },
-    update: {
-      summary: data.summary,
-      fullDescription: data.fullDescription,
-      useCases: data.useCases as unknown as Prisma.InputJsonValue,
-      whoFor: data.whoFor as unknown as Prisma.InputJsonValue,
-      website: data.website,
-      twitter: data.twitter,
-      discord: data.discord,
-      contactEmail: data.contactEmail,
-      teamInfo: (data.teamInfo ?? {}) as Prisma.InputJsonValue,
-      businessInfo: (data.businessInfo ?? {}) as Prisma.InputJsonValue,
-    },
-  });
-
-  return Response.json({ ok: true, officialInfo: saved });
-}
+      cont

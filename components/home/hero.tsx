@@ -22,6 +22,13 @@ export default function Hero() {
       />
 
       <div className="relative mx-auto flex max-w-3xl flex-col items-center">
+        {/* AI 时代 badge */}
+        <div className="mb-5 sm:mb-6">
+          <span className="inline-flex items-center rounded-full border border-teal-400/60 bg-teal-50/80 px-3.5 py-1 text-xs font-medium tracking-wide text-teal-700 dark:border-teal-500/40 dark:bg-teal-950/60 dark:text-teal-300">
+            AI 时代的项目公众主页
+          </span>
+        </div>
+
         <div className="mb-6 flex w-full justify-center bg-transparent sm:mb-8">
           <Image
             src="/brand/muhub_logo_mark.png"
@@ -37,34 +44,20 @@ export default function Hero() {
           木哈布 MUHUB
         </h1>
 
-        <p className="mt-4 max-w-2xl text-base font-medium leading-[1.65] text-zinc-700 dark:text-zinc-300 sm:text-lg">
-          真实项目入口与动态信息流，持续聚合公开项目与最新进展。
+        <p className="mt-4 max-w-xl text-base font-medium leading-[1.7] text-zinc-600 dark:text-zinc-400 sm:text-lg">
+          帮助 AI 时代的项目{" "}
+          <span className="text-teal-600 dark:text-teal-400">被看见</span>、
+          <span className="text-teal-600 dark:text-teal-400">被理解</span>、
+          <span className="text-teal-600 dark:text-teal-400">被联系</span>。
+          <br className="hidden sm:block" />
+          <span className="text-zinc-500 dark:text-zinc-500">
+            从项目主页到传播资产，让好项目不再埋没。
+          </span>
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
-          <span className="rounded-full border border-zinc-300 bg-white/80 px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900/70">
-            真实项目
-          </span>
-          <span className="rounded-full border border-zinc-300 bg-white/80 px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900/70">
-            持续更新
-          </span>
-          <span className="rounded-full border border-zinc-300 bg-white/80 px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900/70">
-            公开信息聚合
-          </span>
-        </div>
-
-        <div className="mt-10 flex w-full max-w-lg flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center">
-          <Link
-            href="/projects"
-            className="muhub-btn-primary w-full px-8 py-3.5 shadow-md ring-1 ring-black/[0.06] sm:w-auto dark:ring-white/10"
-          >
-            浏览项目
-          </Link>
-          <Link href="/projects?sort=updated" className="muhub-btn-secondary w-full px-8 py-3.5 sm:w-auto">
-            查看最新动态
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
+        {/* 三列价值说明 */}
+        <div className="mt-8 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-zinc-200/60 bg-white/60 px-4 py-3 text-left backdrop-blur-sm dark:border-zinc-700/50 dark:bg-zinc-900/50">
+            <div className="mb-1.5 text-lg">{"🔍"}</div>
+            <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{"被看见"}</div>
+            <div cl

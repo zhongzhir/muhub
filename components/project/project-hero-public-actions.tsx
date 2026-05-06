@@ -17,6 +17,7 @@ export type ProjectHeroPublicActionsProps = {
   description?: string;
   tags?: string[];
   category?: string | null;
+  claimStatus?: 'CLAIMED' | 'UNCLAIMED';
   showManageLink: boolean;
   claimHref?: string;
   posterIntro: string;
@@ -35,15 +36,12 @@ export type ProjectHeroPublicActionsProps = {
   };
 };
 
-/** 主要链接按钮：官网 / GitHub / GitCC */
 const primaryBtnClass =
   "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-750";
 
-/** 次要幽灵按钮：分享 / 海报 / 管理 */
 const ghostBtnClass =
   "inline-flex items-center gap-1 rounded-full border border-zinc-200/70 px-3.5 py-1.5 text-sm text-zinc-600 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-800 dark:border-zinc-700/50 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200";
 
-/** 认领高亮按钮 */
 const claimBtnClass =
   "inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-700/70 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/50";
 
@@ -56,6 +54,7 @@ export function ProjectHeroPublicActions({
   description,
   tags,
   category,
+  claimStatus,
   showManageLink,
   claimHref,
   posterIntro,
@@ -68,7 +67,7 @@ export function ProjectHeroPublicActions({
   engagement,
 }: ProjectHeroPublicActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
-  const repoLabel = githubUrl?.includes("gitee.com") ? "查看 Gitee" : "查看 GitHub";
+  const repoLabel = githubUrl?.includes("gitee.com") ? "View Gitee" : "View GitHub";
 
   return (
     <>
@@ -76,7 +75,6 @@ export function ProjectHeroPublicActions({
         className="flex flex-wrap items-center gap-2"
         data-testid="project-hero-public-actions"
       >
-        {/* 互动指标条 */}
         {engagement ? (
           <ProjectEngagementBar
             slug={slug}
@@ -88,49 +86,26 @@ export function ProjectHeroPublicActions({
           />
         ) : null}
 
-        {/* 主链接按钮 */}
         {websiteUrl?.trim() ? (
-          <a
-            href={websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={primaryBtnClass}
-          >
-            <span aria-hidden className="text-xs">🌐</span>
-            访问官网
+          <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className={primaryBtnClass}>
+            Website
           </a>
         ) : null}
 
         {githubUrl?.trim() ? (
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={primaryBtnClass}
-          >
-            <span aria-hidden className="text-xs">⌥</span>
+          <a href={githubUrl} target="_blank" rel="noopener noreferrer" className={primaryBtnClass}>
             {repoLabel}
           </a>
         ) : null}
 
         {gitccUrl?.trim() ? (
-          <a
-            href={gitccUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={primaryBtnClass}
-          >
-            查看 GitCC
+          <a href={gitccUrl} target="_blank" rel="noopener noreferrer" className={primaryBtnClass}>
+            View GitCC
           </a>
         ) : null}
 
-        {/* 次要操作 */}
-        <button
-          type="button"
-          className={ghostBtnClass}
-          onClick={() => setShareOpen(true)}
-        >
-          分享
+        <button type="button" className={ghostBtnClass} onClick={() => setShareOpen(true)}>
+          Share
         </button>
 
         <ProjectSharePoster
@@ -163,17 +138,13 @@ export function ProjectHeroPublicActions({
             className={ghostBtnClass}
             data-testid="project-hero-enter-manage"
           >
-            管理
+            Manage
           </Link>
         ) : null}
 
         {claimHref ? (
-          <Link
-            href={claimHref}
-            className={claimBtnClass}
-            data-testid="project-hero-claim"
-          >
-            ✦ 认领项目
+          <Link href={claimHref} className={claimBtnClass} data-testid="project-hero-claim">
+            Claim Project
           </Link>
         ) : null}
       </div>
@@ -189,6 +160,7 @@ export function ProjectHeroPublicActions({
         description={description}
         tags={tags}
         category={category}
+        claimStatus={claimStatus}
       />
     </>
   );

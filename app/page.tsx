@@ -39,14 +39,14 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">最新收录项目</h2>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">来自公开项目库的实时内容</p>
+              <h2 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">最新入驻项目</h2>
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">来自 AI 原生生态的真实项目，持续更新</p>
             </div>
             <Link
               href="/projects?sort=new"
               className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
             >
-              查看全部项目
+              查看项目广场 →
             </Link>
           </div>
           {latestProjects.length > 0 ? (
@@ -74,6 +74,3 @@ export default async function HomePage() {
       <Features />
       <ProjectClaimCta />
       <GeoFaq />
-    </main>
-  );
-}

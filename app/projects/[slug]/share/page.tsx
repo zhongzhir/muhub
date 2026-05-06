@@ -68,37 +68,45 @@ export default async function ShareProjectPage({ params }: PageProps) {
   const initial = projectShareInitial(data.name);
   const canonicalProjectUrl = projectCanonicalUrl(slug);
   const weiboShareHref = buildWeiboShareUrl(canonicalProjectUrl, buildProjectShareSocialLine(data));
-  const xShareText = `${data.name}${data.tagline ? ` — ${data.tagline}` : ""}\n${canonicalProjectUrl}`;
+  const xShareText = `${data.name}${data.tagline ? ` - ${data.tagline}` : ""}\n${canonicalProjectUrl}`;
   const xShareHref = `https://x.com/intent/tweet?text=${encodeURIComponent(xShareText)}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-zinc-100 to-zinc-200 px-4 py-8 text-zinc-900 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900 dark:text-zinc-50 sm:py-12">
-      <div className="mx-auto max-w-xl">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500">
-          <span className="font-medium uppercase tracking-widest text-zinc-500">项目名片 · 分享</span>
-          <div className="flex flex-wrap gap-4">
-            <Link href={`/projects/${slug}`} className="font-medium underline-offset-4 hover:underline">
-              完整主页
-            </Link>
-            <Link href="/" className="underline-offset-4 hover:underline">
-              木哈布
-            </Link>
-          </div>
+    <div className="min-h-screen bg-[#f8f8f6] px-4 py-8 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 sm:py-12">
+      <header className="mb-6 -mx-4 -mt-8 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900 sm:-mt-12">
+        <div className="mx-auto flex max-w-xl items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-900 text-xs font-bold text-white dark:bg-white dark:text-zinc-900">
+              M
+            </div>
+            <span className="text-sm font-semibold text-zinc-800 group-hover:text-zinc-600 dark:text-zinc-100 dark:group-hover:text-zinc-300">
+              MuHub
+            </span>
+          </Link>
+          <Link
+            href={`/projects/${slug}`}
+            className="text-xs font-medium text-zinc-500 underline-offset-4 hover:underline hover:text-zinc-800 dark:hover:text-zinc-200"
+          >
+            Full Project Page
+          </Link>
         </div>
+      </header>
 
+      <div className="mx-auto max-w-xl">
         <article className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-xl ring-1 ring-zinc-200/50 dark:border-zinc-700/90 dark:bg-zinc-900 dark:ring-zinc-800/80">
-          {/* 1. Hero */}
+          {data.claimStatus === "CLAIMED" && (
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-2.5 text-center text-xs font-semibold text-white">
+              Official Verified Page - Claimed by Project Owner
+            </div>
+          )}
+
           <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 px-6 pb-8 pt-8 text-white">
             <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left">
               <div className="relative shrink-0">
                 {data.logoUrl?.trim() ? (
                   <div className="flex h-24 w-24 overflow-hidden rounded-2xl border-2 border-white/20 bg-white/10 shadow-lg ring-2 ring-black/20">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={data.logoUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={data.logoUrl} alt="" className="h-full w-full object-cover" />
                   </div>
                 ) : (
                   <div
@@ -125,7 +133,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
                   </p>
                 ) : (
                   <p className="mt-3 text-sm text-zinc-400" data-testid="share-project-tagline">
-                    暂无简介
+                    No description
                   </p>
                 )}
                 <div className="mt-4 flex justify-center sm:justify-start">
@@ -140,17 +148,14 @@ export default async function ShareProjectPage({ params }: PageProps) {
           </div>
 
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {/* 2. 项目亮点 */}
             <ShareHighlightSection
               paragraphs={highlight.paragraphs}
               source={highlight.source}
               tags={data.tags && data.tags.length > 0 ? data.tags : undefined}
             />
 
-            {/* 3. 当前进展 */}
             <ShareProgressSection model={progressModel} githubSnapshot={snap} />
 
-            {/* 4. 信息源 / 链接 */}
             <section
               className="px-6 py-6"
               aria-labelledby="share-sources-heading"
@@ -160,11 +165,11 @@ export default async function ShareProjectPage({ params }: PageProps) {
                 id="share-sources-heading"
                 className="text-xs font-semibold uppercase tracking-widest text-zinc-500"
               >
-                项目信息源
+                Project Sources
               </h2>
-              <p className="mt-1 text-[11px] text-zinc-400">仓库 · 官网 · 文档 · 博客与社媒，一键跳转</p>
+              <p className="mt-1 text-[11px] text-zinc-400">Repo, website, docs, blog and socials</p>
               {sourceItems.length === 0 ? (
-                <p className="mt-4 text-sm text-zinc-400">暂无公开链接，可在完整主页查看是否已配置。</p>
+                <p className="mt-4 text-sm text-zinc-400">No public links configured yet.</p>
               ) : (
                 <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                   {sourceItems.map((s) => (
@@ -189,7 +194,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
                         </span>
                         {s.isPrimary ? (
                           <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-900 dark:bg-amber-950/60 dark:text-amber-200">
-                            主
+                            Main
                           </span>
                         ) : null}
                       </a>
@@ -199,9 +204,9 @@ export default async function ShareProjectPage({ params }: PageProps) {
               )}
 
               <div className="mt-6">
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">社媒</h3>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Socials</h3>
                 {socials.length === 0 ? (
-                  <p className="mt-2 text-sm text-zinc-400">暂无社媒</p>
+                  <p className="mt-2 text-sm text-zinc-400">No socials</p>
                 ) : (
                   <ul className="mt-2 flex flex-wrap gap-2">
                     {socials.map((s) => (
@@ -226,21 +231,20 @@ export default async function ShareProjectPage({ params }: PageProps) {
                 )}
               </div>
 
-              <p className="mt-4 text-xs text-zinc-500">创建于 {formatListDate(data.createdAt)}</p>
+              <p className="mt-4 text-xs text-zinc-500">Created {formatListDate(data.createdAt)}</p>
             </section>
 
-            {/* 5. 仓库数据（后置、辅助参考） */}
             {snap ? (
               <section
                 className="px-6 py-6"
-                aria-label="仓库指标参考"
+                aria-label="Repo stats"
                 data-testid="share-github-stats"
               >
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  仓库指标参考
+                  Repo Stats
                 </h2>
                 <p className="mt-1 text-[11px] text-zinc-400">
-                  以下为快照数据，仅供侧面了解活跃度，不影响上方价值叙述。
+                  Snapshot data for reference only.
                 </p>
                 <p className="mt-3 text-xs font-medium text-zinc-500" data-testid="share-repo-platform-heading">
                   {repoPlatformDisplayLabel(
@@ -250,7 +254,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
                 <p className="mt-1 font-mono text-xs text-zinc-500">{snap.repoFullName}</p>
                 <dl className="mt-4 grid grid-cols-3 gap-3 text-center sm:text-left">
                   <div className="rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-800/80">
-                    <dt className="text-[11px] font-medium text-zinc-500">星标</dt>
+                    <dt className="text-[11px] font-medium text-zinc-500">Stars</dt>
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.stars}</dd>
                   </div>
                   <div className="rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-800/80">
@@ -258,7 +262,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.forks}</dd>
                   </div>
                   <div className="rounded-lg bg-zinc-50 px-2 py-2 dark:bg-zinc-800/80">
-                    <dt className="text-[11px] font-medium text-zinc-500">待处理议题</dt>
+                    <dt className="text-[11px] font-medium text-zinc-500">Open Issues</dt>
                     <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{snap.openIssues}</dd>
                   </div>
                 </dl>
@@ -268,14 +272,14 @@ export default async function ShareProjectPage({ params }: PageProps) {
                 >
                   {snap.lastCommitAt ? (
                     <p className="text-sm" data-testid="share-github-last-commit">
-                      <span className="text-zinc-500">最近提交 </span>
+                      <span className="text-zinc-500">Last commit: </span>
                       <span className="font-medium text-zinc-800 dark:text-zinc-200">
                         {snap.lastCommitAt.toLocaleString("zh-CN")}
                       </span>
                     </p>
                   ) : null}
                   <p className="text-sm" data-testid="share-github-activity">
-                    <span className="text-zinc-500">活跃度 </span>
+                    <span className="text-zinc-500">Activity: </span>
                     <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                       {computeGithubActivity(snap).label}
                     </span>
@@ -295,19 +299,16 @@ export default async function ShareProjectPage({ params }: PageProps) {
             ) : null}
           </div>
 
-          {/* 6. 复制分享链接 CTA */}
           <footer className="border-t border-zinc-100 bg-zinc-50/90 px-6 py-8 dark:border-zinc-800 dark:bg-zinc-900/90">
             <p className="mb-1 text-center text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-              分享这份项目名片
+              Share this project card
             </p>
             <p className="mb-5 text-center text-xs text-zinc-500 dark:text-zinc-400">
-              复制链接发给投资人、合作方或客户，或直接分享到社交平台
+              Copy the link to share with investors, partners, or clients
             </p>
-            {/* 主 CTA：复制链接 */}
             <div className="mx-auto w-full max-w-xs">
               <CopyLinkButton />
             </div>
-            {/* 社交平台按钮 */}
             <div className="mx-auto mt-3 flex w-full max-w-xs flex-col gap-2">
               <a
                 href={weiboShareHref}
@@ -315,7 +316,7 @@ export default async function ShareProjectPage({ params }: PageProps) {
                 rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200 dark:hover:bg-red-950/50"
               >
-                分享到微博
+                Share to Weibo
               </a>
               <a
                 href={xShareHref}
@@ -323,11 +324,11 @@ export default async function ShareProjectPage({ params }: PageProps) {
                 rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
               >
-                分享到 X (Twitter)
+                Share to X (Twitter)
               </a>
             </div>
             <p className="mt-5 text-center text-[11px] text-zinc-400 dark:text-zinc-600">
-              微信分享：在手机上打开此页，点击右上角 → 发送给朋友
+              WeChat: open on mobile and tap share
             </p>
           </footer>
         </article>
