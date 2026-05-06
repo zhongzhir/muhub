@@ -74,3 +74,6 @@ export default async function HomePage() {
       <Features />
       <ProjectClaimCta />
       <GeoFaq />
+    </main>
+  );
+}

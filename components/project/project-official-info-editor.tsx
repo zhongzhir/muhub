@@ -72,4 +72,30 @@ export function ProjectOfficialInfoEditor({ projectId, initial }: Props) {
       <input className="muhub-input" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="官网" />
       <input className="muhub-input" value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="Twitter" />
       <input className="muhub-input" value={discord} onChange={(e) => setDiscord(e.target.value)} placeholder="Discord" />
-      <input className="muhub-input" value={contactEmail} onChange={(e) => setContactEmail(e
+      <input className="muhub-input" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="联系邮箱" />
+      <div className="space-y-1">
+        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400">合作需求说明</label>
+        <textarea
+          className="muhub-input min-h-[72px]"
+          rows={3}
+          value={collaborationNeeds}
+          onChange={(e) => setCollaborationNeeds(e.target.value)}
+          placeholder="描述你的合作意向，例如：寻找渠道合作伙伴、技术联合开发..."
+        />
+      </div>
+      <div className="space-y-1">
+        <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400">招聘需求</label>
+        <textarea
+          className="muhub-input min-h-[72px]"
+          rows={3}
+          value={hiringNeeds}
+          onChange={(e) => setHiringNeeds(e.target.value)}
+          placeholder="例如：寻找全栈工程师、产品设计师..."
+        />
+      </div>
+      <button type="button" onClick={save} disabled={saving} className="muhub-btn-secondary px-3 py-2 text-sm disabled:opacity-60">
+        {saving ? "保存中..." : "保存官方信息"}
+      </button>
+    </section>
+  );
+}

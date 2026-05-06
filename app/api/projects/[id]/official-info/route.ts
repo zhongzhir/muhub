@@ -104,4 +104,23 @@ export async function POST(
       website: data.website,
       twitter: data.twitter,
       discord: data.discord,
-      cont
+      contactEmail: data.contactEmail,
+      teamInfo: (data.teamInfo ?? {}) as Prisma.InputJsonValue,
+      businessInfo: (data.businessInfo ?? {}) as Prisma.InputJsonValue,
+    },
+    update: {
+      summary: data.summary,
+      fullDescription: data.fullDescription,
+      useCases: data.useCases as unknown as Prisma.InputJsonValue,
+      whoFor: data.whoFor as unknown as Prisma.InputJsonValue,
+      website: data.website,
+      twitter: data.twitter,
+      discord: data.discord,
+      contactEmail: data.contactEmail,
+      teamInfo: (data.teamInfo ?? {}) as Prisma.InputJsonValue,
+      businessInfo: (data.businessInfo ?? {}) as Prisma.InputJsonValue,
+    },
+  });
+
+  return Response.json({ ok: true, officialInfo: saved });
+}

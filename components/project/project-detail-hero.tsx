@@ -112,4 +112,21 @@ export function ProjectDetailHero({
       <div className="border-t border-zinc-100 bg-zinc-50/60 px-7 py-5 md:px-10 dark:border-zinc-800/80 dark:bg-zinc-900/40">
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-zinc-500">
           <div className="flex min-w-0 gap-1.5">
-            <dt className="shrink-0 font-medium text-z
+            <dt className="shrink-0 font-medium text-zinc-400">访问地址</dt>
+            <dd className="min-w-0 break-all font-mono text-zinc-600 dark:text-zinc-300">
+              {publicPath}
+            </dd>
+          </div>
+          <div className="flex gap-1.5">
+            <dt className="font-medium text-zinc-400">收录时间</dt>
+            <dd className="text-zinc-600 dark:text-zinc-300">{formatListDate(createdAt)}</dd>
+          </div>
+        </dl>
+
+        <div className="mt-4" role="toolbar" aria-label="项目快捷操作">
+          {actions}
+        </div>
+      </div>
+    </section>
+  );
+}

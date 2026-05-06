@@ -121,7 +121,7 @@ export function ProjectSpreadContent({
   const [status, setStatus] = useState(initialStatus || "idle");
   const [busy, setBusy] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("oneLiner");
-  const [liveContent, setLiveContent] = useState<ContentPayload | null>(content as ContentPayload | null);
+  const liveContent = content as ContentPayload | null;
   const [liveDraft, setLiveDraft] = useState<ContentPayload | null>(draft as ContentPayload | null);
 
   // Active content: draft takes priority over content
@@ -196,7 +196,7 @@ export function ProjectSpreadContent({
             </p>
           ) : (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              传播资产正在准备中。点击"生成传播内容"按钮，AI 将根据项目信息自动生成一句话定位、多长度介绍和多受众版本文案。
+              传播资产正在准备中。点击&ldquo;生成传播内容&rdquo;按钮，AI 将根据项目信息自动生成一句话定位、多长度介绍和多受众版本文案。
             </p>
           )}
         </div>

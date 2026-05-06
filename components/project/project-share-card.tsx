@@ -78,4 +78,7 @@ export function ProjectShareCard({
             {canonicalUrl || `/projects/${slug}`}
           </p>
         </div>
-    
+      </div>
+    </div>
+  );
+}

@@ -217,4 +217,29 @@ export function ProjectCard({
           </div>
         </div>
 
-        <div className={`mt-auto pt-3 ${isPlaza ? "border-t border-zinc-100 dark:border-zinc-
+        <div className={`mt-auto pt-3 ${isPlaza ? "border-t border-zinc-100 dark:border-zinc-800/80" : ""}`}>
+          <ProjectLinks project={project} isPlaza={isPlaza} />
+        </div>
+      </div>
+
+      {isPlaza ? null : (
+        <div className="relative z-10 mt-auto grid gap-2 border-t border-zinc-100 px-5 pb-5 pt-4 sm:grid-cols-2 dark:border-zinc-800">
+          <Link
+            href={dashHref}
+            className="muhub-btn-primary min-h-[2.5rem] w-full text-center"
+            data-testid="project-card-manage"
+          >
+            管理项目
+          </Link>
+          <Link
+            href={publicHref}
+            className="muhub-btn-secondary min-h-[2.5rem] w-full text-center font-medium"
+            data-testid="project-card-public"
+          >
+            查看项目
+          </Link>
+        </div>
+      )}
+    </article>
+  );
+}
