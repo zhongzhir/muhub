@@ -169,7 +169,7 @@ export async function fetchProjectSummary(githubUrl: string): Promise<FetchProje
     const releaseUrl = `${r.githubUrl}/releases/tag/${encodeURIComponent(tag)}`;
     updates.push({
       title: `Release ${tag}`,
-      summary: release.publishedAt ? `发布于 ${release.publishedAt.toISOString().slice(0, 10)}` : undefined,
+      summary: release.publishedAt ? `发布于 ${release.publishedAt.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" })}` : undefined,
       sourceUrl: releaseUrl,
       occurredAt: release.publishedAt?.toISOString(),
     });

@@ -101,7 +101,7 @@ export function CandidateClassificationPanel(props: {
             onClick={runClassify}
             className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50 dark:bg-violet-600"
           >
-            Run Classification
+            运行分类
           </button>
           <button
             type="button"
@@ -110,7 +110,7 @@ export function CandidateClassificationPanel(props: {
             className="rounded-lg border border-violet-400 px-3 py-1.5 text-xs font-medium text-violet-900 disabled:opacity-50 dark:border-violet-600 dark:text-violet-200"
             title={canAccept ? undefined : "需先运行分类且状态为 DONE"}
           >
-            Accept Classification
+            采纳分类
           </button>
         </div>
       </div>
@@ -119,7 +119,7 @@ export function CandidateClassificationPanel(props: {
         <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
           最近任务：{lastJob.status}
           {lastJob.finishedAt ?
-            ` · ${new Date(lastJob.finishedAt).toLocaleString()}`
+            ` · ${new Date(lastJob.finishedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`
           : " · 进行中"}
           {lastJob.errorMessage ?
             <span className="ml-1 text-red-600 dark:text-red-400">· {lastJob.errorMessage}</span>

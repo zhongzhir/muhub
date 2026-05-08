@@ -433,7 +433,7 @@ export function ProjectDetailInfoSections({
                 <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
                   <dt className="text-xs font-medium text-zinc-500">最近提交</dt>
                   <dd className="mt-1 font-medium" data-testid="github-snapshot-last-commit">
-                    {data.githubSnapshot.lastCommitAt ? data.githubSnapshot.lastCommitAt.toLocaleString("zh-CN") : "暂无"}
+                    {data.githubSnapshot.lastCommitAt ? data.githubSnapshot.lastCommitAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" }) : "暂无"}
                   </dd>
                 </div>
                 <div className="col-span-2 rounded-lg bg-zinc-50 px-3 py-3 sm:col-span-3 dark:bg-zinc-800/50">
@@ -442,7 +442,7 @@ export function ProjectDetailInfoSections({
                     {data.githubSnapshot.latestReleaseTag
                       ? `${data.githubSnapshot.latestReleaseTag}${
                           data.githubSnapshot.latestReleaseAt
-                            ? ` · ${data.githubSnapshot.latestReleaseAt.toLocaleString("zh-CN")}`
+                            ? ` · ${data.githubSnapshot.latestReleaseAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`
                             : ""
                         }`
                       : "—"}

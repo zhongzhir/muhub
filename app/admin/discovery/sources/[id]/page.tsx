@@ -89,10 +89,10 @@ export default async function AdminDiscoverySourceDetailPage({
                   </td>
                   <td className="px-3 py-2 text-xs">{r.status}</td>
                   <td className="px-3 py-2 text-xs text-zinc-600">
-                    {r.startedAt.toISOString().slice(0, 19)}
+                    {r.startedAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}
                   </td>
                   <td className="px-3 py-2 text-xs text-zinc-600">
-                    {r.finishedAt?.toISOString().slice(0, 19) ?? "—"}
+                    {r.finishedAt?.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }) ?? "—"}
                   </td>
                   <td className="px-3 py-2 text-[10px] tabular-nums text-zinc-600">
                     {r.fetchedCount}/{r.parsedCount}/+{r.newCandidateCount}/~

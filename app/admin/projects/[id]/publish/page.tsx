@@ -68,7 +68,7 @@ export default async function AdminProjectPublishPage({ params }: { params: Prom
             <code className="ml-1 rounded bg-zinc-100 px-1 dark:bg-zinc-800">{row.visibilityStatus}</code>
           </div>
           <div>是否公开：{row.isPublic ? "是" : "否"}</div>
-          <div>发布时间：{row.publishedAt ? row.publishedAt.toISOString().replace("T", " ").slice(0, 19) : "未发布"}</div>
+          <div>发布时间：{row.publishedAt ? row.publishedAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }) : "未发布"}</div>
         </div>
 
         <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/30">
@@ -96,7 +96,7 @@ export default async function AdminProjectPublishPage({ params }: { params: Prom
                 <li key={item.id}>
                   <span className="font-medium text-zinc-800 dark:text-zinc-200">{actionLabel(item.action)}</span>
                   {" · "}
-                  {item.occurredAt.toISOString().replace("T", " ").slice(0, 19)}
+                  {item.occurredAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}
                 </li>
               ))}
             </ul>

@@ -27,7 +27,7 @@ export function ProjectRelatedContent({ items }: { items: SiteContent[] }) {
         id="project-related-content-heading"
         className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
       >
-        Related Content
+        相关内容
       </h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         MUHUB 站内内容流中与本项目关联的条目（按发布时间倒序）。

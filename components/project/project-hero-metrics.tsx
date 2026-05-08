@@ -20,7 +20,7 @@ export default function ProjectHeroMetrics({ stars, updatedAt, contributors }: P
           <span className="text-sm font-semibold tabular-nums text-white">
             {stars.toLocaleString()}
           </span>
-          <span className="text-[10px] font-medium text-zinc-500">Stars</span>
+          <span className="text-[10px] font-medium text-zinc-500">星标</span>
         </div>
       ) : null}
 

@@ -127,7 +127,7 @@ export function DiscoveryAdvancedFilters(props: { paramString: string }) {
               className="w-40 rounded border px-1.5 py-1 font-mono dark:border-zinc-600 dark:bg-zinc-900"
               value={sourceId}
               onChange={(e) => setSourceId(e.target.value)}
-              placeholder="DiscoverySource id"
+              placeholder="数据源 ID"
             />
           </label>
           <label className="flex items-center gap-1">

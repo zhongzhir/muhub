@@ -126,7 +126,7 @@ export default async function AdminProjectClaimsPage({ searchParams }: PageProps
                   return (
                     <tr key={row.id} className="align-top">
                       <td className="whitespace-nowrap px-4 py-4 text-zinc-500">
-                        {row.createdAt.toLocaleString("zh-CN")}
+                        {row.createdAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
                       </td>
                       <td className="px-4 py-4">
                         <Link

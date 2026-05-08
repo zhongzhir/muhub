@@ -26,7 +26,7 @@ export function ContentSubscriptionRow({ row }: { row: ContentSubscriptionWithPr
             <dd className="text-zinc-700 dark:text-zinc-300">{formatListDate(row.createdAt)}</dd>
           </div>
           <div className="flex flex-wrap gap-x-2">
-            <dt>slug</dt>
+            <dt>项目标识</dt>
             <dd className="break-all font-mono text-zinc-600 dark:text-zinc-300">{row.projectSlug}</dd>
           </div>
         </dl>

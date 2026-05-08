@@ -14,7 +14,7 @@ export function ContentSearchForm({ tab, defaultQuery }: { tab: ContentStreamTab
         id="content-search-q"
         name="q"
         type="search"
-        placeholder="Search content..."
+        placeholder="搜索内容…"
         defaultValue={defaultQuery}
         autoComplete="off"
         className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-teal-400"

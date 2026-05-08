@@ -21,7 +21,7 @@ function formatTime(value: string): string {
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-  return date.toLocaleString("zh-CN", { hour12: false });
+  return date.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
 }
 
 export default async function AdminDiscoveryMobilePage() {

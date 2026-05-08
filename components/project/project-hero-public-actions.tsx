@@ -67,7 +67,7 @@ export function ProjectHeroPublicActions({
   engagement,
 }: ProjectHeroPublicActionsProps) {
   const [shareOpen, setShareOpen] = useState(false);
-  const repoLabel = githubUrl?.includes("gitee.com") ? "View Gitee" : "View GitHub";
+  const repoLabel = githubUrl?.includes("gitee.com") ? "访问 Gitee" : "访问 GitHub";
 
   return (
     <>
@@ -88,7 +88,7 @@ export function ProjectHeroPublicActions({
 
         {websiteUrl?.trim() ? (
           <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className={primaryBtnClass}>
-            Website
+            官方网站
           </a>
         ) : null}
 
@@ -100,12 +100,12 @@ export function ProjectHeroPublicActions({
 
         {gitccUrl?.trim() ? (
           <a href={gitccUrl} target="_blank" rel="noopener noreferrer" className={primaryBtnClass}>
-            View GitCC
+            访问 GitCC
           </a>
         ) : null}
 
         <button type="button" className={ghostBtnClass} onClick={() => setShareOpen(true)}>
-          Share
+          分享
         </button>
 
         <ProjectSharePoster
@@ -138,13 +138,13 @@ export function ProjectHeroPublicActions({
             className={ghostBtnClass}
             data-testid="project-hero-enter-manage"
           >
-            Manage
+            管理项目
           </Link>
         ) : null}
 
         {claimHref ? (
           <Link href={claimHref} className={claimBtnClass} data-testid="project-hero-claim">
-            Claim Project
+            认领项目
           </Link>
         ) : null}
       </div>

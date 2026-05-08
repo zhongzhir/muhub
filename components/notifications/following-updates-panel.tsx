@@ -21,6 +21,7 @@ function formatTime(iso: string): string {
   try {
     const d = new Date(iso);
     return d.toLocaleString("zh-CN", {
+      timeZone: "Asia/Shanghai",
       month: "numeric",
       day: "numeric",
       hour: "2-digit",

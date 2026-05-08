@@ -60,7 +60,7 @@ export function DiscoveryCandidateRow({ candidate: c }: DiscoveryCandidateRowPro
           <dt className="text-zinc-400">最近推送</dt>
           <dd>
             {c.lastPushedAt
-              ? new Date(c.lastPushedAt).toLocaleString("zh-CN")
+              ? new Date(c.lastPushedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })
               : "—"}
           </dd>
         </div>
@@ -122,7 +122,6 @@ function LinkButton({ href, primary, children }: { href: string; primary?: boole
           : ""
       }
     >
-      {children}
-    </a>
+  </a>
   );
 }

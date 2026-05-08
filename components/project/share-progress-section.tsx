@@ -65,7 +65,7 @@ export function ShareProgressSection({ model, githubSnapshot }: Props) {
                         })}
                       </p>
                       <time className="mt-0.5 block text-[11px] text-zinc-400" dateTime={t.toISOString()}>
-                        {t.toLocaleString("zh-CN")}
+                        {t.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
                       </time>
                     </li>
                   );

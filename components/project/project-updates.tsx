@@ -119,7 +119,7 @@ export function ProjectUpdates({
                       className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
                       dateTime={displayAt.toISOString()}
                     >
-                      {displayAt.toLocaleString("zh-CN")}
+                      {displayAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
                     </time>
                   </div>
                 ) : (
@@ -142,7 +142,7 @@ export function ProjectUpdates({
                         className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500"
                         dateTime={displayAt.toISOString()}
                       >
-                        {displayAt.toLocaleString("zh-CN")}
+                        {displayAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}
                       </time>
                     </div>
                   </>

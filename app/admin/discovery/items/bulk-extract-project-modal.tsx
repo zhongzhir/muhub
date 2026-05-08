@@ -6,10 +6,13 @@ import { useMemo, useState, useTransition } from "react";
 import {
   bulkAddGithubProjectsToQueueAction,
   extractGithubProjectsFromArticleAction,
+  extractProjectsFromUrlAction,
 } from "./actions";
 
 const inputClass =
   "mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-blue-500 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+
+type InputMode = "text" | "url";
 
 type ExtractedItem = {
   sourceType: "GITHUB" | "GITCC";
@@ -32,29 +35,41 @@ export function BulkExtractProjectModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [inputMode, setInputMode] = useState<InputMode>("text");
+
   const [sourceName, setSourceName] = useState("");
   const [articleTitle, setArticleTitle] = useState("");
   const [articleBody, setArticleBody] = useState("");
+
+  const [articleUrl, setArticleUrl] = useState("");
+  const [urlSourceName, setUrlSourceName] = useState("");
+
   const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [items, setItems] = useState<ExtractedItem[]>([]);
   const [selectedUrls, setSelectedUrls] = useState<string[]>([]);
+  const [extractedArticleBody, setExtractedArticleBody] = useState<string>("");
+  const [extractedArticleTitle, setExtractedArticleTitle] = useState<string>("");
 
   const readyItems = useMemo(() => items.filter((x) => x.status === "ready"), [items]);
   const duplicateItems = useMemo(() => items.filter((x) => x.status === "duplicate"), [items]);
   const failedItems = useMemo(() => items.filter((x) => x.status === "error"), [items]);
 
   function reset() {
-    setSourceName("");
-    setArticleTitle("");
-    setArticleBody("");
-    setFeedback(null);
-    setItems([]);
-    setSelectedUrls([]);
+    setSourceName(""); setArticleTitle(""); setArticleBody("");
+    setArticleUrl(""); setUrlSourceName("");
+    setFeedback(null); setItems([]); setSelectedUrls([]);
+    setExtractedArticleBody(""); setExtractedArticleTitle("");
   }
 
   function toggleSelect(url: string) {
-    setSelectedUrls((prev) => (prev.includes(url) ? prev.filter((x) => x !== url) : [...prev, url]));
+    setSelectedUrls((prev) =>
+      prev.includes(url) ? prev.filter((x) => x !== url) : [...prev, url]
+    );
   }
+
+  const effectiveSourceName = inputMode === "url" ? urlSourceName : sourceName;
+  const effectiveArticleTitle = inputMode === "url" ? extractedArticleTitle : articleTitle;
+  const effectiveArticleBody = inputMode === "url" ? extractedArticleBody : articleBody;
 
   return (
     <>
@@ -63,7 +78,7 @@ export function BulkExtractProjectModal() {
         onClick={() => setOpen(true)}
         className="rounded border border-zinc-300 bg-white px-2.5 py-1 text-xs text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
       >
-        批量提取项目
+        {"批量提取项目"}
       </button>
 
       {open ? (
@@ -71,56 +86,106 @@ export function BulkExtractProjectModal() {
           <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
               <div>
-                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">批量提取项目</h2>
+                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{"批量提取项目"}</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  粘贴文章正文，自动提取 GitHub / GitCC 等项目链接并批量加入发现队列。
-                </p>
-                <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-                  提取规则版本：2026-04-16-b
+                  {"从文章正文或 URL 中自动提取 GitHub / GitCC 项目链接并批量加入发现队列。"}
                 </p>
               </div>
               <button
                 type="button"
-                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                onClick={() => {
-                  setOpen(false);
-                  reset();
-                }}
+                className="shrink-0 rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                onClick={() => { setOpen(false); reset(); }}
               >
-                关闭
+                {"关闭"}
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              <div className="grid gap-3">
-                <label className="text-sm">
-                  来源名称（可选）
-                  <input
-                    className={inputClass}
-                    placeholder="例如：某某公众号"
-                    value={sourceName}
-                    onChange={(e) => setSourceName(e.target.value)}
-                  />
-                </label>
-                <label className="text-sm">
-                  文章来源标题（可选）
-                  <input
-                    className={inputClass}
-                    placeholder="文章标题"
-                    value={articleTitle}
-                    onChange={(e) => setArticleTitle(e.target.value)}
-                  />
-                </label>
-                <label className="text-sm">
-                  文章正文（必填）
-                  <textarea
-                    className={`${inputClass} min-h-[180px]`}
-                    placeholder="粘贴公众号文章正文..."
-                    value={articleBody}
-                    onChange={(e) => setArticleBody(e.target.value)}
-                  />
-                </label>
+              <div className="mb-4 flex gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800/60">
+                <button
+                  type="button"
+                  onClick={() => { setInputMode("text"); setFeedback(null); }}
+                  className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                    inputMode === "text"
+                      ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+                      : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  }`}
+                >
+                  {"📝 粘贴文章正文"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setInputMode("url"); setFeedback(null); }}
+                  className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                    inputMode === "url"
+                      ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+                      : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  }`}
+                >
+                  {"🔗 输入文章 URL（微信 / 新闻等）"}
+                </button>
               </div>
+
+              {inputMode === "text" && (
+                <div className="grid gap-3">
+                  <label className="text-sm">
+                    {"来源名称（可选）"}
+                    <input
+                      className={inputClass}
+                      placeholder={"例如：某某公众号"}
+                      value={sourceName}
+                      onChange={(e) => setSourceName(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-sm">
+                    {"文章来源标题（可选）"}
+                    <input
+                      className={inputClass}
+                      placeholder={"文章标题"}
+                      value={articleTitle}
+                      onChange={(e) => setArticleTitle(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-sm">
+                    {"文章正文（必填）"}
+                    <textarea
+                      className={`${inputClass} min-h-[180px]`}
+                      placeholder={"粘贴公众号文章正文..."}
+                      value={articleBody}
+                      onChange={(e) => setArticleBody(e.target.value)}
+                    />
+                  </label>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                    {"提取规则版本：2026-04-16-b"}
+                  </p>
+                </div>
+              )}
+
+              {inputMode === "url" && (
+                <div className="grid gap-3">
+                  <label className="text-sm">
+                    {"文章 URL（必填）"}
+                    <input
+                      className={inputClass}
+                      placeholder="https://mp.weixin.qq.com/s/…"
+                      value={articleUrl}
+                      onChange={(e) => setArticleUrl(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-sm">
+                    {"来源名称（可选）"}
+                    <input
+                      className={inputClass}
+                      placeholder={"例如：某某公众号"}
+                      value={urlSourceName}
+                      onChange={(e) => setUrlSourceName(e.target.value)}
+                    />
+                  </label>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                    {"系统将自动抓取页面内容并从中提取 GitHub / GitCC 项目链接。"}
+                  </p>
+                </div>
+              )}
 
               {feedback ? (
                 <p
@@ -137,20 +202,20 @@ export function BulkExtractProjectModal() {
               {items.length > 0 ? (
                 <>
                   <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
-                    提取成功 {readyItems.length} 条，已存在 {duplicateItems.length} 条，失败 {failedItems.length} 条
+                    {"提取成功 "}{readyItems.length}{" 条，已存在 "}{duplicateItems.length}{" 条，失败 "}{failedItems.length}{" 条"}
                   </p>
                   <div className="mt-2 max-h-[45vh] overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
                     <table className="w-full min-w-[920px] text-left text-xs">
                       <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/30">
                         <tr>
-                          <th className="px-3 py-2">选择</th>
-                          <th className="px-3 py-2">来源</th>
-                          <th className="px-3 py-2">项目链接</th>
-                          <th className="px-3 py-2">项目名</th>
-                          <th className="px-3 py-2">简介</th>
-                          <th className="px-3 py-2">Stars</th>
-                          <th className="px-3 py-2">语言</th>
-                          <th className="px-3 py-2">状态</th>
+                          <th className="px-3 py-2">{"选择"}</th>
+                          <th className="px-3 py-2">{"来源"}</th>
+                          <th className="px-3 py-2">{"项目链接"}</th>
+                          <th className="px-3 py-2">{"项目名"}</th>
+                          <th className="px-3 py-2">{"简介"}</th>
+                          <th className="px-3 py-2">{"Stars"}</th>
+                          <th className="px-3 py-2">{"语言"}</th>
+                          <th className="px-3 py-2">{"状态"}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -158,7 +223,10 @@ export function BulkExtractProjectModal() {
                           const checked = selectedUrls.includes(item.sourceUrl);
                           const disabled = item.status !== "ready";
                           return (
-                            <tr key={item.sourceUrl} className="border-b border-zinc-100 dark:border-zinc-800">
+                            <tr
+                              key={item.sourceUrl}
+                              className="border-b border-zinc-100 dark:border-zinc-800"
+                            >
                               <td className="px-3 py-2">
                                 <input
                                   type="checkbox"
@@ -169,26 +237,33 @@ export function BulkExtractProjectModal() {
                               </td>
                               <td className="px-3 py-2">{item.sourceLabel}</td>
                               <td className="px-3 py-2">
-                                <a href={item.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+                                <a
+                                  href={item.sourceUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="underline"
+                                >
                                   {item.sourceUrl}
                                 </a>
                               </td>
                               <td className="px-3 py-2">{item.projectName || "-"}</td>
-                              <td className="max-w-[320px] px-3 py-2 truncate">{item.summary || "-"}</td>
+                              <td className="max-w-[320px] px-3 py-2 truncate">
+                                {item.summary || "-"}
+                              </td>
                               <td className="px-3 py-2">{item.stars}</td>
                               <td className="px-3 py-2">{item.language || "-"}</td>
                               <td className="px-3 py-2">
                                 {item.status === "ready" ? (
                                   <span className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-                                    可加入
+                                    {"可加入"}
                                   </span>
                                 ) : item.status === "duplicate" ? (
                                   <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                                    已存在
+                                    {"已存在"}
                                   </span>
                                 ) : (
                                   <span className="rounded bg-red-100 px-2 py-0.5 text-red-800 dark:bg-red-950 dark:text-red-200">
-                                    解析失败
+                                    {"解析失败"}
                                   </span>
                                 )}
                                 {item.status === "duplicate" && item.duplicateProject ? (
@@ -202,7 +277,9 @@ export function BulkExtractProjectModal() {
                                   </p>
                                 ) : null}
                                 {item.status === "error" && item.errorMessage ? (
-                                  <p className="mt-1 text-red-600 dark:text-red-300">{item.errorMessage}</p>
+                                  <p className="mt-1 text-red-600 dark:text-red-300">
+                                    {item.errorMessage}
+                                  </p>
                                 ) : null}
                               </td>
                             </tr>
@@ -212,7 +289,7 @@ export function BulkExtractProjectModal() {
                     </table>
                   </div>
                   <p className="px-1 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    可加入：{readyItems.length}，已选：{selectedUrls.length}
+                    {"可加入："}{readyItems.length}{"，已选："}{selectedUrls.length}
                   </p>
                 </>
               ) : null}
@@ -227,26 +304,60 @@ export function BulkExtractProjectModal() {
                   setFeedback(null);
                   startTransition(() => {
                     void (async () => {
-                      const result = await extractGithubProjectsFromArticleAction({
-                        sourceName: sourceName.trim() || undefined,
-                        articleTitle: articleTitle.trim() || undefined,
-                        articleBody,
-                      });
-                      if (!result.ok) {
-                        setItems([]);
-                        setSelectedUrls([]);
-                        setFeedback({ kind: "err", text: result.error });
-                        return;
+                      if (inputMode === "url") {
+                        const url = articleUrl.trim();
+                        if (!url) {
+                          setFeedback({ kind: "err", text: "请输入文章 URL。" });
+                          return;
+                        }
+                        const result = await extractProjectsFromUrlAction({
+                          url,
+                          sourceName: urlSourceName.trim() || undefined,
+                        });
+                        if (!result.ok) {
+                          setItems([]); setSelectedUrls([]);
+                          setFeedback({ kind: "err", text: result.error });
+                          return;
+                        }
+                        setItems(result.items);
+                        setExtractedArticleBody(result.articleBody);
+                        setExtractedArticleTitle(result.articleTitle || "");
+                        const defaultSelected = result.items
+                          .filter((x) => x.status === "ready")
+                          .map((x) => x.sourceUrl);
+                        setSelectedUrls(defaultSelected);
+                        if (result.items.length === 0) {
+                          setFeedback({
+                            kind: "err",
+                            text: "页面中未识别到有效的 GitHub / GitCC 项目链接。",
+                          });
+                        } else {
+                          setFeedback({
+                            kind: "ok",
+                            text: `已从 URL 抓取内容，提取 ${result.uniqueRepoUrls} 个项目链接。`,
+                          });
+                        }
+                      } else {
+                        const result = await extractGithubProjectsFromArticleAction({
+                          sourceName: sourceName.trim() || undefined,
+                          articleTitle: articleTitle.trim() || undefined,
+                          articleBody,
+                        });
+                        if (!result.ok) {
+                          setItems([]); setSelectedUrls([]);
+                          setFeedback({ kind: "err", text: result.error });
+                          return;
+                        }
+                        setItems(result.items);
+                        const defaultSelected = result.items
+                          .filter((x) => x.status === "ready")
+                          .map((x) => x.sourceUrl);
+                        setSelectedUrls(defaultSelected);
+                        setFeedback({
+                          kind: "ok",
+                          text: `提取完成：原始链接 ${result.totalUrls}，仓库去重后 ${result.uniqueRepoUrls}。`,
+                        });
                       }
-                      setItems(result.items);
-                      const defaultSelected = result.items
-                        .filter((x) => x.status === "ready")
-                        .map((x) => x.sourceUrl);
-                      setSelectedUrls(defaultSelected);
-                      setFeedback({
-                        kind: "ok",
-                        text: `提取完成：原始链接 ${result.totalUrls}，仓库去重后 ${result.uniqueRepoUrls}。`,
-                      });
                     })();
                   });
                 }}
@@ -263,9 +374,9 @@ export function BulkExtractProjectModal() {
                   startTransition(() => {
                     void (async () => {
                       const result = await bulkAddGithubProjectsToQueueAction({
-                        sourceName: sourceName.trim() || undefined,
-                        articleTitle: articleTitle.trim() || undefined,
-                        articleBody,
+                        sourceName: effectiveSourceName.trim() || undefined,
+                        articleTitle: effectiveArticleTitle.trim() || undefined,
+                        articleBody: effectiveArticleBody,
                         selectedGithubUrls: selectedUrls,
                       });
                       if (!result.ok) {

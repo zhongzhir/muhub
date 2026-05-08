@@ -335,7 +335,23 @@ export function ProjectAiContentDraft({
     setEditDraft((prev) => updater(prev));
   };
 
-  const formatTime = (iso: string) => (iso ? iso.replace("T", " ").slice(0, 19) : "");
+  const formatTime = (iso: string) => {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleString("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    } catch {
+      return iso.replace("T", " ").slice(0, 19);
+    }
+  };
 
   return (
     <section className="muhub-card space-y-4 p-5 sm:p-6">
@@ -570,24 +586,24 @@ export function ProjectAiContentDraft({
               general：普通用户；business：合作/招商；creator：内容创作者；developer：技术用户
             </p>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-              <li>general: {active.copy?.audienceVersions?.general || "信息不足"}</li>
-              <li>business: {active.copy?.audienceVersions?.business || "信息不足"}</li>
-              <li>creator: {active.copy?.audienceVersions?.creator || "信息不足"}</li>
-              <li>developer: {active.copy?.audienceVersions?.developer || "信息不足"}</li>
+              <li>通用版：{active.copy?.audienceVersions?.general || "信息不足"}</li>
+              <li>商业版：{active.copy?.audienceVersions?.business || "信息不足"}</li>
+              <li>创作者版：{active.copy?.audienceVersions?.creator || "信息不足"}</li>
+              <li>开发者版：{active.copy?.audienceVersions?.developer || "信息不足"}</li>
             </ul>
             {editing ? (
               <div className="mt-2 grid gap-2">
-                <input className="muhub-input" placeholder="general" value={editDraft.copy?.audienceVersions?.general || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, general: e.target.value } } }))} />
-                <input className="muhub-input" placeholder="business" value={editDraft.copy?.audienceVersions?.business || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, business: e.target.value } } }))} />
-                <input className="muhub-input" placeholder="creator" value={editDraft.copy?.audienceVersions?.creator || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, creator: e.target.value } } }))} />
-                <input className="muhub-input" placeholder="developer" value={editDraft.copy?.audienceVersions?.developer || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, developer: e.target.value } } }))} />
+                <input className="muhub-input" placeholder="通用版文案" value={editDraft.copy?.audienceVersions?.general || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, general: e.target.value } } }))} />
+                <input className="muhub-input" placeholder="商业版文案" value={editDraft.copy?.audienceVersions?.business || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, business: e.target.value } } }))} />
+                <input className="muhub-input" placeholder="创作者版文案" value={editDraft.copy?.audienceVersions?.creator || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, creator: e.target.value } } }))} />
+                <input className="muhub-input" placeholder="开发者版文案" value={editDraft.copy?.audienceVersions?.developer || ""} onChange={(e) => updateEdit((prev) => ({ ...prev, copy: { ...prev.copy, audienceVersions: { ...prev.copy?.audienceVersions, developer: e.target.value } } }))} />
               </div>
             ) : null}
             <div className="mt-2 flex flex-wrap gap-2">
-              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.general || "", "general版本")}>复制 general</button>
-              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.business || "", "business版本")}>复制 business</button>
-              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.creator || "", "creator版本")}>复制 creator</button>
-              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.developer || "", "developer版本")}>复制 developer</button>
+              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.general || "", "general版本")}>复制通用版</button>
+              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.business || "", "business版本")}>复制商业版</button>
+              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.creator || "", "creator版本")}>复制创作者版</button>
+              <button type="button" className="rounded border border-zinc-300 px-2 py-1 text-xs" onClick={() => copyText(active.copy?.audienceVersions?.developer || "", "developer版本")}>复制开发者版</button>
             </div>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white p-4">

@@ -16,6 +16,7 @@ function sourceLabel(t: ProjectTimelineItem["sourceType"]): string {
 function formatWhen(iso: string): string {
   try {
     return new Date(iso).toLocaleString("zh-CN", {
+      timeZone: "Asia/Shanghai",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -44,7 +45,7 @@ export function ProjectTimeline({ items }: { items: ProjectTimelineItem[] }) {
         id="project-timeline-heading"
         className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
       >
-        Project Timeline
+        项目时间线
       </h2>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         按时间归集的本项目相关公开信息与站内内容；仅作档案展示，不包含排序推荐或投资建议。
@@ -92,5 +93,5 @@ export function ProjectTimeline({ items }: { items: ProjectTimelineItem[] }) {
         ))}
       </ul>
     </section>
-  )
+  );
 }

@@ -6,7 +6,7 @@ function formatDate(iso: string): string {
   if (Number.isNaN(d.getTime())) {
     return iso;
   }
-  return d.toLocaleString("zh-CN", { hour12: false });
+  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
 }
 
 function badgeClass(type: ProjectActivity["type"]): string {
@@ -37,7 +37,7 @@ type RecentProjectActivitySectionProps = {
 
 export function RecentProjectActivitySection({
   activities,
-  title = "Recent Project Activity",
+  title = "近期项目动态",
   subtitle = "平台最近项目动态（GitHub）",
   actionHref = "/projects?sort=updated",
   actionLabel = "查看全部动态",

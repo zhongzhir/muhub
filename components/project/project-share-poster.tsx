@@ -66,7 +66,7 @@ const ghostBtnClass =
 
 function formatPosterDate(value: string): string {
   try {
-    return new Date(value).toLocaleDateString("zh-CN");
+    return new Date(value).toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" });
   } catch {
     return value.slice(0, 10);
   }

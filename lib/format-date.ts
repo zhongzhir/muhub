@@ -1,6 +1,7 @@
-/** 列表页等项目创建时间展示 */
+/** 列表页等项目创建时间展示（东八区） */
 export function formatListDate(d: Date): string {
   return d.toLocaleString("zh-CN", {
+    timeZone: "Asia/Shanghai",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

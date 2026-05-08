@@ -146,6 +146,19 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
   if (!raw) {
     throw new Error("条目缺少有效 URL");
   }
+  // 通用项目（manual-general）无需 URL，直接返回空链接
+  if (!raw.startsWith("http")) {
+    // 尝试从 meta 取 websiteUrl / referenceUrl 作为站点
+    const ws = (item.meta && typeof item.meta === "object" && "websiteUrl" in item.meta && typeof (item.meta as Record<string,unknown>).websiteUrl === "string")
+      ? ((item.meta as Record<string,unknown>).websiteUrl as string).trim()
+      : null;
+    return {
+      githubUrl: null,
+      websiteUrl: ws || null,
+      primaryRepo: null,
+      externalLinks: ws ? [{ platform: "website", url: ws, label: "官方网站", isPrimary: true }] : [],
+    };
+  }
   if (isSourceArticleUrl(raw)) {
     throw new Error("条目缺少项目主页或平台项目页链接，不能把来源文章当作项目地址导入。");
   }

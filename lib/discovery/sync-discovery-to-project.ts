@@ -139,11 +139,11 @@ export function buildCoreCandidateLinkSpecs(
 
   const websiteUrl = safeUrl(cand.website);
   if (websiteUrl) {
-    specs.push({ platform: "website", url: websiteUrl, label: "Website" });
+    specs.push({ platform: "website", url: websiteUrl, label: "官方网站" });
   }
   const docsUrl = safeUrl(cand.docsUrl);
   if (docsUrl) {
-    specs.push({ platform: "docs", url: docsUrl, label: "Docs" });
+    specs.push({ platform: "docs", url: docsUrl, label: "文档" });
   }
   const twitterUrl = safeUrl(cand.twitterUrl);
   if (twitterUrl) {

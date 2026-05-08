@@ -3,7 +3,7 @@ import type { ProjectActivity } from "@/lib/activity/project-activity-service";
 function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("zh-CN", { hour12: false });
+  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
 }
 
 function badgeClass(type: ProjectActivity["type"]): string {

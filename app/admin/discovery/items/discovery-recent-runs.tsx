@@ -20,7 +20,7 @@ function formatWhen(iso: string): string {
   if (Number.isNaN(d.getTime())) {
     return iso;
   }
-  return d.toLocaleString("zh-CN", { hour12: false });
+  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
 }
 
 type Props = {

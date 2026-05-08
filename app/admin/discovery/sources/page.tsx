@@ -78,12 +78,12 @@ export default async function AdminDiscoverySourcesPage() {
                   </td>
                   <td className="px-3 py-2 text-xs">{s.status}</td>
                   <td className="px-3 py-2 text-xs text-zinc-600">
-                    {s.lastRunAt?.toISOString().slice(0, 19) ?? "—"}
+                    {s.lastRunAt?.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }) ?? "—"}
                   </td>
                   <td className="max-w-[200px] px-3 py-2 text-[10px] text-zinc-600">
-                    <div>✓ {s.lastSuccessAt?.toISOString().slice(0, 10) ?? "—"}</div>
+                    <div>✓ {s.lastSuccessAt?.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }) ?? "—"}</div>
                     <div className="text-amber-800 dark:text-amber-200">
-                      ✗ {s.lastErrorAt?.toISOString().slice(0, 10) ?? "—"}
+                      ✗ {s.lastErrorAt?.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }) ?? "—"}
                     </div>
                     {s.lastErrorMessage ? (
                       <div className="mt-1 line-clamp-2 text-zinc-500" title={s.lastErrorMessage}>

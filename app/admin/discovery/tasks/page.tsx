@@ -84,8 +84,8 @@ export default async function AdminDiscoveryTasksPage() {
                     <td className="px-3 py-2 tabular-nums">
                       {run.fetchedCount} / {run.newCandidateCount} / {run.updatedCandidateCount}
                     </td>
-                    <td className="px-3 py-2 text-xs text-zinc-500">{run.startedAt.toISOString().replace("T", " ").slice(0, 19)}</td>
-                    <td className="px-3 py-2 text-xs text-zinc-500">{run.finishedAt ? run.finishedAt.toISOString().replace("T", " ").slice(0, 19) : "运行中"}</td>
+                    <td className="px-3 py-2 text-xs text-zinc-500">{run.startedAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}</td>
+                    <td className="px-3 py-2 text-xs text-zinc-500">{run.finishedAt ? run.finishedAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }) : "运行中"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -105,7 +105,7 @@ export default async function AdminDiscoveryTasksPage() {
                 <p className="font-medium text-zinc-900 dark:text-zinc-100">{source.name}</p>
                 <p className="text-xs text-zinc-500">{source.key}</p>
                 <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  {source.status} · 最近成功 {source.lastSuccessAt ? source.lastSuccessAt.toISOString().slice(0, 10) : "—"} · 最近失败 {source.lastErrorAt ? source.lastErrorAt.toISOString().slice(0, 10) : "—"}
+                  {source.status} · 最近成功 {source.lastSuccessAt ? source.lastSuccessAt.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }) : "—"} · 最近失败 {source.lastErrorAt ? source.lastErrorAt.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }) : "—"}
                 </p>
               </li>
             ))}

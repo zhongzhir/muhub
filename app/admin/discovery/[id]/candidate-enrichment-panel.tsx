@@ -157,7 +157,7 @@ export function CandidateEnrichmentPanel(props: {
       {lastJob ? (
         <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
           最近任务：{lastJob.status} · {lastJob.extractedCount} 条（合并后计数）·{" "}
-          {lastJob.finishedAt ? new Date(lastJob.finishedAt).toLocaleString() : "进行中"}
+          {lastJob.finishedAt ? new Date(lastJob.finishedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" }) : "进行中"}
           {lastJob.errorMessage ? (
             <span className="ml-1 text-red-600 dark:text-red-400">· {lastJob.errorMessage}</span>
           ) : null}

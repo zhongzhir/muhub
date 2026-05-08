@@ -13,7 +13,7 @@ function formatUpdatedAt(isoString: string) {
   if (Number.isNaN(date.getTime())) {
     return isoString;
   }
-  return date.toLocaleString("zh-CN", { hour12: false });
+  return date.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
 }
 
 export function ContentOutputsPanel({ wechatDraft, xDrafts }: ContentOutputsPanelProps) {

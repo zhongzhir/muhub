@@ -274,9 +274,9 @@ export default async function AdminDiscoveryDetailPage({
               </div>
               <div className="flex flex-wrap gap-3 tabular-nums">
                 <span>★ {row.stars}</span>
-                <span>forks {row.forks}</span>
-                <span>watch {row.watchers}</span>
-                <span>issues {row.issues}</span>
+                <span>分叉 {row.forks}</span>
+                <span>关注 {row.watchers}</span>
+                <span>问题 {row.issues}</span>
               </div>
               <div>
                 <dt className="text-xs text-zinc-500">语言 / 许可</dt>
@@ -285,11 +285,11 @@ export default async function AdminDiscoveryDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-zinc-500">pushed / updated</dt>
+                <dt className="text-xs text-zinc-500">推送 / 更新时间</dt>
                 <dd className="text-xs text-zinc-600">
-                  {row.lastCommitAt?.toISOString() ?? "—"}
+                  {row.lastCommitAt ? row.lastCommitAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" }) : "—"}
                   <br />
-                  {row.repoUpdatedAt?.toISOString() ?? "—"}
+                  {row.repoUpdatedAt ? row.repoUpdatedAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" }) : "—"}
                 </dd>
               </div>
             </dl>

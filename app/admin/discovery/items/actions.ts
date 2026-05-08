@@ -152,6 +152,42 @@ export type BulkAddGithubProjectsToQueueResult =
     }
   | { ok: false; error: string };
 
+// ─── 通用项目（非 GitHub）相关类型 ──────────────────────────────────────────
+
+export type ParseGeneralProjectResult =
+  | {
+      ok: true;
+      parsed: {
+        title: string;
+        summary: string | null;
+        websiteUrl: string | null;
+        referenceUrl: string | null;
+        category: string | null;
+        aiEnriched: boolean;
+      };
+      duplicate: ExistingProjectHit | null;
+    }
+  | { ok: false; error: string };
+
+export type AddGeneralProjectToQueueResult =
+  | { ok: true; duplicate: boolean; message: string }
+  | { ok: false; error: string };
+
+export type ImportGeneralProjectResult =
+  | { ok: true; slug: string; duplicated: boolean; message: string }
+  | { ok: false; error: string };
+
+export type ExtractProjectsFromUrlResult =
+  | {
+      ok: true;
+      items: BulkExtractedGithubProject[];
+      totalUrls: number;
+      uniqueRepoUrls: number;
+      articleTitle: string | null;
+      articleBody: string;
+    }
+  | { ok: false; error: string };
+
 function extractProjectSourceUrlsFromArticleText(articleBody: string): string[] {
   return extractProjectSourceUrlsFromText(articleBody).map((item) => item.source.url);
 }
@@ -466,7 +502,7 @@ export async function runContentPipelineAction(): Promise<RunContentPipelineResu
   try {
     const opsEngineDir = await resolveOpsEngineDir();
     if (!opsEngineDir) {
-      return { ok: false, error: "muhub-ops-engine not found" };
+      return { ok: false, error: "未找到 muhub-ops-engine，请检查目录配置。" };
     }
 
     const npmCommand = getNpmCommand();
@@ -480,7 +516,7 @@ export async function runContentPipelineAction(): Promise<RunContentPipelineResu
 
     return {
       ok: true,
-      message: "Content pipeline completed",
+      message: "内容生成流水线已完成",
       output,
     };
   } catch (err) {
@@ -1062,5 +1098,441 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
     duplicate,
     failed,
     message: `批量加入完成：成功 ${success}，重复 ${duplicate}，失败 ${failed}。`,
+  };
+}
+
+// ─── 通用项目（非 GitHub）入库 ────────────────────────────────────────────────
+
+/**
+ * 抓取外部 URL 的纯文本内容（用于微信文章等）。
+ * 仅用于站内后台，做适度抓取，超时 10 秒。
+ */
+/** 从 URL 抓取纯文本（支持微信文章、新闻等中文页面）。后台专用，超时 12 秒。 */
+async function fetchUrlText(url: string): Promise<string | null> {
+  try {
+    const isWechat = url.includes("mp.weixin.qq.com");
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Cache-Control": "no-cache",
+    };
+    if (isWechat) {
+      headers["Referer"] = "https://mp.weixin.qq.com/";
+      headers["Origin"] = "https://mp.weixin.qq.com";
+    }
+    const resp = await fetch(url, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(12_000),
+      cache: "no-store",
+    });
+    if (!resp.ok) return null;
+    const html = await resp.text();
+    // 提取 og:title / <title> 作为首行
+    const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']{2,120})["']/i)?.[1]?.trim()
+      || html.match(/<title[^>]*>([^<]{2,120})<\/title>/i)?.[1]?.trim()
+      || "";
+    const body = html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s{3,}/g, "\n")
+      .trim()
+      .slice(0, 7500);
+    return ogTitle ? `${ogTitle}\n\n${body}` : body;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 用 AI 从文本中提取项目基本信息（名称、简介、官网、分类）。
+ */
+async function aiExtractProjectInfo(text: string, referenceUrl?: string): Promise<{
+  title: string;
+  summary: string | null;
+  websiteUrl: string | null;
+  category: string | null;
+} | null> {
+  try {
+    const { generateText } = await import("@/lib/ai/generate-text");
+    const urlHint = referenceUrl ? `\n参考来源 URL：${referenceUrl}` : "";
+    const prompt = `你是一个项目信息提取助手。请从以下文本中提取项目信息，以 JSON 格式返回，不要有任何多余内容。${urlHint}
+
+文本内容：
+${text.slice(0, 4000)}
+
+请提取以下字段（如果找不到，填 null）：
+- title：项目名称（字符串，必填）
+- summary：一句话简介，50~150字（字符串或 null）
+- websiteUrl：项目官网 URL，优先找官方网址（字符串或 null）
+- category：项目分类，例如"AI工具"、"开发工具"、"产品/服务"等（字符串或 null）
+
+只返回 JSON，格式如下：
+{"title":"...","summary":"...","websiteUrl":"...","category":"..."}`;
+
+    const raw = await generateText(prompt, {
+      maxTokens: 400,
+      temperature: 0.2,
+      systemPrompt: "你是项目信息提取专家，只返回 JSON，不要其他内容。",
+    });
+    const jsonStr = raw.match(/\{[\s\S]*\}/)?.[0];
+    if (!jsonStr) return null;
+    const parsed = JSON.parse(jsonStr) as Record<string, unknown>;
+    return {
+      title: typeof parsed.title === "string" && parsed.title.trim() ? parsed.title.trim() : "",
+      summary: typeof parsed.summary === "string" && parsed.summary.trim() ? parsed.summary.trim() : null,
+      websiteUrl: typeof parsed.websiteUrl === "string" && parsed.websiteUrl.startsWith("http") ? parsed.websiteUrl.trim() : null,
+      category: typeof parsed.category === "string" && parsed.category.trim() ? parsed.category.trim() : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 解析通用项目（无需 GitHub 链接）。
+ * - 如提供参考 URL（微信文章、新闻等），尝试抓取正文并 AI 分析
+ * - 如提供项目名称，直接使用手填信息
+ */
+export async function parseGeneralProjectAction(input: {
+  title?: string;
+  description?: string;
+  websiteUrl?: string;
+  referenceUrl?: string;
+}): Promise<ParseGeneralProjectResult> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { ok: false, error: "未配置 DATABASE_URL，无法执行解析。" };
+  }
+
+  const titleRaw = input.title?.trim() || "";
+  const descRaw = input.description?.trim() || "";
+  const websiteRaw = input.websiteUrl?.trim() || "";
+  const refUrlRaw = input.referenceUrl?.trim() || "";
+
+  let title = titleRaw;
+  let summary: string | null = descRaw || null;
+  let websiteUrl: string | null = websiteRaw || null;
+  let category: string | null = null;
+  let aiEnriched = false;
+
+  if (refUrlRaw) {
+    try {
+      const pageText = await fetchUrlText(refUrlRaw);
+      if (pageText && pageText.length > 100) {
+        const aiResult = await aiExtractProjectInfo(pageText, refUrlRaw);
+        if (aiResult) {
+          if (!title && aiResult.title) title = aiResult.title;
+          if (!summary && aiResult.summary) summary = aiResult.summary;
+          if (!websiteUrl && aiResult.websiteUrl) websiteUrl = aiResult.websiteUrl;
+          if (aiResult.category) category = aiResult.category;
+          aiEnriched = true;
+        }
+      }
+    } catch {
+      // AI 分析失败，使用手填信息
+    }
+  }
+
+  if (!title) {
+    return { ok: false, error: "请填写项目名称，或提供可分析的参考链接。" };
+  }
+
+  const duplicate = await findExistingProjectByPriority({
+    githubUrl: null,
+    source: null,
+    websiteUrl: websiteUrl || refUrlRaw || null,
+    title,
+    repo: title,
+  });
+
+  return {
+    ok: true,
+    parsed: {
+      title,
+      summary,
+      websiteUrl,
+      referenceUrl: refUrlRaw || null,
+      category,
+      aiEnriched,
+    },
+    duplicate,
+  };
+}
+
+/**
+ * 将通用项目（无 GitHub）加入发现队列。
+ */
+export async function addGeneralProjectToQueueAction(input: {
+  title: string;
+  summary?: string | null;
+  websiteUrl?: string | null;
+  referenceUrl?: string | null;
+  category?: string | null;
+  note?: string;
+}): Promise<AddGeneralProjectToQueueResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, error: "请先登录后再操作。" };
+  }
+  const title = input.title?.trim();
+  if (!title) {
+    return { ok: false, error: "项目名称不能为空。" };
+  }
+
+  const websiteUrl = input.websiteUrl?.trim() || null;
+  const referenceUrl = input.referenceUrl?.trim() || null;
+
+  const duplicate = await findExistingProjectByPriority({
+    githubUrl: null,
+    source: null,
+    websiteUrl: websiteUrl || referenceUrl || null,
+    title,
+    repo: title,
+  });
+  if (duplicate) {
+    return { ok: false, error: `该项目已存在：/projects/${duplicate.slug}` };
+  }
+
+  const now = new Date().toISOString();
+  const item: DiscoveryItem = {
+    id: `manual-general-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    sourceType: "manual",
+    title,
+    url: websiteUrl || `manual-general-${Date.now().toString(36)}`,
+    description: input.summary?.trim() || undefined,
+    status: "new",
+    createdAt: now,
+    meta: {
+      source: "manual-general",
+      sourceKey: "manual-general",
+      sourceType: "GENERAL",
+      sourceLabel: "手动添加",
+      sourceUrl: websiteUrl || null,
+      githubUrl: null,
+      websiteUrl,
+      referenceUrl,
+      note: input.note?.trim() || null,
+      category: input.category?.trim() || null,
+      language: null,
+      stars: 0,
+      owner: null,
+      repo: null,
+    },
+  };
+
+  try {
+    const created = await appendDiscoveryItem(item);
+    revalidatePath(REVALIDATE);
+    return {
+      ok: true,
+      duplicate: created.duplicate,
+      message: created.duplicate ? "已存在相同发现线索，未重复加入。" : "已加入发现队列。",
+    };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "加入发现队列失败。" };
+  }
+}
+
+/**
+ * 将通用项目（无 GitHub）直接导入项目库。
+ */
+export async function importGeneralProjectAction(input: {
+  title: string;
+  summary?: string | null;
+  websiteUrl?: string | null;
+  referenceUrl?: string | null;
+  category?: string | null;
+  note?: string;
+}): Promise<ImportGeneralProjectResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, error: "请先登录后再操作。" };
+  }
+  const title = input.title?.trim();
+  if (!title) {
+    return { ok: false, error: "项目名称不能为空。" };
+  }
+
+  const websiteUrl = input.websiteUrl?.trim() || null;
+  const referenceUrl = input.referenceUrl?.trim() || null;
+
+  const duplicate = await findExistingProjectByPriority({
+    githubUrl: null,
+    source: null,
+    websiteUrl: websiteUrl || referenceUrl || null,
+    title,
+    repo: title,
+  });
+  if (duplicate) {
+    return {
+      ok: true,
+      slug: duplicate.slug,
+      duplicated: true,
+      message: "该项目已存在，已跳转到已有项目。",
+    };
+  }
+
+  const now = new Date().toISOString();
+  const item: DiscoveryItem = {
+    id: `manual-general-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    sourceType: "manual",
+    title,
+    url: websiteUrl || `manual-general-${Date.now().toString(36)}`,
+    description: input.summary?.trim() || undefined,
+    status: "new",
+    createdAt: now,
+    meta: {
+      source: "manual-general",
+      sourceKey: "manual-general",
+      sourceType: "GENERAL",
+      sourceLabel: "手动添加",
+      sourceUrl: websiteUrl || null,
+      githubUrl: null,
+      websiteUrl,
+      referenceUrl,
+      note: input.note?.trim() || null,
+      category: input.category?.trim() || null,
+      language: null,
+      stars: 0,
+      owner: null,
+      repo: null,
+    },
+  };
+
+  try {
+    const result = await importJsonDiscoveryItem(item);
+    revalidatePath(REVALIDATE);
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${result.slug}`);
+    return {
+      ok: true,
+      slug: result.slug,
+      duplicated: result.duplicated,
+      message: result.created ? "已成功导入项目。" : "该项目已存在，已关联既有项目。",
+    };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "直接导入失败。" };
+  }
+}
+
+/**
+ * 从 URL（微信文章、新闻等）抓取内容，提取其中提到的项目（含 GitHub 和非 GitHub）。
+ */
+export async function extractProjectsFromUrlAction(input: {
+  url: string;
+  sourceName?: string;
+}): Promise<ExtractProjectsFromUrlResult> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { ok: false, error: "未配置 DATABASE_URL，暂时无法执行提取。" };
+  }
+  const url = input.url?.trim();
+  if (!url || !url.startsWith("http")) {
+    return { ok: false, error: "请输入有效的 URL（以 http 开头）。" };
+  }
+
+  const pageText = await fetchUrlText(url);
+  if (!pageText || pageText.length < 50) {
+    return { ok: false, error: "无法抓取该 URL 的内容，请检查链接是否可访问，或改为粘贴文章正文。" };
+  }
+
+  const extracted = extractProjectSourceUrlsFromText(pageText);
+  const items: BulkExtractedGithubProject[] = [];
+
+  for (const { source } of extracted) {
+    if (source.type === "GITCC") {
+      const projectName = source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目";
+      const duplicate = await findExistingProjectByPriority({
+        githubUrl: null,
+        source: { kind: "OTHER", url: source.url, label: "GitCC" },
+        websiteUrl: source.url,
+        title: projectName,
+        repo: projectName,
+      });
+      items.push({
+        sourceType: "GITCC",
+        sourceUrl: source.url,
+        sourceLabel: "GitCC",
+        githubUrl: null,
+        owner: null,
+        repo: null,
+        projectName,
+        summary: "已识别为 GitCC 来源，可加入发现队列或导入为外部项目。",
+        stars: 0,
+        language: null,
+        websiteUrl: source.url,
+        status: duplicate ? "duplicate" : "ready",
+        duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
+      });
+      continue;
+    }
+    if (source.type !== "GITHUB") continue;
+    const githubUrl = normalizeGithubRepoUrl(source.url);
+    try {
+      const repoData = await fetchGithubRepo(source.owner, source.repo);
+      const duplicate = await findExistingProjectByPriority({
+        githubUrl,
+        source: { kind: "GITHUB", url: githubUrl, label: "GitHub" },
+        websiteUrl: repoData.homepage || null,
+        title: repoData.name,
+        repo: source.repo,
+      });
+      items.push({
+        sourceType: "GITHUB",
+        sourceUrl: githubUrl,
+        sourceLabel: "GitHub",
+        githubUrl,
+        owner: source.owner,
+        repo: source.repo,
+        projectName: repoData.name,
+        summary: repoData.description,
+        stars: repoData.stargazers_count,
+        language: repoData.language,
+        websiteUrl: repoData.homepage,
+        status: duplicate ? "duplicate" : "ready",
+        duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "解析失败";
+      items.push({
+        sourceType: "GITHUB",
+        sourceUrl: githubUrl,
+        sourceLabel: "GitHub",
+        githubUrl,
+        owner: source.owner,
+        repo: source.repo,
+        projectName: source.repo,
+        summary: null,
+        stars: 0,
+        language: null,
+        websiteUrl: null,
+        status: "error",
+        errorMessage: message.includes("项目不存在") ? "项目不存在" : "GitHub API 调用失败",
+        duplicateProject: null,
+      });
+    }
+  }
+
+  let articleTitle: string | null = null;
+  const titleMatch = pageText.match(/(?:^|\n)([^\n]{5,80})(?:\n|$)/);
+  if (titleMatch) articleTitle = titleMatch[1].trim() || null;
+
+  return {
+    ok: true,
+    items,
+    totalUrls: extracted.length,
+    uniqueRepoUrls: extracted.length,
+    articleTitle,
+    articleBody: pageText,
   };
 }

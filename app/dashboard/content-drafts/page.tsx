@@ -67,7 +67,7 @@ export default async function ContentDraftsPage() {
         <header className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight">内容草稿</h1>
           <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            V1.2 内部运营视图：展示 Content Agent
+            V1.2 内部运营视图：Content Agent 草稿
             模板生成的草稿（存于本地 JSON，未接社媒发布）。可复制正文后到外站编辑发布。
           </p>
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">

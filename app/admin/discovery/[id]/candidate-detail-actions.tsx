@@ -122,7 +122,7 @@ export function CandidateDetailActions(props: {
         </p>
         <input
           className="mt-2 w-full max-w-md rounded-lg border border-zinc-300 bg-white px-2 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-900"
-          placeholder="Project cuid"
+          placeholder="项目 CUID"
           value={mergeProjectId}
           onChange={(event) => setMergeProjectId(event.target.value)}
         />

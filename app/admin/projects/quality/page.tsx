@@ -148,7 +148,7 @@ export default async function AdminProjectQualityPage({
                   {r.discoverySource ?? "—"}
                 </td>
                 <td className="px-3 py-2 text-[11px] text-zinc-500">
-                  {r.discoveredAt ? r.discoveredAt.toISOString().slice(0, 10) : "—"}
+                  {r.discoveredAt ? r.discoveredAt.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }) : "—"}
                 </td>
               </tr>
             ))}

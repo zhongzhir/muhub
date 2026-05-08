@@ -117,12 +117,12 @@ function formatSnapshotProgressLines(snap: GithubSnapshotView): string[] {
   const lines: string[] = [];
   if (snap.latestReleaseTag) {
     const date = snap.latestReleaseAt
-      ? `（${snap.latestReleaseAt.toLocaleDateString("zh-CN")}）`
+      ? `（${snap.latestReleaseAt.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" })}）`
       : "";
     lines.push(`最近版本 ${snap.latestReleaseTag}${date}`);
   }
   if (snap.lastCommitAt) {
-    lines.push(`最近提交 ${snap.lastCommitAt.toLocaleString("zh-CN")}`);
+    lines.push(`最近提交 ${snap.lastCommitAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`);
   }
   if (lines.length > 0) {
     lines.push("仓库持续有提交与迭代，详细指标见页面后部。");
@@ -140,7 +140,7 @@ export function buildShareProgressModel(
   const weekly = data.aiWeeklySummary?.summary?.trim();
   if (weekly) {
     const w = data.aiWeeklySummary!;
-    const windowHint = `${w.startAt.toLocaleDateString("zh-CN")} — ${w.endAt.toLocaleDateString("zh-CN")}`;
+    const windowHint = `${w.startAt.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" })} — ${w.endAt.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" })}`;
     return { mode: "weekly", summary: weekly, windowHint };
   }
   if (recentUpdates.length > 0) {

@@ -39,9 +39,9 @@ const weiboBtn =
   "inline-flex min-h-[2.5rem] w-full items-center justify-center rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-800 shadow-sm transition hover:border-red-300 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100 dark:hover:bg-red-950/50";
 
 const templateLabels: Record<ShareTemplateId, string> = {
-  short: "short",
-  community: "community",
-  weibo: "weibo",
+  short: "简短",
+  community: "社区",
+  weibo: "微博",
 };
 
 export function ProjectShareDialog({
@@ -172,7 +172,7 @@ export function ProjectShareDialog({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center" role="presentation">
       <button
         type="button"
-        aria-label="Close share panel"
+        aria-label="关闭分享面板"
         className="absolute inset-0 bg-zinc-950/55 backdrop-blur-[2px]"
         onClick={() => onOpenChangeWrapped(false)}
       />
@@ -187,22 +187,22 @@ export function ProjectShareDialog({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 id={dialogTitleId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              Share Project
+              分享项目
             </h3>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Copy link, text, or share to Weibo.</p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">复制链接、分享文案，或分享到微博。</p>
           </div>
           <button
             type="button"
             className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
             onClick={() => onOpenChangeWrapped(false)}
-            aria-label="Close"
+            aria-label="关闭"
           >
             <span aria-hidden className="text-lg leading-none">x</span>
           </button>
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Share Preview</p>
+          <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">分享预览</p>
           <div className="mt-2">
             <ProjectShareCard
               name={name}
@@ -218,7 +218,7 @@ export function ProjectShareDialog({
 
         <div className="mt-5">
           <p id={templateGroupId} className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Text Style
+            文案风格
           </p>
           <div
             className="flex flex-wrap gap-1 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800/80"
@@ -245,7 +245,7 @@ export function ProjectShareDialog({
 
         <div className="mt-4">
           <p id={previewCopyId} className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Current Text
+            当前文案
           </p>
           <div
             className="rounded-xl border border-zinc-200/90 bg-zinc-50/90 dark:border-zinc-600 dark:bg-zinc-800/60"
@@ -259,10 +259,10 @@ export function ProjectShareDialog({
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <button type="button" className={actionBtn} onClick={onCopyLink} data-testid="project-share-copy-link">
-            {linkState === "ok" ? "Copied!" : "Copy Link"}
+            {linkState === "ok" ? "已复制！" : "复制链接"}
           </button>
           <button type="button" className={actionBtn} onClick={onCopyShareText} data-testid="project-share-copy-text">
-            {textState === "ok" ? "Copied!" : "Copy Text"}
+            {textState === "ok" ? "已复制！" : "复制文案"}
           </button>
         </div>
 
@@ -274,49 +274,49 @@ export function ProjectShareDialog({
           data-testid="project-share-weibo"
           onClick={onWeiboShareClick}
         >
-          Share to Weibo
+          分享到微博
         </a>
 
         {linkState === "ok" ? (
           <div className="mt-2 rounded-lg bg-emerald-50/80 px-2.5 py-2 dark:bg-emerald-950/25" role="status">
-            <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">Link copied!</p>
+            <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">链接已复制！</p>
           </div>
         ) : null}
 
         {textState === "ok" ? (
           <div className="mt-2 rounded-lg bg-emerald-50/80 px-2.5 py-2 dark:bg-emerald-950/25" role="status">
-            <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">Text copied!</p>
+            <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">文案已复制！</p>
           </div>
         ) : null}
 
         {linkState === "err" ? (
           <div className="mt-3" role="alert">
-            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">Copy failed. Please copy manually.</p>
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">复制失败，请手动复制。</p>
             <div className="mt-2">
-              <ManualCopyTextarea value={canonicalUrl} hint="Project URL" />
+              <ManualCopyTextarea value={canonicalUrl} hint="项目链接" />
             </div>
           </div>
         ) : null}
 
         {textState === "err" ? (
           <div className="mt-3" role="alert">
-            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">Copy failed. Please copy manually.</p>
+            <p className="text-xs font-medium text-amber-900 dark:text-amber-200">复制失败，请手动复制。</p>
             <div className="mt-2">
-              <ManualCopyTextarea value={shareBody} hint="Share text" />
+              <ManualCopyTextarea value={shareBody} hint="分享文案" />
             </div>
           </div>
         ) : null}
 
         <p className="mt-4 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
           {localShareTotals === 0 ? (
-            <>First share on this device.</>
+            <>首次在本设备分享。</>
           ) : (
             <>
-              Shared{" "}
+              已在本设备分享{" "}
               <span className="tabular-nums text-zinc-500 dark:text-zinc-400">{localShareTotals}</span>{" "}
-              times on this device.
+              次。
             </>
-          )}
+        )}
         </p>
       </div>
     </div>
