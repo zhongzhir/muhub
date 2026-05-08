@@ -18,7 +18,8 @@ test("分享名片页：亮点优先、当前进展、信息源与复制链接",
 
   const sources = page.getByTestId("share-project-sources");
   await expect(sources).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Project Sources" })).toBeVisible();
+  // 区块标题曾为中英文混排迭代：断言结构（区内二级标题）而非固定文案
+  await expect(sources.getByRole("heading", { level: 2 })).toBeVisible();
   const sourceLinks = page.getByTestId("share-source-link");
   if ((await sourceLinks.count()) > 0) {
     await expect(sourceLinks.first()).toBeVisible();
