@@ -15,9 +15,9 @@ const inputClass =
 type InputMode = "text" | "url";
 
 type ExtractedItem = {
-  sourceType: "GITHUB" | "GITCC";
+  sourceType: "GITHUB" | "GITCC" | "GENERAL";
   sourceUrl: string;
-  sourceLabel: "GitHub" | "GitCC";
+  sourceLabel: "GitHub" | "GitCC" | "通用项目";
   githubUrl: string | null;
   owner: string | null;
   repo: string | null;
@@ -88,7 +88,7 @@ export function BulkExtractProjectModal() {
               <div>
                 <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{"批量提取项目"}</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  {"从文章正文或 URL 中自动提取 GitHub / GitCC 项目链接并批量加入发现队列。"}
+                  {"从文章正文或 URL 中自动提取项目信息并批量加入发现队列。支持 GitHub / GitCC 链接提取，以及 AI 识别文章中无代码仓库的通用项目（如行业报道、公众号盘点等）。"}
                 </p>
               </div>
               <button
@@ -182,7 +182,7 @@ export function BulkExtractProjectModal() {
                     />
                   </label>
                   <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                    {"系统将自动抓取页面内容并从中提取 GitHub / GitCC 项目链接。"}
+                    {"系统将自动抓取页面内容并提取项目信息，包括 GitHub/GitCC 链接及 AI 识别的通用项目。"}
                   </p>
                 </div>
               )}
@@ -235,23 +235,31 @@ export function BulkExtractProjectModal() {
                                   onChange={() => toggleSelect(item.sourceUrl)}
                                 />
                               </td>
-                              <td className="px-3 py-2">{item.sourceLabel}</td>
                               <td className="px-3 py-2">
-                                <a
-                                  href={item.sourceUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="underline"
-                                >
-                                  {item.sourceUrl}
-                                </a>
+                                {item.sourceType === "GENERAL" ? (
+                                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-700 dark:bg-blue-950 dark:text-blue-300">{"AI识别"}</span>
+                                ) : item.sourceLabel}
+                              </td>
+                              <td className="px-3 py-2">
+                                {item.sourceType === "GENERAL" ? (
+                                  <span className="text-zinc-400 italic text-[11px]">{"无代码仓库"}{item.websiteUrl ? ` · ${item.websiteUrl}` : ""}</span>
+                                ) : (
+                                  <a
+                                    href={item.sourceUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="underline"
+                                  >
+                                    {item.sourceUrl}
+                                  </a>
+                                )}
                               </td>
                               <td className="px-3 py-2">{item.projectName || "-"}</td>
                               <td className="max-w-[320px] px-3 py-2 truncate">
                                 {item.summary || "-"}
                               </td>
-                              <td className="px-3 py-2">{item.stars}</td>
-                              <td className="px-3 py-2">{item.language || "-"}</td>
+                              <td className="px-3 py-2">{item.sourceType === "GENERAL" ? "-" : item.stars}</td>
+                              <td className="px-3 py-2">{item.sourceType === "GENERAL" ? "-" : (item.language || "-")}</td>
                               <td className="px-3 py-2">
                                 {item.status === "ready" ? (
                                   <span className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
@@ -329,12 +337,17 @@ export function BulkExtractProjectModal() {
                         if (result.items.length === 0) {
                           setFeedback({
                             kind: "err",
-                            text: "页面中未识别到有效的 GitHub / GitCC 项目链接。",
+                            text: "页面中未识别到有效的项目信息（GitHub/GitCC 链接或 AI 识别的产品名称）。",
                           });
                         } else {
+                          const generalCount = result.items.filter((x) => x.sourceType === "GENERAL").length;
+                          const repoCount = result.items.filter((x) => x.sourceType !== "GENERAL").length;
+                          const parts = [];
+                          if (repoCount > 0) parts.push(`代码仓库 ${repoCount} 个`);
+                          if (generalCount > 0) parts.push(`AI识别通用项目 ${generalCount} 个`);
                           setFeedback({
                             kind: "ok",
-                            text: `已从 URL 抓取内容，提取 ${result.uniqueRepoUrls} 个项目链接。`,
+                            text: `已从 URL 抓取内容，共提取 ${result.items.length} 个项目（${parts.join("，")}）。`,
                           });
                         }
                       } else {
@@ -353,9 +366,14 @@ export function BulkExtractProjectModal() {
                           .filter((x) => x.status === "ready")
                           .map((x) => x.sourceUrl);
                         setSelectedUrls(defaultSelected);
+                        const generalCount = result.items.filter((x) => x.sourceType === "GENERAL").length;
+                        const repoCount = result.items.filter((x) => x.sourceType !== "GENERAL").length;
+                        const parts = [];
+                        if (repoCount > 0) parts.push(`代码仓库 ${repoCount} 个`);
+                        if (generalCount > 0) parts.push(`AI识别通用项目 ${generalCount} 个`);
                         setFeedback({
                           kind: "ok",
-                          text: `提取完成：原始链接 ${result.totalUrls}，仓库去重后 ${result.uniqueRepoUrls}。`,
+                          text: `提取完成：共识别 ${result.items.length} 个项目（${parts.join("，")}）。`,
                         });
                       }
                     })();

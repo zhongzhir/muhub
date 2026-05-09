@@ -117,9 +117,9 @@ export type ImportManualGithubProjectResult =
   | { ok: false; error: string };
 
 type BulkExtractedGithubProject = {
-  sourceType: "GITHUB" | "GITCC";
+  sourceType: "GITHUB" | "GITCC" | "GENERAL";
   sourceUrl: string;
-  sourceLabel: "GitHub" | "GitCC";
+  sourceLabel: "GitHub" | "GitCC" | "通用项目";
   githubUrl: string | null;
   owner: string | null;
   repo: string | null;
@@ -164,6 +164,11 @@ export type ParseGeneralProjectResult =
         referenceUrl: string | null;
         category: string | null;
         aiEnriched: boolean;
+        wechatAccount: string | null;
+        weiboUrl: string | null;
+        douyinUrl: string | null;
+        appStoreUrl: string | null;
+        playStoreUrl: string | null;
       };
       duplicate: ExistingProjectHit | null;
     }
@@ -853,16 +858,17 @@ export async function extractGithubProjectsFromArticleAction(input: {
   if (!body) {
     return { ok: false, error: "请先粘贴文章正文。" };
   }
+
+  const items: BulkExtractedGithubProject[] = [];
+  const seenNames = new Set<string>();
+
+  // ── 步骤 1：URL 提取（GitHub / GitCC）────────────────────────────────────
   const extracted = extractProjectSourceUrlsFromText(body);
   console.log(
     "[extractGithubProjectsFromArticleAction] project source matches:",
     extracted.map((item) => item.source.url),
   );
-  if (extracted.length === 0) {
-    return { ok: false, error: "正文中未识别到有效的项目来源链接，目前支持 GitHub 和 GitCC。" };
-  }
 
-  const items: BulkExtractedGithubProject[] = [];
   for (const { source } of extracted) {
     if (source.type === "GITCC") {
       const projectName =
@@ -874,6 +880,7 @@ export async function extractGithubProjectsFromArticleAction(input: {
         title: projectName,
         repo: projectName,
       });
+      seenNames.add(projectName.toLowerCase());
       items.push({
         sourceType: "GITCC",
         sourceUrl: source.url,
@@ -904,6 +911,7 @@ export async function extractGithubProjectsFromArticleAction(input: {
         title: repoData.name,
         repo: source.repo,
       });
+      seenNames.add(repoData.name.toLowerCase());
       items.push({
         sourceType: "GITHUB",
         sourceUrl: githubUrl,
@@ -921,6 +929,7 @@ export async function extractGithubProjectsFromArticleAction(input: {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "解析失败";
+      seenNames.add(source.repo.toLowerCase());
       items.push({
         sourceType: "GITHUB",
         sourceUrl: githubUrl,
@@ -943,11 +952,54 @@ export async function extractGithubProjectsFromArticleAction(input: {
       });
     }
   }
+
+  // ── 步骤 2：AI 通用项目提取（识别文章中无代码仓库链接的产品/项目）────────
+  try {
+    const aiProjects = await aiExtractGeneralProjectsFromArticle(body);
+    for (const proj of aiProjects) {
+      if (!proj.name) continue;
+      // 跳过已通过 URL 识别的项目（避免重复）
+      if (seenNames.has(proj.name.toLowerCase())) continue;
+      seenNames.add(proj.name.toLowerCase());
+      // 去重检查
+      const duplicate = await findExistingProjectByPriority({
+        githubUrl: null,
+        source: null,
+        websiteUrl: proj.websiteUrl || null,
+        title: proj.name,
+        repo: proj.name,
+      });
+      items.push({
+        sourceType: "GENERAL",
+        sourceUrl: proj.websiteUrl || `general:${proj.name}`,
+        sourceLabel: "通用项目",
+        githubUrl: null,
+        owner: null,
+        repo: null,
+        projectName: proj.name,
+        summary: proj.summary,
+        stars: 0,
+        language: null,
+        websiteUrl: proj.websiteUrl,
+        status: duplicate ? "duplicate" : "ready",
+        duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
+      });
+    }
+  } catch (err) {
+    console.warn("[extractGithubProjectsFromArticleAction] AI 通用项目提取失败:", err);
+  }
+
+  const totalItems = extracted.length;
+  const hasResults = items.length > 0;
+  if (!hasResults && totalItems === 0) {
+    return { ok: false, error: "正文中未识别到有效的项目链接或项目名称，请检查内容是否包含项目信息。" };
+  }
+
   return {
     ok: true,
     items,
-    totalUrls: extracted.length,
-    uniqueRepoUrls: extracted.length,
+    totalUrls: totalItems,
+    uniqueRepoUrls: totalItems,
   };
 }
 
@@ -965,10 +1017,18 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   if (!body) {
     return { ok: false, error: "请先粘贴文章正文。" };
   }
-  const allowed = new Set(extractProjectSourceUrlsFromArticleText(body));
-  const selected = Array.from(
-    new Set((input.selectedGithubUrls ?? []).map((x) => x.trim()).filter((x) => x && allowed.has(x))),
+  // 分类：GENERAL 类型（general:名称）和 URL 类型（GitHub/GitCC）
+  const allSelected = Array.from(
+    new Set((input.selectedGithubUrls ?? []).map((x) => x.trim()).filter(Boolean)),
   );
+  const generalSelected = allSelected.filter((x) => x.startsWith("general:"));
+  const urlSelected = allSelected.filter((x) => !x.startsWith("general:"));
+
+  // URL 类型需要从正文校验来源
+  const allowed = new Set(extractProjectSourceUrlsFromArticleText(body));
+  const validUrlSelected = urlSelected.filter((x) => allowed.has(x));
+
+  const selected = [...validUrlSelected, ...generalSelected];
   if (selected.length === 0) {
     return { ok: false, error: "没有可加入发现队列的项目。" };
   }
@@ -981,6 +1041,57 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   const sourceArticleUrl = firstSourceArticleUrlFromText(body);
 
   for (const sourceUrl of selected) {
+    // ── GENERAL 通用项目（AI 识别，无代码仓库链接）────────────────────────
+    if (sourceUrl.startsWith("general:")) {
+      const projectName = sourceUrl.slice("general:".length).trim();
+      if (!projectName) { failed += 1; continue; }
+      try {
+        const existing = await findExistingProjectByPriority({
+          githubUrl: null,
+          source: null,
+          websiteUrl: null,
+          title: projectName,
+          repo: projectName,
+        });
+        if (existing) { duplicate += 1; continue; }
+        const now = new Date().toISOString();
+        const { appendDiscoveryItem: append } = await import("@/agents/discovery/discovery-store");
+        const item = {
+          id: `manual-general-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          sourceType: "manual" as const,
+          title: projectName,
+          url: `manual-general-${Date.now().toString(36)}`,
+          description: undefined,
+          status: "new" as const,
+          createdAt: now,
+          meta: {
+            source: "wechat-article",
+            sourceKey: "manual-general",
+            sourceType: "GENERAL",
+            sourceLabel: "手动添加",
+            sourceUrl: null,
+            githubUrl: null,
+            websiteUrl: null,
+            referenceUrl: sourceArticleUrl,
+            note: null,
+            category: null,
+            language: null,
+            stars: 0,
+            owner: null,
+            repo: null,
+            sourceName,
+            articleTitle,
+            articleBody: body,
+            sourceArticleUrl,
+            extractedFrom: "ai_article_extraction",
+          },
+        };
+        const appended = await append(item);
+        if (appended.duplicate) { duplicate += 1; } else { success += 1; }
+      } catch { failed += 1; }
+      continue;
+    }
+
     const source = parseProjectSourceUrl(sourceUrl);
     if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
       failed += 1;
@@ -1156,13 +1267,19 @@ async function fetchUrlText(url: string): Promise<string | null> {
 }
 
 /**
- * 用 AI 从文本中提取项目基本信息（名称、简介、官网、分类）。
+ * 用 AI 从文本中提取项目基本信息（名称、简介、官网、分类、中国社媒账号等）。
+ * 支持：官网、公众号、微博、抖音、App Store、Google Play 等多种官方来源。
  */
 async function aiExtractProjectInfo(text: string, referenceUrl?: string): Promise<{
   title: string;
   summary: string | null;
   websiteUrl: string | null;
   category: string | null;
+  wechatAccount: string | null;
+  weiboUrl: string | null;
+  douyinUrl: string | null;
+  appStoreUrl: string | null;
+  playStoreUrl: string | null;
 } | null> {
   try {
     const { generateText } = await import("@/lib/ai/generate-text");
@@ -1176,13 +1293,18 @@ ${text.slice(0, 4000)}
 - title：项目名称（字符串，必填）
 - summary：一句话简介，50~150字（字符串或 null）
 - websiteUrl：项目官网 URL，优先找官方网址（字符串或 null）
-- category：项目分类，例如"AI工具"、"开发工具"、"产品/服务"等（字符串或 null）
+- category：项目分类，例如"AI工具"、"AI漫画"、"开发工具"、"产品/服务"等（字符串或 null）
+- wechatAccount：微信公众号名称或ID（字符串或 null，注意：不是微信文章链接）
+- weiboUrl：微博账号主页 URL（字符串或 null，格式如 https://weibo.com/...）
+- douyinUrl：抖音账号主页 URL（字符串或 null，格式如 https://www.douyin.com/user/...）
+- appStoreUrl：Apple App Store 应用链接（字符串或 null）
+- playStoreUrl：Google Play 应用链接（字符串或 null）
 
 只返回 JSON，格式如下：
-{"title":"...","summary":"...","websiteUrl":"...","category":"..."}`;
+{"title":"...","summary":"...","websiteUrl":"...","category":"...","wechatAccount":null,"weiboUrl":null,"douyinUrl":null,"appStoreUrl":null,"playStoreUrl":null}`;
 
     const raw = await generateText(prompt, {
-      maxTokens: 400,
+      maxTokens: 600,
       temperature: 0.2,
       systemPrompt: "你是项目信息提取专家，只返回 JSON，不要其他内容。",
     });
@@ -1194,9 +1316,70 @@ ${text.slice(0, 4000)}
       summary: typeof parsed.summary === "string" && parsed.summary.trim() ? parsed.summary.trim() : null,
       websiteUrl: typeof parsed.websiteUrl === "string" && parsed.websiteUrl.startsWith("http") ? parsed.websiteUrl.trim() : null,
       category: typeof parsed.category === "string" && parsed.category.trim() ? parsed.category.trim() : null,
+      wechatAccount: typeof parsed.wechatAccount === "string" && parsed.wechatAccount.trim() ? parsed.wechatAccount.trim() : null,
+      weiboUrl: typeof parsed.weiboUrl === "string" && parsed.weiboUrl.startsWith("http") ? parsed.weiboUrl.trim() : null,
+      douyinUrl: typeof parsed.douyinUrl === "string" && parsed.douyinUrl.startsWith("http") ? parsed.douyinUrl.trim() : null,
+      appStoreUrl: typeof parsed.appStoreUrl === "string" && parsed.appStoreUrl.startsWith("http") ? parsed.appStoreUrl.trim() : null,
+      playStoreUrl: typeof parsed.playStoreUrl === "string" && parsed.playStoreUrl.startsWith("http") ? parsed.playStoreUrl.trim() : null,
     };
   } catch {
     return null;
+  }
+}
+
+/**
+ * 用 AI 从文章正文中批量识别所有提及的项目（不依赖 GitHub/GitCC 链接）。
+ * 适用于行业报道、公众号盘点等场景，返回项目名称列表及基础信息。
+ */
+async function aiExtractGeneralProjectsFromArticle(text: string): Promise<Array<{
+  name: string;
+  summary: string | null;
+  websiteUrl: string | null;
+  category: string | null;
+  wechatAccount: string | null;
+}>> {
+  try {
+    const { generateText } = await import("@/lib/ai/generate-text");
+    const prompt = `你是一个项目/产品信息提取助手。请从以下文章正文中识别所有明确提及的产品、应用、工具或项目（不包括公司本身，只找产品/项目/工具/应用名称），以 JSON 数组格式返回，不要有任何多余内容。
+
+文章正文：
+${text.slice(0, 5000)}
+
+请找出所有在文章中作为产品、工具或项目提及的名称（排除纯粹的公司名/机构名，除非该名称也是其核心产品名）。
+
+对每个识别到的项目返回以下字段（找不到填 null）：
+- name：项目/产品名称（必填）
+- summary：在文章中的简短描述（null 或字符串）
+- websiteUrl：如文章提供了官网链接（null 或字符串）
+- category：产品类别如"AI漫画"、"AI视频"、"AI图像"等（null 或字符串）
+- wechatAccount：微信公众号名（null 或字符串）
+
+只返回 JSON 数组，格式如下：
+[{"name":"项目A","summary":"...","websiteUrl":null,"category":"AI漫画","wechatAccount":null}]
+
+如果找不到任何项目，返回空数组：[]`;
+
+    const raw = await generateText(prompt, {
+      maxTokens: 1500,
+      temperature: 0.1,
+      systemPrompt: "你是项目信息提取专家，只返回 JSON 数组，不要其他内容。",
+    });
+    const jsonStr = raw.match(/\[[\s\S]*\]/)?.[0];
+    if (!jsonStr) return [];
+    const parsed = JSON.parse(jsonStr) as unknown[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+      .map((item) => ({
+        name: typeof item.name === "string" && item.name.trim() ? item.name.trim() : "",
+        summary: typeof item.summary === "string" && item.summary.trim() ? item.summary.trim() : null,
+        websiteUrl: typeof item.websiteUrl === "string" && item.websiteUrl.startsWith("http") ? item.websiteUrl.trim() : null,
+        category: typeof item.category === "string" && item.category.trim() ? item.category.trim() : null,
+        wechatAccount: typeof item.wechatAccount === "string" && item.wechatAccount.trim() ? item.wechatAccount.trim() : null,
+      }))
+      .filter((item) => item.name.length > 0);
+  } catch {
+    return [];
   }
 }
 
@@ -1225,6 +1408,11 @@ export async function parseGeneralProjectAction(input: {
   let websiteUrl: string | null = websiteRaw || null;
   let category: string | null = null;
   let aiEnriched = false;
+  let wechatAccount: string | null = null;
+  let weiboUrl: string | null = null;
+  let douyinUrl: string | null = null;
+  let appStoreUrl: string | null = null;
+  let playStoreUrl: string | null = null;
 
   if (refUrlRaw) {
     try {
@@ -1236,6 +1424,11 @@ export async function parseGeneralProjectAction(input: {
           if (!summary && aiResult.summary) summary = aiResult.summary;
           if (!websiteUrl && aiResult.websiteUrl) websiteUrl = aiResult.websiteUrl;
           if (aiResult.category) category = aiResult.category;
+          if (aiResult.wechatAccount) wechatAccount = aiResult.wechatAccount;
+          if (aiResult.weiboUrl) weiboUrl = aiResult.weiboUrl;
+          if (aiResult.douyinUrl) douyinUrl = aiResult.douyinUrl;
+          if (aiResult.appStoreUrl) appStoreUrl = aiResult.appStoreUrl;
+          if (aiResult.playStoreUrl) playStoreUrl = aiResult.playStoreUrl;
           aiEnriched = true;
         }
       }
@@ -1246,6 +1439,16 @@ export async function parseGeneralProjectAction(input: {
 
   if (!title) {
     return { ok: false, error: "请填写项目名称，或提供可分析的参考链接。" };
+  }
+
+  // 入库校验：至少需要一个官方或第三方信息来源
+  // 新闻报道链接（refUrlRaw）不算官方来源
+  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl);
+  if (!hasOfficialSource && !refUrlRaw) {
+    return {
+      ok: false,
+      error: "项目缺少任何官方信息来源（官网、公众号、微博、抖音等），请补充后再入库。",
+    };
   }
 
   const duplicate = await findExistingProjectByPriority({
@@ -1265,6 +1468,11 @@ export async function parseGeneralProjectAction(input: {
       referenceUrl: refUrlRaw || null,
       category,
       aiEnriched,
+      wechatAccount,
+      weiboUrl,
+      douyinUrl,
+      appStoreUrl,
+      playStoreUrl,
     },
     duplicate,
   };
@@ -1272,6 +1480,7 @@ export async function parseGeneralProjectAction(input: {
 
 /**
  * 将通用项目（无 GitHub）加入发现队列。
+ * 新增：支持公众号、微博、抖音、App Store 等官方信息来源字段。
  */
 export async function addGeneralProjectToQueueAction(input: {
   title: string;
@@ -1280,6 +1489,11 @@ export async function addGeneralProjectToQueueAction(input: {
   referenceUrl?: string | null;
   category?: string | null;
   note?: string;
+  wechatAccount?: string | null;
+  weiboUrl?: string | null;
+  douyinUrl?: string | null;
+  appStoreUrl?: string | null;
+  playStoreUrl?: string | null;
 }): Promise<AddGeneralProjectToQueueResult> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -1292,6 +1506,21 @@ export async function addGeneralProjectToQueueAction(input: {
 
   const websiteUrl = input.websiteUrl?.trim() || null;
   const referenceUrl = input.referenceUrl?.trim() || null;
+  const wechatAccount = input.wechatAccount?.trim() || null;
+  const weiboUrl = input.weiboUrl?.trim() || null;
+  const douyinUrl = input.douyinUrl?.trim() || null;
+  const appStoreUrl = input.appStoreUrl?.trim() || null;
+  const playStoreUrl = input.playStoreUrl?.trim() || null;
+
+  // 入库校验：至少需要一个官方来源（官网、代码仓库、社媒账号等）
+  // 参考链接（新闻报道等）不算官方来源
+  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl);
+  if (!hasOfficialSource) {
+    return {
+      ok: false,
+      error: "项目需要至少一个官方信息来源（官网、公众号、微博、抖音、App Store 等），新闻报道不算官方来源。",
+    };
+  }
 
   const duplicate = await findExistingProjectByPriority({
     githubUrl: null,
@@ -1328,6 +1557,11 @@ export async function addGeneralProjectToQueueAction(input: {
       stars: 0,
       owner: null,
       repo: null,
+      wechatAccount,
+      weiboUrl,
+      douyinUrl,
+      appStoreUrl,
+      playStoreUrl,
     },
   };
 
@@ -1346,6 +1580,7 @@ export async function addGeneralProjectToQueueAction(input: {
 
 /**
  * 将通用项目（无 GitHub）直接导入项目库。
+ * 新增：支持公众号、微博、抖音等官方信息来源字段，并验证最低来源要求。
  */
 export async function importGeneralProjectAction(input: {
   title: string;
@@ -1354,6 +1589,11 @@ export async function importGeneralProjectAction(input: {
   referenceUrl?: string | null;
   category?: string | null;
   note?: string;
+  wechatAccount?: string | null;
+  weiboUrl?: string | null;
+  douyinUrl?: string | null;
+  appStoreUrl?: string | null;
+  playStoreUrl?: string | null;
 }): Promise<ImportGeneralProjectResult> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -1366,6 +1606,20 @@ export async function importGeneralProjectAction(input: {
 
   const websiteUrl = input.websiteUrl?.trim() || null;
   const referenceUrl = input.referenceUrl?.trim() || null;
+  const wechatAccount = input.wechatAccount?.trim() || null;
+  const weiboUrl = input.weiboUrl?.trim() || null;
+  const douyinUrl = input.douyinUrl?.trim() || null;
+  const appStoreUrl = input.appStoreUrl?.trim() || null;
+  const playStoreUrl = input.playStoreUrl?.trim() || null;
+
+  // 入库校验：至少需要一个官方来源
+  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl);
+  if (!hasOfficialSource) {
+    return {
+      ok: false,
+      error: "项目需要至少一个官方信息来源（官网、公众号、微博、抖音、App Store 等）。",
+    };
+  }
 
   const duplicate = await findExistingProjectByPriority({
     githubUrl: null,
@@ -1407,6 +1661,11 @@ export async function importGeneralProjectAction(input: {
       stars: 0,
       owner: null,
       repo: null,
+      wechatAccount,
+      weiboUrl,
+      douyinUrl,
+      appStoreUrl,
+      playStoreUrl,
     },
   };
 

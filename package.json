@@ -41,7 +41,8 @@
     "discovery:github-batch": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-github-batch.ts",
     "discovery:github-v3": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-github-v3.ts",
     "discovery:scheduled-run": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-scheduled.ts",
-    "activity:github": "node ./node_modules/tsx/dist/cli.mjs scripts/run-project-activity.ts"
+    "activity:github": "node ./node_modules/tsx/dist/cli.mjs scripts/run-project-activity.ts",
+    "tracker:official-info": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-project-info-tracker.ts"
   },
   "dependencies": {
     "@alicloud/dysmsapi20170525": "^4.5.1",

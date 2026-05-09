@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/summary-update",
       "schedule": "0 6 * * 1"
+    },
+    {
+      "path": "/api/cron/track-official-info",
+      "schedule": "0 8 * * 3"
     }
   ]
 }
