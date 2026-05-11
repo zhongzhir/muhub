@@ -5,6 +5,7 @@ import {
   primaryTypeRank,
 } from "./keyword-rules";
 import { applyTopicRules } from "./topic-rules";
+import { detectChinaAffinitySignals } from "@/lib/discovery/china-affinity";
 
 export type ClassificationInput = {
   title: string;
@@ -121,6 +122,12 @@ export function classifyDiscoveryCandidate(input: ClassificationInput): Classifi
   }
 
   let isChineseTool = false;
+  const chinaSignals = detectChinaAffinitySignals(input);
+  if (chinaSignals.length > 0) {
+    isChineseTool = true;
+    evidence.push(...chinaSignals.map((signal) => signal.evidence));
+  }
+
   for (const c of CHINESE_TOOL_PATTERNS) {
     if (haystack.includes(c.toLowerCase())) {
       isChineseTool = true;

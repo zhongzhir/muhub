@@ -1,3 +1,9 @@
+import {
+  chinaAffinityPriorityPoints,
+  detectChinaAffinitySignals,
+  type ChinaAffinitySignal,
+} from "@/lib/discovery/china-affinity";
+
 function asObject(v: unknown): Record<string, unknown> {
   if (v && typeof v === "object" && !Array.isArray(v)) {
     return v as Record<string, unknown>;
@@ -20,11 +26,15 @@ export type ReviewPriorityFactor = {
 };
 
 export type ReviewPrioritySignals = {
-  version: 1;
+  version: 2;
   total: number;
   multiSource: boolean;
   contributingLabels: string[];
   productHuntFused: boolean;
+  chinaAffinity?: {
+    points: number;
+    signals: ChinaAffinitySignal[];
+  };
   productHunt?: {
     votes: number | null;
     snapshotCount: number;
@@ -43,6 +53,14 @@ export type ReviewPriorityComputeInput = {
   enrichmentStatus: string;
   classificationStatus: string;
   isAiRelated: boolean | null;
+  isChineseTool: boolean | null;
+  language: string | null;
+  title: string | null;
+  summary: string | null;
+  descriptionRaw: string | null;
+  externalUrl: string | null;
+  referenceSources: unknown;
+  rawPayloadJson: unknown;
   score: number | null;
   qualityScore: number | null;
   stars: number;
@@ -208,6 +226,32 @@ export function computeReviewPriority(input: ReviewPriorityComputeInput): {
     factors.push({ id: "ai_related", label: "AI 相关", points: 10 });
   }
 
+  const chinaSignals = detectChinaAffinitySignals({
+    title: input.title,
+    summary: input.summary,
+    descriptionRaw: input.descriptionRaw,
+    website: input.website ?? input.externalUrl,
+    docsUrl: input.docsUrl,
+    repoUrl: input.repoUrl,
+    language: input.language,
+    evidenceText: [
+      JSON.stringify(input.metadataJson ?? null),
+      JSON.stringify(input.referenceSources ?? null),
+      JSON.stringify(input.rawPayloadJson ?? null),
+    ].join("\n"),
+  });
+  const chinaPoints =
+    input.isChineseTool === true
+      ? Math.max(16, chinaAffinityPriorityPoints(chinaSignals))
+      : chinaAffinityPriorityPoints(chinaSignals);
+  if (chinaPoints > 0) {
+    factors.push({
+      id: "china_affinity",
+      label: `中国相关线索 (+${chinaPoints})`,
+      points: chinaPoints,
+    });
+  }
+
   const baseScore = input.score ?? 0;
   const quality = input.qualityScore ?? 0;
   const qPts = Math.round(Math.min(18, baseScore * 0.12 + quality * 0.1));
@@ -255,11 +299,18 @@ export function computeReviewPriority(input: ReviewPriorityComputeInput): {
   }
 
   const signals: ReviewPrioritySignals = {
-    version: 1,
+    version: 2,
     total, // 与 reviewPriorityScore 一致（已含拒绝/导入降权）
     multiSource: fusion.multiSource,
     contributingLabels: fusion.contributingLabels,
     productHuntFused: fusion.productHuntFused,
+    chinaAffinity:
+      chinaPoints > 0
+        ? {
+            points: chinaPoints,
+            signals: chinaSignals,
+          }
+        : undefined,
     productHunt: fusion.productHunt,
     factors,
   };

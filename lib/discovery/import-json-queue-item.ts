@@ -44,6 +44,13 @@ type ArticleSourceInput = {
   url: string;
 };
 
+type MetaProjectSourceInput = {
+  kind: ProjectSourceKind;
+  url: string;
+  label: string;
+  isPrimary: boolean;
+};
+
 function stringMeta(meta: Record<string, unknown> | undefined, key: string): string {
   const value = meta?.[key];
   return typeof value === "string" ? value.trim() : "";
@@ -106,6 +113,38 @@ function articleSourceFromItem(item: DiscoveryItem): ArticleSourceInput | null {
     summary,
     url: sourceArticleUrl,
   };
+}
+
+function officialSourcesFromMeta(item: DiscoveryItem): MetaProjectSourceInput[] {
+  const meta = item.meta && typeof item.meta === "object" ? (item.meta as Record<string, unknown>) : undefined;
+  const out: MetaProjectSourceInput[] = [];
+  const push = (kind: ProjectSourceKind, key: string, label: string, isPrimary = false) => {
+    const url = stringMeta(meta, key);
+    if (!url) return;
+    out.push({ kind, url, label, isPrimary });
+  };
+
+  const wechatAccount = stringMeta(meta, "wechatAccount");
+  if (wechatAccount) {
+    out.push({
+      kind: "WECHAT",
+      url: `wechat://account/${encodeURIComponent(wechatAccount)}`,
+      label: wechatAccount,
+      isPrimary: false,
+    });
+  }
+  push("OTHER", "weiboUrl", "微博", false);
+  push("DOUYIN", "douyinUrl", "抖音", false);
+  push("OTHER", "appStoreUrl", "App Store", false);
+  push("OTHER", "playStoreUrl", "Google Play", false);
+
+  const seen = new Set<string>();
+  return out.filter((source) => {
+    const key = `${source.kind}:${source.url}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 async function ensureArticleProjectSource(
@@ -386,6 +425,23 @@ export async function importJsonDiscoveryItem(
         });
       }
       await ensureArticleProjectSource(tx, existing.id, articleSource);
+      for (const source of officialSourcesFromMeta(item)) {
+        const exists = await tx.projectSource.findFirst({
+          where: { projectId: existing.id, url: source.url },
+          select: { id: true },
+        });
+        if (!exists) {
+          await tx.projectSource.create({
+            data: {
+              projectId: existing.id,
+              kind: source.kind,
+              url: source.url,
+              label: source.label,
+              isPrimary: source.isPrimary,
+            },
+          });
+        }
+      }
       await createExternalLinks(tx, existing.id, link.externalLinks);
     });
     return {
@@ -450,6 +506,9 @@ export async function importJsonDiscoveryItem(
       summary: articleSource.summary,
       isPrimary: false,
     });
+  }
+  for (const source of officialSourcesFromMeta(item)) {
+    sourceCreates.push(source);
   }
 
   const project = await prisma.$transaction(async (tx) => {

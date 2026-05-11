@@ -39,6 +39,18 @@ type ParsedGeneralState = {
   referenceUrl: string | null;
   category: string | null;
   aiEnriched: boolean;
+  wechatAccount: string | null;
+  weiboUrl: string | null;
+  douyinUrl: string | null;
+  appStoreUrl: string | null;
+  playStoreUrl: string | null;
+  officialSourceCompletion: Array<{
+    kind: "APP_STORE" | "GOOGLE_PLAY";
+    url: string;
+    label: string;
+    evidence: string;
+    confidence: number;
+  }>;
   duplicate: { slug: string; name: string } | null;
 };
 
@@ -402,6 +414,12 @@ export function ManualAddProjectModal() {
                             referenceUrl: parsedGeneral.referenceUrl,
                             category: parsedGeneral.category,
                             note: genNote,
+                            wechatAccount: parsedGeneral.wechatAccount,
+                            weiboUrl: parsedGeneral.weiboUrl,
+                            douyinUrl: parsedGeneral.douyinUrl,
+                            appStoreUrl: parsedGeneral.appStoreUrl,
+                            playStoreUrl: parsedGeneral.playStoreUrl,
+                            officialSourceCompletion: parsedGeneral.officialSourceCompletion,
                           });
                           if (!result.ok) { setFeedback({ kind: "err", text: result.error }); return; }
                           setFeedback({ kind: "ok", text: "已加入发现队列。" });
@@ -429,6 +447,12 @@ export function ManualAddProjectModal() {
                             referenceUrl: parsedGeneral.referenceUrl,
                             category: parsedGeneral.category,
                             note: genNote,
+                            wechatAccount: parsedGeneral.wechatAccount,
+                            weiboUrl: parsedGeneral.weiboUrl,
+                            douyinUrl: parsedGeneral.douyinUrl,
+                            appStoreUrl: parsedGeneral.appStoreUrl,
+                            playStoreUrl: parsedGeneral.playStoreUrl,
+                            officialSourceCompletion: parsedGeneral.officialSourceCompletion,
                           });
                           if (!result.ok) { setFeedback({ kind: "err", text: result.error }); return; }
                           setFeedback({ kind: "ok", text: "已成功导入项目。" });
@@ -448,6 +472,21 @@ export function ManualAddProjectModal() {
                     {parsedGeneral.websiteUrl ? (
                       <p className="truncate">{"官网："}{parsedGeneral.websiteUrl}</p>
                     ) : null}
+                    {parsedGeneral.wechatAccount ? (
+                      <p className="truncate">{"公众号："}{parsedGeneral.wechatAccount}</p>
+                    ) : null}
+                    {parsedGeneral.weiboUrl ? (
+                      <p className="truncate">{"微博："}{parsedGeneral.weiboUrl}</p>
+                    ) : null}
+                    {parsedGeneral.douyinUrl ? (
+                      <p className="truncate">{"抖音："}{parsedGeneral.douyinUrl}</p>
+                    ) : null}
+                    {parsedGeneral.appStoreUrl ? (
+                      <p className="truncate">{"App Store："}{parsedGeneral.appStoreUrl}</p>
+                    ) : null}
+                    {parsedGeneral.playStoreUrl ? (
+                      <p className="truncate">{"Google Play："}{parsedGeneral.playStoreUrl}</p>
+                    ) : null}
                     {parsedGeneral.referenceUrl ? (
                       <p className="truncate">{"参考来源："}{parsedGeneral.referenceUrl}</p>
                     ) : null}
@@ -456,6 +495,12 @@ export function ManualAddProjectModal() {
                     ) : null}
                     {parsedGeneral.aiEnriched ? (
                       <p className="mt-1 text-blue-600 dark:text-blue-400">{"✦ 已由 AI 从参考链接自动提取信息"}</p>
+                    ) : null}
+                    {parsedGeneral.officialSourceCompletion.length ? (
+                      <p className="mt-1 text-emerald-700 dark:text-emerald-300">
+                        {"已轻量补全官方来源："}
+                        {parsedGeneral.officialSourceCompletion.map((item) => item.label).join("、")}
+                      </p>
                     ) : null}
                     {generalDuplicateHit ? (
                       <p className="mt-2 text-red-600 dark:text-red-300">

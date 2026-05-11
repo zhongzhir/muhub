@@ -169,10 +169,19 @@ export type ParseGeneralProjectResult =
         douyinUrl: string | null;
         appStoreUrl: string | null;
         playStoreUrl: string | null;
+        officialSourceCompletion: OfficialSourceCompletion[];
       };
       duplicate: ExistingProjectHit | null;
     }
   | { ok: false; error: string };
+
+export type OfficialSourceCompletion = {
+  kind: "APP_STORE" | "GOOGLE_PLAY";
+  url: string;
+  label: string;
+  evidence: string;
+  confidence: number;
+};
 
 export type AddGeneralProjectToQueueResult =
   | { ok: true; duplicate: boolean; message: string }
@@ -1331,6 +1340,155 @@ ${text.slice(0, 4000)}
  * 用 AI 从文章正文中批量识别所有提及的项目（不依赖 GitHub/GitCC 链接）。
  * 适用于行业报道、公众号盘点等场景，返回项目名称列表及基础信息。
  */
+function normalizeProjectNameForMatch(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[\s._\-:：|｜]+/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function appStoreCountryFromText(text: string): string {
+  return /中国|国内|大陆|中文|国区|应用市场|App Store 中国/i.test(text) ? "cn" : "us";
+}
+
+async function searchAppleAppStoreOfficialSource(input: {
+  title: string;
+  summary: string | null;
+  referenceText: string;
+}): Promise<OfficialSourceCompletion | null> {
+  const title = input.title.trim();
+  if (!title) return null;
+  try {
+    const country = appStoreCountryFromText(`${input.summary ?? ""}\n${input.referenceText}`);
+    const params = new URLSearchParams({
+      term: title,
+      entity: "software",
+      limit: "5",
+      country,
+    });
+    const resp = await fetch(`https://itunes.apple.com/search?${params.toString()}`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8_000),
+      cache: "no-store",
+    });
+    if (!resp.ok) return null;
+    const json = (await resp.json()) as {
+      results?: Array<{
+        trackName?: unknown;
+        sellerName?: unknown;
+        trackViewUrl?: unknown;
+      }>;
+    };
+    const target = normalizeProjectNameForMatch(title);
+    for (const item of json.results ?? []) {
+      const trackName = typeof item.trackName === "string" ? item.trackName.trim() : "";
+      const trackUrl = typeof item.trackViewUrl === "string" ? item.trackViewUrl.trim() : "";
+      if (!trackName || !trackUrl.startsWith("http")) continue;
+      const candidate = normalizeProjectNameForMatch(trackName);
+      const exact = candidate === target;
+      const close = candidate.includes(target) || target.includes(candidate);
+      if (!exact && !close) continue;
+      const sellerName = typeof item.sellerName === "string" ? item.sellerName.trim() : "";
+      return {
+        kind: "APP_STORE",
+        url: trackUrl,
+        label: sellerName ? `App Store: ${trackName} (${sellerName})` : `App Store: ${trackName}`,
+        evidence: `itunes-search country=${country} matched trackName="${trackName}"`,
+        confidence: exact ? 0.92 : 0.78,
+      };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+async function searchGooglePlayOfficialSource(input: {
+  title: string;
+  summary: string | null;
+  referenceText: string;
+}): Promise<OfficialSourceCompletion | null> {
+  const title = input.title.trim();
+  if (!title) return null;
+  try {
+    const gl = /中国|国内|大陆|中文|应用市场/i.test(`${input.summary ?? ""}\n${input.referenceText}`) ? "cn" : "us";
+    const params = new URLSearchParams({
+      q: title,
+      c: "apps",
+      hl: "en",
+      gl,
+    });
+    const resp = await fetch(`https://play.google.com/store/search?${params.toString()}`, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.8,zh-CN;q=0.6",
+      },
+      signal: AbortSignal.timeout(8_000),
+      cache: "no-store",
+    });
+    if (!resp.ok) return null;
+    const html = await resp.text();
+    const target = normalizeProjectNameForMatch(title);
+    const seen = new Set<string>();
+    const linkRegex = /href="(\/store\/apps\/details\?id=[^"]+)"/g;
+    let match: RegExpExecArray | null;
+    while ((match = linkRegex.exec(html))) {
+      const href = match[1].replace(/&amp;/g, "&");
+      if (seen.has(href)) continue;
+      seen.add(href);
+      const index = Math.max(0, match.index - 800);
+      const context = html
+        .slice(index, Math.min(html.length, match.index + 800))
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/\s+/g, " ")
+        .trim();
+      const candidate = normalizeProjectNameForMatch(context);
+      if (!candidate.includes(target)) continue;
+      return {
+        kind: "GOOGLE_PLAY",
+        url: `https://play.google.com${href}`,
+        label: `Google Play: ${title}`,
+        evidence: `google-play-search gl=${gl} matched app details link`,
+        confidence: 0.74,
+      };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+async function completeOfficialSourcesLightly(input: {
+  title: string;
+  summary: string | null;
+  referenceText: string;
+  appStoreUrl: string | null;
+  playStoreUrl: string | null;
+}): Promise<OfficialSourceCompletion[]> {
+  const shouldSearchStores = /应用市场|App Store|Google Play|play store|下载|install|download/i.test(
+    `${input.title}\n${input.summary ?? ""}\n${input.referenceText}`,
+  );
+  if (!shouldSearchStores) {
+    return [];
+  }
+
+  const completions: OfficialSourceCompletion[] = [];
+  if (!input.appStoreUrl) {
+    const appStore = await searchAppleAppStoreOfficialSource(input);
+    if (appStore) completions.push(appStore);
+  }
+  if (!input.playStoreUrl) {
+    const playStore = await searchGooglePlayOfficialSource(input);
+    if (playStore) completions.push(playStore);
+  }
+  return completions;
+}
+
 async function aiExtractGeneralProjectsFromArticle(text: string): Promise<Array<{
   name: string;
   summary: string | null;
@@ -1413,11 +1571,14 @@ export async function parseGeneralProjectAction(input: {
   let douyinUrl: string | null = null;
   let appStoreUrl: string | null = null;
   let playStoreUrl: string | null = null;
+  let pageTextForCompletion = "";
+  let officialSourceCompletion: OfficialSourceCompletion[] = [];
 
   if (refUrlRaw) {
     try {
       const pageText = await fetchUrlText(refUrlRaw);
       if (pageText && pageText.length > 100) {
+        pageTextForCompletion = pageText;
         const aiResult = await aiExtractProjectInfo(pageText, refUrlRaw);
         if (aiResult) {
           if (!title && aiResult.title) title = aiResult.title;
@@ -1434,6 +1595,27 @@ export async function parseGeneralProjectAction(input: {
       }
     } catch {
       // AI 分析失败，使用手填信息
+    }
+  }
+
+  if (title && refUrlRaw && !(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl)) {
+    officialSourceCompletion = await completeOfficialSourcesLightly({
+      title,
+      summary,
+      referenceText: pageTextForCompletion,
+      appStoreUrl,
+      playStoreUrl,
+    });
+    for (const completion of officialSourceCompletion) {
+      if (completion.kind === "APP_STORE" && !appStoreUrl) {
+        appStoreUrl = completion.url;
+      }
+      if (completion.kind === "GOOGLE_PLAY" && !playStoreUrl) {
+        playStoreUrl = completion.url;
+      }
+    }
+    if (officialSourceCompletion.length > 0) {
+      aiEnriched = true;
     }
   }
 
@@ -1473,6 +1655,7 @@ export async function parseGeneralProjectAction(input: {
       douyinUrl,
       appStoreUrl,
       playStoreUrl,
+      officialSourceCompletion,
     },
     duplicate,
   };
@@ -1494,6 +1677,7 @@ export async function addGeneralProjectToQueueAction(input: {
   douyinUrl?: string | null;
   appStoreUrl?: string | null;
   playStoreUrl?: string | null;
+  officialSourceCompletion?: OfficialSourceCompletion[];
 }): Promise<AddGeneralProjectToQueueResult> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -1562,6 +1746,7 @@ export async function addGeneralProjectToQueueAction(input: {
       douyinUrl,
       appStoreUrl,
       playStoreUrl,
+      officialSourceCompletion: input.officialSourceCompletion ?? [],
     },
   };
 
@@ -1594,6 +1779,7 @@ export async function importGeneralProjectAction(input: {
   douyinUrl?: string | null;
   appStoreUrl?: string | null;
   playStoreUrl?: string | null;
+  officialSourceCompletion?: OfficialSourceCompletion[];
 }): Promise<ImportGeneralProjectResult> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -1666,6 +1852,7 @@ export async function importGeneralProjectAction(input: {
       douyinUrl,
       appStoreUrl,
       playStoreUrl,
+      officialSourceCompletion: input.officialSourceCompletion ?? [],
     },
   };
 
