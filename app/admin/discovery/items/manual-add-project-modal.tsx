@@ -109,7 +109,7 @@ export function ManualAddProjectModal() {
                   {"添加项目"}
                 </h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  {"支持 GitHub / GitCC 技术项目，也支持产品、工具等非技术类项目。"}
+                  {"支持项目、产品、服务、应用和工具；GitHub / GitCC 只是代码仓库来源之一。"}
                 </p>
               </div>
               <button
@@ -131,7 +131,7 @@ export function ManualAddProjectModal() {
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
-                {"🔗 GitHub / GitCC 项目"}
+                {"🔗 代码仓库（GitHub / GitCC）"}
               </button>
               <button
                 type="button"
@@ -142,7 +142,7 @@ export function ManualAddProjectModal() {
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                 }`}
               >
-                {"📦 通用项目（产品 / 服务 / 工具）"}
+                {"📦 项目 / 产品 / 服务"}
               </button>
             </div>
 
@@ -150,7 +150,7 @@ export function ManualAddProjectModal() {
               <>
                 <div className="mt-4 grid gap-3">
                   <label className="text-sm">
-                    {"项目链接（必填）"}
+                    {"代码仓库链接（必填）"}
                     <input
                       className={inputClass}
                       placeholder="https://github.com/{owner}/{repo}"
@@ -306,7 +306,7 @@ export function ManualAddProjectModal() {
               <>
                 <div className="mt-4 grid gap-3">
                   <label className="text-sm">
-                    {"项目名称（必填，或提供参考链接后自动识别）"}
+                    {"项目名称或参考材料 URL（可选，提供参考材料可自动识别）"}
                     <input
                       className={inputClass}
                       placeholder={"例如：Notion、Claude、DeepSeek"}
@@ -315,7 +315,7 @@ export function ManualAddProjectModal() {
                     />
                   </label>
                   <label className="text-sm">
-                    {"参考链接（可选）— 微信文章、新闻报道等，AI 将自动提取项目信息"}
+                    {"参考材料链接（可选）— 公众号、新闻、应用介绍、官网等"}
                     <input
                       className={inputClass}
                       placeholder="https://mp.weixin.qq.com/s/…"
@@ -352,7 +352,7 @@ export function ManualAddProjectModal() {
                   </label>
                 </div>
                 <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-                  {"提供参考链接后点击「解析项目」，AI 将尝试从页面内容提取项目名称、简介和官网。"}
+                  {"提供项目名或参考材料后点击「解析项目」，系统会识别项目名、简介、别名和官方来源；GitHub/GitCC 不是必填。"}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">

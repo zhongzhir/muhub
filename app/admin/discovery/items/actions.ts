@@ -1012,7 +1012,7 @@ export async function extractGithubProjectsFromArticleAction(input: {
   const totalItems = extracted.length;
   const hasResults = items.length > 0;
   if (!hasResults && totalItems === 0) {
-    return { ok: false, error: "正文中未识别到有效的项目链接或项目名称，请检查内容是否包含项目信息。" };
+    return { ok: false, error: "正文中未识别到明确项目、产品、应用、服务或工具信息，请检查内容是否包含可收录对象。" };
   }
 
   return {

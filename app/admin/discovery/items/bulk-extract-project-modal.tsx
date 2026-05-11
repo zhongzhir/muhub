@@ -88,7 +88,7 @@ export function BulkExtractProjectModal() {
               <div>
                 <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{"批量提取项目"}</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  {"从文章正文或 URL 中自动提取项目信息并批量加入发现队列。支持 GitHub / GitCC 链接提取，以及 AI 识别文章中无代码仓库的通用项目（如行业报道、公众号盘点等）。"}
+                  {"从文章正文或 URL 中提取项目、产品、应用、服务和工具；代码仓库只是来源之一。"}
                 </p>
               </div>
               <button
@@ -182,7 +182,7 @@ export function BulkExtractProjectModal() {
                     />
                   </label>
                   <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                    {"系统将自动抓取页面内容并提取项目信息，包括 GitHub/GitCC 链接及 AI 识别的通用项目。"}
+                    {"系统将自动抓取页面内容，识别代码仓库链接、产品名称、应用入口和可补全的官方来源。"}
                   </p>
                 </div>
               )}
@@ -210,7 +210,7 @@ export function BulkExtractProjectModal() {
                         <tr>
                           <th className="px-3 py-2">{"选择"}</th>
                           <th className="px-3 py-2">{"来源"}</th>
-                          <th className="px-3 py-2">{"项目链接"}</th>
+                          <th className="px-3 py-2">{"来源 / 入口"}</th>
                           <th className="px-3 py-2">{"项目名"}</th>
                           <th className="px-3 py-2">{"简介"}</th>
                           <th className="px-3 py-2">{"Stars"}</th>
@@ -242,7 +242,7 @@ export function BulkExtractProjectModal() {
                               </td>
                               <td className="px-3 py-2">
                                 {item.sourceType === "GENERAL" ? (
-                                  <span className="text-zinc-400 italic text-[11px]">{"无代码仓库"}{item.websiteUrl ? ` · ${item.websiteUrl}` : ""}</span>
+                                  <span className="text-zinc-400 italic text-[11px]">{"非代码仓库项目"}{item.websiteUrl ? ` · ${item.websiteUrl}` : ""}</span>
                                 ) : (
                                   <a
                                     href={item.sourceUrl}
@@ -337,14 +337,14 @@ export function BulkExtractProjectModal() {
                         if (result.items.length === 0) {
                           setFeedback({
                             kind: "err",
-                            text: "页面中未识别到有效的项目信息（GitHub/GitCC 链接或 AI 识别的产品名称）。",
+                            text: "页面中未识别到明确项目、产品、应用、服务或工具信息。",
                           });
                         } else {
                           const generalCount = result.items.filter((x) => x.sourceType === "GENERAL").length;
                           const repoCount = result.items.filter((x) => x.sourceType !== "GENERAL").length;
                           const parts = [];
                           if (repoCount > 0) parts.push(`代码仓库 ${repoCount} 个`);
-                          if (generalCount > 0) parts.push(`AI识别通用项目 ${generalCount} 个`);
+                          if (generalCount > 0) parts.push(`多元项目 ${generalCount} 个`);
                           setFeedback({
                             kind: "ok",
                             text: `已从 URL 抓取内容，共提取 ${result.items.length} 个项目（${parts.join("，")}）。`,
@@ -370,7 +370,7 @@ export function BulkExtractProjectModal() {
                         const repoCount = result.items.filter((x) => x.sourceType !== "GENERAL").length;
                         const parts = [];
                         if (repoCount > 0) parts.push(`代码仓库 ${repoCount} 个`);
-                        if (generalCount > 0) parts.push(`AI识别通用项目 ${generalCount} 个`);
+                        if (generalCount > 0) parts.push(`多元项目 ${generalCount} 个`);
                         setFeedback({
                           kind: "ok",
                           text: `提取完成：共识别 ${result.items.length} 个项目（${parts.join("，")}）。`,
@@ -380,7 +380,7 @@ export function BulkExtractProjectModal() {
                   });
                 }}
               >
-                {pending ? "提取中..." : "提取项目链接"}
+                {pending ? "提取中..." : "提取项目"}
               </button>
 
               <button
