@@ -133,6 +133,14 @@ type BulkExtractedGithubProject = {
   duplicateProject?: { slug: string; name: string } | null;
 };
 
+type GeneralArticleProject = {
+  name: string;
+  summary: string | null;
+  websiteUrl: string | null;
+  category: string | null;
+  wechatAccount: string | null;
+};
+
 export type ExtractGithubProjectsFromArticleResult =
   | {
       ok: true;
@@ -964,7 +972,10 @@ export async function extractGithubProjectsFromArticleAction(input: {
 
   // ── 步骤 2：AI 通用项目提取（识别文章中无代码仓库链接的产品/项目）────────
   try {
-    const aiProjects = await aiExtractGeneralProjectsFromArticle(body);
+    const aiProjects = mergeGeneralArticleProjects(
+      await aiExtractGeneralProjectsFromArticle(body),
+      heuristicExtractGeneralProjectsFromArticle(body),
+    );
     for (const proj of aiProjects) {
       if (!proj.name) continue;
       // 跳过已通过 URL 识别的项目（避免重复）
@@ -1063,6 +1074,17 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
           repo: projectName,
         });
         if (existing) { duplicate += 1; continue; }
+        const officialSourceCompletion = await completeOfficialSourcesLightly({
+          title: projectName,
+          summary: null,
+          referenceText: body,
+          appStoreUrl: null,
+          playStoreUrl: null,
+        });
+        const appStoreUrl =
+          officialSourceCompletion.find((item) => item.kind === "APP_STORE")?.url ?? null;
+        const playStoreUrl =
+          officialSourceCompletion.find((item) => item.kind === "GOOGLE_PLAY")?.url ?? null;
         const now = new Date().toISOString();
         const { appendDiscoveryItem: append } = await import("@/agents/discovery/discovery-store");
         const item = {
@@ -1093,6 +1115,9 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
             articleBody: body,
             sourceArticleUrl,
             extractedFrom: "ai_article_extraction",
+            appStoreUrl,
+            playStoreUrl,
+            officialSourceCompletion,
           },
         };
         const appended = await append(item);
@@ -1347,6 +1372,24 @@ function normalizeProjectNameForMatch(value: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
+function stripGenericAiToken(value: string): string {
+  return value.replace(/ai|人工智能/gi, "");
+}
+
+function projectNamesCloseEnough(a: string, b: string): boolean {
+  const left = normalizeProjectNameForMatch(a);
+  const right = normalizeProjectNameForMatch(b);
+  if (!left || !right) return false;
+  if (left === right || left.includes(right) || right.includes(left)) return true;
+  const leftNoAi = stripGenericAiToken(left);
+  const rightNoAi = stripGenericAiToken(right);
+  return Boolean(
+    leftNoAi &&
+      rightNoAi &&
+      (leftNoAi === rightNoAi || leftNoAi.includes(rightNoAi) || rightNoAi.includes(leftNoAi)),
+  );
+}
+
 function appStoreCountryFromText(text: string): string {
   return /中国|国内|大陆|中文|国区|应用市场|App Store 中国/i.test(text) ? "cn" : "us";
 }
@@ -1420,22 +1463,18 @@ async function searchAppleAppStoreOfficialSource(input: {
         trackViewUrl?: unknown;
       }>;
     };
-    const target = normalizeProjectNameForMatch(term);
     for (const item of json.results ?? []) {
       const trackName = typeof item.trackName === "string" ? item.trackName.trim() : "";
       const trackUrl = typeof item.trackViewUrl === "string" ? item.trackViewUrl.trim() : "";
       if (!trackName || !trackUrl.startsWith("http")) continue;
-      const candidate = normalizeProjectNameForMatch(trackName);
-      const exact = candidate === target;
-      const close = candidate.includes(target) || target.includes(candidate);
-      if (!exact && !close) continue;
+      if (!projectNamesCloseEnough(term, trackName)) continue;
       const sellerName = typeof item.sellerName === "string" ? item.sellerName.trim() : "";
       return {
         kind: "APP_STORE",
         url: trackUrl,
         label: sellerName ? `App Store: ${trackName} (${sellerName})` : `App Store: ${trackName}`,
         evidence: `itunes-search term="${term}" country=${country} matched trackName="${trackName}"`,
-        confidence: exact ? 0.92 : 0.78,
+        confidence: normalizeProjectNameForMatch(term) === normalizeProjectNameForMatch(trackName) ? 0.92 : 0.78,
       };
     }
   } catch {
@@ -1471,7 +1510,6 @@ async function searchGooglePlayOfficialSource(input: {
     });
     if (!resp.ok) return null;
     const html = await resp.text();
-    const target = normalizeProjectNameForMatch(term);
     const seen = new Set<string>();
     const linkRegex = /href="(\/store\/apps\/details\?id=[^"]+)"/g;
     let match: RegExpExecArray | null;
@@ -1488,8 +1526,7 @@ async function searchGooglePlayOfficialSource(input: {
         .replace(/&quot;/g, '"')
         .replace(/\s+/g, " ")
         .trim();
-      const candidate = normalizeProjectNameForMatch(context);
-      if (!candidate.includes(target)) continue;
+      if (!projectNamesCloseEnough(term, context)) continue;
       return {
         kind: "GOOGLE_PLAY",
         url: `https://play.google.com${href}`,
@@ -1541,13 +1578,75 @@ async function completeOfficialSourcesLightly(input: {
   return completions;
 }
 
-async function aiExtractGeneralProjectsFromArticle(text: string): Promise<Array<{
-  name: string;
-  summary: string | null;
-  websiteUrl: string | null;
-  category: string | null;
-  wechatAccount: string | null;
-}>> {
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function cleanArticleProjectName(value: string): string {
+  return value
+    .replace(/^[「『“"'\s]+|[」』”"'\s]+$/g, "")
+    .replace(/[，,。；;：:！!？?].*$/g, "")
+    .trim();
+}
+
+function summaryAround(text: string, needle: string): string | null {
+  const index = text.indexOf(needle);
+  if (index < 0) return null;
+  return text
+    .slice(index, index + 220)
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180) || null;
+}
+
+function heuristicExtractGeneralProjectsFromArticle(text: string): GeneralArticleProject[] {
+  const patterns = [
+    /([A-Z][A-Za-z0-9][A-Za-z0-9._-]{1,40})(?:的出现|可以看做是|给自己的定位|进入欧美|进入日本|进入[^，。]{1,20}市场)/g,
+    /(?:产品|应用|工具|项目)\s*[「『“"]\s*([A-Za-z0-9][A-Za-z0-9._-]{1,40})\s*[」』”"]/g,
+  ];
+  const out: GeneralArticleProject[] = [];
+  const seen = new Set<string>();
+  for (const pattern of patterns) {
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text))) {
+      const name = cleanArticleProjectName(match[1]);
+      if (!name || isHttpUrl(name)) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        name,
+        summary: summaryAround(text, name),
+        websiteUrl: null,
+        category: null,
+        wechatAccount: null,
+      });
+    }
+  }
+  return out.slice(0, 8);
+}
+
+function mergeGeneralArticleProjects(
+  primary: GeneralArticleProject[],
+  fallback: GeneralArticleProject[],
+): GeneralArticleProject[] {
+  const out: GeneralArticleProject[] = [];
+  const seen = new Set<string>();
+  for (const item of [...primary, ...fallback]) {
+    const key = item.name.toLowerCase();
+    if (!item.name || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
+
+async function aiExtractGeneralProjectsFromArticle(text: string): Promise<GeneralArticleProject[]> {
   try {
     const { generateText } = await import("@/lib/ai/generate-text");
     const prompt = `你是一个项目/产品信息提取助手。请从以下文章正文中识别所有明确提及的产品、应用、工具或项目（不包括公司本身，只找产品/项目/工具/应用名称），以 JSON 数组格式返回，不要有任何多余内容。
@@ -1611,9 +1710,11 @@ export async function parseGeneralProjectAction(input: {
   const titleRaw = input.title?.trim() || "";
   const descRaw = input.description?.trim() || "";
   const websiteRaw = input.websiteUrl?.trim() || "";
-  const refUrlRaw = input.referenceUrl?.trim() || "";
+  const refUrlInput = input.referenceUrl?.trim() || "";
+  const titleLooksLikeUrl = isHttpUrl(titleRaw);
+  const refUrlRaw = refUrlInput || (titleLooksLikeUrl ? titleRaw : "");
 
-  let title = titleRaw;
+  let title = titleLooksLikeUrl ? "" : titleRaw;
   let summary: string | null = descRaw || null;
   let websiteUrl: string | null = websiteRaw || null;
   let category: string | null = null;
@@ -1643,6 +1744,13 @@ export async function parseGeneralProjectAction(input: {
           if (aiResult.appStoreUrl) appStoreUrl = aiResult.appStoreUrl;
           if (aiResult.playStoreUrl) playStoreUrl = aiResult.playStoreUrl;
           aiEnriched = true;
+        }
+        if (!title) {
+          const heuristicProject = heuristicExtractGeneralProjectsFromArticle(pageText)[0];
+          if (heuristicProject?.name) {
+            title = heuristicProject.name;
+            if (!summary && heuristicProject.summary) summary = heuristicProject.summary;
+          }
         }
       }
     } catch {
@@ -2019,6 +2127,38 @@ export async function extractProjectsFromUrlAction(input: {
         duplicateProject: null,
       });
     }
+  }
+
+  const seenNames = new Set(items.map((item) => item.projectName.toLowerCase()));
+  const generalProjects = mergeGeneralArticleProjects(
+    await aiExtractGeneralProjectsFromArticle(pageText),
+    heuristicExtractGeneralProjectsFromArticle(pageText),
+  );
+  for (const proj of generalProjects) {
+    if (!proj.name || seenNames.has(proj.name.toLowerCase())) continue;
+    seenNames.add(proj.name.toLowerCase());
+    const duplicate = await findExistingProjectByPriority({
+      githubUrl: null,
+      source: null,
+      websiteUrl: proj.websiteUrl || null,
+      title: proj.name,
+      repo: proj.name,
+    });
+    items.push({
+      sourceType: "GENERAL",
+      sourceUrl: `general:${proj.name}`,
+      sourceLabel: "通用项目",
+      githubUrl: null,
+      owner: null,
+      repo: null,
+      projectName: proj.name,
+      summary: proj.summary,
+      stars: 0,
+      language: null,
+      websiteUrl: proj.websiteUrl,
+      status: duplicate ? "duplicate" : "ready",
+      duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
+    });
   }
 
   let articleTitle: string | null = null;
