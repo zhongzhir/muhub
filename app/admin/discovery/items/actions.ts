@@ -1351,17 +1351,58 @@ function appStoreCountryFromText(text: string): string {
   return /中国|国内|大陆|中文|国区|应用市场|App Store 中国/i.test(text) ? "cn" : "us";
 }
 
-async function searchAppleAppStoreOfficialSource(input: {
+function normalizeCompletionSearchTerm(value: string): string {
+  return value
+    .replace(/\s+/g, "")
+    .replace(/^[：:，,。"'“”‘’「」『』【】\[\]()（）\s]+/u, "")
+    .replace(/[：:，,。"'“”‘’「」『』【】\[\]()（）\s]+$/u, "")
+    .trim();
+}
+
+function officialSourceSearchTerms(input: {
   title: string;
   summary: string | null;
   referenceText: string;
+}): string[] {
+  const terms: string[] = [];
+  const seen = new Set<string>();
+  const push = (value: string | null | undefined) => {
+    const term = normalizeCompletionSearchTerm(value ?? "");
+    if (term.length < 2 || term.length > 80) return;
+    const key = term.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    terms.push(term);
+  };
+
+  push(input.title);
+
+  const text = `${input.summary ?? ""}\n${input.referenceText}`;
+  const aliasPatterns = [
+    /(?:国内版本名为|国内版(?:本)?(?:名|名称)?为|中国版(?:本)?(?:名|名称)?为|应用名为|产品名为)\s*[「『“"]\s*([\s\S]{2,80}?)\s*[」』”"]/g,
+    /(?:国内版本名为|国内版(?:本)?(?:名|名称)?为|中国版(?:本)?(?:名|名称)?为|应用名为|产品名为)\s*([A-Za-z0-9\u4e00-\u9fff][A-Za-z0-9\u4e00-\u9fff\s-]{1,60})/g,
+  ];
+  for (const pattern of aliasPatterns) {
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text))) {
+      push(match[1]);
+    }
+  }
+
+  return terms.slice(0, 5);
+}
+
+async function searchAppleAppStoreOfficialSource(input: {
+  term: string;
+  summary: string | null;
+  referenceText: string;
 }): Promise<OfficialSourceCompletion | null> {
-  const title = input.title.trim();
-  if (!title) return null;
+  const term = input.term.trim();
+  if (!term) return null;
   try {
     const country = appStoreCountryFromText(`${input.summary ?? ""}\n${input.referenceText}`);
     const params = new URLSearchParams({
-      term: title,
+      term,
       entity: "software",
       limit: "5",
       country,
@@ -1379,7 +1420,7 @@ async function searchAppleAppStoreOfficialSource(input: {
         trackViewUrl?: unknown;
       }>;
     };
-    const target = normalizeProjectNameForMatch(title);
+    const target = normalizeProjectNameForMatch(term);
     for (const item of json.results ?? []) {
       const trackName = typeof item.trackName === "string" ? item.trackName.trim() : "";
       const trackUrl = typeof item.trackViewUrl === "string" ? item.trackViewUrl.trim() : "";
@@ -1393,7 +1434,7 @@ async function searchAppleAppStoreOfficialSource(input: {
         kind: "APP_STORE",
         url: trackUrl,
         label: sellerName ? `App Store: ${trackName} (${sellerName})` : `App Store: ${trackName}`,
-        evidence: `itunes-search country=${country} matched trackName="${trackName}"`,
+        evidence: `itunes-search term="${term}" country=${country} matched trackName="${trackName}"`,
         confidence: exact ? 0.92 : 0.78,
       };
     }
@@ -1404,16 +1445,16 @@ async function searchAppleAppStoreOfficialSource(input: {
 }
 
 async function searchGooglePlayOfficialSource(input: {
-  title: string;
+  term: string;
   summary: string | null;
   referenceText: string;
 }): Promise<OfficialSourceCompletion | null> {
-  const title = input.title.trim();
-  if (!title) return null;
+  const term = input.term.trim();
+  if (!term) return null;
   try {
     const gl = /中国|国内|大陆|中文|应用市场/i.test(`${input.summary ?? ""}\n${input.referenceText}`) ? "cn" : "us";
     const params = new URLSearchParams({
-      q: title,
+      q: term,
       c: "apps",
       hl: "en",
       gl,
@@ -1430,7 +1471,7 @@ async function searchGooglePlayOfficialSource(input: {
     });
     if (!resp.ok) return null;
     const html = await resp.text();
-    const target = normalizeProjectNameForMatch(title);
+    const target = normalizeProjectNameForMatch(term);
     const seen = new Set<string>();
     const linkRegex = /href="(\/store\/apps\/details\?id=[^"]+)"/g;
     let match: RegExpExecArray | null;
@@ -1452,8 +1493,8 @@ async function searchGooglePlayOfficialSource(input: {
       return {
         kind: "GOOGLE_PLAY",
         url: `https://play.google.com${href}`,
-        label: `Google Play: ${title}`,
-        evidence: `google-play-search gl=${gl} matched app details link`,
+        label: `Google Play: ${term}`,
+        evidence: `google-play-search term="${term}" gl=${gl} matched app details link`,
         confidence: 0.74,
       };
     }
@@ -1473,18 +1514,29 @@ async function completeOfficialSourcesLightly(input: {
   const shouldSearchStores = /应用市场|App Store|Google Play|play store|下载|install|download/i.test(
     `${input.title}\n${input.summary ?? ""}\n${input.referenceText}`,
   );
-  if (!shouldSearchStores) {
+  const terms = officialSourceSearchTerms(input);
+  if (!shouldSearchStores && terms.length <= 1) {
     return [];
   }
 
   const completions: OfficialSourceCompletion[] = [];
   if (!input.appStoreUrl) {
-    const appStore = await searchAppleAppStoreOfficialSource(input);
-    if (appStore) completions.push(appStore);
+    for (const term of terms) {
+      const appStore = await searchAppleAppStoreOfficialSource({ ...input, term });
+      if (appStore) {
+        completions.push(appStore);
+        break;
+      }
+    }
   }
   if (!input.playStoreUrl) {
-    const playStore = await searchGooglePlayOfficialSource(input);
-    if (playStore) completions.push(playStore);
+    for (const term of terms) {
+      const playStore = await searchGooglePlayOfficialSource({ ...input, term });
+      if (playStore) {
+        completions.push(playStore);
+        break;
+      }
+    }
   }
   return completions;
 }
