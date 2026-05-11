@@ -113,6 +113,21 @@ export type PublishValidationResult = {
   readinessMessages: string[];
 };
 
+type PublishSourceLink = {
+  kind: string;
+  url: string | null;
+};
+
+const NON_PROJECT_PUBLIC_SOURCE_KINDS = new Set(["WECHAT_ARTICLE"]);
+
+function isPublishableProjectSource(source: PublishSourceLink): boolean {
+  if (NON_PROJECT_PUBLIC_SOURCE_KINDS.has(source.kind)) {
+    return false;
+  }
+  const url = source.url?.trim();
+  return Boolean(url && /^https?:\/\//i.test(url));
+}
+
 function normalizeOptionalUrl(value: string, fieldLabel: string): string | null {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -207,8 +222,12 @@ export function parseAdminProjectInput(formData: FormData): ParsedAdminProjectIn
   };
 }
 
-export function validateProjectForPublish(input: ParsedAdminProjectInput): PublishValidationResult {
+export function validateProjectForPublish(
+  input: ParsedAdminProjectInput,
+  projectSources: PublishSourceLink[] = [],
+): PublishValidationResult {
   const blockingErrors: string[] = [];
+  const publishableProjectSources = projectSources.filter(isPublishableProjectSource);
 
   if (!input.name.trim()) {
     blockingErrors.push("项目名称未填写");
@@ -216,7 +235,12 @@ export function validateProjectForPublish(input: ParsedAdminProjectInput): Publi
   if (!input.tagline?.trim() && !input.description?.trim()) {
     blockingErrors.push("至少补充一句话简介或项目详情");
   }
-  if (!input.websiteUrl && !input.githubUrl && input.externalLinks.length === 0) {
+  if (
+    !input.websiteUrl &&
+    !input.githubUrl &&
+    input.externalLinks.length === 0 &&
+    publishableProjectSources.length === 0
+  ) {
     blockingErrors.push("至少补充一个公开来源链接");
   }
 
@@ -229,8 +253,11 @@ export function validateProjectForPublish(input: ParsedAdminProjectInput): Publi
       tags: input.tags,
       websiteUrl: input.websiteUrl,
       githubUrl: input.githubUrl,
-      sources: [],
-      externalLinks: input.externalLinks.map((item) => ({ platform: item.platform })),
+      sources: projectSources.map((item) => ({ kind: item.kind })),
+      externalLinks: [
+        ...input.externalLinks.map((item) => ({ platform: item.platform })),
+        ...publishableProjectSources.map((item) => ({ platform: item.kind })),
+      ],
     }),
   );
 

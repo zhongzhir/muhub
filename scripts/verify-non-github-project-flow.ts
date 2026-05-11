@@ -38,6 +38,48 @@ function verifyPublishValidationWithoutGithub(): void {
     externalLinks: [],
   });
   assert(!invalid.ok, "缺少介绍与公开来源时应阻塞发布");
+
+  const validWithAppStoreSource = validateProjectForPublish(
+    {
+      name: "HakkoAI",
+      tagline: "游戏场景 AI 陪伴产品",
+      description: null,
+      primaryCategory: null,
+      tags: [],
+      websiteUrl: null,
+      githubUrl: null,
+      aiCardSummary: null,
+      externalLinks: [],
+    },
+    [
+      {
+        kind: "OTHER",
+        url: "https://apps.apple.com/cn/app/id6477382934",
+      },
+    ],
+  );
+  assert(validWithAppStoreSource.ok, "App Store / Google Play 等 ProjectSource 应计入公开来源");
+
+  const invalidWithOnlyArticleSource = validateProjectForPublish(
+    {
+      name: "Article Only Project",
+      tagline: "只有来源文章，没有项目入口",
+      description: null,
+      primaryCategory: null,
+      tags: [],
+      websiteUrl: null,
+      githubUrl: null,
+      aiCardSummary: null,
+      externalLinks: [],
+    },
+    [
+      {
+        kind: "WECHAT_ARTICLE",
+        url: "https://mp.weixin.qq.com/s/example",
+      },
+    ],
+  );
+  assert(!invalidWithOnlyArticleSource.ok, "来源文章不应单独替代项目公开入口");
 }
 
 function verifyPublicSourceBuilderWithNullGithub(): void {

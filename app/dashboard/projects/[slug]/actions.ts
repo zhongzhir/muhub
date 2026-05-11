@@ -35,6 +35,9 @@ async function loadProjectForManage(slug: string, userId: string) {
       externalLinks: {
         select: { platform: true, url: true, label: true, isPrimary: true },
       },
+      sources: {
+        select: { kind: true, url: true },
+      },
     },
   });
 
@@ -63,17 +66,20 @@ export async function publishProject(
     return loaded;
   }
 
-  const validation = validateProjectForPublish({
-    name: loaded.row.name,
-    tagline: loaded.row.tagline,
-    description: loaded.row.description,
-    primaryCategory: loaded.row.primaryCategory,
-    tags: loaded.row.tags,
-    websiteUrl: loaded.row.websiteUrl,
-    githubUrl: loaded.row.githubUrl,
-    aiCardSummary: null,
-    externalLinks: loaded.row.externalLinks,
-  });
+  const validation = validateProjectForPublish(
+    {
+      name: loaded.row.name,
+      tagline: loaded.row.tagline,
+      description: loaded.row.description,
+      primaryCategory: loaded.row.primaryCategory,
+      tags: loaded.row.tags,
+      websiteUrl: loaded.row.websiteUrl,
+      githubUrl: loaded.row.githubUrl,
+      aiCardSummary: null,
+      externalLinks: loaded.row.externalLinks,
+    },
+    loaded.row.sources,
+  );
 
   if (!validation.ok) {
     return {

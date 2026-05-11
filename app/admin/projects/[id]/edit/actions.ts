@@ -129,6 +129,12 @@ export async function saveAdminProject(
       visibilityStatus: true,
       isPublic: true,
       publishedAt: true,
+      sources: {
+        select: {
+          kind: true,
+          url: true,
+        },
+      },
     },
   });
 
@@ -161,7 +167,7 @@ export async function saveAdminProject(
     };
   }
 
-  const publishValidation = validateProjectForPublish(parsed);
+  const publishValidation = validateProjectForPublish(parsed, existing.sources);
   const nextDraftStatus =
     existing.status === "PUBLISHED"
       ? "PUBLISHED"
