@@ -15,9 +15,9 @@ const inputClass =
 type InputMode = "text" | "url";
 
 type ExtractedItem = {
-  sourceType: "GITHUB" | "GITCC" | "GENERAL";
+  sourceType: "GITHUB" | "GITCC" | "PRODUCTHUNT" | "GENERAL";
   sourceUrl: string;
-  sourceLabel: "GitHub" | "GitCC" | "通用项目";
+  sourceLabel: "GitHub" | "GitCC" | "Product Hunt" | "通用项目";
   githubUrl: string | null;
   owner: string | null;
   repo: string | null;
@@ -238,6 +238,8 @@ export function BulkExtractProjectModal() {
                               <td className="px-3 py-2">
                                 {item.sourceType === "GENERAL" ? (
                                   <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-700 dark:bg-blue-950 dark:text-blue-300">{"AI识别"}</span>
+                                ) : item.sourceType === "PRODUCTHUNT" ? (
+                                  <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] text-orange-700 dark:bg-orange-950 dark:text-orange-300">{"Product Hunt"}</span>
                                 ) : item.sourceLabel}
                               </td>
                               <td className="px-3 py-2">
@@ -258,8 +260,8 @@ export function BulkExtractProjectModal() {
                               <td className="max-w-[320px] px-3 py-2 truncate">
                                 {item.summary || "-"}
                               </td>
-                              <td className="px-3 py-2">{item.sourceType === "GENERAL" ? "-" : item.stars}</td>
-                              <td className="px-3 py-2">{item.sourceType === "GENERAL" ? "-" : (item.language || "-")}</td>
+                              <td className="px-3 py-2">{item.sourceType === "GENERAL" || item.sourceType === "PRODUCTHUNT" ? "-" : item.stars}</td>
+                              <td className="px-3 py-2">{item.sourceType === "GENERAL" || item.sourceType === "PRODUCTHUNT" ? "-" : (item.language || "-")}</td>
                               <td className="px-3 py-2">
                                 {item.status === "ready" ? (
                                   <span className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
@@ -341,9 +343,11 @@ export function BulkExtractProjectModal() {
                           });
                         } else {
                           const generalCount = result.items.filter((x) => x.sourceType === "GENERAL").length;
-                          const repoCount = result.items.filter((x) => x.sourceType !== "GENERAL").length;
+                          const phCount = result.items.filter((x) => x.sourceType === "PRODUCTHUNT").length;
+                          const repoCount = result.items.filter((x) => x.sourceType === "GITHUB" || x.sourceType === "GITCC").length;
                           const parts = [];
                           if (repoCount > 0) parts.push(`代码仓库 ${repoCount} 个`);
+                          if (phCount > 0) parts.push(`Product Hunt ${phCount} 个`);
                           if (generalCount > 0) parts.push(`多元项目 ${generalCount} 个`);
                           setFeedback({
                             kind: "ok",
@@ -367,9 +371,11 @@ export function BulkExtractProjectModal() {
                           .map((x) => x.sourceUrl);
                         setSelectedUrls(defaultSelected);
                         const generalCount = result.items.filter((x) => x.sourceType === "GENERAL").length;
-                        const repoCount = result.items.filter((x) => x.sourceType !== "GENERAL").length;
+                        const phCount = result.items.filter((x) => x.sourceType === "PRODUCTHUNT").length;
+                        const repoCount = result.items.filter((x) => x.sourceType === "GITHUB" || x.sourceType === "GITCC").length;
                         const parts = [];
                         if (repoCount > 0) parts.push(`代码仓库 ${repoCount} 个`);
+                        if (phCount > 0) parts.push(`Product Hunt ${phCount} 个`);
                         if (generalCount > 0) parts.push(`多元项目 ${generalCount} 个`);
                         setFeedback({
                           kind: "ok",

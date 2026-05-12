@@ -117,9 +117,9 @@ export type ImportManualGithubProjectResult =
   | { ok: false; error: string };
 
 type BulkExtractedGithubProject = {
-  sourceType: "GITHUB" | "GITCC" | "GENERAL";
+  sourceType: "GITHUB" | "GITCC" | "PRODUCTHUNT" | "GENERAL";
   sourceUrl: string;
-  sourceLabel: "GitHub" | "GitCC" | "通用项目";
+  sourceLabel: "GitHub" | "GitCC" | "Product Hunt" | "通用项目";
   githubUrl: string | null;
   owner: string | null;
   repo: string | null;
@@ -915,6 +915,34 @@ export async function extractGithubProjectsFromArticleAction(input: {
       });
       continue;
     }
+    if (source.type === "PRODUCTHUNT") {
+      const slug = source.slug || source.url.replace(/\/+$/, "").split("/").filter(Boolean).pop() || "product";
+      const projectName = slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      const duplicate = await findExistingProjectByPriority({
+        githubUrl: null,
+        source: { kind: "OTHER", url: source.url, label: "Product Hunt" },
+        websiteUrl: source.url,
+        title: projectName,
+        repo: projectName,
+      });
+      seenNames.add(projectName.toLowerCase());
+      items.push({
+        sourceType: "PRODUCTHUNT",
+        sourceUrl: source.url,
+        sourceLabel: "Product Hunt",
+        githubUrl: null,
+        owner: null,
+        repo: null,
+        projectName,
+        summary: null,
+        stars: 0,
+        language: null,
+        websiteUrl: source.url,
+        status: duplicate ? "duplicate" : "ready",
+        duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
+      });
+      continue;
+    }
     if (source.type !== "GITHUB") {
       continue;
     }
@@ -1127,7 +1155,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
     }
 
     const source = parseProjectSourceUrl(sourceUrl);
-    if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
+    if (!source || (source.type !== "GITHUB" && source.type !== "GITCC" && source.type !== "PRODUCTHUNT")) {
       failed += 1;
       continue;
     }
@@ -1183,6 +1211,57 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
         continue;
       }
 
+      if (source.type === "PRODUCTHUNT") {
+        const slug = source.slug || source.url.replace(/\/+$/, "").split("/").filter(Boolean).pop() || "product";
+        const projectName = slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+        const existing = await findExistingProjectByPriority({
+          githubUrl: null,
+          source: { kind: "OTHER", url: source.url, label: "Product Hunt" },
+          websiteUrl: source.url,
+          title: projectName,
+          repo: projectName,
+        });
+        if (existing) { duplicate += 1; continue; }
+        const now = new Date().toISOString();
+        const phItem = {
+          id: `manual-ph-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          sourceType: "manual" as const,
+          title: projectName,
+          url: source.url,
+          description: undefined,
+          status: "new" as const,
+          createdAt: now,
+          meta: {
+            source: "wechat-article",
+            sourceKey: "manual-producthunt",
+            sourceType: "PRODUCTHUNT",
+            sourceLabel: "Product Hunt",
+            sourceUrl: source.url,
+            githubUrl: null,
+            websiteUrl: source.url,
+            referenceUrl: sourceArticleUrl,
+            note: null,
+            category: null,
+            language: null,
+            stars: 0,
+            owner: null,
+            repo: null,
+            sourceName,
+            articleTitle,
+            articleBody: body,
+            sourceArticleUrl,
+            extractedFrom: "article_text",
+            primaryProjectUrl: source.url,
+            projectPageUrl: source.url,
+            externalLinks: [
+              { platform: "producthunt", label: "Product Hunt", url: source.url, primary: true },
+            ],
+          },
+        };
+        const appended = await appendDiscoveryItem(phItem);
+        if (appended.duplicate) { duplicate += 1; } else { success += 1; }
+        continue;
+      }
       if (source.type !== "GITHUB") {
         failed += 1;
         continue;
@@ -1858,7 +1937,8 @@ export async function addGeneralProjectToQueueAction(input: {
 
   // 入库校验：至少需要一个官方来源（官网、代码仓库、社媒账号等）
   // 参考链接（新闻报道等）不算官方来源
-  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl);
+  const isProductHuntRef = /producthunt\.com\/(products|posts)\//i.test(referenceUrl ?? "");
+  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl || isProductHuntRef);
   if (!hasOfficialSource) {
     return {
       ok: false,
@@ -1959,7 +2039,8 @@ export async function importGeneralProjectAction(input: {
   const playStoreUrl = input.playStoreUrl?.trim() || null;
 
   // 入库校验：至少需要一个官方来源
-  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl);
+  const isProductHuntRef = /producthunt\.com\/(products|posts)\//i.test(referenceUrl ?? "");
+  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl || isProductHuntRef);
   if (!hasOfficialSource) {
     return {
       ok: false,
@@ -2074,6 +2155,33 @@ export async function extractProjectsFromUrlAction(input: {
         repo: null,
         projectName,
         summary: "已识别为 GitCC 来源，可加入发现队列或导入为外部项目。",
+        stars: 0,
+        language: null,
+        websiteUrl: source.url,
+        status: duplicate ? "duplicate" : "ready",
+        duplicateProject: duplicate ? { slug: duplicate.slug, name: duplicate.name } : null,
+      });
+      continue;
+    }
+    if (source.type === "PRODUCTHUNT") {
+      const slug = source.slug || source.url.replace(/\/+$/, "").split("/").filter(Boolean).pop() || "product";
+      const projectName = slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      const duplicate = await findExistingProjectByPriority({
+        githubUrl: null,
+        source: { kind: "OTHER", url: source.url, label: "Product Hunt" },
+        websiteUrl: source.url,
+        title: projectName,
+        repo: projectName,
+      });
+      items.push({
+        sourceType: "PRODUCTHUNT",
+        sourceUrl: source.url,
+        sourceLabel: "Product Hunt",
+        githubUrl: null,
+        owner: null,
+        repo: null,
+        projectName,
+        summary: null,
         stars: 0,
         language: null,
         websiteUrl: source.url,

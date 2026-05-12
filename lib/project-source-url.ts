@@ -1,4 +1,4 @@
-export type ProjectSourceType = "GITHUB" | "GITCC" | "EXTERNAL";
+export type ProjectSourceType = "GITHUB" | "GITCC" | "PRODUCTHUNT" | "EXTERNAL";
 
 export type ParsedProjectSourceUrl =
   | {
@@ -6,6 +6,14 @@ export type ParsedProjectSourceUrl =
       url: string;
       owner: string;
       repo: string;
+    }
+  | {
+      type: "PRODUCTHUNT";
+      url: string;
+      /** Normalized slug from /products/<slug> or /posts/<slug> */
+      slug: string;
+      owner: null;
+      repo: null;
     }
   | {
       type: "GITCC" | "EXTERNAL";
@@ -27,7 +35,7 @@ function withDefaultProtocol(raw: string): string {
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) {
     return s;
   }
-  if (/^(www\.)?(github|gitcc)\.com\//i.test(s)) {
+  if (/^(www\.)?(github|gitcc|producthunt)\.com\//i.test(s)) {
     return `https://${s}`;
   }
   return s;
@@ -57,6 +65,9 @@ export function detectProjectSource(url: string): ProjectSourceType | null {
   }
   if (host === "gitcc.com") {
     return "GITCC";
+  }
+  if (host === "producthunt.com") {
+    return "PRODUCTHUNT";
   }
   return "EXTERNAL";
 }
@@ -97,19 +108,37 @@ export function parseProjectSourceUrl(url: string): ParsedProjectSourceUrl | nul
     return { type: "GITCC", url: u.toString(), owner: null, repo: null };
   }
 
+  if (host === "producthunt.com") {
+    // Accept /products/<slug> or /posts/<slug>
+    if (segments.length >= 2 && (segments[0] === "products" || segments[0] === "posts")) {
+      const slug = segments[1]!;
+      u.protocol = "https:";
+      u.hostname = "www.producthunt.com";
+      u.search = "";
+      u.pathname = `/products/${slug}`;
+      return { type: "PRODUCTHUNT", url: u.toString(), slug, owner: null, repo: null };
+    }
+    // producthunt.com with no recognized path -- still track as PRODUCTHUNT
+    u.protocol = "https:";
+    u.hostname = "www.producthunt.com";
+    u.search = "";
+    const slug = segments[0] ?? "";
+    return { type: "PRODUCTHUNT", url: u.toString(), slug, owner: null, repo: null };
+  }
+
   return { type: "EXTERNAL", url: u.toString(), owner: null, repo: null };
 }
 
 function stripTrailingUrlPunctuation(raw: string): string {
   return raw
     .trim()
-    .replace(/[),.;:!?，。；：！？、）】》]+$/u, "");
+    .replace(/[),.;:!?\u{ff0c}\u{3002}\u{ff1b}\u{ff1a}\u{ff01}\u{ff1f}\u{3001}\u{ff09}\u{3011}\u{300b}]+$/u, "");
 }
 
 export function extractProjectSourceUrlsFromText(text: string): ExtractedProjectSourceUrl[] {
   const matches =
     text.match(
-      /(?:https?:\/\/|www\.|github\.com\/|gitcc\.com\/)[^\s<>"'`，。；：！？、（）【】《》]+/giu,
+      /(?:https?:\/\/|www\.|github\.com\/|gitcc\.com\/|producthunt\.com\/)[^\s<>"'`\u{ff0c}\u{3002}\u{ff1b}\u{ff1a}\u{ff01}\u{ff1f}\u{3001}\u{ff08}\u{ff09}\u{3010}\u{3011}\u{300a}\u{300b}]+/giu,
     ) ?? [];
   const seen = new Set<string>();
   const out: ExtractedProjectSourceUrl[] = [];
@@ -117,7 +146,7 @@ export function extractProjectSourceUrlsFromText(text: string): ExtractedProject
   for (const match of matches) {
     const rawUrl = stripTrailingUrlPunctuation(match);
     const source = parseProjectSourceUrl(rawUrl);
-    if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
+    if (!source || (source.type !== "GITHUB" && source.type !== "GITCC" && source.type !== "PRODUCTHUNT")) {
       continue;
     }
     const key = `${source.type}:${source.url.toLowerCase()}`;
