@@ -21,6 +21,13 @@ const TAG_DICT: Record<string, string> = {
   marketing: "\u8425\u9500",
   content: "\u5185\u5bb9",
   analytics: "\u6570\u636e\u5206\u6790",
+  // \u4e2d\u56fd\u9879\u76ee\u8eab\u4efd\u6807\u7b7e\uff08\u7531\u5206\u7c7b\u5f15\u64ce\u81ea\u52a8\u63a8\u5165\uff0c\u4fdd\u6301\u539f\u6587\u76f4\u901a\uff09
+  "\u4e2d\u56fd\u9879\u76ee": "\u4e2d\u56fd\u9879\u76ee",
+  "china project": "\u4e2d\u56fd\u9879\u76ee",
+  "chinese project": "\u4e2d\u56fd\u9879\u76ee",
+  "\u7591\u662f\u4e2d\u56fd\u9879\u76ee": "\u7591\u662f\u4e2d\u56fd\u9879\u76ee",
+  "possibly chinese": "\u7591\u662f\u4e2d\u56fd\u9879\u76ee",
+  "possible china": "\u7591\u662f\u4e2d\u56fd\u9879\u76ee",
 };
 
 const CATEGORY_DICT: Record<string, string> = {

@@ -5,7 +5,12 @@ import {
   primaryTypeRank,
 } from "./keyword-rules";
 import { applyTopicRules } from "./topic-rules";
-import { detectChinaAffinitySignals } from "@/lib/discovery/china-affinity";
+import {
+  chinaAffinityConfidenceLevel,
+  chinaAffinityTag,
+  detectChinaAffinitySignals,
+  type ChinaAffinityConfidence,
+} from "@/lib/discovery/china-affinity";
 
 export type ClassificationInput = {
   title: string;
@@ -27,6 +32,8 @@ export type ClassificationResult = {
   evidence: string[];
   isAiRelated: boolean;
   isChineseTool: boolean;
+  /** 中国项目置信度；"none" 表示无相关信号 */
+  chinaConfidence: ChinaAffinityConfidence;
 };
 
 const MIN_TYPE_WEIGHT_FALLBACK = 2.5;
@@ -142,6 +149,13 @@ export function classifyDiscoveryCandidate(input: ClassificationInput): Classifi
     evidence.push("language / locale suggests Chinese context");
   }
 
+  // 置信度评估：仅基于 affinity 信号。CHINESE_TOOL_PATTERNS / 语言单独触发时兼容处理为 "possible"。
+  const chinaConfidence: ChinaAffinityConfidence = isChineseTool
+    ? chinaAffinityConfidenceLevel(chinaSignals) === "none"
+      ? "possible"
+      : chinaAffinityConfidenceLevel(chinaSignals)
+    : "none";
+
   const suggestedTags: string[] = [];
   const seen = new Set<string>();
   const pushTag = (x: string) => {
@@ -162,6 +176,12 @@ export function classifyDiscoveryCandidate(input: ClassificationInput): Classifi
   }
   for (const t of keywordTagCandidates) {
     pushTag(t);
+  }
+
+  // 将中国项目标签追加到 suggestedTags（放在最后，不占优先位）
+  const chinaTag = chinaAffinityTag(chinaConfidence);
+  if (chinaTag) {
+    pushTag(chinaTag);
   }
 
   const maxTypeScore = Math.max(bestScore, ...Object.values(typeWeights), 0);
@@ -186,5 +206,6 @@ export function classifyDiscoveryCandidate(input: ClassificationInput): Classifi
     evidence: evidence.slice(0, MAX_EVIDENCE),
     isAiRelated,
     isChineseTool,
+    chinaConfidence,
   };
 }

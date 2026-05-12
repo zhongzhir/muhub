@@ -39,54 +39,54 @@ const SOURCE_HOST_PATTERNS = [
 ];
 
 const SOURCE_TEXT_PATTERNS = [
-  "微信公众号",
-  "公众号",
-  "微信",
-  "掘金",
-  "知乎",
-  "哔哩",
+  "\u5fae\u4fe1\u516c\u4f17\u53f7",
+  "\u516c\u4f17\u53f7",
+  "\u5fae\u4fe1",
+  "\u6398\u91d1",
+  "\u77e5\u4e4e",
+  "\u54d4\u54e9",
   "bilibili",
-  "小红书",
-  "抖音",
+  "\u5c0f\u7ea2\u4e66",
+  "\u6296\u97f3",
   "Gitee",
   "GitCode",
 ];
 
 const OPERATION_PATTERNS = [
-  "中国市场",
-  "国内市场",
-  "中国用户",
-  "国内用户",
-  "中国大陆",
-  "国内版",
-  "中文版",
-  "中文官网",
-  "面向中国",
-  "面向国内",
-  "在中国运营",
-  "国内运营",
-  "国产",
-  "备案号",
-  "ICP备案",
-  "京ICP备",
-  "沪ICP备",
-  "粤ICP备",
+  "\u4e2d\u56fd\u5e02\u573a",
+  "\u56fd\u5185\u5e02\u573a",
+  "\u4e2d\u56fd\u7528\u6237",
+  "\u56fd\u5185\u7528\u6237",
+  "\u4e2d\u56fd\u5927\u9646",
+  "\u56fd\u5185\u7248",
+  "\u4e2d\u6587\u7248",
+  "\u4e2d\u6587\u5b98\u7f51",
+  "\u9762\u5411\u4e2d\u56fd",
+  "\u9762\u5411\u56fd\u5185",
+  "\u5728\u4e2d\u56fd\u8fd0\u8425",
+  "\u56fd\u5185\u8fd0\u8425",
+  "\u56fd\u4ea7",
+  "\u5907\u6848\u53f7",
+  "ICP\u5907\u6848",
+  "\u4eacICP\u5907",
+  "\u6cbcICP\u5907",
+  "\u7ca4ICP\u5907",
 ];
 
 const TEAM_LEAD_PATTERNS = [
-  "中国团队",
-  "国内团队",
-  "中国创业团队",
-  "华人团队",
-  "创始人来自中国",
-  "创始人是中国",
-  "负责人来自中国",
-  "中国创始人",
-  "北京团队",
-  "上海团队",
-  "深圳团队",
-  "杭州团队",
-  "广州团队",
+  "\u4e2d\u56fd\u56e2\u961f",
+  "\u56fd\u5185\u56e2\u961f",
+  "\u4e2d\u56fd\u521b\u4e1a\u56e2\u961f",
+  "\u534e\u4eba\u56e2\u961f",
+  "\u521b\u59cb\u4eba\u6765\u81ea\u4e2d\u56fd",
+  "\u521b\u59cb\u4eba\u662f\u4e2d\u56fd",
+  "\u8d1f\u8d23\u4eba\u6765\u81ea\u4e2d\u56fd",
+  "\u4e2d\u56fd\u521b\u59cb\u4eba",
+  "\u5317\u4eac\u56e2\u961f",
+  "\u4e0a\u6d77\u56e2\u961f",
+  "\u6df1\u5733\u56e2\u961f",
+  "\u676d\u5dde\u56e2\u961f",
+  "\u5e7f\u5dde\u56e2\u961f",
   "based in China",
   "China-based team",
   "Chinese founder",
@@ -94,17 +94,17 @@ const TEAM_LEAD_PATTERNS = [
 ];
 
 const TEAM_MEMBER_PATTERNS = [
-  "中国开发者",
-  "国内开发者",
-  "华人开发者",
-  "中国成员",
-  "国内成员",
-  "中文维护者",
+  "\u4e2d\u56fd\u5f00\u53d1\u8005",
+  "\u56fd\u5185\u5f00\u53d1\u8005",
+  "\u534e\u4eba\u5f00\u53d1\u8005",
+  "\u4e2d\u56fd\u6210\u5458",
+  "\u56fd\u5185\u6210\u5458",
+  "\u4e2d\u6587\u7ef4\u62a4\u8005",
   "Chinese developer",
   "Chinese maintainer",
 ];
 
-const LANGUAGE_HINT_PATTERNS = ["中文", "简体中文", "繁体中文", "汉语", "华语", "zh-CN", "zh_CN"];
+const LANGUAGE_HINT_PATTERNS = ["\u4e2d\u6587", "\u7b80\u4f53\u4e2d\u6587", "\u7e41\u4f53\u4e2d\u6587", "\u6c49\u8bed", "\u534e\u8bed", "zh-CN", "zh_CN"];
 
 function normalizeText(input: string): string {
   return input.toLowerCase();
@@ -172,7 +172,7 @@ export function detectChinaAffinitySignals(input: ChinaAffinityInput): ChinaAffi
   if (sourceHost || sourceText) {
     pushUnique(signals, {
       kind: "source_origin_china",
-      label: "中国来源渠道",
+      label: "\u4e2d\u56fd\u6765\u6e90\u6e20\u9053",
       evidence: sourceHost ? `matched Chinese source host: ${sourceHost}` : `matched Chinese source text: ${sourceText}`,
       strength: sourceHost ? "medium" : "weak",
     });
@@ -182,7 +182,7 @@ export function detectChinaAffinitySignals(input: ChinaAffinityInput): ChinaAffi
   if (operation) {
     pushUnique(signals, {
       kind: "operation_in_china",
-      label: "面向中国运营或市场",
+      label: "\u9762\u5411\u4e2d\u56fd\u8fd0\u8425\u6216\u5e02\u573a",
       evidence: `matched China operation hint: ${operation}`,
       strength: "strong",
     });
@@ -192,7 +192,7 @@ export function detectChinaAffinitySignals(input: ChinaAffinityInput): ChinaAffi
   if (teamLead) {
     pushUnique(signals, {
       kind: "team_lead_china",
-      label: "中国团队或负责人",
+      label: "\u4e2d\u56fd\u56e2\u961f\u6216\u8d1f\u8d23\u4eba",
       evidence: `matched China team lead hint: ${teamLead}`,
       strength: "strong",
     });
@@ -202,7 +202,7 @@ export function detectChinaAffinitySignals(input: ChinaAffinityInput): ChinaAffi
   if (teamMember) {
     pushUnique(signals, {
       kind: "team_member_china",
-      label: "团队包含中国成员",
+      label: "\u56e2\u961f\u5305\u542b\u4e2d\u56fd\u6210\u5458",
       evidence: `matched China team member hint: ${teamMember}`,
       strength: "medium",
     });
@@ -216,7 +216,7 @@ export function detectChinaAffinitySignals(input: ChinaAffinityInput): ChinaAffi
   if (languageHint) {
     pushUnique(signals, {
       kind: "language_or_platform_hint",
-      label: "中文语言或平台线索",
+      label: "\u4e2d\u6587\u8bed\u8a00\u6216\u5e73\u53f0\u7ebf\u7d22",
       evidence: `matched Chinese language/platform hint: ${languageHint}`,
       strength: "weak",
     });
@@ -235,4 +235,51 @@ export function chinaAffinityPriorityPoints(signals: ChinaAffinitySignal[]): num
     return sum + 8;
   }, 0);
   return Math.min(32, raw);
+}
+
+/**
+ * \u57fa\u4e8e\u4fe1\u53f7\u96c6\u5408\u63a8\u65ad\u4e2d\u56fd\u9879\u76ee\u7f6e\u4fe1\u5ea6\u3002
+ *
+ * - "confirmed"\uff1a\u6709\u660e\u786e\u7684\u8fd0\u8425\u6216\u56e2\u961f\u5f3a\u4fe1\u53f7\uff08ICP \u5907\u6848\u3001\u4e2d\u56fd\u56e2\u961f\u3001Chinese founder \u7b49\uff09\uff0c
+ *   \u6216\u7d2f\u8ba1 2 \u6761\u53ca\u4ee5\u4e0a\u5f3a\u4fe1\u53f7\u2014\u2014\u53ef\u76f4\u63a5\u6253\u201c\u4e2d\u56fd\u9879\u76ee\u201d\u6807\u7b7e\u3002
+ * - "likely"\uff1a\u67091 \u6761\u5f3a\u4fe1\u53f7\uff0c\u6216 2 \u6761\u53ca\u4ee5\u4e0a\u4e2d\u7b49\u4fe1\u53f7\uff0c\u4e0d\u8db3\u4ee5\u201c\u786e\u8ba4\u201d\u4f46\u6982\u7387\u5f88\u9ad8\u2014\u2014
+ *   \u53ef\u6253\u201c\u7591\u662f\u4e2d\u56fd\u9879\u76ee\u201d\u6807\u7b7e\u3002
+ * - "possible"\uff1a\u4ec5\u6709\u5f31\u4fe1\u53f7\uff08\u4e2d\u6587\u8bed\u8a00\u63d0\u793a\u3001\u4e2d\u56fd\u5a92\u4f53\u6e20\u9053\u6587\u5b57\u5339\u914d\u7b49\uff09\u2014\u2014
+ *   \u53ef\u6253\u201c\u7591\u662f\u4e2d\u56fd\u9879\u76ee\u201d\u6807\u7b7e\uff0c\u6743\u91cd\u8f83\u4f4e\u3002
+ * - "none"\uff1a\u65e0\u4efb\u4f55\u4fe1\u53f7\u3002
+ */
+export type ChinaAffinityConfidence = "confirmed" | "likely" | "possible" | "none";
+
+export function chinaAffinityConfidenceLevel(signals: ChinaAffinitySignal[]): ChinaAffinityConfidence {
+  if (!signals.length) return "none";
+
+  const hasDefinitiveSignal = signals.some(
+    (s) =>
+      s.strength === "strong" &&
+      (s.kind === "operation_in_china" || s.kind === "team_lead_china"),
+  );
+
+  const strongCount = signals.filter((s) => s.strength === "strong").length;
+  const mediumCount = signals.filter((s) => s.strength === "medium").length;
+  const points = chinaAffinityPriorityPoints(signals);
+
+  if (hasDefinitiveSignal || strongCount >= 2 || points >= 32) {
+    return "confirmed";
+  }
+  if (strongCount >= 1 || mediumCount >= 2 || points >= 16) {
+    return "likely";
+  }
+  return "possible";
+}
+
+/**
+ * \u6839\u636e\u7f6e\u4fe1\u5ea6\u8fd4\u56de\u63a8\u8350\u7684\u516c\u5f00\u6807\u7b7e\u6587\u5b57\u3002
+ * - "confirmed" / "likely" \u2192 "\u4e2d\u56fd\u9879\u76ee"
+ * - "possible"            \u2192 "\u7591\u662f\u4e2d\u56fd\u9879\u76ee"
+ * - "none"                \u2192 null\uff08\u4e0d\u6253\u6807\u7b7e\uff09
+ */
+export function chinaAffinityTag(confidence: ChinaAffinityConfidence): string | null {
+  if (confidence === "confirmed" || confidence === "likely") return "\u4e2d\u56fd\u9879\u76ee";
+  if (confidence === "possible") return "\u7591\u662f\u4e2d\u56fd\u9879\u76ee";
+  return null;
 }
