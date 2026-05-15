@@ -620,6 +620,63 @@ export async function updateDiscoveryItemDuplicateResult(
 }
 
 /** 回写 AI enrich 状态与时间 */
+export async function updateDiscoveryItemMeta(
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<boolean> {
+  if (isDbEnabled()) {
+    const row = await prisma.discoveryCandidate.findUnique({
+      where: { id },
+      select: { metadataJson: true },
+    });
+    if (!row) {
+      return false;
+    }
+    const parsed = parseDiscoveryMeta(row.metadataJson);
+    const meta = { ...(parsed.meta ?? {}), ...patch };
+    await prisma.discoveryCandidate.update({
+      where: { id },
+      data: {
+        metadataJson: {
+          sourceType: parsed.sourceType,
+          meta,
+          aiStatus: parsed.aiStatus ?? null,
+          aiUpdatedAt: parsed.aiUpdatedAt ?? null,
+          duplicateOfId: parsed.duplicateOfId ?? null,
+          duplicateProjectId: parsed.duplicateProjectId ?? null,
+          possibleDuplicate: parsed.possibleDuplicate ?? false,
+          normalizedUrl: parsed.normalizedUrl ?? null,
+          githubRepoKey: parsed.githubRepoKey ?? null,
+          websiteHost: parsed.websiteHost ?? null,
+          projectSlug: parsed.projectSlug ?? null,
+          url: pickItemUrl(meta, ""),
+        } as Prisma.InputJsonValue,
+      },
+    });
+    return true;
+  }
+
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  const list = await readRawList();
+  let updated = false;
+  const next = list.map((item) => {
+    if (item.id !== id) {
+      return item;
+    }
+    updated = true;
+    return {
+      ...item,
+      meta: { ...(item.meta ?? {}), ...patch },
+    };
+  });
+  if (!updated) {
+    return false;
+  }
+  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return true;
+}
+
 export async function updateDiscoveryAiStatus(
   id: string,
   status: DiscoveryAiStatus,

@@ -152,6 +152,12 @@ export default async function AdminDiscoveryListPage({
             待筛选项目列表
           </Link>
           <Link
+            href="/admin/discovery/daily"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+          >
+            今日 AI 发现工作台
+          </Link>
+          <Link
             href="/admin/discovery/items"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >

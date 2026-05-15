@@ -3,6 +3,7 @@ import Link from "next/link";
 import { readDiscoveryItems } from "@/agents/discovery/discovery-store";
 import { ManualCopyTextarea } from "@/components/share/manual-copy-textarea";
 import { isSourceMaterialDiscoveryItem } from "@/lib/discovery/mobile-capture";
+import { MobileAutoExtractButton } from "./mobile-auto-extract-button";
 import { MobileCaptureForm } from "./mobile-capture-form";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,48 @@ function stringMeta(meta: Record<string, unknown> | undefined, key: string): str
 
 function boolMeta(meta: Record<string, unknown> | undefined, key: string): boolean {
   return meta?.[key] === true;
+}
+
+function numberMeta(meta: Record<string, unknown> | undefined, key: string): number | null {
+  const value = meta?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function queuedMeta(
+  meta: Record<string, unknown> | undefined,
+): { success: number; duplicate: number; failed: number } | null {
+  const value = meta?.autoExtractionQueued;
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const row = value as Record<string, unknown>;
+  return {
+    success: typeof row.success === "number" ? row.success : 0,
+    duplicate: typeof row.duplicate === "number" ? row.duplicate : 0,
+    failed: typeof row.failed === "number" ? row.failed : 0,
+  };
+}
+
+function extractionLabel(meta: Record<string, unknown> | undefined): string {
+  const status = stringMeta(meta, "autoExtractionStatus");
+  if (status === "done") {
+    const total = numberMeta(meta, "autoExtractionTotal") ?? 0;
+    const queued = queuedMeta(meta);
+    return queued
+      ? `自动提取完成：识别 ${total} 个，新增 ${queued.success} 个，重复 ${queued.duplicate} 个，失败 ${queued.failed} 个`
+      : `自动提取完成：识别 ${total} 个`;
+  }
+  if (status === "failed") {
+    const error = stringMeta(meta, "autoExtractionError");
+    return `自动提取失败${error ? `：${error}` : ""}`;
+  }
+  if (status === "skipped") {
+    const reason = stringMeta(meta, "autoExtractionReason");
+    if (reason === "no_url") return "未检测到链接，需人工提取";
+    if (reason === "duplicate") return "重复素材，已跳过自动提取";
+    return "已跳过自动提取";
+  }
+  return boolMeta(meta, "needsExtraction") ? "待提取" : "已处理";
 }
 
 function formatTime(value: string): string {
@@ -76,6 +119,7 @@ export default async function AdminDiscoveryMobilePage() {
               const sourceNote = stringMeta(item.meta, "sourceNote");
               const articleBody = stringMeta(item.meta, "articleBody") || item.description || item.url;
               const isWechatArticle = boolMeta(item.meta, "isWechatArticle");
+              const extractionStatus = extractionLabel(item.meta);
               return (
                 <article key={item.id} className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -85,19 +129,22 @@ export default async function AdminDiscoveryMobilePage() {
                       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                         {sourceNote ? `来源备注：${sourceNote} · ` : ""}
                         {isWechatArticle ? "微信文章 · " : ""}
-                        {formatTime(item.createdAt)} · 待提取
+                        {formatTime(item.createdAt)} · {extractionStatus}
                       </p>
                     </div>
-                    {extractedUrl.startsWith("http") ? (
-                      <a
-                        href={extractedUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="shrink-0 rounded border border-zinc-300 px-2.5 py-1 text-xs dark:border-zinc-700"
-                      >
-                        打开链接
-                      </a>
-                    ) : null}
+                    <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                      {extractedUrl.startsWith("http") ? (
+                        <a
+                          href={extractedUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded border border-zinc-300 px-2.5 py-1 text-xs dark:border-zinc-700"
+                        >
+                          打开链接
+                        </a>
+                      ) : null}
+                      <MobileAutoExtractButton itemId={item.id} />
+                    </div>
                   </div>
                   <ManualCopyTextarea value={articleBody} hint="复制内容后可到 JSON 队列的“批量提取项目”中粘贴正文" />
                 </article>

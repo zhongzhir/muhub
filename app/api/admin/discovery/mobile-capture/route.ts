@@ -2,6 +2,10 @@ import { revalidatePath } from "next/cache";
 
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
 import { createMobileCaptureItem } from "@/lib/discovery/mobile-capture";
+import {
+  autoExtractProjectsFromCapturedUrl,
+  persistMobileAutoExtractionResult,
+} from "@/lib/discovery/mobile-auto-extraction";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +39,14 @@ export async function POST(req: Request) {
   }
 
   const result = await createMobileCaptureItem({ title, content, sourceNote });
+  const autoExtraction = await autoExtractProjectsFromCapturedUrl({
+    duplicate: result.duplicate,
+    extractedUrl: result.extractedUrl,
+    sourceNote,
+  });
+  if (!result.duplicate) {
+    await persistMobileAutoExtractionResult(result.itemId, autoExtraction);
+  }
   revalidatePath("/admin/discovery/items");
   revalidatePath("/admin/discovery/mobile");
   revalidatePath("/admin/discovery");
@@ -46,5 +58,6 @@ export async function POST(req: Request) {
     extractedUrl: result.extractedUrl,
     isWechatArticle: result.isWechatArticle,
     duplicate: result.duplicate,
+    autoExtraction,
   });
 }

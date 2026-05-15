@@ -11,6 +11,16 @@ type SubmitResult =
       extractedUrl: string | null;
       isWechatArticle: boolean;
       duplicate?: boolean;
+      autoExtraction?:
+        | { attempted: false; reason: "duplicate" | "no_url" }
+        | {
+            attempted: true;
+            ok: true;
+            articleTitle: string | null;
+            totalExtracted: number;
+            queued: { success: number; duplicate: number; failed: number };
+          }
+        | { attempted: true; ok: false; error: string };
     }
   | { ok: false; error: string };
 
@@ -70,6 +80,20 @@ export function MobileCaptureForm() {
                 {feedback.extractedUrl ? `URL: ${feedback.extractedUrl}` : "未检测到 URL"}
                 {feedback.isWechatArticle ? " · 微信公众号文章" : ""}
               </p>
+              {feedback.autoExtraction?.attempted ? (
+                feedback.autoExtraction.ok ? (
+                  <p className="text-xs">
+                    自动提取：识别 {feedback.autoExtraction.totalExtracted} 个，新增队列{" "}
+                    {feedback.autoExtraction.queued.success} 个，重复{" "}
+                    {feedback.autoExtraction.queued.duplicate} 个，失败{" "}
+                    {feedback.autoExtraction.queued.failed} 个。
+                  </p>
+                ) : (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    自动提取失败：{feedback.autoExtraction.error}
+                  </p>
+                )
+              ) : null}
               <div className="flex flex-wrap gap-3 text-xs">
                 <Link href="/admin/discovery/items" className="inline-block underline underline-offset-4">
                   去 JSON 队列/批量提取项目
