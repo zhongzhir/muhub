@@ -106,13 +106,17 @@ export default async function middleware(req: NextRequest) {
   // Nginx 将 Host: training.muhub.cn 透传过来，此处识别后 rewrite 到 /training
   const host = req.headers.get("host") ?? "";
   if (host.startsWith("training.")) {
-    const url = req.nextUrl.clone();
-    if (!url.pathname.startsWith("/training")) {
-      url.pathname = url.pathname === "/" ? "/training" : `/training${url.pathname}`;
-      return NextResponse.rewrite(url);
+    const sharedAsset =
+      pathname.startsWith("/icons/") ||
+      pathname === "/apple-touch-icon.png" ||
+      pathname === "/icon.png" ||
+      pathname === "/favicon.ico";
+    if (pathname.startsWith("/training") || sharedAsset) {
+      return NextResponse.next();
     }
-    // 已在 /training/* 路径下，直接放行（无需认证）
-    return NextResponse.next();
+    const url = req.nextUrl.clone();
+    url.pathname = pathname === "/" ? "/training" : `/training${pathname}`;
+    return NextResponse.rewrite(url);
   }
 
   // ── 1. API 路由：先限流，通过则放行（不走 Auth 中间件） ──────────────────

@@ -6,10 +6,12 @@ import { TrainingServiceWorkerRegister } from "@/components/pwa/training-service
 import { isTrainingHost } from "@/lib/pwa/training-host";
 
 const TRAINING_MANIFEST = "/training/manifest.webmanifest";
-const TRAINING_ICONS = {
-  icon192: "/training/icons/icon-192.png",
-  icon512: "/training/icons/icon-512.png",
-  appleTouch: "/training/icons/apple-touch-icon.png",
+
+/** 与主站 PWA 相同：`public/icons/*` + 根目录 `apple-touch-icon.png`（pnpm pwa:icons 同步） */
+const SITE_PWA_ICONS = {
+  icon192: "/icons/icon-192.png",
+  icon512: "/icons/icon-512.png",
+  appleTouch: "/apple-touch-icon.png",
 } as const;
 
 async function getHost(): Promise<string> {
@@ -36,10 +38,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: [
-        { url: TRAINING_ICONS.icon192, type: "image/png", sizes: "192x192" },
-        { url: TRAINING_ICONS.icon512, type: "image/png", sizes: "512x512" },
+        { url: SITE_PWA_ICONS.icon192, type: "image/png", sizes: "192x192" },
+        { url: SITE_PWA_ICONS.icon512, type: "image/png", sizes: "512x512" },
       ],
-      apple: [{ url: TRAINING_ICONS.appleTouch, sizes: "180x180", type: "image/png" }],
+      apple: [{ url: SITE_PWA_ICONS.appleTouch, sizes: "180x180", type: "image/png" }],
     },
   };
 }

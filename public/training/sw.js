@@ -3,9 +3,9 @@ const CACHE_NAME = "muhub-training-v1";
 
 const PRECACHE_URLS = [
   "/training/manifest.webmanifest",
-  "/training/icons/icon-192.png",
-  "/training/icons/icon-512.png",
-  "/training/icons/apple-touch-icon.png",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {
