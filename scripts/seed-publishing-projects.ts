@@ -9,7 +9,7 @@
  * 需要环境变量：DATABASE_URL
  */
 
-import { PrismaClient, ProjectStatus } from "@prisma/client";
+import { PrismaClient, ProjectStatus, ProjectVisibilityStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -316,6 +316,8 @@ async function main(): Promise<void> {
           isAiRelated: true,
           isChineseTool: p.isChineseTool,
           status: ProjectStatus.PUBLISHED,
+          visibilityStatus: ProjectVisibilityStatus.PUBLISHED,
+          isPublic: true,
           sourceType: "seed",
           isFeatured: false,
         },
@@ -329,13 +331,10 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log(`\n[seed:pub-projects] 完成：新建 ${created}，跳过 ${skipped}，失败 ${failed}`);
-  console.log(`[seed:pub-projects] 所有项目均已设为 PUBLISHED，category=publishing_media`);
+  console.log(`
+[seed:pub-projects] 完成：新建 ${created}，跳过 ${skipped}，失败 ${failed}`);
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
+  .catch((e) => { console.error(e); process.exit(1); })
   .finally(() => prisma.$disconnect());

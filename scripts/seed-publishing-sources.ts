@@ -307,13 +307,9 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log(`\n[seed:publishing] 完成：新建 ${created}，跳过 ${skipped}，失败 ${failed}`);
-  console.log(`[seed:publishing] PAUSED 状态的国内媒体占位源共 5 个，待补充真实抓取配置后激活`);
+  console.log(`\n[seed:publishing-sources] 完成：新建 ${created}，跳过 ${skipped}，失败 ${failed}`);
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
+  .catch((e) => { console.error(e); process.exit(1); })
   .finally(() => prisma.$disconnect());

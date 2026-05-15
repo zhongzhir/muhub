@@ -753,7 +753,7 @@ export async function saveProjectAIInsight(
     sourceLevel: ProjectAISourceLevel;
   },
 ) {
-  return prisma.project.update({
+  returnprisma.project.update({
     where: { id: projectId },
     data: {
       aiInsight: payload.insight as unknown as Prisma.InputJsonValue,

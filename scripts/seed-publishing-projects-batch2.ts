@@ -5,7 +5,7 @@
  * 运行：pnpm seed:pub-projects-b2
  */
 
-import { PrismaClient, ProjectStatus } from "@prisma/client";
+import { PrismaClient, ProjectStatus, ProjectVisibilityStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -208,6 +208,8 @@ async function main(): Promise<void> {
           isAiRelated: true,
           isChineseTool: p.isChineseTool,
           status: ProjectStatus.PUBLISHED,
+          visibilityStatus: ProjectVisibilityStatus.PUBLISHED,
+          isPublic: true,
           sourceType: "seed",
           isFeatured: false,
         },
@@ -220,7 +222,8 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log(`\n[seed:pub-projects-b2] 完成：新建 ${created}，跳过 ${skipped}，失败 ${failed}`);
+  console.log(`
+[seed:pub-projects-b2] 完成：新建 ${created}，跳过 ${skipped}，失败 ${failed}`);
 }
 
 main()
