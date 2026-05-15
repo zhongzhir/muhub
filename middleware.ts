@@ -102,6 +102,19 @@ const { auth } = NextAuth({
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // ── 0. 子域名路由：training.muhub.cn → /training ─────────────────────────
+  // Nginx 将 Host: training.muhub.cn 透传过来，此处识别后 rewrite 到 /training
+  const host = req.headers.get("host") ?? "";
+  if (host.startsWith("training.")) {
+    const url = req.nextUrl.clone();
+    if (!url.pathname.startsWith("/training")) {
+      url.pathname = url.pathname === "/" ? "/training" : `/training${url.pathname}`;
+      return NextResponse.rewrite(url);
+    }
+    // 已在 /training/* 路径下，直接放行（无需认证）
+    return NextResponse.next();
+  }
+
   // ── 1. API 路由：先限流，通过则放行（不走 Auth 中间件） ──────────────────
   if (pathname.startsWith("/api/")) {
     // 惰性初始化限流器（首次请求时建立 Redis 连接）
@@ -149,7 +162,6 @@ export default async function middleware(req: NextRequest) {
         },
       );
     }
-
     const res = NextResponse.next();
     for (const [k, v] of Object.entries(rlHeaders)) {
       res.headers.set(k, v);
@@ -157,7 +169,7 @@ export default async function middleware(req: NextRequest) {
     return res;
   }
 
-  // ── 2. 鉴权保护路由：委托给 NextAuth ────────────────────────────────────
+  // ── 2. 鉴权保护路由：委托给 NextAuth ────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (auth as any)(req);
 }
@@ -171,5 +183,8 @@ export const config = {
     "/admin/:path*",
     // API 路由（限流处理）
     "/api/:path*",
+    // 子域名路由（training.muhub.cn → /training）
+    // 需要覆盖所有路径；静态资源由 Nginx 直接处理，不会到达此处
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

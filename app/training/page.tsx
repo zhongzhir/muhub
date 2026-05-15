@@ -182,9 +182,6 @@ export default function TrainingPage() {
             </div>
             <div>
               <div className="text-sm font-semibold text-white">华闻传媒产业创新研究院</div>
-              <div className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-                中宣部智库单位
-              </div>
             </div>
           </div>
           <div className="hidden items-center gap-2 sm:flex">
@@ -285,10 +282,10 @@ export default function TrainingPage() {
                   出版传媒AI工具库
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                  由 MUHUB 与华闻传媒产业创新研究院联合整理，覆盖出版全链条
+                  由华闻传媒产业创新研究院联合 MUHUB 整理，覆盖出版全链条
                   <strong className="text-zinc-800 dark:text-zinc-200">{TOOL_LIBRARY_STATS.scenes} 个应用场景</strong>，
                   收录 <strong className="text-zinc-800 dark:text-zinc-200">{TOOL_LIBRARY_STATS.total} 个AI工具</strong>，
-                  每期实训前集中更新，配有出版场景适配分析与导读建议。
+                  定期更新，配有出版场景适配分析与导读应用建议。
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {["选题策划", "编辑校对", "有声书生成", "版权管理", "营销文案", "数字人主播"].map((tag) => (
@@ -487,7 +484,7 @@ export default function TrainingPage() {
       <footer className="border-t border-zinc-200 py-8 dark:border-zinc-800">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col items-center gap-2 text-center text-xs text-zinc-400 sm:flex-row sm:justify-between">
-            <span>© 华闻传媒产业创新研究院 · 中宣部智库单位</span>
+            <span>© 华闻传媒产业创新研究院</span>
             <span>
               AI工具库支持：
               <Link href="/" className="underline underline-offset-2 hover:text-zinc-600">
