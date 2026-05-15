@@ -4,7 +4,6 @@ import "./globals.css";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { SiteHeader } from "@/components/layout/header";
 import { SiteFooter } from "@/components/footer";
-import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
@@ -72,19 +71,6 @@ export const metadata: Metadata = {
     description: OG_DESCRIPTION,
     images: [absoluteUrl("/og-default.png")],
   },
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    title: "MUHUB",
-    statusBarStyle: "default",
-  },
-  icons: {
-    icon: [
-      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
-    ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-  },
 };
 
 export default function RootLayout({
@@ -99,7 +85,6 @@ export default function RootLayout({
           <SiteHeader />
           {children}
           <SiteFooter />
-          <ServiceWorkerRegister />
         </AuthSessionProvider>
       </body>
     </html>

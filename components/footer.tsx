@@ -1,7 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { PwaInstallButton } from "@/components/pwa/pwa-install-button";
-
 export function SiteFooter() {
   return (
     <footer className="border-t border-zinc-200 bg-zinc-50 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
@@ -39,7 +37,6 @@ export function SiteFooter() {
           隐私政策
         </Link>
       </p>
-      <PwaInstallButton />
       <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
         <a
           href="https://beian.miit.gov.cn/"

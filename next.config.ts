@@ -65,9 +65,9 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
-      // Service Worker 缓存策略
+      // 实训 PWA Service Worker（scope /，仅 training 子域注册）
       {
-        source: "/sw.js",
+        source: "/training/sw.js",
         headers: [
           { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
           { key: "Service-Worker-Allowed", value: "/" },
