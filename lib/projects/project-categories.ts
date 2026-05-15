@@ -19,6 +19,7 @@ export const PROJECT_CATEGORIES = [
   "health_medical",
   "hardware_robotics",
   "game_entertainment",
+  "publishing_media",
   "other",
 ] as const;
 
@@ -45,6 +46,7 @@ const PROJECT_CATEGORY_LABELS: Record<ProjectCategory, string> = {
   health_medical: "\u5065\u5eb7\u4e0e\u533b\u7597",
   hardware_robotics: "\u786c\u4ef6\u4e0e\u673a\u5668\u4eba",
   game_entertainment: "\u6e38\u620f\u4e0e\u5a31\u4e50",
+  publishing_media: "\u51fa\u7248\u4e0e\u4f20\u5a92",
   other: "\u5176\u4ed6",
 };
 
@@ -139,6 +141,9 @@ const LEGACY_CLASSIFICATION_PRIMARY_TO_SLUG: Record<string, ProjectCategory> = {
 
   "media ai": "content_media",
   "general ai tool": "ai_agent",
+  // \u51fa\u7248\u4e0e\u4f20\u5a92
+  publishing: "publishing_media",
+  "publishing media": "publishing_media",
   other: "other",
   "\u5176\u4ed6": "other",
 };

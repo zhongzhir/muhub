@@ -279,6 +279,126 @@ export async function generateProjectHeroCardSummary(input: ProjectHeroCardInput
   return line ? line.slice(0, 320) : null;
 }
 
+
+// ─────────────────────────────────────────────────────────
+// 出版行业适配分析（平台通用能力，所有项目均可运行）
+// ─────────────────────────────────────────────────────────
+
+export const PUBLISHING_SCENE_TAG_LIST = [
+  "选题策划", "写作辅助", "编辑校对", "翻译", "图片生成", "排版设计",
+  "版权管理", "元数据处理", "内容审核", "档案数字化",
+  "个性化推荐", "营销文案", "读者分析", "社交媒体运营",
+  "有声书生成", "交互式内容", "数字人主播", "知识图谱",
+  "合同处理", "数据分析", "客服自动化",
+] as const;
+
+export type PublishingSceneTag = (typeof PUBLISHING_SCENE_TAG_LIST)[number];
+
+export type PublishingAnalysisInput = {
+  name: string;
+  tagline?: string | null;
+  description?: string | null;
+  tags?: string[];
+  primaryCategory?: string | null;
+  evidenceContext?: string | null;
+};
+
+export type PublishingAnalysisResult = {
+  /** 匹配的出版场景标签（若与出版无关则为空数组） */
+  publishingSceneTags: PublishingSceneTag[];
+  /** 出版行业适配分析段落（100-200字）；无关联时说明原因 */
+  publishingAnalysis: string;
+  /** 关联度：high / medium / low / none */
+  publishingRelevance: "high" | "medium" | "low" | "none";
+};
+
+/**
+ * 分析项目在出版行业的应用场景适配性。
+ * 所有项目均可运行：无关联时 publishingSceneTags 为空数组，
+ * publishingRelevance 为 "none"。
+ * 无 AI Key 时返回 null。
+ */
+export async function generatePublishingAnalysis(
+  input: PublishingAnalysisInput,
+): Promise<PublishingAnalysisResult | null> {
+  const tagList = PUBLISHING_SCENE_TAG_LIST.join("、");
+  const userBits = [
+    `项目名称：${input.name}`,
+    input.tagline?.trim() ? `一句话简介：${input.tagline.trim()}` : null,
+    input.description?.trim() ? `项目描述：${input.description.trim().slice(0, 1000)}` : null,
+    input.tags?.length ? `已有标签：${input.tags.join("、")}` : null,
+    input.primaryCategory?.trim() ? `主类目：${input.primaryCategory.trim()}` : null,
+    input.evidenceContext?.trim()
+      ? `补充信息：\n${input.evidenceContext.trim().slice(0, 8000)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const systemPrompt = `你是出版行业数字化专家。请分析给定项目在出版传媒行业中的应用场景适配性。
+
+可选场景标签（从以下列表中严格选择，不要创造新标签）：
+${tagList}
+
+输出严格遵守以下 JSON 格式（不要输出任何其他文字）：
+{
+  "publishingSceneTags": ["标签1", "标签2"],
+  "publishingAnalysis": "100-200字的中文分析段落，说明该项目在出版行业中的具体用途、适用场景、优势与局限性。如与出版行业关联度极低，说明原因并给出可能的边缘应用。语气专业克制，不夸大，不编造数据。",
+  "publishingRelevance": "high|medium|low|none"
+}
+
+判断标准：
+- high：核心功能直接服务出版流程（如写作辅助、OCR、版权管理等）
+- medium：可适配出版场景但非专用（如通用AI写作工具、数据分析平台）
+- low：有边缘关联但需较大定制改造
+- none：与出版传媒行业无实质关联`;
+
+  const text = await chatCompletion(
+    [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userBits },
+    ],
+    600,
+  );
+
+  if (!text) return null;
+
+  try {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start === -1 || end === -1) return null;
+    const parsed = JSON.parse(text.slice(start, end + 1)) as {
+      publishingSceneTags?: unknown;
+      publishingAnalysis?: unknown;
+      publishingRelevance?: unknown;
+    };
+
+    const tags = Array.isArray(parsed.publishingSceneTags)
+      ? (parsed.publishingSceneTags as string[])
+          .filter((t): t is PublishingSceneTag =>
+            (PUBLISHING_SCENE_TAG_LIST as readonly string[]).includes(t),
+          )
+          .slice(0, 6)
+      : [];
+
+    const analysis =
+      typeof parsed.publishingAnalysis === "string"
+        ? parsed.publishingAnalysis.trim().slice(0, 500)
+        : "";
+
+    const relevanceRaw = parsed.publishingRelevance;
+    const relevance: PublishingAnalysisResult["publishingRelevance"] =
+      relevanceRaw === "high" || relevanceRaw === "medium" || relevanceRaw === "low"
+        ? relevanceRaw
+        : "none";
+
+    if (!analysis) return null;
+    return { publishingSceneTags: tags, publishingAnalysis: analysis, publishingRelevance: relevance };
+  } catch {
+    return null;
+  }
+}
+
 export type ProjectWeeklySummaryAiInput = {
   projectName: string;
   /** 展示用时间范围说明 */

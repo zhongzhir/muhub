@@ -19,6 +19,7 @@
     "test:e2e:prelaunch": "playwright test tests/e2e/public-smoke.spec.ts tests/e2e/admin-smoke.spec.ts tests/e2e/project-page.spec.ts --workers=1",
     "test:smoke": "playwright test tests/e2e/smoke.spec.ts",
     "import:seed": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/import_seed_projects.ts",
+    "seed:publishing": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/seed-publishing-sources.ts",
     "ai:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run_ai_update.ts",
     "source:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/source_update.ts",
     "summary:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/summary_update.ts",
@@ -42,7 +43,9 @@
     "discovery:github-v3": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-github-v3.ts",
     "discovery:scheduled-run": "node ./node_modules/tsx/dist/cli.mjs scripts/run-discovery-scheduled.ts",
     "activity:github": "node ./node_modules/tsx/dist/cli.mjs scripts/run-project-activity.ts",
-    "tracker:official-info": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-project-info-tracker.ts"
+    "tracker:official-info": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run-project-info-tracker.ts",
+    "monitor:muhub-site": "node scripts/monitor-muhub-site.js",
+    "monitor:muhub-site:watch": "node scripts/monitor-muhub-site.js --watch"
   },
   "dependencies": {
     "@alicloud/dysmsapi20170525": "^4.5.1",
@@ -82,10 +85,4 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "png-to-ico": "^2.1.8",
-    "prisma": "^6.19.2",
-    "sharp": "^0.34.5",
-    "tailwindcss": "^4",
-    "tsx": "^4.21.0",
-    "typescript": "^5"
-  }
-}
+    "prisma

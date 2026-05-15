@@ -30,6 +30,10 @@ export type ProjectAIInsight = {
   };
   sourceNotes: string[];
   generatedAt: string;
+  /** 出版行业适配分析（平台通用能力 V1，可选） */
+  publishingSceneTags?: string[];
+  publishingAnalysis?: string;
+  publishingRelevance?: "high" | "medium" | "low" | "none";
 };
 
 export type ProjectAISignals = {

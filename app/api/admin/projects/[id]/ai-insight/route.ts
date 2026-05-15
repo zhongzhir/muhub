@@ -8,6 +8,7 @@ import {
   saveProjectAIInsight,
   type ProjectAISignals,
 } from "@/lib/project-ai-insight";
+import { generatePublishingAnalysis } from "@/lib/ai/project-ai";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -97,7 +98,29 @@ export async function POST(
     }
     const completeness = computeProjectCompleteness(snapshot);
     const sourceLevel = computeProjectSourceLevel(snapshot);
-    const generated = await generateProjectAIInsight(snapshot, completeness);
+    // 主 insight 与出版分析并行生成（publishing analysis 失败不阻断主流程）
+    const [generated, publishingResult] = await Promise.all([
+      generateProjectAIInsight(snapshot, completeness),
+      generatePublishingAnalysis({
+        name: snapshot.base.name,
+        tagline: snapshot.base.tagline,
+        description: snapshot.base.description,
+        tags: snapshot.base.tags,
+        primaryCategory: snapshot.base.categories?.[0] ?? null,
+        evidenceContext: snapshot.evidenceContext?.promptText ?? null,
+      }).catch((err) => {
+        console.warn("[AI][PublishingAnalysis] failed, skipping", err);
+        return null;
+      }),
+    ]);
+
+    // 将出版分析结果合并到 insight（均为可选字段，不影响主结构）
+    if (publishingResult) {
+      generated.insight.publishingSceneTags = publishingResult.publishingSceneTags;
+      generated.insight.publishingAnalysis = publishingResult.publishingAnalysis;
+      generated.insight.publishingRelevance = publishingResult.publishingRelevance;
+    }
+
     const signals: ProjectAISignals = {
       github: {
         ...snapshot.github.facts,
