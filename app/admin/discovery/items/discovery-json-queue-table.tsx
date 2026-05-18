@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition, useState } from "react";
 
 import {
+  bulkDeleteDiscoveryItemsAction,
   bulkImportAction,
   bulkMarkReviewedAction,
   bulkRejectAction,
@@ -93,7 +94,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkRunning, setBulkRunning] = useState<"reviewed" | "rejected" | "import" | null>(null);
+  const [bulkRunning, setBulkRunning] = useState<"reviewed" | "rejected" | "import" | "delete" | null>(null);
   const itemIds = items.map((item) => item.id);
   const selectedValidIds = selectedIds.filter((id) => itemIds.includes(id));
   const selectedCount = selectedValidIds.length;
@@ -218,9 +219,36 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
             type="button"
             disabled={pending}
             className={btn}
+            onClick={() => {
+              if (!window.confirm(`确认从 JSON 队列删除 ${selectedCount} 条记录？此操作不会删除已入库项目。`)) {
+                return;
+              }
+              setFeedback(null);
+              setBulkRunning("delete");
+              startTransition(() => {
+                void (async () => {
+                  const r = await bulkDeleteDiscoveryItemsAction(selectedValidIds);
+                  if (r.ok) {
+                    setFeedback({ kind: "ok", text: `已删除 ${r.deleted} 条队列记录` });
+                    setSelectedIds([]);
+                    router.refresh();
+                  } else {
+                    setFeedback({ kind: "err", text: r.error || "删除队列记录失败" });
+                  }
+                  setBulkRunning(null);
+                })();
+              });
+            }}
+          >
+            {bulkRunning === "delete" ? "删除中..." : "删除所选"}
+          </button>
+          <button
+            type="button"
+            disabled={pending}
+            className={btn}
             onClick={() => setSelectedIds([])}
           >
-            清空
+            取消选择
           </button>
         </div>
       ) : null}

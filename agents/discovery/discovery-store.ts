@@ -358,6 +358,31 @@ export async function readDiscoveryItemById(id: string): Promise<DiscoveryItem |
   return list.find((x) => x.id === id) ?? null;
 }
 
+export async function deleteDiscoveryItems(ids: string[]): Promise<number> {
+  const targetIds = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
+  if (targetIds.length === 0) {
+    return 0;
+  }
+
+  if (isDbEnabled()) {
+    const result = await prisma.discoveryCandidate.deleteMany({
+      where: { id: { in: targetIds } },
+    });
+    return result.count;
+  }
+
+  await ensureDiscoveryStoreFile();
+  const path = filePath();
+  const list = await readRawList();
+  const targetSet = new Set(targetIds);
+  const next = list.filter((item) => !targetSet.has(item.id));
+  const deleted = list.length - next.length;
+  if (deleted > 0) {
+    await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  }
+  return deleted;
+}
+
 export async function findDiscoveryItemByUrl(url: string): Promise<DiscoveryItem | null> {
   if (isDbEnabled()) {
     const key = normalizeDiscoveryUrl(url);

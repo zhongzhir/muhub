@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { parseGitHubRepoUrl } from "@/lib/github";
 import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
-import { getDeepSeekClient } from "@/lib/deepseek";
+import { getDeepSeekClient, getDeepSeekCompatibleModel } from "@/lib/deepseek";
 import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { buildProjectEvidenceContext, type ProjectEvidenceContext } from "@/lib/project-evidence-context";
@@ -593,7 +593,7 @@ export async function generateProjectAIInsight(
   completeness: ProjectAICompleteness,
 ): Promise<InsightGenerateResult> {
   const client = getDeepSeekClient();
-  const model = process.env.DEEPSEEK_MODEL_INSIGHT?.trim() || "deepseek-chat";
+  const model = getDeepSeekCompatibleModel("DEEPSEEK_MODEL_INSIGHT");
   const fallbackSuggest = suggestAdminProjectClassificationAndTags({
     githubUrl: snapshot.base.github ?? "",
     tagline: snapshot.base.tagline ?? "",

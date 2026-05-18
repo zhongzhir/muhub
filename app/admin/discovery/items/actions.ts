@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import {
   appendDiscoveryItem,
+  deleteDiscoveryItems,
   readDiscoveryItemById,
   readDiscoveryItems,
   updateDiscoveryItemDuplicateResult,
@@ -75,6 +76,10 @@ export type RunContentPipelineResult =
 
 export type BulkDiscoveryStatusResult =
   | { ok: true; updated: number }
+  | { ok: false; error: string };
+
+export type BulkDeleteDiscoveryItemsResult =
+  | { ok: true; deleted: number }
   | { ok: false; error: string };
 
 export type BulkImportResult =
@@ -591,6 +596,29 @@ export async function bulkRejectAction(ids: string[]): Promise<BulkDiscoveryStat
     return { ok: true, updated };
   } catch (err) {
     console.error("[bulkRejectAction]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function bulkDeleteDiscoveryItemsAction(
+  ids: string[],
+): Promise<BulkDeleteDiscoveryItemsResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { ok: false, error: "请先登录后再操作。" };
+    }
+    const targetIds = Array.from(new Set(ids.filter((id) => typeof id === "string" && id.trim())));
+    const deleted = await deleteDiscoveryItems(targetIds);
+    revalidatePath(REVALIDATE);
+    revalidatePath("/admin/discovery");
+    revalidatePath("/admin/discovery/daily");
+    return { ok: true, deleted };
+  } catch (err) {
+    console.error("[bulkDeleteDiscoveryItemsAction]", err);
     return {
       ok: false,
       error: err instanceof Error ? err.message : String(err),

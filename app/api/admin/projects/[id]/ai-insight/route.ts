@@ -170,7 +170,7 @@ export async function POST(
   } catch (error) {
     const raw = error instanceof Error ? error.message : "AI 认知卡生成失败，请稍后重试。";
     const message =
-      raw === "Missing DEEPSEEK_API_KEY"
+      raw === "Missing DEEPSEEK_API_KEY" || raw === "Missing AI_API_KEY"
         ? "AI 服务未配置，请检查服务器环境变量"
         : raw;
     await prisma.project.update({
