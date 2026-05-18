@@ -69,6 +69,7 @@ export async function autoExtractProjectsFromCapturedUrl(input: {
     sourceName,
     articleTitle: extracted.articleTitle ?? undefined,
     articleBody: extracted.articleBody,
+    sourceArticleUrl: input.extractedUrl,
     selectedGithubUrls,
   });
   if (!queued.ok) {

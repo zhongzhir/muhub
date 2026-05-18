@@ -159,7 +159,7 @@ async function ensureArticleProjectSource(
     where: {
       projectId,
       kind: "WECHAT_ARTICLE",
-      title: article.title,
+      url: article.url,
     },
     select: { id: true },
   });

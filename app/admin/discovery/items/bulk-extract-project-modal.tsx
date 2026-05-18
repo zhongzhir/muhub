@@ -70,6 +70,7 @@ export function BulkExtractProjectModal() {
   const effectiveSourceName = inputMode === "url" ? urlSourceName : sourceName;
   const effectiveArticleTitle = inputMode === "url" ? extractedArticleTitle : articleTitle;
   const effectiveArticleBody = inputMode === "url" ? extractedArticleBody : articleBody;
+  const effectiveSourceArticleUrl = inputMode === "url" ? articleUrl.trim() || null : null;
 
   return (
     <>
@@ -401,6 +402,7 @@ export function BulkExtractProjectModal() {
                         sourceName: effectiveSourceName.trim() || undefined,
                         articleTitle: effectiveArticleTitle.trim() || undefined,
                         articleBody: effectiveArticleBody,
+                        sourceArticleUrl: effectiveSourceArticleUrl,
                         selectedGithubUrls: selectedUrls,
                       });
                       if (!result.ok) {

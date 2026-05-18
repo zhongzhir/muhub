@@ -709,6 +709,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   sourceName?: string;
   articleTitle?: string;
   articleBody: string;
+  sourceArticleUrl?: string | null;
   selectedGithubUrls: string[];
 }): Promise<BulkAddGithubProjectsToQueueResult> {
   const session = await auth();
@@ -727,6 +728,7 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   const { success, duplicate, failed } = await bulkAddGithubProjectsToQueue({
     ...input,
     articleBody: body,
+    sourceArticleUrl: input.sourceArticleUrl,
     fetchGithubRepo,
   });
 

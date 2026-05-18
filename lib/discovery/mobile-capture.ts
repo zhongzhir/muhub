@@ -119,6 +119,7 @@ export async function createMobileCaptureItem(
       sourceMaterialType,
       sourceNote: sourceNote || null,
       extractedUrl,
+      sourceArticleUrl: isWechatArticle ? extractedUrl : null,
       isWechatArticle,
       capturedAt: now,
       articleTitle: title,

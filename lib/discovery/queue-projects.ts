@@ -452,6 +452,7 @@ export async function bulkAddGithubProjectsToQueue(input: {
   sourceName?: string;
   articleTitle?: string;
   articleBody: string;
+  sourceArticleUrl?: string | null;
   selectedGithubUrls: string[];
   fetchGithubRepo: FetchGithubRepoForQueue;
 }): Promise<{ success: number; duplicate: number; failed: number }> {
@@ -470,7 +471,7 @@ export async function bulkAddGithubProjectsToQueue(input: {
   let failed = 0;
   const sourceName = input.sourceName?.trim() || null;
   const articleTitle = input.articleTitle?.trim() || null;
-  const sourceArticleUrl = firstSourceArticleUrlFromText(body);
+  const sourceArticleUrl = input.sourceArticleUrl?.trim() || firstSourceArticleUrlFromText(body);
 
   for (const sourceUrl of selected) {
     if (sourceUrl.startsWith("general:")) {
