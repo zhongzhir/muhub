@@ -552,13 +552,6 @@ export async function extractProjectsFromArticleText(input: {
   const seenNames = new Set<string>();
   const extracted = extractProjectSourceUrlsFromText(body);
 
-  if (input.logLabel) {
-    console.log(
-      `[${input.logLabel}] project source matches:`,
-      extracted.map((item) => item.source.url),
-    );
-  }
-
   for (const { source } of extracted) {
     if (source.type === "GITCC") {
       const projectName =
