@@ -30,6 +30,13 @@ const eslintConfig = [
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  {
+    files: ["scripts/monitor-muhub-site.js"],
+    rules: {
+      // 运维巡查脚本为 Node CommonJS，保持 require 与现有运行方式一致
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

@@ -36,6 +36,12 @@ export function SiteFooter() {
         <Link href="/privacy" className="underline-offset-4 hover:underline">
           隐私政策
         </Link>
+        <span className="text-zinc-300 dark:text-zinc-600" aria-hidden>
+          |
+        </span>
+        <Link href="/help" className="underline-offset-4 hover:underline">
+          网站帮助
+        </Link>
       </p>
       <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
         <a

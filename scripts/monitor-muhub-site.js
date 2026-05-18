@@ -87,7 +87,7 @@ function appendLog(plain) {
     const dir = path.dirname(CONFIG.logFile);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.appendFileSync(CONFIG.logFile, plain + '\n', 'utf8');
-  } catch (_) {}
+  } catch {}
 }
 
 function log(tag, msg) {
@@ -185,7 +185,7 @@ function checkCert(hostname, port = 443) {
 async function checkDns() {
   const result = { ok: false, cnames: [], ips: [], pointsToEsa: false, error: null, warn: null };
   try {
-    try { result.cnames = await resolveCname('www.muhub.cn'); } catch (_) {}
+    try { result.cnames = await resolveCname('www.muhub.cn'); } catch {}
     try { result.ips = await resolve4('www.muhub.cn'); } catch (e) {
       result.error = `A 记录解析失败: ${e.message}`; return result;
     }
@@ -379,7 +379,7 @@ function postJson(urlStr, body) {
       req.on('error', () => resolve(false));
       req.setTimeout(8000, () => { req.destroy(); resolve(false); });
       req.write(data); req.end();
-    } catch (_) { resolve(false); }
+    } catch { resolve(false); }
   });
 }
 
@@ -524,7 +524,8 @@ async function runCheck() {
     if (hasDnsFault) {
       logInfo('\n🔧 自动操作：刷新本地 DNS 缓存 ...');
       const r = await flushLocalDnsCache();
-      r.ok ? logOk(`  ✅ ${r.msg}`) : logWarn(`  ⚠️  ${r.msg}`);
+      if (r.ok) logOk(`  ✅ ${r.msg}`);
+      else logWarn(`  ⚠️  ${r.msg}`);
     }
   }
 

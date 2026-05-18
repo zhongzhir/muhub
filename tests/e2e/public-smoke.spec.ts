@@ -35,4 +35,19 @@ test.describe("公开页：基础冒烟", () => {
       await expect(page.locator("body")).not.toHaveText("");
     }
   });
+
+  test("网站帮助页可打开", async ({ page }) => {
+    const res = await page.goto("/help");
+    expect(res?.ok(), `/help HTTP 状态异常: ${res?.status()}`).toBeTruthy();
+    await expect(page.getByRole("heading", { level: 1, name: "网站帮助" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "开放项目入门" })).toBeVisible();
+  });
+
+  test("开放项目入门专题可打开", async ({ page }) => {
+    const res = await page.goto("/help/open-projects");
+    expect(res?.ok(), `/help/open-projects HTTP 状态异常: ${res?.status()}`).toBeTruthy();
+    await expect(page.getByRole("heading", { level: 1, name: "开放项目入门" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /什么是 GitHub、GitCode/ })).toBeVisible();
+    await expect(page.locator("#security-reminder")).toBeVisible();
+  });
 });

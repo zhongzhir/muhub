@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { OpenProjectsHelpLink } from "@/components/help/open-projects-help-link";
 import { computeGithubActivity } from "@/lib/github-activity";
 import type { ProjectPageView } from "@/lib/demo-project";
 import { parseRepoUrl, repoPlatformDisplayLabel } from "@/lib/repo-platform";
@@ -73,6 +74,20 @@ function normalizedUrlKey(url: string | null | undefined): string | null {
 function isPrimaryCodeOrWebsiteSource(item: ProjectSourceDisplayItem): boolean {
   if (item.kind === "GITHUB" || item.kind === "WEBSITE") return true;
   return item.kind === "OTHER" && item.categoryLabel.toLowerCase() === "gitcc";
+}
+
+function projectHasOpenCodeHostLinks(
+  data: ProjectPageView,
+  sourceItems: ProjectSourceDisplayItem[],
+): boolean {
+  if (data.githubUrl?.trim()) return true;
+  if (sourceItems.some((s) => s.kind === "GITHUB" || s.categoryLabel.toLowerCase() === "gitcc")) {
+    return true;
+  }
+  return (data.externalLinks ?? []).some((link) => {
+    const platform = link.platform.toLowerCase();
+    return platform === "github" || platform === "gitcc";
+  });
 }
 
 function isWeChatArticleUrl(url: string): boolean {
@@ -229,6 +244,7 @@ export function ProjectDetailInfoSections({
     return !key || !topLinkKeys.has(key);
   });
   const officialMediaItems = buildOfficialMediaItems(data, socials, sourceItems);
+  const showOpenProjectsHelp = projectHasOpenCodeHostLinks(data, sourceItems);
 
   return (
     <>
@@ -452,6 +468,7 @@ export function ProjectDetailInfoSections({
             </>
           )}
         </div>
+        {showOpenProjectsHelp ? <OpenProjectsHelpLink className="mt-4" /> : null}
       </section>
 
       <section className="mt-12 scroll-mt-8" aria-labelledby="official-media-heading" data-testid="project-official-media-section">
