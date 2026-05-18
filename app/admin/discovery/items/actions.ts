@@ -9,7 +9,6 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import {
-  appendDiscoveryItem,
   deleteDiscoveryItems,
   readDiscoveryItemById,
   readDiscoveryItems,
@@ -17,7 +16,6 @@ import {
   updateDiscoveryItemImportResult,
   updateDiscoveryStatus,
 } from "@/agents/discovery/discovery-store";
-import type { DiscoveryItem } from "@/agents/discovery/discovery-types";
 import { runGitHubDiscoveryV3 } from "@/agents/discovery/github/github-discovery-v3";
 import { runRssDiscovery } from "@/agents/discovery/rss/rss-discovery";
 import { runGitHubProjectActivity } from "@/agents/activity/github-activity";
@@ -32,15 +30,19 @@ import {
   type ArticleExtractedProject,
   type OfficialSourceCompletion as ArticleOfficialSourceCompletion,
 } from "@/lib/discovery/article-extraction";
+import {
+  addGeneralProjectToQueue,
+  addManualGithubToQueue,
+  bulkAddGithubProjectsToQueue,
+  countBulkQueueSelection,
+  findExistingProjectByPriority,
+  importGeneralProject,
+  importManualGithubProject,
+  type ExistingProjectHit,
+} from "@/lib/discovery/queue-projects";
 import { isSourceMaterialDiscoveryItem } from "@/lib/discovery/mobile-capture";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
-import { prisma } from "@/lib/prisma";
-import { slugifyProjectName } from "@/lib/project-slug";
-import {
-  extractProjectSourceUrlsFromText,
-  parseProjectSourceUrl,
-} from "@/lib/project-source-url";
-import { isSourceArticleUrl } from "@/lib/project-url-classifier";
+import { parseProjectSourceUrl } from "@/lib/project-source-url";
 
 const REVALIDATE = "/admin/discovery/items";
 const execFileAsync = promisify(execFile);
@@ -95,13 +97,6 @@ export type BulkDeleteDiscoveryItemsResult =
 export type BulkImportResult =
   | { ok: true; success: number; failed: number; skipped: number }
   | { ok: false; error: string };
-
-type ExistingProjectHit = {
-  id: string;
-  slug: string;
-  name: string;
-  reason: "githubUrl" | "websiteUrl" | "slug" | "name";
-};
 
 export type ParseManualGithubProjectResult =
   | {
@@ -195,125 +190,6 @@ export type ExtractProjectsFromUrlResult =
       articleBody: string;
     }
   | { ok: false; error: string };
-
-function extractProjectSourceUrlsFromArticleText(articleBody: string): string[] {
-  return extractProjectSourceUrlsFromText(articleBody).map((item) => item.source.url);
-}
-
-function firstSourceArticleUrlFromText(text: string): string | null {
-  const matches = text.match(/https?:\/\/[^\s<>"'`，。；：！？、（）【】]+/gi) ?? [];
-  for (const match of matches) {
-    const url = match.replace(/[),.;:!?，。；：！？、）】]+$/u, "");
-    if (isSourceArticleUrl(url)) {
-      return url;
-    }
-  }
-  return null;
-}
-
-function createManualDiscoveryItem(input: {
-  sourceType: "GITHUB" | "GITCC";
-  sourceUrl: string;
-  githubUrl?: string | null;
-  websiteUrl?: string | null;
-  title: string;
-  summary?: string | null;
-  note?: string | null;
-  language?: string | null;
-  stars?: number;
-  owner?: string;
-  repo?: string;
-}): DiscoveryItem {
-  const now = new Date().toISOString();
-  const sourceLabel = input.sourceType === "GITHUB" ? "GitHub" : "GitCC";
-  return {
-    id: `manual-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    sourceType: "manual",
-    title: input.title.trim(),
-    url: input.sourceUrl,
-    description: input.summary?.trim() || undefined,
-    status: "new",
-    createdAt: now,
-    meta: {
-      source: input.sourceType === "GITHUB" ? "manual-github" : "manual-gitcc",
-      sourceKey: input.sourceType === "GITHUB" ? "manual-github" : "manual-gitcc",
-      sourceType: input.sourceType,
-      sourceLabel,
-      sourceUrl: input.sourceUrl,
-      githubUrl: input.githubUrl ?? null,
-      websiteUrl: input.websiteUrl?.trim() || null,
-      note: input.note?.trim() || null,
-      language: input.language?.trim() || null,
-      stars: input.stars ?? 0,
-      owner: input.owner ?? null,
-      repo: input.repo ?? null,
-    },
-  };
-}
-
-async function findExistingProjectByPriority(input: {
-  githubUrl?: string | null;
-  source?: { kind: "GITHUB" | "OTHER"; url: string; label?: string | null } | null;
-  websiteUrl?: string | null;
-  title: string;
-  repo: string;
-}): Promise<ExistingProjectHit | null> {
-  const githubUrl = input.githubUrl?.trim() || null;
-  if (githubUrl) {
-    const byGithub = await prisma.project.findFirst({
-      where: { deletedAt: null, githubUrl },
-      select: { id: true, slug: true, name: true },
-    });
-    if (byGithub) {
-      return { ...byGithub, reason: "githubUrl" };
-    }
-  }
-
-  if (input.source?.url) {
-    const bySource = await prisma.project.findFirst({
-      where: {
-        deletedAt: null,
-        sources: { some: { kind: input.source.kind, url: input.source.url } },
-      },
-      select: { id: true, slug: true, name: true },
-    });
-    if (bySource) {
-      return { ...bySource, reason: "githubUrl" };
-    }
-  }
-
-  const websiteUrl = input.websiteUrl?.trim() || null;
-  if (websiteUrl) {
-    const byWebsite = await prisma.project.findFirst({
-      where: { deletedAt: null, websiteUrl },
-      select: { id: true, slug: true, name: true },
-    });
-    if (byWebsite) {
-      return { ...byWebsite, reason: "websiteUrl" };
-    }
-  }
-
-  const candidateSlug = slugifyProjectName(input.title) || slugifyProjectName(input.repo);
-  if (candidateSlug) {
-    const bySlug = await prisma.project.findFirst({
-      where: { deletedAt: null, slug: candidateSlug },
-      select: { id: true, slug: true, name: true },
-    });
-    if (bySlug) {
-      return { ...bySlug, reason: "slug" };
-    }
-  }
-
-  const byName = await prisma.project.findFirst({
-    where: { deletedAt: null, name: input.title.trim() },
-    select: { id: true, slug: true, name: true },
-  });
-  if (byName) {
-    return { ...byName, reason: "name" };
-  }
-
-  return null;
-}
 
 async function fetchGithubRepo(owner: string, repo: string): Promise<{
   name: string;
@@ -747,51 +623,21 @@ export async function addManualGithubToQueueAction(input: {
   if (!session?.user?.id) {
     return { ok: false, error: "请先登录后再操作。" };
   }
-  const githubUrlRaw = input.githubUrl?.trim() || "";
-  const source = parseProjectSourceUrl(githubUrlRaw);
-  if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
-    return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
-  }
-  const githubUrl = source.type === "GITHUB" ? normalizeGithubRepoUrl(source.url) : null;
-  const title =
-    input.title?.trim() ||
-    (source.type === "GITHUB"
-      ? source.repo
-      : source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目");
-  const duplicate = await findExistingProjectByPriority({
-    githubUrl,
-    source:
-      source.type === "GITHUB"
-        ? { kind: "GITHUB", url: githubUrl!, label: "GitHub" }
-        : { kind: "OTHER", url: source.url, label: "GitCC" },
-    websiteUrl: input.websiteUrl?.trim() || (source.type === "GITCC" ? source.url : null),
-    title,
-    repo: source.repo ?? title,
-  });
-  if (duplicate) {
-    return { ok: false, error: `该项目已存在：/projects/${duplicate.slug}` };
-  }
 
   try {
-    const item = createManualDiscoveryItem({
-      sourceType: source.type,
-      sourceUrl: githubUrl ?? source.url,
-      githubUrl,
-      websiteUrl: input.websiteUrl || (source.type === "GITCC" ? source.url : undefined),
-      title,
-      summary: input.summary,
-      note: input.note,
-      language: input.language ?? null,
-      stars: input.stargazersCount ?? 0,
-      owner: input.owner || source.owner || undefined,
-      repo: input.repo || source.repo || undefined,
-    });
-    const created = await appendDiscoveryItem(item);
+    const result = await addManualGithubToQueue(input);
+    if (!result.ok) {
+      if (result.error === "invalid_source") {
+        return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
+      }
+      return { ok: false, error: `该项目已存在：/projects/${result.duplicate.slug}` };
+    }
+
     revalidatePath(REVALIDATE);
     return {
       ok: true,
-      duplicate: created.duplicate,
-      message: created.duplicate ? "已存在相同发现线索，未重复加入。" : "已加入发现队列。",
+      duplicate: result.duplicate,
+      message: result.duplicate ? "已存在相同发现线索，未重复加入。" : "已加入发现队列。",
     };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "加入发现队列失败。" };
@@ -813,51 +659,13 @@ export async function importManualGithubProjectAction(input: {
   if (!session?.user?.id) {
     return { ok: false, error: "请先登录后再操作。" };
   }
-  const githubUrlRaw = input.githubUrl?.trim() || "";
-  const source = parseProjectSourceUrl(githubUrlRaw);
-  if (!source || (source.type !== "GITHUB" && source.type !== "GITCC")) {
-    return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
-  }
-  const githubUrl = source.type === "GITHUB" ? normalizeGithubRepoUrl(source.url) : null;
-  const title =
-    input.title?.trim() ||
-    (source.type === "GITHUB"
-      ? source.repo
-      : source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目");
-  const duplicate = await findExistingProjectByPriority({
-    githubUrl,
-    source:
-      source.type === "GITHUB"
-        ? { kind: "GITHUB", url: githubUrl!, label: "GitHub" }
-        : { kind: "OTHER", url: source.url, label: "GitCC" },
-    websiteUrl: input.websiteUrl?.trim() || (source.type === "GITCC" ? source.url : null),
-    title,
-    repo: source.repo ?? title,
-  });
-  if (duplicate) {
-    return {
-      ok: true,
-      slug: duplicate.slug,
-      duplicated: true,
-      message: "该项目已存在，已跳转到已有项目。",
-    };
-  }
 
   try {
-    const item = createManualDiscoveryItem({
-      sourceType: source.type,
-      sourceUrl: githubUrl ?? source.url,
-      githubUrl,
-      websiteUrl: input.websiteUrl || (source.type === "GITCC" ? source.url : undefined),
-      title,
-      summary: input.summary,
-      note: input.note,
-      language: input.language ?? null,
-      stars: input.stargazersCount ?? 0,
-      owner: input.owner || source.owner || undefined,
-      repo: input.repo || source.repo || undefined,
-    });
-    const result = await importJsonDiscoveryItem(item);
+    const result = await importManualGithubProject(input);
+    if (!result.ok) {
+      return { ok: false, error: "项目链接无效，目前支持 GitHub 和 GitCC。" };
+    }
+
     revalidatePath(REVALIDATE);
     revalidatePath("/projects");
     revalidatePath(`/projects/${result.slug}`);
@@ -865,7 +673,11 @@ export async function importManualGithubProjectAction(input: {
       ok: true,
       slug: result.slug,
       duplicated: result.duplicated,
-      message: result.created ? "已成功导入项目。" : "该项目已存在，已关联既有项目。",
+      message: result.existing
+        ? "该项目已存在，已跳转到已有项目。"
+        : result.created
+          ? "已成功导入项目。"
+          : "该项目已存在，已关联既有项目。",
     };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "直接导入失败。" };
@@ -907,255 +719,16 @@ export async function bulkAddGithubProjectsToQueueAction(input: {
   if (!body) {
     return { ok: false, error: "请先粘贴文章正文。" };
   }
-  // 分类：GENERAL 类型（general:名称）和 URL 类型（GitHub/GitCC）
-  const allSelected = Array.from(
-    new Set((input.selectedGithubUrls ?? []).map((x) => x.trim()).filter(Boolean)),
-  );
-  const generalSelected = allSelected.filter((x) => x.startsWith("general:"));
-  const urlSelected = allSelected.filter((x) => !x.startsWith("general:"));
 
-  // URL 类型需要从正文校验来源
-  const allowed = new Set(extractProjectSourceUrlsFromArticleText(body));
-  const validUrlSelected = urlSelected.filter((x) => allowed.has(x));
-
-  const selected = [...validUrlSelected, ...generalSelected];
-  if (selected.length === 0) {
+  if (countBulkQueueSelection({ articleBody: body, selectedGithubUrls: input.selectedGithubUrls }) === 0) {
     return { ok: false, error: "没有可加入发现队列的项目。" };
   }
 
-  let success = 0;
-  let duplicate = 0;
-  let failed = 0;
-  const sourceName = input.sourceName?.trim() || null;
-  const articleTitle = input.articleTitle?.trim() || null;
-  const sourceArticleUrl = firstSourceArticleUrlFromText(body);
-
-  for (const sourceUrl of selected) {
-    // ── GENERAL 通用项目（AI 识别，无代码仓库链接）────────────────────────
-    if (sourceUrl.startsWith("general:")) {
-      const projectName = sourceUrl.slice("general:".length).trim();
-      if (!projectName) { failed += 1; continue; }
-      try {
-        const existing = await findExistingProjectByPriority({
-          githubUrl: null,
-          source: null,
-          websiteUrl: null,
-          title: projectName,
-          repo: projectName,
-        });
-        if (existing) { duplicate += 1; continue; }
-        const officialSourceCompletion = await completeOfficialSourcesLightly({
-          title: projectName,
-          summary: null,
-          referenceText: body,
-          appStoreUrl: null,
-          playStoreUrl: null,
-        });
-        const appStoreUrl =
-          officialSourceCompletion.find((item) => item.kind === "APP_STORE")?.url ?? null;
-        const playStoreUrl =
-          officialSourceCompletion.find((item) => item.kind === "GOOGLE_PLAY")?.url ?? null;
-        const now = new Date().toISOString();
-        const { appendDiscoveryItem: append } = await import("@/agents/discovery/discovery-store");
-        const item = {
-          id: `manual-general-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-          sourceType: "manual" as const,
-          title: projectName,
-          url: `manual-general-${Date.now().toString(36)}`,
-          description: undefined,
-          status: "new" as const,
-          createdAt: now,
-          meta: {
-            source: "wechat-article",
-            sourceKey: "manual-general",
-            sourceType: "GENERAL",
-            sourceLabel: "手动添加",
-            sourceUrl: null,
-            githubUrl: null,
-            websiteUrl: null,
-            referenceUrl: sourceArticleUrl,
-            note: null,
-            category: null,
-            language: null,
-            stars: 0,
-            owner: null,
-            repo: null,
-            sourceName,
-            articleTitle,
-            articleBody: body,
-            sourceArticleUrl,
-            extractedFrom: "ai_article_extraction",
-            appStoreUrl,
-            playStoreUrl,
-            officialSourceCompletion,
-          },
-        };
-        const appended = await append(item);
-        if (appended.duplicate) { duplicate += 1; } else { success += 1; }
-      } catch { failed += 1; }
-      continue;
-    }
-
-    const source = parseProjectSourceUrl(sourceUrl);
-    if (!source || (source.type !== "GITHUB" && source.type !== "GITCC" && source.type !== "PRODUCTHUNT")) {
-      failed += 1;
-      continue;
-    }
-    try {
-      if (source.type === "GITCC") {
-        const projectName =
-          source.url.replace(/\/+$/g, "").split("/").filter(Boolean).pop() || "GitCC 项目";
-        const existing = await findExistingProjectByPriority({
-          githubUrl: null,
-          source: { kind: "OTHER", url: source.url, label: "GitCC" },
-          websiteUrl: source.url,
-          title: projectName,
-          repo: projectName,
-        });
-        if (existing) {
-          duplicate += 1;
-          continue;
-        }
-        const item = createManualDiscoveryItem({
-          sourceType: "GITCC",
-          sourceUrl: source.url,
-          githubUrl: null,
-          websiteUrl: source.url,
-          title: projectName,
-          summary: "已识别为 GitCC 来源，可导入为外部项目。",
-          language: null,
-          stars: 0,
-        });
-        item.meta = {
-          ...(item.meta ?? {}),
-          source: "wechat-article",
-          sourceType: "wechat",
-          sourceName,
-          articleTitle,
-          articleBody: body,
-          sourceArticleUrl,
-          extractedFrom: "article_text",
-          projectSourceType: "GITCC",
-          primaryProjectUrl: source.url,
-          projectPageUrl: source.url,
-          websiteUrl: source.url,
-          externalLinks: [
-            { platform: "gitcc", label: "GitCC 项目页", url: source.url, primary: true },
-          ],
-          sourceUrl: source.url,
-        };
-        const appended = await appendDiscoveryItem(item);
-        if (appended.duplicate) {
-          duplicate += 1;
-        } else {
-          success += 1;
-        }
-        continue;
-      }
-
-      if (source.type === "PRODUCTHUNT") {
-        const slug = source.slug || source.url.replace(/\/+$/, "").split("/").filter(Boolean).pop() || "product";
-        const projectName = slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-        const existing = await findExistingProjectByPriority({
-          githubUrl: null,
-          source: { kind: "OTHER", url: source.url, label: "Product Hunt" },
-          websiteUrl: source.url,
-          title: projectName,
-          repo: projectName,
-        });
-        if (existing) { duplicate += 1; continue; }
-        const now = new Date().toISOString();
-        const phItem = {
-          id: `manual-ph-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-          sourceType: "manual" as const,
-          title: projectName,
-          url: source.url,
-          description: undefined,
-          status: "new" as const,
-          createdAt: now,
-          meta: {
-            source: "wechat-article",
-            sourceKey: "manual-producthunt",
-            sourceType: "PRODUCTHUNT",
-            sourceLabel: "Product Hunt",
-            sourceUrl: source.url,
-            githubUrl: null,
-            websiteUrl: source.url,
-            referenceUrl: sourceArticleUrl,
-            note: null,
-            category: null,
-            language: null,
-            stars: 0,
-            owner: null,
-            repo: null,
-            sourceName,
-            articleTitle,
-            articleBody: body,
-            sourceArticleUrl,
-            extractedFrom: "article_text",
-            primaryProjectUrl: source.url,
-            projectPageUrl: source.url,
-            externalLinks: [
-              { platform: "producthunt", label: "Product Hunt", url: source.url, primary: true },
-            ],
-          },
-        };
-        const appended = await appendDiscoveryItem(phItem);
-        if (appended.duplicate) { duplicate += 1; } else { success += 1; }
-        continue;
-      }
-      if (source.type !== "GITHUB") {
-        failed += 1;
-        continue;
-      }
-      const githubUrl = normalizeGithubRepoUrl(source.url);
-      const repoData = await fetchGithubRepo(source.owner, source.repo);
-      const existing = await findExistingProjectByPriority({
-        githubUrl,
-        source: { kind: "GITHUB", url: githubUrl, label: "GitHub" },
-        websiteUrl: repoData.homepage || null,
-        title: repoData.name,
-        repo: source.repo,
-      });
-      if (existing) {
-        duplicate += 1;
-        continue;
-      }
-      const item = createManualDiscoveryItem({
-        sourceType: "GITHUB",
-        sourceUrl: githubUrl,
-        githubUrl,
-        websiteUrl: repoData.homepage || null,
-        title: repoData.name,
-        summary: repoData.description,
-        language: repoData.language,
-        stars: repoData.stargazers_count,
-        owner: source.owner,
-        repo: source.repo,
-      });
-      item.meta = {
-        ...(item.meta ?? {}),
-        source: "wechat-article",
-        sourceType: "wechat",
-        sourceName,
-        articleTitle,
-        articleBody: body,
-        sourceArticleUrl,
-        extractedFrom: "article_text",
-        githubUrl,
-        primaryProjectUrl: githubUrl,
-        sourceUrl: githubUrl,
-      };
-      const appended = await appendDiscoveryItem(item);
-      if (appended.duplicate) {
-        duplicate += 1;
-      } else {
-        success += 1;
-      }
-    } catch {
-      failed += 1;
-    }
-  }
+  const { success, duplicate, failed } = await bulkAddGithubProjectsToQueue({
+    ...input,
+    articleBody: body,
+    fetchGithubRepo,
+  });
 
   revalidatePath(REVALIDATE);
   return {
@@ -1322,91 +895,36 @@ export async function addGeneralProjectToQueueAction(input: {
   if (!session?.user?.id) {
     return { ok: false, error: "请先登录后再操作。" };
   }
-  const title = input.title?.trim();
-  if (!title) {
-    return { ok: false, error: "项目名称不能为空。" };
-  }
-
-  const websiteUrl = input.websiteUrl?.trim() || null;
-  const referenceUrl = input.referenceUrl?.trim() || null;
-  const wechatAccount = input.wechatAccount?.trim() || null;
-  const weiboUrl = input.weiboUrl?.trim() || null;
-  const douyinUrl = input.douyinUrl?.trim() || null;
-  const appStoreUrl = input.appStoreUrl?.trim() || null;
-  const playStoreUrl = input.playStoreUrl?.trim() || null;
-
-  // 入库校验：至少需要一个官方来源（官网、代码仓库、社媒账号等）
-  // 参考链接（新闻报道等）不算官方来源
-  const isProductHuntRef = /producthunt\.com\/(products|posts)\//i.test(referenceUrl ?? "");
-  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl || isProductHuntRef);
-  if (!hasOfficialSource) {
-    return {
-      ok: false,
-      error: "项目需要至少一个官方信息来源（官网、公众号、微博、抖音、App Store 等），新闻报道不算官方来源。",
-    };
-  }
-
-  const duplicate = await findExistingProjectByPriority({
-    githubUrl: null,
-    source: null,
-    websiteUrl: websiteUrl || referenceUrl || null,
-    title,
-    repo: title,
-  });
-  if (duplicate) {
-    return { ok: false, error: `该项目已存在：/projects/${duplicate.slug}` };
-  }
-
-  const now = new Date().toISOString();
-  const item: DiscoveryItem = {
-    id: `manual-general-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    sourceType: "manual",
-    title,
-    url: websiteUrl || `manual-general-${Date.now().toString(36)}`,
-    description: input.summary?.trim() || undefined,
-    status: "new",
-    createdAt: now,
-    meta: {
-      source: "manual-general",
-      sourceKey: "manual-general",
-      sourceType: "GENERAL",
-      sourceLabel: "手动添加",
-      sourceUrl: websiteUrl || null,
-      githubUrl: null,
-      websiteUrl,
-      referenceUrl,
-      note: input.note?.trim() || null,
-      category: input.category?.trim() || null,
-      language: null,
-      stars: 0,
-      owner: null,
-      repo: null,
-      wechatAccount,
-      weiboUrl,
-      douyinUrl,
-      appStoreUrl,
-      playStoreUrl,
-      officialSourceCompletion: input.officialSourceCompletion ?? [],
-    },
-  };
 
   try {
-    const created = await appendDiscoveryItem(item);
+    const result = await addGeneralProjectToQueue(input);
+    if (!result.ok) {
+      if (result.error === "empty_title") {
+        return { ok: false, error: "项目名称不能为空。" };
+      }
+      if (result.error === "missing_official_source") {
+        return {
+          ok: false,
+          error: "项目需要至少一个官方信息来源（官网、公众号、微博、抖音、App Store 等），新闻报道不算官方来源。",
+        };
+      }
+      if (result.error === "existing_project") {
+        return { ok: false, error: `该项目已存在：/projects/${result.duplicate.slug}` };
+      }
+      return { ok: false, error: "加入发现队列失败。" };
+    }
+
     revalidatePath(REVALIDATE);
     return {
       ok: true,
-      duplicate: created.duplicate,
-      message: created.duplicate ? "已存在相同发现线索，未重复加入。" : "已加入发现队列。",
+      duplicate: result.duplicate,
+      message: result.duplicate ? "已存在相同发现线索，未重复加入。" : "已加入发现队列。",
     };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "加入发现队列失败。" };
   }
 }
 
-/**
- * 将通用项目（无 GitHub）直接导入项目库。
- * 新增：支持公众号、微博、抖音等官方信息来源字段，并验证最低来源要求。
- */
 export async function importGeneralProjectAction(input: {
   title: string;
   summary?: string | null;
@@ -1425,80 +943,19 @@ export async function importGeneralProjectAction(input: {
   if (!session?.user?.id) {
     return { ok: false, error: "请先登录后再操作。" };
   }
-  const title = input.title?.trim();
-  if (!title) {
-    return { ok: false, error: "项目名称不能为空。" };
-  }
-
-  const websiteUrl = input.websiteUrl?.trim() || null;
-  const referenceUrl = input.referenceUrl?.trim() || null;
-  const wechatAccount = input.wechatAccount?.trim() || null;
-  const weiboUrl = input.weiboUrl?.trim() || null;
-  const douyinUrl = input.douyinUrl?.trim() || null;
-  const appStoreUrl = input.appStoreUrl?.trim() || null;
-  const playStoreUrl = input.playStoreUrl?.trim() || null;
-
-  // 入库校验：至少需要一个官方来源
-  const isProductHuntRef = /producthunt\.com\/(products|posts)\//i.test(referenceUrl ?? "");
-  const hasOfficialSource = !!(websiteUrl || wechatAccount || weiboUrl || douyinUrl || appStoreUrl || playStoreUrl || isProductHuntRef);
-  if (!hasOfficialSource) {
-    return {
-      ok: false,
-      error: "项目需要至少一个官方信息来源（官网、公众号、微博、抖音、App Store 等）。",
-    };
-  }
-
-  const duplicate = await findExistingProjectByPriority({
-    githubUrl: null,
-    source: null,
-    websiteUrl: websiteUrl || referenceUrl || null,
-    title,
-    repo: title,
-  });
-  if (duplicate) {
-    return {
-      ok: true,
-      slug: duplicate.slug,
-      duplicated: true,
-      message: "该项目已存在，已跳转到已有项目。",
-    };
-  }
-
-  const now = new Date().toISOString();
-  const item: DiscoveryItem = {
-    id: `manual-general-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    sourceType: "manual",
-    title,
-    url: websiteUrl || `manual-general-${Date.now().toString(36)}`,
-    description: input.summary?.trim() || undefined,
-    status: "new",
-    createdAt: now,
-    meta: {
-      source: "manual-general",
-      sourceKey: "manual-general",
-      sourceType: "GENERAL",
-      sourceLabel: "手动添加",
-      sourceUrl: websiteUrl || null,
-      githubUrl: null,
-      websiteUrl,
-      referenceUrl,
-      note: input.note?.trim() || null,
-      category: input.category?.trim() || null,
-      language: null,
-      stars: 0,
-      owner: null,
-      repo: null,
-      wechatAccount,
-      weiboUrl,
-      douyinUrl,
-      appStoreUrl,
-      playStoreUrl,
-      officialSourceCompletion: input.officialSourceCompletion ?? [],
-    },
-  };
 
   try {
-    const result = await importJsonDiscoveryItem(item);
+    const result = await importGeneralProject(input);
+    if (!result.ok) {
+      if (result.error === "empty_title") {
+        return { ok: false, error: "项目名称不能为空。" };
+      }
+      return {
+        ok: false,
+        error: "项目需要至少一个官方信息来源（官网、公众号、微博、抖音、App Store 等）。",
+      };
+    }
+
     revalidatePath(REVALIDATE);
     revalidatePath("/projects");
     revalidatePath(`/projects/${result.slug}`);
@@ -1506,7 +963,11 @@ export async function importGeneralProjectAction(input: {
       ok: true,
       slug: result.slug,
       duplicated: result.duplicated,
-      message: result.created ? "已成功导入项目。" : "该项目已存在，已关联既有项目。",
+      message: result.existing
+        ? "该项目已存在，已跳转到已有项目。"
+        : result.created
+          ? "已成功导入项目。"
+          : "该项目已存在，已关联既有项目。",
     };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "直接导入失败。" };
@@ -1516,6 +977,7 @@ export async function importGeneralProjectAction(input: {
 /**
  * 从 URL（微信文章、新闻等）抓取内容，提取其中提到的项目（含 GitHub 和非 GitHub）。
  */
+
 export async function extractProjectsFromUrlAction(input: {
   url: string;
   sourceName?: string;
