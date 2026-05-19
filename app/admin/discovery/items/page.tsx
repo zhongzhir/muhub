@@ -18,6 +18,7 @@ import { ContentPipelineRunActions } from "./content-pipeline-run-actions";
 import { ContentOutputsPanel } from "./content-outputs-panel";
 import { ManualAddProjectModal } from "./manual-add-project-modal";
 import { BulkExtractProjectModal } from "./bulk-extract-project-modal";
+import { SyncChineseIndieButton } from "./sync-chinese-indie-button";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,7 @@ export default async function AdminDiscoveryJsonQueuePage() {
               </Link>
               <ManualAddProjectModal />
               <BulkExtractProjectModal />
+              <SyncChineseIndieButton />
               <DiscoveryRunActions />
               <ProjectActivityRunActions />
               <ContentPipelineRunActions />

@@ -13,6 +13,10 @@ import {
   parseProjectSourceUrl,
 } from "@/lib/project-source-url";
 import { isSourceArticleUrl } from "@/lib/project-url-classifier";
+import type { ChineseIndieCandidateInput } from "@/lib/discovery/sources/chinese-independent-developer";
+import {
+  CHINESE_INDIE_SOURCE_KEY,
+} from "@/lib/discovery/sources/chinese-independent-developer";
 
 export type ExistingProjectHit = {
   id: string;
@@ -734,4 +738,217 @@ export function countBulkQueueSelection(input: {
   const urlSelected = allSelected.filter((item) => !item.startsWith("general:"));
   const allowed = new Set(extractProjectSourceUrlsFromArticleText(input.articleBody));
   return urlSelected.filter((item) => allowed.has(item)).length + generalSelected.length;
+}
+
+export type ChineseIndieQueueDuplicate = {
+  name: string;
+  projectUrl: string;
+  edition: ChineseIndieCandidateInput["edition"];
+  reason: ExistingProjectHit["reason"];
+  existingSlug: string;
+  existingName: string;
+};
+
+export type BulkQueueChineseIndieOptions = {
+  limit?: number;
+  dryRun?: boolean;
+};
+
+export type BulkQueueChineseIndieResult = {
+  queued: number;
+  duplicates: ChineseIndieQueueDuplicate[];
+  skippedClosed: number;
+  skippedInvalid: number;
+  failed: number;
+  items: DiscoveryItem[];
+};
+
+type ExistingProjectIndex = {
+  byGithubUrl: Map<string, ExistingProjectHit>;
+  byWebsiteUrl: Map<string, ExistingProjectHit>;
+  bySlug: Map<string, ExistingProjectHit>;
+  byName: Map<string, ExistingProjectHit>;
+};
+
+async function loadExistingProjectIndex(): Promise<ExistingProjectIndex> {
+  const rows = await prisma.project.findMany({
+    where: { deletedAt: null },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      githubUrl: true,
+      websiteUrl: true,
+    },
+  });
+  const byGithubUrl = new Map<string, ExistingProjectHit>();
+  const byWebsiteUrl = new Map<string, ExistingProjectHit>();
+  const bySlug = new Map<string, ExistingProjectHit>();
+  const byName = new Map<string, ExistingProjectHit>();
+
+  for (const row of rows) {
+    const hit: ExistingProjectHit = {
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      reason: "name",
+    };
+    byName.set(row.name.trim().toLowerCase(), hit);
+    bySlug.set(row.slug.toLowerCase(), { ...hit, reason: "slug" });
+    if (row.githubUrl?.trim()) {
+      byGithubUrl.set(row.githubUrl.trim().toLowerCase(), { ...hit, reason: "githubUrl" });
+    }
+    if (row.websiteUrl?.trim()) {
+      byWebsiteUrl.set(row.websiteUrl.trim().toLowerCase(), { ...hit, reason: "websiteUrl" });
+    }
+  }
+
+  return { byGithubUrl, byWebsiteUrl, bySlug, byName };
+}
+
+function findExistingProjectInIndex(
+  index: ExistingProjectIndex,
+  input: {
+    githubUrl?: string | null;
+    websiteUrl?: string | null;
+    title: string;
+    repo: string;
+  },
+): ExistingProjectHit | null {
+  const githubUrl = input.githubUrl?.trim().toLowerCase() || null;
+  if (githubUrl && index.byGithubUrl.has(githubUrl)) {
+    return index.byGithubUrl.get(githubUrl)!;
+  }
+  const websiteUrl = input.websiteUrl?.trim().toLowerCase() || null;
+  if (websiteUrl && index.byWebsiteUrl.has(websiteUrl)) {
+    return index.byWebsiteUrl.get(websiteUrl)!;
+  }
+  const candidateSlug = slugifyProjectName(input.title) || slugifyProjectName(input.repo);
+  if (candidateSlug && index.bySlug.has(candidateSlug.toLowerCase())) {
+    return index.bySlug.get(candidateSlug.toLowerCase())!;
+  }
+  const byName = index.byName.get(input.title.trim().toLowerCase());
+  if (byName) {
+    return { ...byName, reason: "name" };
+  }
+  return null;
+}
+
+function createChineseIndieDiscoveryItem(input: ChineseIndieCandidateInput): DiscoveryItem {
+  const now = new Date().toISOString();
+  const primaryUrl = input.githubUrl || input.websiteUrl || input.sourceUrl;
+  return {
+    id: `chinese-indie-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    sourceType: "manual",
+    title: input.name.trim(),
+    url: primaryUrl,
+    description: input.description?.trim() || undefined,
+    status: "new",
+    createdAt: now,
+    meta: {
+      source: CHINESE_INDIE_SOURCE_KEY,
+      sourceKey: CHINESE_INDIE_SOURCE_KEY,
+      sourceType: "curated_repository",
+      sourceLabel: input.sourceName,
+      sourceName: input.sourceName,
+      sourceUrl: input.sourceUrl,
+      sourceArticleUrl: input.sourceArticleUrl,
+      githubUrl: input.githubUrl,
+      websiteUrl: input.websiteUrl,
+      primaryProjectUrl: primaryUrl,
+      projectPageUrl: primaryUrl,
+      trustLevel: input.meta.trustLevel,
+      edition: input.meta.edition,
+      developerName: input.meta.developerName,
+      developerRegion: input.meta.developerRegion,
+      developerLinks: input.meta.developerLinks,
+      addedDate: input.meta.addedDate,
+      originalStatus: input.meta.originalStatus,
+      originalMarkdown: input.meta.originalMarkdown,
+      moreInfoUrls: input.meta.moreInfoUrls,
+      sourceRepo: input.meta.sourceRepo,
+      autoImportAllowed: input.meta.autoImportAllowed,
+      readyForReview: input.originalStatus === "ONLINE",
+      extractedFrom: "chinese-independent-developer",
+    },
+  };
+}
+
+export async function bulkQueueChineseIndependentDeveloperProjects(
+  entries: ChineseIndieCandidateInput[],
+  options: BulkQueueChineseIndieOptions = {},
+): Promise<BulkQueueChineseIndieResult> {
+  const limit = options.limit && options.limit > 0 ? options.limit : undefined;
+  const duplicates: ChineseIndieQueueDuplicate[] = [];
+  const items: DiscoveryItem[] = [];
+  let queued = 0;
+  let skippedClosed = 0;
+  let skippedInvalid = 0;
+  let failed = 0;
+
+  const targetEntries = limit ? entries.slice(0, limit) : entries;
+  const existingIndex = await loadExistingProjectIndex();
+
+  for (const entry of targetEntries) {
+    if (entry.originalStatus === "CLOSED") {
+      skippedClosed += 1;
+      continue;
+    }
+    if (!entry.githubUrl && !entry.websiteUrl) {
+      skippedInvalid += 1;
+      continue;
+    }
+
+    try {
+      const existing = findExistingProjectInIndex(existingIndex, {
+        githubUrl: entry.githubUrl,
+        websiteUrl: entry.websiteUrl,
+        title: entry.name,
+        repo: entry.name,
+      });
+      if (existing) {
+        duplicates.push({
+          name: entry.name,
+          projectUrl: entry.githubUrl || entry.websiteUrl || entry.sourceUrl,
+          edition: entry.edition,
+          reason: existing.reason,
+          existingSlug: existing.slug,
+          existingName: existing.name,
+        });
+        continue;
+      }
+
+      const item = createChineseIndieDiscoveryItem(entry);
+      if (options.dryRun) {
+        items.push(item);
+        queued += 1;
+        continue;
+      }
+      const appended = await appendDiscoveryItem(item);
+      if (appended.duplicate) {
+        duplicates.push({
+          name: entry.name,
+          projectUrl: item.url,
+          edition: entry.edition,
+          reason: "name",
+          existingSlug: "",
+          existingName: entry.name,
+        });
+        continue;
+      }
+      items.push(item);
+      queued += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  return {
+    queued,
+    duplicates,
+    skippedClosed,
+    skippedInvalid,
+    failed,
+    items,
+  };
 }

@@ -115,6 +115,23 @@ function articleSourceFromItem(item: DiscoveryItem): ArticleSourceInput | null {
   };
 }
 
+function curatedSourceFromItem(item: DiscoveryItem): ArticleSourceInput | null {
+  if (stringMeta(item.meta, "sourceKey") !== "chinese-independent-developer") {
+    return null;
+  }
+  const content = stringMeta(item.meta, "originalMarkdown");
+  if (!content) {
+    return null;
+  }
+  const developerName = stringMeta(item.meta, "developerName");
+  return {
+    title: "中国独立开发者项目列表",
+    content,
+    summary: item.description?.trim() || developerName || null,
+    url: stringMeta(item.meta, "sourceArticleUrl") || stringMeta(item.meta, "sourceRepo") || item.url,
+  };
+}
+
 function officialSourcesFromMeta(item: DiscoveryItem): MetaProjectSourceInput[] {
   const meta = item.meta && typeof item.meta === "object" ? (item.meta as Record<string, unknown>) : undefined;
   const out: MetaProjectSourceInput[] = [];
@@ -144,6 +161,42 @@ function officialSourcesFromMeta(item: DiscoveryItem): MetaProjectSourceInput[] 
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+}
+
+async function ensureCuratedListProjectSource(
+  tx: Prisma.TransactionClient,
+  projectId: string,
+  curated: ArticleSourceInput | null,
+  item: DiscoveryItem,
+): Promise<void> {
+  if (!curated) {
+    return;
+  }
+  const edition = stringMeta(item.meta, "edition");
+  const exists = await tx.projectSource.findFirst({
+    where: {
+      projectId,
+      kind: "WEBSITE",
+      url: curated.url,
+      title: curated.title,
+    },
+    select: { id: true },
+  });
+  if (exists) {
+    return;
+  }
+  await tx.projectSource.create({
+    data: {
+      projectId,
+      kind: "WEBSITE",
+      url: curated.url,
+      label: edition ? `curated_repository · ${edition}` : "curated_repository",
+      title: curated.title,
+      content: curated.content,
+      summary: curated.summary,
+      isPrimary: false,
+    },
   });
 }
 
@@ -394,6 +447,7 @@ export async function importJsonDiscoveryItem(
 
   const link = parseItemLink(item);
   const articleSource = articleSourceFromItem(item);
+  const curatedSource = curatedSourceFromItem(item);
 
   if (item.status === "imported" && item.projectSlug?.trim()) {
     const exists = await prisma.project.findFirst({
@@ -425,6 +479,7 @@ export async function importJsonDiscoveryItem(
         });
       }
       await ensureArticleProjectSource(tx, existing.id, articleSource);
+      await ensureCuratedListProjectSource(tx, existing.id, curatedSource, item);
       for (const source of officialSourcesFromMeta(item)) {
         const exists = await tx.projectSource.findFirst({
           where: { projectId: existing.id, url: source.url },
@@ -504,6 +559,18 @@ export async function importJsonDiscoveryItem(
       title: articleSource.title,
       content: articleSource.content,
       summary: articleSource.summary,
+      isPrimary: false,
+    });
+  }
+  if (curatedSource) {
+    const edition = stringMeta(item.meta, "edition");
+    sourceCreates.push({
+      kind: "WEBSITE",
+      url: curatedSource.url,
+      label: edition ? `curated_repository · ${edition}` : "curated_repository",
+      title: curatedSource.title,
+      content: curatedSource.content,
+      summary: curatedSource.summary,
       isPrimary: false,
     });
   }

@@ -115,6 +115,14 @@ const BLOG_SIGNAL_SEED_CONFIG: Prisma.InputJsonValue = {
   ],
 };
 
+const CHINESE_INDEPENDENT_DEVELOPER_CONFIG: Prisma.InputJsonValue = {
+  files: ["README.md", "README-Programmer-Edition.md", "README-Game.md"],
+  rawBaseUrl: "https://raw.githubusercontent.com/zhongzhir/chinese-independent-developer/master",
+  repoUrl: "https://github.com/zhongzhir/chinese-independent-developer",
+  trustLevel: "curated",
+  defaultTags: ["indie-developer", "china", "curated-source"],
+};
+
 /**
  * 首次部署时插入默认来源；不覆盖运营已在后台改过配置的行。
  */
@@ -211,6 +219,16 @@ export async function ensureDiscoveryDefaultSources(): Promise<void> {
       type: DiscoverySourceType.BLOG,
       subtype: "manual_seed",
       configJson: BLOG_SIGNAL_SEED_CONFIG,
+    },
+    {
+      key: "chinese-independent-developer",
+      name: "中国独立开发者项目列表",
+      type: DiscoverySourceType.INSTITUTION,
+      subtype: "github_markdown_project_list",
+      configJson: CHINESE_INDEPENDENT_DEVELOPER_CONFIG,
+      institutionName: "中国独立开发者项目列表",
+      institutionType: "curated_repository",
+      institutionRegion: "中国",
     },
   ];
 

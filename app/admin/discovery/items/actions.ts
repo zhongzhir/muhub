@@ -43,6 +43,7 @@ import {
 import { isSourceMaterialDiscoveryItem } from "@/lib/discovery/mobile-capture";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
+import type { RunChineseIndependentDeveloperImportResult } from "@/lib/discovery/sources/run-chinese-independent-developer-import";
 
 const REVALIDATE = "/admin/discovery/items";
 const execFileAsync = promisify(execFile);
@@ -997,4 +998,41 @@ export async function extractProjectsFromUrlAction(input: {
     findExistingProject: findExistingProjectByPriority,
     fetchGithubRepo,
   });
+}
+
+export type SyncChineseIndependentDeveloperResult =
+  | { ok: true; summary: RunChineseIndependentDeveloperImportResult }
+  | { ok: false; error: string };
+
+export async function syncChineseIndependentDeveloperAction(input: {
+  dryRun?: boolean;
+  limit?: number;
+}): Promise<SyncChineseIndependentDeveloperResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, error: "请先登录后再操作。" };
+  }
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { ok: false, error: "未配置 DATABASE_URL，无法执行同步。" };
+  }
+
+  try {
+    const { runChineseIndependentDeveloperImport } = await import(
+      "@/lib/discovery/sources/run-chinese-independent-developer-import"
+    );
+    const summary = await runChineseIndependentDeveloperImport({
+      dryRun: input.dryRun === true,
+      autoImport: false,
+      edition: "all",
+      limit: input.limit,
+    });
+    revalidatePath(REVALIDATE);
+    revalidatePath("/admin/discovery/sources");
+    return { ok: true, summary };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "同步中国独立开发者项目库失败。",
+    };
+  }
 }
