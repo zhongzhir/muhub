@@ -108,10 +108,10 @@ function buildProjectDetailFromInsight(insight: InsightView, officialDescription
     blocks.push(insight.whatItIs.trim());
   }
   if ((insight.whoFor ?? []).length > 0) {
-    blocks.push(`它更适合：${(insight.whoFor ?? []).slice(0, 5).join("、")}。`);
+    blocks.push(`适合：${(insight.whoFor ?? []).slice(0, 5).join("、")}。`);
   }
   if ((insight.useCases ?? []).length > 0) {
-    blocks.push(`典型使用场景包括：${(insight.useCases ?? []).slice(0, 5).join("；")}。`);
+    blocks.push(`典型使用场景：${(insight.useCases ?? []).slice(0, 5).join("；")}。`);
   }
   if (blocks.length === 0) return fallbackDescription.trim();
   return blocks.join("\n\n");

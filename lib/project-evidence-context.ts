@@ -1,5 +1,11 @@
 import type { Prisma, ProjectSourceKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  collectProjectWebsiteFetchUrls,
+  fetchWebsiteEvidenceBatch,
+  formatWebsiteEvidenceForPrompt,
+  type WebsiteEvidenceSnapshot,
+} from "@/lib/project-url-evidence";
 
 const MAX_SOURCE_CONTENT_CHARS = 5000;
 const MAX_SOURCE_SUMMARY_CHARS = 1200;
@@ -93,6 +99,7 @@ export type ProjectEvidenceContext = {
   website: {
     url: string | null;
     capturedSources: EvidenceSource[];
+    fetchedEvidence: WebsiteEvidenceSnapshot[];
   };
   gaps: string[];
   promptText: string;
@@ -216,6 +223,10 @@ function formatReferences(references: EvidenceReference[]): string {
     .join("\n");
 }
 
+function formatWebsiteEvidenceSection(items: WebsiteEvidenceSnapshot[]): string {
+  return formatWebsiteEvidenceForPrompt(items);
+}
+
 function buildPromptText(ctx: Omit<ProjectEvidenceContext, "promptText">): string {
   const officialLines = ctx.official
     ? [
@@ -250,6 +261,9 @@ function buildPromptText(ctx: Omit<ProjectEvidenceContext, "promptText">): strin
     ctx.project.websiteUrl ? `- websiteUrl: ${ctx.project.websiteUrl}` : "- 未提供 websiteUrl",
     ctx.project.githubUrl ? `- githubUrl: ${ctx.project.githubUrl}` : "- 未提供 githubUrl",
     formatLinks(ctx.links),
+    "",
+    "2.1 官网抓取证据（服务端已验证，优先采信）",
+    formatWebsiteEvidenceSection(ctx.website.fetchedEvidence),
     "",
     "3. 来源文章 / 公众号文章 / 用户采集来源",
     formatSources(ctx.sources),
@@ -361,8 +375,21 @@ export async function buildProjectEvidenceContext(projectId: string): Promise<Pr
   ].slice(0, MAX_REFERENCES);
 
   const latest = row.githubSnapshots[0] ?? null;
+  const websiteCandidateUrls = collectProjectWebsiteFetchUrls({
+    websiteUrl: row.websiteUrl,
+    officialWebsite: row.officialInfo?.website ?? null,
+    sources: sortedSources,
+  });
+  const fetchedEvidence = await fetchWebsiteEvidenceBatch(websiteCandidateUrls, { limit: 3 });
+  const hasReachableWebsite = fetchedEvidence.some((item) => item.reachable);
+
   const gaps: string[] = [];
-  if (!row.websiteUrl && !row.officialInfo?.website && !links.some((link) => link.platform.toLowerCase().includes("website"))) {
+  if (
+    !row.websiteUrl &&
+    !row.officialInfo?.website &&
+    !links.some((link) => link.platform.toLowerCase().includes("website")) &&
+    !hasReachableWebsite
+  ) {
     gaps.push("缺少官网或明确项目主页");
   }
   if (!row.githubUrl && !links.some((link) => link.platform.toLowerCase().includes("github"))) {
@@ -440,6 +467,7 @@ export async function buildProjectEvidenceContext(projectId: string): Promise<Pr
     website: {
       url: row.websiteUrl ?? row.officialInfo?.website ?? null,
       capturedSources: sortedSources.filter((source) => source.kind === "WEBSITE" || source.kind === "DOCS"),
+      fetchedEvidence,
     },
     gaps,
   };

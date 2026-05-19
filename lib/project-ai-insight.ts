@@ -5,6 +5,12 @@ import { getDeepSeekClient, getDeepSeekCompatibleModel } from "@/lib/deepseek";
 import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { buildProjectEvidenceContext, type ProjectEvidenceContext } from "@/lib/project-evidence-context";
+import {
+  bestDescriptionFromWebsiteEvidence,
+  bestTitleFromWebsiteEvidence,
+  fetchWebsiteEvidence,
+  type WebsiteEvidenceSnapshot,
+} from "@/lib/project-url-evidence";
 import { prisma } from "@/lib/prisma";
 
 type ActivityLevel = "high" | "medium" | "low" | "unknown";
@@ -54,6 +60,10 @@ export type ProjectAISignals = {
   website?: {
     url?: string;
     exists?: boolean;
+    reachable?: boolean;
+    statusCode?: number | null;
+    finalUrl?: string | null;
+    errorMessage?: string | null;
     title?: string | null;
     description?: string | null;
     hasContent?: boolean;
@@ -111,6 +121,7 @@ export type ProjectInsightSourceSnapshot = {
   };
   website: {
     facts: ProjectAISignals["website"];
+    evidence: WebsiteEvidenceSnapshot | null;
     hasPricing: boolean;
     hasDocs: boolean;
     hasContact: boolean;
@@ -263,35 +274,78 @@ async function fetchGitHubFacts(githubUrl: string | null) {
   }
 }
 
-async function fetchWebsiteFacts(websiteUrl: string | null) {
+async function fetchWebsiteFacts(websiteUrl: string | null, prefetched?: WebsiteEvidenceSnapshot | null) {
   if (!websiteUrl) {
     return {
       url: undefined,
       exists: false,
+      reachable: false,
+      statusCode: null,
+      finalUrl: null,
+      errorMessage: null,
       title: null,
       description: null,
     };
   }
-  try {
-    const res = await fetch(websiteUrl, { cache: "no-store" });
-    if (!res.ok) {
-      return { url: websiteUrl, exists: false, title: null, description: null };
-    }
-    const html = await res.text();
-    const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? null;
-    const description =
-      html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1]?.trim() ??
-      html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i)?.[1]?.trim() ??
-      null;
-    return {
-      url: websiteUrl,
-      exists: true,
-      title: title ? limitText(title, 160) : null,
-      description: description ? limitText(description, 280) : null,
-    };
-  } catch {
-    return { url: websiteUrl, exists: false, title: null, description: null };
+  const evidence = prefetched ?? (await fetchWebsiteEvidence(websiteUrl));
+  const title = bestTitleFromWebsiteEvidence(evidence);
+  const description = bestDescriptionFromWebsiteEvidence(evidence);
+  return {
+    url: websiteUrl,
+    exists: evidence.reachable,
+    reachable: evidence.reachable,
+    statusCode: evidence.statusCode,
+    finalUrl: evidence.finalUrl,
+    errorMessage: evidence.errorMessage,
+    title: title ? limitText(title, 160) : null,
+    description: description ? limitText(description, 280) : null,
+  };
+}
+
+function websiteEvidenceFromContext(
+  evidenceContext: ProjectEvidenceContext | null,
+  websiteUrl: string | null,
+): WebsiteEvidenceSnapshot | null {
+  const items = evidenceContext?.website.fetchedEvidence ?? [];
+  if (!items.length) {
+    return null;
   }
+  if (websiteUrl) {
+    const normalized = websiteUrl.trim().toLowerCase();
+    const matched = items.find(
+      (item) =>
+        item.url.trim().toLowerCase() === normalized ||
+        item.finalUrl?.trim().toLowerCase() === normalized,
+    );
+    if (matched) {
+      return matched;
+    }
+  }
+  return items.find((item) => item.reachable) ?? items[0] ?? null;
+}
+
+function sanitizeInsightAgainstWebsiteEvidence(
+  insight: ProjectAIInsight,
+  websiteEvidence: WebsiteEvidenceSnapshot | null,
+): ProjectAIInsight {
+  if (!websiteEvidence?.reachable) {
+    return insight;
+  }
+  const unreachablePattern = /官网.{0,12}(无法访问|不可访问|打不开|访问失败|不能访问)/u;
+  const scrub = (value: string) =>
+    unreachablePattern.test(value)
+      ? value.replace(unreachablePattern, "官网已验证可访问，但公开信息仍较有限")
+      : value;
+  return {
+    ...insight,
+    summary: scrub(insight.summary),
+    whatItIs: scrub(insight.whatItIs),
+    risks: insight.risks.map((item) => scrub(item)),
+    suggestions: insight.suggestions.map((item) => scrub(item)),
+    sourceNotes: insight.sourceNotes.map((item) =>
+      unreachablePattern.test(item) ? "官网已通过服务端抓取验证可访问" : item,
+    ),
+  };
 }
 
 export async function buildProjectInsightSourceSnapshot(projectId: string): Promise<ProjectInsightSourceSnapshot | null> {
@@ -336,17 +390,23 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
     if (p.includes("discord")) socialsAccounts.discord ??= link.url;
   }
 
+  const websiteEvidence =
+    websiteEvidenceFromContext(evidenceContext, row.websiteUrl) ??
+    (row.websiteUrl ? await fetchWebsiteEvidence(row.websiteUrl) : null);
   const [githubFactsRaw, websiteFacts] = await Promise.all([
     fetchGitHubFacts(row.githubUrl),
-    fetchWebsiteFacts(row.websiteUrl),
+    fetchWebsiteFacts(row.websiteUrl, websiteEvidence),
   ]);
   const githubFacts = githubFactsRaw as ProjectAISignals["github"] & { readmeSummary?: string | null };
-  const websiteText = `${websiteFacts.title ?? ""} ${websiteFacts.description ?? ""}`.toLowerCase();
+  const websiteText = `${websiteFacts.title ?? ""} ${websiteFacts.description ?? ""} ${websiteEvidence?.textExcerpt ?? ""}`.toLowerCase();
   const hasPricing = websiteText.includes("pricing") || websiteText.includes("价格");
   const hasDocs = websiteText.includes("docs") || websiteText.includes("文档");
   const hasContact = websiteText.includes("contact") || websiteText.includes("联系我们");
   const hasDemo = websiteText.includes("demo") || websiteText.includes("演示");
-  const hasContent = Boolean((websiteFacts.description ?? "").trim()) || Boolean((websiteFacts.title ?? "").trim());
+  const hasContent =
+    Boolean((websiteFacts.description ?? "").trim()) ||
+    Boolean((websiteFacts.title ?? "").trim()) ||
+    Boolean((websiteEvidence?.textExcerpt ?? "").trim());
   const hasKeySections = hasPricing || hasDocs || hasContact || hasDemo;
   const sourceContents = row.sources
     .filter((source) => {
@@ -385,11 +445,11 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
   if (evidenceContext?.official) mainSources.push("人工/官方信息");
   if (evidenceContext?.links.length) mainSources.push("项目外部链接");
   if (row.githubUrl) mainSources.push("GitHub");
-  if (row.websiteUrl) mainSources.push("官网");
+  if (row.websiteUrl) mainSources.push(websiteFacts.reachable ? "官网（已验证可访问）" : "官网");
   if (row.description?.trim() || row.tagline?.trim()) mainSources.push("项目描述");
   if (Object.values(socialsAccounts).some(Boolean)) mainSources.push("社媒");
   const missingSources: string[] = [];
-  if (!row.websiteUrl) missingSources.push("未检测到官网");
+  if (!row.websiteUrl && !websiteEvidence?.reachable) missingSources.push("未检测到官网");
   if (!row.githubUrl) missingSources.push("未检测到 GitHub");
   if (!Object.values(socialsAccounts).some(Boolean)) missingSources.push("未检测到社媒账号");
 
@@ -427,6 +487,7 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
     },
     website: {
       facts: websiteFacts,
+      evidence: websiteEvidence,
       hasPricing,
       hasDocs,
       hasContact,
@@ -454,7 +515,7 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
 
 export function computeProjectCompleteness(snapshot: ProjectInsightSourceSnapshot): ProjectAICompleteness {
   const checks: Array<{ name: string; ok: boolean; weight: number }> = [
-    { name: "官网", ok: Boolean(snapshot.base.website), weight: 9 },
+    { name: "官网", ok: Boolean(snapshot.base.website) || Boolean(snapshot.website.evidence?.reachable), weight: 9 },
     { name: "GitHub", ok: Boolean(snapshot.base.github), weight: 9 },
     { name: "一句话介绍", ok: Boolean(snapshot.base.tagline?.trim()), weight: 9 },
     { name: "详细介绍", ok: Boolean(snapshot.base.description?.trim()), weight: 10 },
@@ -606,11 +667,13 @@ export async function generateProjectAIInsight(
   const systemPrompt = [
     "你是 MUHUB 的项目公开信息整理助手。",
     "你的任务不是评价项目优劣，也不是给投资建议，而是把项目公开信息整理为结构化中文认知卡。",
-    "只能依据输入内容整理，不得编造不存在的事实。",
-    "不得输出“值得投资”“行业领先”“前景巨大”等武断结论。",
-    "信息不足时要明确指出信息不足，不要猜测。",
-    "sourceNotes 需要明确标注信息来源类型（例如 GitHub / 官网 / 项目描述），并指出缺失来源。",
-    "必须区分“来源存在”和“来源有效”：例如官网存在但内容很少、GitHub 存在但长期不活跃。",
+    "只能依据输入 evidence 整理，不得编造不存在的事实。",
+    "不得输出“值得投资”“行业领先”“前景巨大”“强烈推荐”等武断结论。",
+    "信息不足时应明确说“当前公开信息有限”，不要猜测。",
+    "如果 evidence 中 website fetchedEvidence 显示 reachable=true，禁止声称官网无法访问、打不开或不可访问。",
+    "如果页面是 JS 动态渲染导致正文较少，应表述为“公开静态信息有限”，而不是“官网无法访问”。",
+    "sourceNotes 需要明确标注信息来源类型（例如 GitHub / 官网抓取证据 / 项目描述 / curated 列表），并指出缺失来源。",
+    "必须区分“来源存在”和“来源有效”：例如官网可访问但内容较少、GitHub 存在但长期不活跃。",
     "若 GitHub 超过 90 天无更新、README 过短或官网缺少关键栏目，应在 risks/suggestions/sourceNotes 中明确提示。",
     "输出必须是合法 json，不要输出 markdown。",
     "你必须输出 json。",
@@ -710,6 +773,11 @@ export async function generateProjectAIInsight(
         throw new Error("AI 输出格式异常，请稍后重试");
       }
       const normalized = ensureInsightShape(parsed, completeness);
+      const sanitized = sanitizeInsightAgainstWebsiteEvidence(
+        normalized.insight,
+        snapshot.website.evidence,
+      );
+      normalized.insight = sanitized;
       if (!normalized.suggestedTags.length) {
         normalized.suggestedTags = normalizeSuggestedTags(fallbackSuggest.tags.slice(0, 8));
       }

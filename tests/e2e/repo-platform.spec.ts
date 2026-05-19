@@ -157,6 +157,7 @@ test.describe("多平台仓库 URL 解析", () => {
       github: { facts: {}, readmeSummary: null },
       website: {
         facts: {},
+        evidence: null,
         hasPricing: false,
         hasDocs: false,
         hasContact: false,

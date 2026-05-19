@@ -836,7 +836,7 @@ function findExistingProjectInIndex(
 
 function createChineseIndieDiscoveryItem(input: ChineseIndieCandidateInput): DiscoveryItem {
   const now = new Date().toISOString();
-  const primaryUrl = input.githubUrl || input.websiteUrl || input.sourceUrl;
+  const primaryUrl = input.websiteUrl || input.githubUrl || input.sourceUrl;
   return {
     id: `chinese-indie-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     sourceType: "manual",

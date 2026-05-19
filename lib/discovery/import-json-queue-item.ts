@@ -18,6 +18,126 @@ import {
 import { isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
 import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
 import { createProjectActivity } from "@/lib/activity/project-activity-service";
+import { CHINESE_INDIE_SOURCE_KEY } from "@/lib/discovery/sources/chinese-independent-developer";
+import {
+  bestDescriptionFromWebsiteEvidence,
+  bestTitleFromWebsiteEvidence,
+  fetchWebsiteEvidence,
+} from "@/lib/project-url-evidence";
+
+function isChineseIndieDiscoveryItem(item: DiscoveryItem): boolean {
+  return stringMeta(item.meta, "sourceKey") === CHINESE_INDIE_SOURCE_KEY;
+}
+
+function buildDiscoveryImportSourceCreates(input: {
+  item: DiscoveryItem;
+  link: ParsedLink;
+  articleSource: ArticleSourceInput | null;
+  curatedSource: ArticleSourceInput | null;
+  websiteEvidence?: Awaited<ReturnType<typeof fetchWebsiteEvidence>> | null;
+}): {
+  kind: ProjectSourceKind;
+  url: string;
+  isPrimary: boolean;
+  label?: string | null;
+  title?: string | null;
+  content?: string | null;
+  summary?: string | null;
+}[] {
+  const { item, link, articleSource, curatedSource, websiteEvidence } = input;
+  const sourceCreates: {
+    kind: ProjectSourceKind;
+    url: string;
+    isPrimary: boolean;
+    label?: string | null;
+    title?: string | null;
+    content?: string | null;
+    summary?: string | null;
+  }[] = [];
+  const chineseIndie = isChineseIndieDiscoveryItem(item);
+
+  if (chineseIndie && link.websiteUrl) {
+    sourceCreates.push({
+      kind: "WEBSITE",
+      url: link.websiteUrl,
+      isPrimary: true,
+      title: bestTitleFromWebsiteEvidence(websiteEvidence ?? null) || item.title,
+      summary:
+        bestDescriptionFromWebsiteEvidence(websiteEvidence ?? null) ||
+        item.description?.trim() ||
+        null,
+      content: websiteEvidence?.textExcerpt ?? null,
+    });
+    if (link.githubUrl) {
+      sourceCreates.push({
+        kind: inferRepoSourceKind(link.githubUrl),
+        url: link.githubUrl,
+        isPrimary: false,
+      });
+    }
+  } else {
+    if (link.githubUrl) {
+      sourceCreates.push({
+        kind: inferRepoSourceKind(link.githubUrl),
+        url: link.githubUrl,
+        isPrimary: true,
+      });
+    }
+    if (link.primaryRepo?.kind === "GITEE") {
+      sourceCreates.push({
+        kind: "GITEE",
+        url: link.primaryRepo.url,
+        isPrimary: true,
+      });
+    }
+    if (link.primaryRepo?.kind === "OTHER") {
+      sourceCreates.push({
+        kind: "OTHER",
+        url: link.primaryRepo.url,
+        label: link.primaryRepo.label ?? null,
+        isPrimary: true,
+      });
+    }
+    if (link.websiteUrl) {
+      sourceCreates.push({
+        kind: "WEBSITE",
+        url: link.websiteUrl,
+        isPrimary: !link.githubUrl && link.primaryRepo?.kind !== "GITEE",
+        title: bestTitleFromWebsiteEvidence(websiteEvidence ?? null) || undefined,
+        summary: bestDescriptionFromWebsiteEvidence(websiteEvidence ?? null) || undefined,
+        content: websiteEvidence?.textExcerpt ?? undefined,
+      });
+    }
+  }
+
+  if (articleSource) {
+    sourceCreates.push({
+      kind: "WECHAT_ARTICLE",
+      url: articleSource.url,
+      label: "公众号文章",
+      title: articleSource.title,
+      content: articleSource.content,
+      summary: articleSource.summary,
+      isPrimary: false,
+    });
+  }
+  if (curatedSource) {
+    const edition = stringMeta(item.meta, "edition");
+    sourceCreates.push({
+      kind: "WEBSITE",
+      url: curatedSource.url,
+      label: edition ? `curated_repository · ${edition}` : "curated_repository",
+      title: curatedSource.title,
+      content: curatedSource.content,
+      summary: curatedSource.summary,
+      isPrimary: false,
+    });
+  }
+  for (const source of officialSourcesFromMeta(item)) {
+    sourceCreates.push(source);
+  }
+  return sourceCreates;
+}
 
 function taglineFromDescription(description: string | null | undefined): string | null {
   if (!description?.trim()) {
@@ -513,70 +633,16 @@ export async function importJsonDiscoveryItem(
 
   const slug = await allocateUniqueProjectSlug(name);
 
-  const sourceCreates: {
-    kind: ProjectSourceKind;
-    url: string;
-    isPrimary: boolean;
-    label?: string | null;
-    title?: string | null;
-    content?: string | null;
-    summary?: string | null;
-  }[] = [];
-  if (link.githubUrl) {
-    sourceCreates.push({
-      kind: inferRepoSourceKind(link.githubUrl),
-      url: link.githubUrl,
-      isPrimary: true,
-    });
-  }
-  if (link.primaryRepo?.kind === "GITEE") {
-    sourceCreates.push({
-      kind: "GITEE",
-      url: link.primaryRepo.url,
-      isPrimary: true,
-    });
-  }
-  if (link.primaryRepo?.kind === "OTHER") {
-    sourceCreates.push({
-      kind: "OTHER",
-      url: link.primaryRepo.url,
-      label: link.primaryRepo.label ?? null,
-      isPrimary: true,
-    });
-  }
-  if (link.websiteUrl) {
-    sourceCreates.push({
-      kind: "WEBSITE",
-      url: link.websiteUrl,
-      isPrimary: !link.githubUrl && link.primaryRepo?.kind !== "GITEE",
-    });
-  }
-  if (articleSource) {
-    sourceCreates.push({
-      kind: "WECHAT_ARTICLE",
-      url: articleSource.url,
-      label: "公众号文章",
-      title: articleSource.title,
-      content: articleSource.content,
-      summary: articleSource.summary,
-      isPrimary: false,
-    });
-  }
-  if (curatedSource) {
-    const edition = stringMeta(item.meta, "edition");
-    sourceCreates.push({
-      kind: "WEBSITE",
-      url: curatedSource.url,
-      label: edition ? `curated_repository · ${edition}` : "curated_repository",
-      title: curatedSource.title,
-      content: curatedSource.content,
-      summary: curatedSource.summary,
-      isPrimary: false,
-    });
-  }
-  for (const source of officialSourcesFromMeta(item)) {
-    sourceCreates.push(source);
-  }
+  const websiteEvidence = link.websiteUrl
+    ? await fetchWebsiteEvidence(link.websiteUrl).catch(() => null)
+    : null;
+  const sourceCreates = buildDiscoveryImportSourceCreates({
+    item,
+    link,
+    articleSource,
+    curatedSource,
+    websiteEvidence,
+  });
 
   const project = await prisma.$transaction(async (tx) => {
     const created = await tx.project.create({

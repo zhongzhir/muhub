@@ -28,10 +28,10 @@ function buildHumanReadableProjectDetail(aiInsight: unknown): { description: str
   const lines: string[] = [];
   lines.push(whatItIs || summary || "这是一个面向真实业务场景的项目。");
   if (whoFor.length) {
-    lines.push(`它更适合：${whoFor.slice(0, 4).join("、")}。`);
+    lines.push(`适合：${whoFor.slice(0, 4).join("、")}。`);
   }
   if (useCases.length) {
-    lines.push(`典型使用场景包括：${useCases.slice(0, 4).join("；")}。`);
+    lines.push(`典型使用场景：${useCases.slice(0, 4).join("；")}。`);
   }
   lines.push("以上内容基于当前 AI 结构化整理，发布前请结合官方信息做最终校对。");
   return {

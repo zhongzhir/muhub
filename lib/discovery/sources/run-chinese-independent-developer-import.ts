@@ -2,6 +2,7 @@ import {
   updateDiscoveryItemImportResult,
 } from "@/agents/discovery/discovery-store";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
+import { generatePostImportProjectAi } from "@/lib/discovery/post-import-project-ai";
 import {
   bulkQueueChineseIndependentDeveloperProjects,
   type BulkQueueChineseIndieResult,
@@ -101,6 +102,17 @@ export async function runChineseIndependentDeveloperImport(
         if (!updated) {
           importFailed += 1;
           continue;
+        }
+        if (result.created && result.projectId) {
+          try {
+            await generatePostImportProjectAi(result.projectId);
+          } catch (aiError) {
+            console.error("[chinese-indie] post-import AI failed", {
+              projectId: result.projectId,
+              slug: result.slug,
+              aiError,
+            });
+          }
         }
         imported += 1;
         importedSlugs.push(result.slug);
