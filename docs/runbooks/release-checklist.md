@@ -45,7 +45,8 @@
 
 ## 定时任务（可选）
 
-- [ ] 宿主机或 Cron 已配置 **`pnpm cron:all`**（或分别 **`ai:update`** / **`source:update`** / **`summary:update`**），且 **`DATABASE_URL`** 可用。
+- [ ] 宿主机或 Cron 已配置 **`pnpm cron:all`**（或分别 **`ai:update`** / **`source:update`** / **`summary:update`** / **`tracker:official-info`**），且 **`DATABASE_URL`** 可用。
+- [ ] 如启用 **`tracker:official-info`**，已配置 **`AI_API_KEY`** / **`AI_MODEL`** / **`AI_BASE_URL`** 或 **`DEEPSEEK_API_KEY`** / **`DEEPSEEK_MODEL_INSIGHT`** / **`DEEPSEEK_BASE_URL`**，并确认日志输出 **`checked`** / **`updated`** / **`skipped`** / **`errors`**。
 
 ## 自动化测试
 

@@ -1,32 +1,38 @@
 /**
- * 项目官方信息全网追踪脚本
+ * Project official-info enrichment and public-signal tracking prototype.
  *
- * 功能：
- * 对已上架项目进行官方信息来源的定期追踪和补全，包括：
- * - 官网、微信公众号、微博、抖音、App Store、Google Play 等
- * - 发现新来源时写入项目动态（审核后可发布）
+ * Run with:
+ *   pnpm run tracker:official-info
  *
- * 建议运行频率：每周或每两周一次
- * 运行命令：pnpm run tracker:official-info
- *
- * 环境变量：
- * - DATABASE_URL（必须）
- * - OPENAI_API_KEY（必须，用于 AI 信息推断）
+ * Environment:
+ * - DATABASE_URL required
+ * - TRACKER_LIMIT optional, default 50
+ * - TRACKER_SPACING_MS optional, default 800
+ * - AI_API_KEY / AI_MODEL / AI_BASE_URL, or DeepSeek fallbacks
  */
 
 import { trackAllProjectsOfficialInfo } from "@/lib/project-tracker/track-official-info";
 
+function readPositiveIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL?.trim()) {
-    console.error("[tracker:official-info] 未设置 DATABASE_URL，请在 .env 中配置。");
+    console.error("[tracker:official-info] Missing DATABASE_URL.");
     process.exit(1);
   }
 
-  const limit = process.env.TRACKER_LIMIT ? parseInt(process.env.TRACKER_LIMIT, 10) : 50;
-  const spacingMs = process.env.TRACKER_SPACING_MS ? parseInt(process.env.TRACKER_SPACING_MS, 10) : 800;
+  const limit = readPositiveIntEnv("TRACKER_LIMIT", 50);
+  const spacingMs = readPositiveIntEnv("TRACKER_SPACING_MS", 800);
 
-  console.log(`[tracker:official-info] 启动，最多处理 ${limit} 个项目，间隔 ${spacingMs}ms`);
-  console.log(`[tracker:official-info] 开始时间: ${new Date().toISOString()}\n`);
+  console.log("[tracker:official-info] job=project-official-info-tracker-v1");
+  console.log("[tracker:official-info] label=项目官方信息补全与公开信号跟踪雏形");
+  console.log(`[tracker:official-info] limit=${limit} spacingMs=${spacingMs}`);
+  console.log(`[tracker:official-info] startedAt=${new Date().toISOString()}\n`);
 
   const result = await trackAllProjectsOfficialInfo({
     limit,
@@ -34,28 +40,32 @@ async function main(): Promise<void> {
     spacingMs,
   });
 
-  console.log("\n========== 追踪完成 ==========");
-  console.log(`检查项目数: ${result.examined}`);
-  console.log(`已更新:     ${result.updated}`);
-  console.log(`已跳过:     ${result.skipped}`);
-  console.log(`错误数:     ${result.errors.length}`);
+  console.log("\n========== tracker:official-info completed ==========");
+  console.log(`checked=${result.examined}`);
+  console.log(`updated=${result.updated}`);
+  console.log(`skipped=${result.skipped}`);
+  console.log(`errors=${result.errors.length}`);
 
-  if (result.updated > 0) {
-    console.log("\n有信息缺口的项目列表（前20）：");
+  if (result.gaps.length > 0) {
+    console.log("\n[tracker:official-info] gaps preview:");
     for (const gap of result.gaps.slice(0, 20)) {
-      console.log(`  - ${gap.name} (${gap.slug}): 缺少 ${gap.missingFields.join(", ")}`);
+      console.log(`  - ${gap.name} (${gap.slug}): missing=${gap.missingFields.join(", ")}`);
     }
   }
 
   if (result.errors.length > 0) {
-    console.warn("\n错误详情：");
+    console.warn("\n[tracker:official-info] error details:");
     for (const err of result.errors) {
       console.warn(`  ! ${err}`);
     }
   }
 
-  console.log(`\n[tracker:official-info] 结束时间: ${new Date().toISOString()}`);
+  console.log(`\n[tracker:official-info] finishedAt=${new Date().toISOString()}`);
   process.exit(0);
 }
 
-void main();
+main().catch((err) => {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(`[tracker:official-info] fatal=${message}`);
+  process.exit(1);
+});
