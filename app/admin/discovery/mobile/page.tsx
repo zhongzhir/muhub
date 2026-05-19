@@ -131,6 +131,27 @@ export default async function AdminDiscoveryMobilePage() {
                         {isWechatArticle ? "微信文章 · " : ""}
                         {formatTime(item.createdAt)} · {extractionStatus}
                       </p>
+                      {(() => {
+                        const dups = item.meta?.autoExtractionDuplicates;
+                        if (!Array.isArray(dups) || dups.length === 0) return null;
+                        return (
+                          <div className="mt-1 space-y-0.5 text-xs text-amber-700 dark:text-amber-300">
+                            {dups.slice(0, 3).map((dup) => {
+                              if (!dup || typeof dup !== "object") return null;
+                              const row = dup as Record<string, unknown>;
+                              const projectName =
+                                typeof row.projectName === "string" ? row.projectName : "";
+                              const slug = typeof row.slug === "string" ? row.slug : "";
+                              return (
+                                <p key={`${slug}-${projectName}`}>
+                                  重复：{projectName}
+                                  {slug ? ` (/projects/${slug})` : ""}
+                                </p>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex shrink-0 flex-wrap justify-end gap-2">
                       {extractedUrl.startsWith("http") ? (

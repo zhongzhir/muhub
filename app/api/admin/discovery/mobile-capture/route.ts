@@ -1,10 +1,13 @@
 import { revalidatePath } from "next/cache";
 
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { findDiscoveryItemByUrl } from "@/agents/discovery/discovery-store";
 import { createMobileCaptureItem } from "@/lib/discovery/mobile-capture";
 import {
+  autoExtractMobileCaptureItemById,
   autoExtractProjectsFromCapturedUrl,
   persistMobileAutoExtractionResult,
+  type MobileCaptureAutoExtraction,
 } from "@/lib/discovery/mobile-auto-extraction";
 
 export const dynamic = "force-dynamic";
@@ -39,12 +42,20 @@ export async function POST(req: Request) {
   }
 
   const result = await createMobileCaptureItem({ title, content, sourceNote });
-  const autoExtraction = await autoExtractProjectsFromCapturedUrl({
-    duplicate: result.duplicate,
-    extractedUrl: result.extractedUrl,
-    sourceNote,
-  });
-  if (!result.duplicate) {
+
+  let autoExtraction: MobileCaptureAutoExtraction;
+  if (result.duplicate && result.extractedUrl) {
+    const existing = await findDiscoveryItemByUrl(result.extractedUrl);
+    if (existing?.id) {
+      autoExtraction = await autoExtractMobileCaptureItemById(existing.id);
+    } else {
+      autoExtraction = { attempted: false, reason: "duplicate" };
+    }
+  } else {
+    autoExtraction = await autoExtractProjectsFromCapturedUrl({
+      extractedUrl: result.extractedUrl,
+      sourceNote,
+    });
     await persistMobileAutoExtractionResult(result.itemId, autoExtraction);
   }
   revalidatePath("/admin/discovery/items");

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition, useState } from "react";
+import { useMemo, useTransition, useState } from "react";
 
 import {
   bulkDeleteDiscoveryItemsAction,
@@ -14,6 +14,11 @@ import {
   markDiscoveryItemRejectedAction,
   markDiscoveryItemReviewedAction,
 } from "./actions";
+import { MobileAutoExtractButton } from "../mobile/mobile-auto-extract-button";
+import {
+  isSourceMaterialDiscoveryItem,
+  sourceMaterialExtractionStatusLabel,
+} from "@/lib/discovery/source-material";
 import type { DiscoveryItem } from "@/agents/discovery/discovery-types";
 
 const btn =
@@ -89,16 +94,98 @@ function duplicateBadgeClass(row: DiscoveryItem) {
   return "bg-zinc-50 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400";
 }
 
+function readMetaObjectArray(
+  meta: Record<string, unknown> | undefined,
+  key: string,
+): Record<string, unknown>[] {
+  const value = meta?.[key];
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter(
+    (item): item is Record<string, unknown> => typeof item === "object" && item !== null,
+  );
+}
+
+function readMetaObject(
+  meta: Record<string, unknown> | undefined,
+  key: string,
+): Record<string, unknown> | null {
+  const value = meta?.[key];
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function discoveryItemSearchHaystack(row: DiscoveryItem): string {
+  const parts: string[] = [
+    row.title,
+    row.url,
+    row.description ?? "",
+    row.sourceType,
+    row.status,
+    row.duplicateOfId ?? "",
+    row.possibleDuplicate ? "疑似 duplicate 重复" : "",
+    row.duplicateOfId ? "重复 duplicate" : "",
+  ];
+  const meta = row.meta ?? {};
+  for (const key of [
+    "source",
+    "sourceLabel",
+    "sourceKey",
+    "sourceName",
+    "githubUrl",
+    "websiteUrl",
+    "sourceArticleUrl",
+    "extractedUrl",
+    "keyword",
+    "topic",
+    "intent",
+    "articleTitle",
+    "autoExtractionStatus",
+    "autoExtractionError",
+    "autoExtractionReason",
+  ]) {
+    const value = meta[key];
+    if (typeof value === "string" && value.trim()) {
+      parts.push(value.trim());
+    }
+  }
+  const queued = readMetaObject(meta, "autoExtractionQueued");
+  if (queued) {
+    parts.push(JSON.stringify(queued));
+  }
+  for (const dup of readMetaObjectArray(meta, "autoExtractionDuplicates")) {
+    parts.push(JSON.stringify(dup));
+  }
+  return parts.join("\n").toLowerCase();
+}
+
+function matchesDiscoverySearch(row: DiscoveryItem, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return true;
+  }
+  return discoveryItemSearchHaystack(row).includes(q);
+}
+
 export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [bulkRunning, setBulkRunning] = useState<"reviewed" | "rejected" | "import" | "delete" | null>(null);
-  const itemIds = items.map((item) => item.id);
+
+  const filteredItems = useMemo(
+    () => items.filter((row) => matchesDiscoverySearch(row, searchQuery)),
+    [items, searchQuery],
+  );
+  const itemIds = filteredItems.map((item) => item.id);
   const selectedValidIds = selectedIds.filter((id) => itemIds.includes(id));
   const selectedCount = selectedValidIds.length;
-  const allSelected = items.length > 0 && selectedCount === items.length;
+  const allSelected = filteredItems.length > 0 && selectedCount === filteredItems.length;
 
   function toggleRow(id: string): void {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -122,6 +209,32 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <label className="min-w-[220px] flex-1 text-sm text-zinc-700 dark:text-zinc-300">
+          检索队列
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="标题 / URL / GitHub / source / meta / duplicate / 简介关键词"
+            className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-blue-500 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <span>
+            当前显示 {filteredItems.length} / 全部 {items.length}
+          </span>
+          {searchQuery.trim() ? (
+            <button
+              type="button"
+              className={btn}
+              onClick={() => setSearchQuery("")}
+            >
+              清空搜索
+            </button>
+          ) : null}
+        </div>
+      </div>
       {feedback ? (
         <p
           role="status"
@@ -252,6 +365,11 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
           </button>
         </div>
       ) : null}
+      {filteredItems.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-zinc-300 bg-white px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-600 dark:bg-zinc-900/40">
+          没有匹配「{searchQuery.trim()}」的队列条目。
+        </p>
+      ) : (
       <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <table className="w-full min-w-[980px] text-left text-sm">
         <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
@@ -275,7 +393,16 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-          {items.map((row) => (
+          {filteredItems.map((row) => {
+            const isSourceMaterial = isSourceMaterialDiscoveryItem(row);
+            const sourceArticleUrl = readMetaText(row.meta, "sourceArticleUrl");
+            const autoExtractionError = readMetaText(row.meta, "autoExtractionError");
+            const extractionDuplicates = readMetaObjectArray(row.meta, "autoExtractionDuplicates");
+            const materialUrl =
+              readMetaText(row.meta, "extractedUrl") ||
+              (isHttpUrl(row.url) ? row.url : null);
+
+            return (
             <tr key={row.id} className="align-top text-zinc-800 dark:text-zinc-200">
               <td className="px-3 py-3">
                 <input
@@ -286,9 +413,27 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 />
               </td>
               <td className="px-4 py-3 font-medium">
-                {isHttpUrl(row.url) ? (
+                {isSourceMaterial ? (
+                  <div className="mb-1 flex flex-wrap gap-1">
+                    <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[11px] font-normal text-violet-800 dark:bg-violet-950 dark:text-violet-200">
+                      手机采集素材
+                    </span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[11px] font-normal ${
+                        readMetaText(row.meta, "autoExtractionStatus") === "failed"
+                          ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200"
+                          : readMetaText(row.meta, "autoExtractionStatus") === "done"
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                      }`}
+                    >
+                      {sourceMaterialExtractionStatusLabel(row.meta)}
+                    </span>
+                  </div>
+                ) : null}
+                {materialUrl && isHttpUrl(materialUrl) ? (
                   <a
-                    href={row.url}
+                    href={materialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
@@ -298,6 +443,57 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 ) : (
                   <span>{row.title}</span>
                 )}
+                {sourceArticleUrl && sourceArticleUrl !== materialUrl ? (
+                  <p className="mt-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                    来源文章：
+                    <a
+                      href={sourceArticleUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                    >
+                      {sourceArticleUrl.length > 56
+                        ? `${sourceArticleUrl.slice(0, 56)}…`
+                        : sourceArticleUrl}
+                    </a>
+                  </p>
+                ) : null}
+                {autoExtractionError ? (
+                  <p className="mt-1 max-w-md text-xs font-normal text-red-600 dark:text-red-400">
+                    提取失败：{autoExtractionError}
+                  </p>
+                ) : null}
+                {extractionDuplicates.length > 0 ? (
+                  <div className="mt-1 max-w-md space-y-0.5 text-xs font-normal text-amber-700 dark:text-amber-300">
+                    {extractionDuplicates.slice(0, 3).map((dup) => {
+                      const slug = typeof dup.slug === "string" ? dup.slug : "";
+                      const name = typeof dup.name === "string" ? dup.name : "";
+                      const projectName =
+                        typeof dup.projectName === "string" ? dup.projectName : name;
+                      return (
+                        <p key={`${slug}-${projectName}`}>
+                          重复项目：{projectName}
+                          {slug ? (
+                            <>
+                              {" "}
+                              (
+                              <Link
+                                href={`/projects/${slug}`}
+                                className="underline underline-offset-2"
+                              >
+                                {slug}
+                              </Link>
+                              )
+                            </>
+                          ) : null}
+                        </p>
+                      );
+                    })}
+                    {extractionDuplicates.length > 3 ? (
+                      <p>…另有 {extractionDuplicates.length - 3} 个重复项目</p>
+                    ) : null}
+                  </div>
+                ) : null}
                 {row.description ? (
                   <p className="mt-1 max-w-md text-xs font-normal text-zinc-500 dark:text-zinc-400">
                     {row.description}
@@ -384,7 +580,14 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-1.5">
-                  {row.status === "imported" ? (
+                  {isSourceMaterial ? (
+                    <>
+                      <span className="rounded border border-violet-200 bg-violet-50 px-2 py-1 text-xs text-violet-800 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-200">
+                        原始链接
+                      </span>
+                      <MobileAutoExtractButton itemId={row.id} />
+                    </>
+                  ) : row.status === "imported" ? (
                     <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
                       已导入
                     </span>
@@ -461,10 +664,12 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 </div>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
+      )}
     </div>
   );
 }

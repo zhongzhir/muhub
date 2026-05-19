@@ -93,6 +93,14 @@ export function MobileCaptureForm() {
                     自动提取失败：{feedback.autoExtraction.error}
                   </p>
                 )
+              ) : feedback.autoExtraction && !feedback.autoExtraction.attempted ? (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {feedback.autoExtraction.reason === "duplicate"
+                    ? "链接已存在，已对原素材重新尝试自动提取。"
+                    : feedback.autoExtraction.reason === "no_url"
+                      ? "未检测到可提取链接。"
+                      : "未执行自动提取。"}
+                </p>
               ) : null}
               <div className="flex flex-wrap gap-3 text-xs">
                 <Link href="/admin/discovery/items" className="inline-block underline underline-offset-4">

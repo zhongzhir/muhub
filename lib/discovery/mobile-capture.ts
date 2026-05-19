@@ -2,6 +2,9 @@ import { randomUUID } from "crypto";
 
 import { appendDiscoveryItem } from "@/agents/discovery/discovery-store";
 import type { DiscoveryItem } from "@/agents/discovery/discovery-types";
+import { isSourceMaterialDiscoveryItem } from "@/lib/discovery/source-material";
+
+export { isSourceMaterialDiscoveryItem };
 
 export type CreateMobileCaptureInput = {
   title?: string;
@@ -73,14 +76,6 @@ function materialTitle(
     return "文章链接";
   }
   return titleFromContent(content) || "pasted text";
-}
-
-export function isSourceMaterialDiscoveryItem(item: Pick<DiscoveryItem, "meta">): boolean {
-  return (
-    item.meta?.itemKind === "source_material" ||
-    item.meta?.needsExtraction === true ||
-    item.meta?.captureType === "mobile"
-  );
 }
 
 export async function createMobileCaptureItem(
