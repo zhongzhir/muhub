@@ -1,14 +1,15 @@
 import type { Prisma } from "@prisma/client";
-import { parseGitHubRepoUrl } from "@/lib/github";
 import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import { getDeepSeekClient, getDeepSeekCompatibleModel } from "@/lib/deepseek";
 import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { buildProjectEvidenceContext, type ProjectEvidenceContext } from "@/lib/project-evidence-context";
 import {
-  bestDescriptionFromWebsiteEvidence,
-  bestTitleFromWebsiteEvidence,
-  fetchWebsiteEvidence,
+  buildProjectEvidenceSnapshot,
+  formatEvidenceSnapshotForPrompt,
+  type ProjectEvidenceSnapshot,
+} from "@/lib/project-evidence-snapshot";
+import {
   type WebsiteEvidenceSnapshot,
 } from "@/lib/project-url-evidence";
 import { prisma } from "@/lib/prisma";
@@ -45,6 +46,7 @@ export type ProjectAIInsight = {
 export type ProjectAISignals = {
   github?: {
     repoUrl?: string;
+    description?: string | null;
     stars?: number | null;
     forks?: number | null;
     watchers?: number | null;
@@ -151,6 +153,7 @@ export type ProjectInsightSourceSnapshot = {
     content: string | null;
   }>;
   evidenceContext: ProjectEvidenceContext | null;
+  evidenceSnapshot?: ProjectEvidenceSnapshot | null;
 };
 
 type InsightGenerateResult = {
@@ -194,136 +197,6 @@ function limitText(text: string, max: number): string {
   return cleaned.length > max ? `${cleaned.slice(0, max - 1)}…` : cleaned;
 }
 
-async function fetchGitHubFacts(githubUrl: string | null) {
-  if (!githubUrl) return { repoUrl: undefined };
-  const parsed = parseGitHubRepoUrl(githubUrl);
-  if (!parsed) return { repoUrl: githubUrl };
-  const token = process.env.GITHUB_TOKEN?.trim();
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "MUHUB-AI-Insight",
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  try {
-    const repoRes = await fetch(
-      `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`,
-      { headers, cache: "no-store" },
-    );
-    if (!repoRes.ok) return { repoUrl: githubUrl };
-    const repoJson = (await repoRes.json()) as {
-      stargazers_count?: number;
-      forks_count?: number;
-      subscribers_count?: number;
-      open_issues_count?: number;
-      pushed_at?: string | null;
-      language?: string | null;
-    };
-    let releaseCount: number | null = null;
-    const releaseRes = await fetch(
-      `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}/releases?per_page=1`,
-      { headers, cache: "no-store" },
-    );
-    if (releaseRes.ok) {
-      const link = releaseRes.headers.get("link");
-      if (link) {
-        const matched = link.match(/&page=(\d+)>; rel="last"/);
-        releaseCount = matched ? Number(matched[1]) : 1;
-      } else {
-        const list = (await releaseRes.json()) as unknown[];
-        releaseCount = Array.isArray(list) ? list.length : null;
-      }
-    }
-    let readmeSummary: string | null = null;
-    let readmeLength = 0;
-    const readmeRes = await fetch(
-      `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}/readme`,
-      { headers, cache: "no-store" },
-    );
-    if (readmeRes.ok) {
-      const readmeJson = (await readmeRes.json()) as { content?: string; encoding?: string };
-      if (readmeJson.encoding === "base64" && typeof readmeJson.content === "string") {
-        const decoded = Buffer.from(readmeJson.content, "base64").toString("utf-8");
-        readmeLength = decoded.trim().length;
-        readmeSummary = limitText(decoded.replace(/\s+/g, " ").trim(), 500);
-      }
-    }
-    const lastPushedAt = repoJson.pushed_at ?? null;
-    const pushedDays =
-      lastPushedAt
-        ? Math.floor((Date.now() - new Date(lastPushedAt).getTime()) / (24 * 3600 * 1000))
-        : null;
-    const isActive = pushedDays != null ? pushedDays <= 90 : false;
-    const hasReleases = typeof releaseCount === "number" ? releaseCount > 0 : false;
-    return {
-      repoUrl: githubUrl,
-      stars: typeof repoJson.stargazers_count === "number" ? repoJson.stargazers_count : null,
-      forks: typeof repoJson.forks_count === "number" ? repoJson.forks_count : null,
-      watchers: typeof repoJson.subscribers_count === "number" ? repoJson.subscribers_count : null,
-      openIssues: typeof repoJson.open_issues_count === "number" ? repoJson.open_issues_count : null,
-      lastPushedAt,
-      language: repoJson.language ?? null,
-      releaseCount,
-      commitSignal: [],
-      readmeSummary,
-      readmeLength,
-      isActive,
-      hasReleases,
-    };
-  } catch {
-    return { repoUrl: githubUrl };
-  }
-}
-
-async function fetchWebsiteFacts(websiteUrl: string | null, prefetched?: WebsiteEvidenceSnapshot | null) {
-  if (!websiteUrl) {
-    return {
-      url: undefined,
-      exists: false,
-      reachable: false,
-      statusCode: null,
-      finalUrl: null,
-      errorMessage: null,
-      title: null,
-      description: null,
-    };
-  }
-  const evidence = prefetched ?? (await fetchWebsiteEvidence(websiteUrl));
-  const title = bestTitleFromWebsiteEvidence(evidence);
-  const description = bestDescriptionFromWebsiteEvidence(evidence);
-  return {
-    url: websiteUrl,
-    exists: evidence.reachable,
-    reachable: evidence.reachable,
-    statusCode: evidence.statusCode,
-    finalUrl: evidence.finalUrl,
-    errorMessage: evidence.errorMessage,
-    title: title ? limitText(title, 160) : null,
-    description: description ? limitText(description, 280) : null,
-  };
-}
-
-function websiteEvidenceFromContext(
-  evidenceContext: ProjectEvidenceContext | null,
-  websiteUrl: string | null,
-): WebsiteEvidenceSnapshot | null {
-  const items = evidenceContext?.website.fetchedEvidence ?? [];
-  if (!items.length) {
-    return null;
-  }
-  if (websiteUrl) {
-    const normalized = websiteUrl.trim().toLowerCase();
-    const matched = items.find(
-      (item) =>
-        item.url.trim().toLowerCase() === normalized ||
-        item.finalUrl?.trim().toLowerCase() === normalized,
-    );
-    if (matched) {
-      return matched;
-    }
-  }
-  return items.find((item) => item.reachable) ?? items[0] ?? null;
-}
-
 function sanitizeInsightAgainstWebsiteEvidence(
   insight: ProjectAIInsight,
   websiteEvidence: WebsiteEvidenceSnapshot | null,
@@ -349,109 +222,77 @@ function sanitizeInsightAgainstWebsiteEvidence(
 }
 
 export async function buildProjectInsightSourceSnapshot(projectId: string): Promise<ProjectInsightSourceSnapshot | null> {
+  const evidenceSnapshot = await buildProjectEvidenceSnapshot(projectId);
+  if (!evidenceSnapshot) {
+    return null;
+  }
+
   const evidenceContext = await buildProjectEvidenceContext(projectId);
   const row = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
     include: {
-      sources: {
-        orderBy: [{ kind: "asc" }, { createdAt: "desc" }],
-      },
-      socialAccounts: true,
-      externalLinks: true,
       updates: {
         orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
         take: 8,
       },
     },
   });
-  if (!row) return null;
+  if (!row) {
+    return null;
+  }
 
-  const socialsAccounts: Record<string, string | null> = {
-    twitter: null,
-    wechatOfficialAccount: null,
-    discord: null,
-    telegram: null,
-    linkedin: null,
-    youtube: null,
+  const websiteEvidence = evidenceSnapshot.website.evidence;
+  const websiteFacts = {
+    url: evidenceSnapshot.website.url ?? undefined,
+    exists: evidenceSnapshot.website.reachable,
+    reachable: evidenceSnapshot.website.reachable,
+    statusCode: websiteEvidence?.statusCode ?? null,
+    finalUrl: websiteEvidence?.finalUrl ?? null,
+    errorMessage: websiteEvidence?.errorMessage ?? null,
+    title: evidenceSnapshot.website.title,
+    description: evidenceSnapshot.website.description,
   };
-  for (const account of row.socialAccounts) {
-    const url = account.accountUrl?.trim() || null;
-    if (account.platform === "X" && !socialsAccounts.twitter) socialsAccounts.twitter = url;
-    if (account.platform === "WECHAT_OFFICIAL" && !socialsAccounts.wechatOfficialAccount) socialsAccounts.wechatOfficialAccount = account.accountName || url;
-    if (account.platform === "DISCORD" && !socialsAccounts.discord) socialsAccounts.discord = url;
-    if (account.platform === "BILIBILI" && !socialsAccounts.youtube) socialsAccounts.youtube = url;
-  }
-  for (const link of row.externalLinks) {
-    const p = link.platform.toLowerCase();
-    if (p.includes("twitter") || p === "x") socialsAccounts.twitter ??= link.url;
-    if (p.includes("telegram")) socialsAccounts.telegram ??= link.url;
-    if (p.includes("linkedin")) socialsAccounts.linkedin ??= link.url;
-    if (p.includes("youtube")) socialsAccounts.youtube ??= link.url;
-    if (p.includes("discord")) socialsAccounts.discord ??= link.url;
-  }
+  const websiteText = `${websiteFacts.title ?? ""} ${websiteFacts.description ?? ""} ${evidenceSnapshot.website.extractedSummary ?? ""}`.toLowerCase();
 
-  const websiteEvidence =
-    websiteEvidenceFromContext(evidenceContext, row.websiteUrl) ??
-    (row.websiteUrl ? await fetchWebsiteEvidence(row.websiteUrl) : null);
-  const [githubFactsRaw, websiteFacts] = await Promise.all([
-    fetchGitHubFacts(row.githubUrl),
-    fetchWebsiteFacts(row.websiteUrl, websiteEvidence),
-  ]);
-  const githubFacts = githubFactsRaw as ProjectAISignals["github"] & { readmeSummary?: string | null };
-  const websiteText = `${websiteFacts.title ?? ""} ${websiteFacts.description ?? ""} ${websiteEvidence?.textExcerpt ?? ""}`.toLowerCase();
-  const hasPricing = websiteText.includes("pricing") || websiteText.includes("价格");
-  const hasDocs = websiteText.includes("docs") || websiteText.includes("文档");
-  const hasContact = websiteText.includes("contact") || websiteText.includes("联系我们");
-  const hasDemo = websiteText.includes("demo") || websiteText.includes("演示");
-  const hasContent =
-    Boolean((websiteFacts.description ?? "").trim()) ||
-    Boolean((websiteFacts.title ?? "").trim()) ||
-    Boolean((websiteEvidence?.textExcerpt ?? "").trim());
-  const hasKeySections = hasPricing || hasDocs || hasContact || hasDemo;
-  const sourceContents = row.sources
-    .filter((source) => {
-      if (source.kind === "WECHAT_ARTICLE") {
-        return Boolean(source.content?.trim());
-      }
-      return Boolean(source.summary?.trim() || source.title?.trim() || source.url?.trim());
-    })
-    .sort((a, b) => {
-      if (a.kind === "WECHAT_ARTICLE" && b.kind !== "WECHAT_ARTICLE") return -1;
-      if (a.kind !== "WECHAT_ARTICLE" && b.kind === "WECHAT_ARTICLE") return 1;
-      return b.createdAt.getTime() - a.createdAt.getTime();
-    })
-    .slice(0, 3)
-    .map((source) => ({
-      kind: source.kind,
-      label: source.label ?? null,
-      title: source.title ?? null,
-      url: source.url || null,
-      summary: source.summary ?? null,
-      content: source.content ? limitText(source.content, 5000) : null,
-    }));
-
-  const evidenceSourceContents = evidenceContext?.sources.map((source) => ({
+  const sourceContents = evidenceSnapshot.sources.items.map((source) => ({
     kind: source.kind,
     label: source.label,
     title: source.title,
     url: source.url,
     summary: source.summary,
-    content: source.content,
-  })) ?? [];
-  const mergedSourceContents = evidenceSourceContents.length ? evidenceSourceContents : sourceContents;
+    content: source.contentExcerpt,
+  }));
 
   const mainSources: string[] = [];
-  if (mergedSourceContents.some((source) => source.kind === "WECHAT_ARTICLE")) mainSources.push("公众号文章");
-  if (evidenceContext?.official) mainSources.push("人工/官方信息");
-  if (evidenceContext?.links.length) mainSources.push("项目外部链接");
-  if (row.githubUrl) mainSources.push("GitHub");
-  if (row.websiteUrl) mainSources.push(websiteFacts.reachable ? "官网（已验证可访问）" : "官网");
-  if (row.description?.trim() || row.tagline?.trim()) mainSources.push("项目描述");
-  if (Object.values(socialsAccounts).some(Boolean)) mainSources.push("社媒");
-  const missingSources: string[] = [];
-  if (!row.websiteUrl && !websiteEvidence?.reachable) missingSources.push("未检测到官网");
-  if (!row.githubUrl) missingSources.push("未检测到 GitHub");
-  if (!Object.values(socialsAccounts).some(Boolean)) missingSources.push("未检测到社媒账号");
+  if (sourceContents.some((source) => source.kind === "WECHAT_ARTICLE")) {
+    mainSources.push("公众号文章");
+  }
+  if (evidenceContext?.official) {
+    mainSources.push("人工/官方信息");
+  }
+  if (evidenceSnapshot.curated.markdownExcerpt) {
+    mainSources.push("curated 列表");
+  }
+  if (evidenceSnapshot.github.url) {
+    mainSources.push("GitHub");
+  }
+  if (evidenceSnapshot.website.url) {
+    mainSources.push(evidenceSnapshot.website.reachable ? "官网（已验证可访问）" : "官网");
+  }
+  if (row.description?.trim() || row.tagline?.trim()) {
+    mainSources.push("项目描述");
+  }
+  if (Object.values(evidenceSnapshot.social.accounts).some(Boolean)) {
+    mainSources.push("社媒");
+  }
+
+  const missingSources = [...evidenceSnapshot.signals.missingPublicInfo];
+  if (!evidenceSnapshot.github.url) {
+    missingSources.push("未检测到 GitHub");
+  }
+  if (!evidenceSnapshot.website.url || !evidenceSnapshot.website.reachable) {
+    missingSources.push("未检测到可用官网 evidence");
+  }
 
   return {
     base: {
@@ -459,8 +300,8 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
       name: row.name,
       tagline: row.tagline,
       description: row.description,
-      website: row.websiteUrl,
-      github: row.githubUrl,
+      website: evidenceSnapshot.website.url,
+      github: evidenceSnapshot.github.url,
       tags: row.tags,
       categories: [row.primaryCategory, ...(Array.isArray(row.categoriesJson) ? row.categoriesJson : [])]
         .filter((item): item is string => typeof item === "string" && Boolean(item.trim())),
@@ -473,43 +314,52 @@ export async function buildProjectInsightSourceSnapshot(projectId: string): Prom
     },
     github: {
       facts: {
-        repoUrl: githubFacts.repoUrl,
-        stars: githubFacts.stars,
-        forks: githubFacts.forks,
-        watchers: githubFacts.watchers,
-        openIssues: githubFacts.openIssues,
-        lastPushedAt: githubFacts.lastPushedAt,
-        language: githubFacts.language,
-        releaseCount: githubFacts.releaseCount,
-        commitSignal: githubFacts.commitSignal,
+        repoUrl: evidenceSnapshot.github.url ?? undefined,
+        description: evidenceSnapshot.github.description,
+        stars: evidenceSnapshot.github.stars,
+        lastPushedAt: evidenceSnapshot.github.updatedAt,
+        language: evidenceSnapshot.github.language,
+        releaseCount: evidenceSnapshot.github.releaseCount,
+        commitSignal: [],
+        isActive: evidenceSnapshot.signals.githubActive ?? undefined,
+        hasReleases: evidenceSnapshot.signals.hasReleases ?? undefined,
+        readmeLength: evidenceSnapshot.github.readmeSummary?.length ?? undefined,
       },
-      readmeSummary: githubFacts.readmeSummary ?? null,
+      readmeSummary: evidenceSnapshot.github.readmeSummary,
     },
     website: {
       facts: websiteFacts,
       evidence: websiteEvidence,
-      hasPricing,
-      hasDocs,
-      hasContact,
-      hasDemo,
-      hasContent,
-      hasKeySections,
+      hasPricing: evidenceSnapshot.signals.websiteHasPricing,
+      hasDocs: evidenceSnapshot.docs.hasDocsSignal,
+      hasContact: evidenceSnapshot.signals.websiteHasContact,
+      hasDemo: websiteText.includes("demo") || websiteText.includes("演示"),
+      hasContent: Boolean(
+        websiteFacts.description?.trim() ||
+          websiteFacts.title?.trim() ||
+          evidenceSnapshot.website.extractedSummary?.trim(),
+      ),
+      hasKeySections:
+        evidenceSnapshot.signals.websiteHasPricing ||
+        evidenceSnapshot.docs.hasDocsSignal ||
+        evidenceSnapshot.signals.websiteHasContact,
     },
     socials: {
-      accounts: socialsAccounts,
+      accounts: evidenceSnapshot.social.accounts,
       exists: {
-        twitter: Boolean(socialsAccounts.twitter),
-        discord: Boolean(socialsAccounts.discord),
-        telegram: Boolean(socialsAccounts.telegram),
-        linkedin: Boolean(socialsAccounts.linkedin),
+        twitter: Boolean(evidenceSnapshot.social.accounts.twitter),
+        discord: Boolean(evidenceSnapshot.social.accounts.discord),
+        telegram: Boolean(evidenceSnapshot.social.accounts.telegram),
+        linkedin: Boolean(evidenceSnapshot.social.accounts.linkedin),
       },
     },
     extractedSignals: {
       mainSources,
-      missingSources,
+      missingSources: [...new Set(missingSources)],
     },
-    sourceContents: mergedSourceContents,
+    sourceContents,
     evidenceContext,
+    evidenceSnapshot,
   };
 }
 
@@ -678,6 +528,9 @@ export async function generateProjectAIInsight(
     "输出必须是合法 json，不要输出 markdown。",
     "你必须输出 json。",
   ].join("\n");
+  const evidencePrompt = snapshot.evidenceSnapshot
+    ? formatEvidenceSnapshotForPrompt(snapshot.evidenceSnapshot)
+    : snapshot.evidenceContext?.promptText ?? "";
   const sourceContext = snapshot.sourceContents
     .map((source, index) => {
       const sourceName =
@@ -699,9 +552,10 @@ export async function generateProjectAIInsight(
     `【项目名称】\n${snapshot.base.name}`,
     snapshot.base.tagline ? `【一句话介绍】\n${snapshot.base.tagline}` : null,
     snapshot.base.description ? `【项目基础描述】\n${limitText(snapshot.base.description, 1600)}` : null,
-    sourceContext || null,
-    snapshot.evidenceContext?.promptText ? `【Project Evidence Context V1】\n${snapshot.evidenceContext.promptText}` : null,
+    evidencePrompt ? `【Evidence Snapshot / 信息覆盖】\n${evidencePrompt}` : null,
+    sourceContext ? `【来源正文摘要】\n${sourceContext}` : null,
     "【任务】\n请结构化分析该项目，重点识别功能、目标用户、使用场景、亮点、价值信号和信息不足点。",
+    "若 GitHub missing 或官网 unreachable，必须在 summary/whatItIs/sourceNotes 中明确写「当前公开信息有限」，不得脑补。",
     "请基于以下项目公开信息，输出 json，字段结构如下：",
     JSON.stringify(
       {

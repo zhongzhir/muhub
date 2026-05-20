@@ -2,7 +2,14 @@ import {
   updateDiscoveryItemImportResult,
   updateDiscoveryItemMeta,
 } from "@/agents/discovery/discovery-store";
-import { rollbackChineseIndieAutoImport } from "@/lib/discovery/chinese-indie-auto-import";
+import {
+  inferDiscoveryFailureKind,
+  recordChineseIndieEnrichmentFailure,
+  recordChineseIndieEnrichmentRetry,
+  recordChineseIndieImportResultFailure,
+  shouldRetryDiscoveryFailure,
+} from "@/lib/discovery/chinese-indie-auto-import";
+import { buildProjectEvidenceSnapshot } from "@/lib/project-evidence-snapshot";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
 import { generatePostImportProjectAi } from "@/lib/discovery/post-import-project-ai";
 import {
@@ -55,6 +62,14 @@ export type RunChineseIndependentDeveloperImportResult = {
   estimatedAutoImportable: number;
   importedSlugs: string[];
   needsReviewTitles: string[];
+  aiFailures: Array<{
+    title: string;
+    projectId: string | null;
+    stage: string;
+    error: string;
+    stack?: string;
+    failureKind?: string;
+  }>;
   dryRun: boolean;
   autoImport: boolean;
   sampleDuplicates: BulkQueueChineseIndieResult["duplicates"];
@@ -99,6 +114,73 @@ function buildSelectedRange(offset: number, limit: number | undefined, total: nu
   }
   const end = limit && limit > 0 ? Math.min(offset + limit - 1, total - 1) : total - 1;
   return `${offset}-${end}`;
+}
+
+function readMetaNumber(meta: Record<string, unknown> | undefined, key: string): number {
+  const value = meta?.[key];
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return 0;
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function finalizeImportedItem(input: {
+  item: { id: string; title: string; meta?: Record<string, unknown> };
+  projectId: string;
+  slug: string;
+  aiResultStage: string;
+}): Promise<boolean> {
+  let importRetry = 0;
+  let updated = false;
+  while (importRetry <= 2) {
+    updated = await updateDiscoveryItemImportResult(input.item.id, input.slug);
+    if (updated) {
+      break;
+    }
+    importRetry += 1;
+    await sleep(400);
+  }
+  if (!updated) {
+    const error = "导入回写失败：无法更新 discovery 队列项";
+    const retryCount = readMetaNumber(input.item.meta, "retryCount") + importRetry;
+    await recordChineseIndieImportResultFailure({
+      discoveryItemId: input.item.id,
+      projectId: input.projectId,
+      slug: input.slug,
+      error,
+      retryCount,
+    });
+    return false;
+  }
+  const evidenceSnapshot = await buildProjectEvidenceSnapshot(input.projectId);
+  await updateDiscoveryItemMeta(input.item.id, {
+    aiEnrichmentStatus: "success",
+    aiEnrichmentStage: "done",
+    aiEnrichmentError: null,
+    aiEnrichmentStack: null,
+    aiEnrichmentAt: new Date().toISOString(),
+    createdProjectId: input.projectId,
+    importedProjectId: input.projectId,
+    importedProjectSlug: input.slug,
+    failureKind: null,
+    importResultError: null,
+    publishCompleted: true,
+    needsReview: false,
+    retryCount: readMetaNumber(input.item.meta, "retryCount"),
+    evidenceCoverage: evidenceSnapshot?.coverage ?? null,
+    evidenceConfidence: evidenceSnapshot?.confidence ?? null,
+  });
+  return true;
 }
 
 export async function runChineseIndependentDeveloperImport(
@@ -148,6 +230,7 @@ export async function runChineseIndependentDeveloperImport(
       estimatedAutoImportable: countEstimatedAutoImportable(selectedEntries, duplicateKeys),
       importedSlugs: [],
       needsReviewTitles: [],
+      aiFailures: [],
       dryRun: true,
       autoImport,
       sampleDuplicates: preview.duplicates.slice(0, 8),
@@ -163,6 +246,7 @@ export async function runChineseIndependentDeveloperImport(
   let needsReview = 0;
   const importedSlugs: string[] = [];
   const needsReviewTitles: string[] = [];
+  const aiFailures: RunChineseIndependentDeveloperImportResult["aiFailures"] = [];
 
   if (autoImport) {
     for (const item of queueResult.items) {
@@ -182,38 +266,111 @@ export async function runChineseIndependentDeveloperImport(
           continue;
         }
 
-        const aiResult = await generatePostImportProjectAi(result.projectId);
-        if (!aiResult.success) {
+        let retryCount = readMetaNumber(item.meta, "retryCount");
+        let aiResult = await generatePostImportProjectAi(result.projectId);
+        while (!aiResult.success) {
           const error =
             aiResult.error ??
             aiResult.insightError ??
             aiResult.contentError ??
-            "AI enrichment 未通过必填校验";
-          await rollbackChineseIndieAutoImport({
+            aiResult.applyFieldsError ??
+            aiResult.publishError ??
+            "AI enrichment 未通过";
+          const failureKind = inferDiscoveryFailureKind(aiResult.stage);
+          if (shouldRetryDiscoveryFailure(failureKind, retryCount)) {
+            retryCount += 1;
+            await recordChineseIndieEnrichmentRetry({
+              discoveryItemId: item.id,
+              projectId: result.projectId,
+              stage: aiResult.stage,
+              error,
+              failureKind,
+              retryCount,
+            });
+            console.warn("[chinese-indie][retry]", {
+              title: item.title,
+              stage: aiResult.stage,
+              failureKind,
+              retryCount,
+            });
+            aiResult = await generatePostImportProjectAi(result.projectId);
+            continue;
+          }
+          const failure = {
+            title: item.title,
+            projectId: result.projectId,
+            stage: aiResult.stage,
+            error,
+            stack: aiResult.stack,
+            failureKind,
+          };
+          aiFailures.push(failure);
+          console.error("[chinese-indie][ai-failed]", failure);
+          await recordChineseIndieEnrichmentFailure({
             discoveryItemId: item.id,
             projectId: result.projectId,
+            title: item.title,
+            stage: aiResult.stage,
             error,
+            stack: aiResult.stack,
+            failureKind,
           });
           aiFailed += 1;
           needsReview += 1;
           needsReviewTitles.push(item.title);
+          break;
+        }
+        if (!aiResult.success) {
           continue;
         }
 
-        const updated = await updateDiscoveryItemImportResult(item.id, result.slug);
-        if (!updated) {
+        const finalized = await finalizeImportedItem({
+          item,
+          projectId: result.projectId,
+          slug: result.slug,
+          aiResultStage: aiResult.stage,
+        });
+        if (!finalized) {
+          const error = "导入回写失败：无法更新 discovery 队列项";
+          aiFailures.push({
+            title: item.title,
+            projectId: result.projectId,
+            stage: "import_result",
+            error,
+            failureKind: "infra",
+          });
+          console.error("[chinese-indie][import-result-failed]", {
+            title: item.title,
+            projectId: result.projectId,
+            slug: result.slug,
+          });
           importFailed += 1;
+          if (readMetaNumber(item.meta, "retryCount") >= 2) {
+            needsReview += 1;
+            needsReviewTitles.push(item.title);
+          }
           continue;
         }
-        await updateDiscoveryItemMeta(item.id, {
-          aiEnrichmentStatus: "success",
-          aiEnrichmentError: null,
-          needsReview: false,
-        });
         imported += 1;
         aiSucceeded += 1;
         importedSlugs.push(result.slug);
-      } catch {
+        console.info("[chinese-indie][imported]", {
+          title: item.title,
+          slug: result.slug,
+          projectId: result.projectId,
+          stage: aiResult.stage,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        aiFailures.push({
+          title: item.title,
+          projectId: null,
+          stage: "import",
+          error: message,
+          stack: error instanceof Error ? error.stack?.slice(0, 400) : undefined,
+          failureKind: "infra",
+        });
+        console.error("[chinese-indie][import-failed]", { title: item.title, error });
         importFailed += 1;
       }
     }
@@ -247,6 +404,7 @@ export async function runChineseIndependentDeveloperImport(
     estimatedAutoImportable: countEstimatedAutoImportable(selectedEntries, duplicateKeys),
     importedSlugs,
     needsReviewTitles,
+    aiFailures,
     dryRun: false,
     autoImport,
     sampleDuplicates: queueResult.duplicates.slice(0, 8),

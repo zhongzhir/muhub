@@ -34,6 +34,15 @@ export default function AdminSystemHomePage() {
           </p>
         </Link>
         <Link
+          href="/admin/system/ai-pipeline"
+          className="muhub-card block space-y-2 p-5 transition hover:border-zinc-400 dark:hover:border-zinc-600"
+        >
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">AI Pipeline</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            查看 enrichment 任务、阶段分布、失败重试与 evidence 覆盖概况。
+          </p>
+        </Link>
+        <Link
           href="/admin/system/claims"
           className="muhub-card block space-y-2 p-5 transition hover:border-zinc-400 dark:hover:border-zinc-600"
         >

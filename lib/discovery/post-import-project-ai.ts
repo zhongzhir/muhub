@@ -1,11 +1,14 @@
 import { enrichProjectWithAi } from "@/lib/ai/enrich-project";
 import { isAiConfigured } from "@/lib/ai/project-ai";
+import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import {
   buildProjectContentSourceSnapshot,
   generateProjectAIContent,
   saveProjectAIContent,
   type ProjectAIContent,
 } from "@/lib/project-ai-content";
+import { buildProjectEvidenceSnapshot } from "@/lib/project-evidence-snapshot";
+import { detectAndPersistProjectUpdateSignals } from "@/lib/project-update-signals";
 import {
   buildProjectInsightSourceSnapshot,
   computeProjectCompleteness,
@@ -14,29 +17,73 @@ import {
   saveProjectAIInsight,
   type ProjectAIInsight,
   type ProjectAISignals,
+  type ProjectAISuggestedCategories,
 } from "@/lib/project-ai-insight";
+import { publishProjectAfterAiEnrichment } from "@/lib/project-publishing";
+import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 
+export type AiEnrichmentStage =
+  | "evidence"
+  | "website_evidence"
+  | "ai_insight"
+  | "ai_content"
+  | "apply_fields"
+  | "publish"
+  | "done";
+
 export type PostImportProjectAiResult = {
   success: boolean;
+  stage: AiEnrichmentStage | string;
   aiInsightStatus: "success" | "failed" | "skipped";
   aiContentStatus: "success" | "failed" | "skipped";
+  applyFieldsStatus: "success" | "failed" | "skipped";
+  publishStatus: "success" | "failed" | "skipped";
   error?: string;
+  stack?: string;
   insightError?: string;
   contentError?: string;
+  applyFieldsError?: string;
+  publishError?: string;
 };
 
 function normalizeAiError(error: unknown): string {
   if (error instanceof Error) {
-    return error.message.slice(0, 300);
+    return error.message.slice(0, 500);
   }
-  return String(error).slice(0, 300);
+  return String(error).slice(0, 500);
+}
+
+function shortStack(error: unknown): string | undefined {
+  if (!(error instanceof Error) || !error.stack) {
+    return undefined;
+  }
+  return error.stack.split("\n").slice(0, 4).join("\n").slice(0, 400);
 }
 
 function aiNotConfiguredMessage(): string {
   return "AI 服务未配置，请检查服务器环境变量";
+}
+
+function failResult(
+  stage: AiEnrichmentStage | string,
+  error: unknown,
+  partial: Partial<PostImportProjectAiResult> = {},
+): PostImportProjectAiResult {
+  const message = normalizeAiError(error);
+  return {
+    success: false,
+    stage,
+    aiInsightStatus: partial.aiInsightStatus ?? "skipped",
+    aiContentStatus: partial.aiContentStatus ?? "skipped",
+    applyFieldsStatus: partial.applyFieldsStatus ?? "skipped",
+    publishStatus: partial.publishStatus ?? "skipped",
+    error: message,
+    stack: shortStack(error),
+    ...partial,
+  };
 }
 
 function buildDescriptionFromInsight(insight: ProjectAIInsight): string | null {
@@ -81,12 +128,105 @@ function buildLongDescriptionFromContent(
   return blocks.length ? blocks.join("\n\n").slice(0, 3000) : null;
 }
 
-async function loadEnrichmentSnapshot(projectId: string) {
-  return prisma.project.findFirst({
+async function applyRequiredProjectFields(input: {
+  projectId: string;
+  insight: ProjectAIInsight;
+  suggestedTags: string[];
+  suggestedCategories: ProjectAISuggestedCategories;
+  content: ProjectAIContent | null;
+}): Promise<void> {
+  const existing = await prisma.project.findFirst({
+    where: { id: input.projectId, deletedAt: null },
+    select: {
+      name: true,
+      tagline: true,
+      description: true,
+      simpleSummary: true,
+      primaryCategory: true,
+      tags: true,
+      websiteUrl: true,
+      githubUrl: true,
+      aiCardSummary: true,
+    },
+  });
+  if (!existing) {
+    throw new Error("项目不存在或已删除");
+  }
+
+  const ruleSuggest = suggestAdminProjectClassificationAndTags({
+    name: existing.name,
+    tagline: existing.tagline ?? "",
+    description: existing.description ?? "",
+    websiteUrl: existing.websiteUrl ?? "",
+    githubUrl: existing.githubUrl ?? "",
+    aiCardSummary: existing.aiCardSummary ?? "",
+  });
+
+  const insight = input.insight;
+  const tagline =
+    (insight.summary?.trim()
+      ? normalizeChineseExpression(insight.summary.trim()).slice(0, 200)
+      : null) ||
+    (insight.whatItIs?.trim()
+      ? normalizeChineseExpression(insight.whatItIs.trim()).slice(0, 200)
+      : null) ||
+    existing.tagline?.trim() ||
+    existing.description?.trim()?.slice(0, 200) ||
+    existing.name;
+
+  const description =
+    buildDescriptionFromInsight(insight) ||
+    existing.description?.trim() ||
+    tagline;
+
+  const simpleSummary =
+    buildLongDescriptionFromContent(insight, input.content) ||
+    existing.simpleSummary?.trim() ||
+    description;
+
+  let tags = normalizeSuggestedTags(input.suggestedTags);
+  if (!tags.length) {
+    tags = normalizeSuggestedTags(ruleSuggest.tags);
+  }
+  if (!tags.length) {
+    tags = ["独立开发者"];
+  }
+
+  const normalizedCategories = normalizeSuggestedCategories({
+    primary: input.suggestedCategories.primary ?? ruleSuggest.primaryCategory,
+    secondary: input.suggestedCategories.secondary,
+    optional: input.suggestedCategories.optional,
+  });
+  const primaryCategory =
+    normalizedCategories.primary ??
+    normalizeSuggestedCategories({ primary: ruleSuggest.primaryCategory }).primary ??
+    "other";
+
+  const categories = [
+    primaryCategory,
+    normalizedCategories.secondary,
+    ...(normalizedCategories.optional ?? []),
+  ].filter((item): item is string => Boolean(item?.trim()));
+
+  await prisma.project.update({
+    where: { id: input.projectId },
+    data: {
+      tagline,
+      description,
+      simpleSummary,
+      primaryCategory,
+      tags,
+      ...(categories.length
+        ? { categoriesJson: categories as unknown as Prisma.InputJsonValue }
+        : {}),
+    },
+  });
+}
+
+async function validateAppliedFields(projectId: string): Promise<string | null> {
+  const row = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
     select: {
-      id: true,
-      slug: true,
       tagline: true,
       description: true,
       simpleSummary: true,
@@ -96,11 +236,6 @@ async function loadEnrichmentSnapshot(projectId: string) {
       aiContentStatus: true,
     },
   });
-}
-
-function validateRequiredEnrichmentFields(
-  row: Awaited<ReturnType<typeof loadEnrichmentSnapshot>>,
-): string | null {
   if (!row) {
     return "项目不存在或已删除";
   }
@@ -129,28 +264,30 @@ function validateRequiredEnrichmentFields(
 }
 
 /**
- * 导入后完整 AI enrichment：简介、分类、标签、详细介绍、认知卡、增强版内容。
- * 全部成功时 success=true；任一步失败则 success=false（不抛出，便于批次继续）。
+ * 导入后完整 AI enrichment（evidence → 认知卡 → 增强版 → 字段写入 → 发布）。
  */
 export async function generatePostImportProjectAi(
   projectId: string,
 ): Promise<PostImportProjectAiResult> {
   const base: PostImportProjectAiResult = {
     success: false,
+    stage: "evidence",
     aiInsightStatus: "skipped",
     aiContentStatus: "skipped",
+    applyFieldsStatus: "skipped",
+    publishStatus: "skipped",
   };
 
   if (!process.env.DATABASE_URL?.trim()) {
-    return { ...base, error: "未配置 DATABASE_URL" };
+    return failResult("evidence", "未配置 DATABASE_URL", base);
   }
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, name: true },
   });
   if (!project) {
-    return { ...base, error: "项目不存在或已删除" };
+    return failResult("evidence", "项目不存在或已删除", base);
   }
 
   if (!isAiConfigured()) {
@@ -166,14 +303,11 @@ export async function generatePostImportProjectAi(
         aiContentError: message,
       },
     });
-    return {
+    return failResult("evidence", message, {
       ...base,
       aiInsightStatus: "failed",
       aiContentStatus: "failed",
-      error: message,
-      insightError: message,
-      contentError: message,
-    };
+    });
   }
 
   await prisma.project.update({
@@ -189,19 +323,26 @@ export async function generatePostImportProjectAi(
   });
 
   try {
-    await enrichProjectWithAi(project.slug);
+    const evidenceSnapshot = await buildProjectEvidenceSnapshot(projectId);
+    if (!evidenceSnapshot) {
+      throw new Error("无法构建 evidence snapshot");
+    }
+    await detectAndPersistProjectUpdateSignals(projectId, evidenceSnapshot);
   } catch (error) {
-    const message = normalizeAiError(error);
-    await prisma.project.update({
-      where: { id: projectId },
-      data: { aiStatus: "failed", aiError: message },
-    });
-    console.error("[post-import-project-ai] base enrichment failed", { projectId, error });
+    console.error("[post-import-project-ai] evidence failed", { projectId, error });
+    return failResult("evidence", error, base);
   }
 
   let generatedInsight: Awaited<ReturnType<typeof generateProjectAIInsight>> | null = null;
 
+  base.stage = "ai_insight";
   try {
+    try {
+      await enrichProjectWithAi(project.slug);
+    } catch (error) {
+      console.warn("[post-import-project-ai] base enrichProjectWithAi failed", { projectId, error });
+    }
+
     const snapshot = await buildProjectInsightSourceSnapshot(projectId);
     if (!snapshot) {
       throw new Error("项目不存在或已删除");
@@ -240,51 +381,24 @@ export async function generatePostImportProjectAi(
       sourceSnapshot: snapshot,
       sourceLevel,
     });
-
-    const insight = generatedInsight.insight;
-    const tagline = insight.summary?.trim()
-      ? normalizeChineseExpression(insight.summary.trim()).slice(0, 200)
-      : null;
-    const description = buildDescriptionFromInsight(insight);
-    const categories = [
-      generatedInsight.suggestedCategories.primary,
-      generatedInsight.suggestedCategories.secondary,
-      ...(generatedInsight.suggestedCategories.optional ?? []),
-    ].filter((item): item is string => Boolean(item?.trim()));
-    const categoryPatch: Prisma.ProjectUpdateInput = {
-      ...(tagline ? { tagline } : {}),
-      ...(description ? { description } : {}),
-      ...(generatedInsight.suggestedTags.length ? { tags: generatedInsight.suggestedTags } : {}),
-      ...(generatedInsight.suggestedCategories.primary
-        ? { primaryCategory: generatedInsight.suggestedCategories.primary }
-        : {}),
-      ...(categories.length
-        ? { categoriesJson: categories as unknown as Prisma.InputJsonValue }
-        : {}),
-    };
-    if (Object.keys(categoryPatch).length > 0) {
-      await prisma.project.update({
-        where: { id: projectId },
-        data: categoryPatch,
-      });
-    }
     base.aiInsightStatus = "success";
   } catch (error) {
     const message = normalizeAiError(error);
-    base.aiInsightStatus = "failed";
-    base.insightError = message;
     await prisma.project.update({
       where: { id: projectId },
-      data: {
-        aiInsightStatus: "failed",
-        aiInsightError: message,
-      },
+      data: { aiInsightStatus: "failed", aiInsightError: message },
     });
-    console.error("[post-import-project-ai] insight failed", { projectId, error });
+    console.error("[post-import-project-ai] ai_insight failed", { projectId, error });
+    return failResult("ai_insight", error, {
+      ...base,
+      aiInsightStatus: "failed",
+      insightError: message,
+    });
   }
 
   let generatedContent: ProjectAIContent | null = null;
 
+  base.stage = "ai_content";
   try {
     const contentSnapshot = await buildProjectContentSourceSnapshot(projectId);
     if (!contentSnapshot) {
@@ -292,49 +406,72 @@ export async function generatePostImportProjectAi(
     }
     generatedContent = await generateProjectAIContent(contentSnapshot, { mode: "balanced" });
     await saveProjectAIContent(projectId, { content: generatedContent });
-
-    const insight = generatedInsight?.insight;
-    const simpleSummary =
-      insight && generatedContent
-        ? buildLongDescriptionFromContent(insight, generatedContent)
-        : generatedContent?.copy?.medium?.trim() ?? null;
-    if (simpleSummary) {
-      await prisma.project.update({
-        where: { id: projectId },
-        data: { simpleSummary },
-      });
-    }
     base.aiContentStatus = "success";
   } catch (error) {
     const message = normalizeAiError(error);
-    base.aiContentStatus = "failed";
-    base.contentError = message;
     await prisma.project.update({
       where: { id: projectId },
-      data: {
-        aiContentStatus: "failed",
-        aiContentError: message,
-      },
+      data: { aiContentStatus: "failed", aiContentError: message },
     });
-    console.error("[post-import-project-ai] content failed", { projectId, error });
+    console.error("[post-import-project-ai] ai_content failed", { projectId, error });
+    return failResult("ai_content", error, {
+      ...base,
+      aiContentStatus: "failed",
+      contentError: message,
+    });
   }
 
-  if (base.aiInsightStatus === "success" && base.aiContentStatus === "success") {
+  base.stage = "apply_fields";
+  try {
+    if (!generatedInsight) {
+      throw new Error("AI 认知卡结果缺失");
+    }
+    await applyRequiredProjectFields({
+      projectId,
+      insight: generatedInsight.insight,
+      suggestedTags: generatedInsight.suggestedTags,
+      suggestedCategories: generatedInsight.suggestedCategories,
+      content: generatedContent,
+    });
+    const applyValidation = await validateAppliedFields(projectId);
+    if (applyValidation) {
+      throw new Error(applyValidation);
+    }
+    base.applyFieldsStatus = "success";
     await prisma.project.update({
       where: { id: projectId },
       data: { aiStatus: "done", aiError: null },
     });
+  } catch (error) {
+    const message = normalizeAiError(error);
+    console.error("[post-import-project-ai] apply_fields failed", { projectId, error });
+    return failResult("apply_fields", error, {
+      ...base,
+      applyFieldsStatus: "failed",
+      applyFieldsError: message,
+    });
   }
 
-  const validationError = validateRequiredEnrichmentFields(await loadEnrichmentSnapshot(projectId));
-  if (validationError) {
-    base.success = false;
-    base.error = validationError;
-    return base;
+  base.stage = "publish";
+  try {
+    const publishResult = await publishProjectAfterAiEnrichment(projectId);
+    if (!publishResult.ok) {
+      throw new Error(publishResult.error ?? "自动发布失败");
+    }
+    base.publishStatus = "success";
+  } catch (error) {
+    const message = normalizeAiError(error);
+    console.error("[post-import-project-ai] publish failed", { projectId, error });
+    return failResult("publish", error, {
+      ...base,
+      publishStatus: "failed",
+      publishError: message,
+    });
   }
 
   return {
     ...base,
     success: true,
+    stage: "done",
   };
 }
