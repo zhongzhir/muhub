@@ -1,40 +1,38 @@
 /**
- * 最小 OpenAI Chat Completions 封装（无 Agent / 无队列）。
- * 未配置 OPENAI_API_KEY 时所有 generate* 返回 null，调用方自行降级。
+ * 最小 OpenAI-compatible Chat Completions 封装（无 Agent / 无队列）。
+ * 未配置 AI_API_KEY / DEEPSEEK_API_KEY 时所有 generate* 返回 null，调用方自行降级。
  */
 
-const DEFAULT_MODEL = "gpt-4o-mini";
+import { getResolvedAiConfig, isAiConfigured as isAiConfiguredFromConfig } from "@/lib/ai/ai-config";
 
-export function isAiConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
-}
+export { isAiConfiguredFromConfig as isAiConfigured };
 
-function openAiBaseUrl(): string {
-  const u = process.env.OPENAI_BASE_URL?.trim();
-  return u || "https://api.openai.com";
-}
-
-function openAiModel(): string {
-  return process.env.OPENAI_MODEL?.trim() || DEFAULT_MODEL;
+function chatCompletionsUrl(baseUrl?: string): string {
+  if (baseUrl?.trim()) {
+    return `${baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
+  }
+  return "https://api.openai.com/v1/chat/completions";
 }
 
 type ChatMessage = { role: "system" | "user"; content: string };
 
 async function chatCompletion(messages: ChatMessage[], maxTokens: number): Promise<string | null> {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key) {
+  let config;
+  try {
+    config = getResolvedAiConfig();
+  } catch {
     return null;
   }
-  const url = `${openAiBaseUrl().replace(/\/$/, "")}/v1/chat/completions`;
+  const url = chatCompletionsUrl(config.baseUrl);
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
+        Authorization: `Bearer ${config.apiKey}`,
       },
       body: JSON.stringify({
-        model: openAiModel(),
+        model: config.model,
         temperature: 0.35,
         max_tokens: maxTokens,
         messages,
@@ -42,7 +40,7 @@ async function chatCompletion(messages: ChatMessage[], maxTokens: number): Promi
       cache: "no-store",
     });
     if (!res.ok) {
-      console.warn("[project-ai] OpenAI HTTP", res.status, await res.text().catch(() => ""));
+      console.warn("[project-ai] chat HTTP", res.status, await res.text().catch(() => ""));
       return null;
     }
     const json = (await res.json()) as {

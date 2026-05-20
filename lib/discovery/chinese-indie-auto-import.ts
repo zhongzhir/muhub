@@ -4,9 +4,12 @@ import {
 } from "@/agents/discovery/discovery-store";
 import { prisma } from "@/lib/prisma";
 
-export type DiscoveryFailureKind = "ai" | "infra" | "validation" | "duplicate";
+export type DiscoveryFailureKind = "ai" | "infra" | "validation" | "duplicate" | "config";
 
 export function inferDiscoveryFailureKind(stage: string): DiscoveryFailureKind {
+  if (stage === "config") {
+    return "config";
+  }
   if (stage === "apply_fields" || stage === "publish") {
     return "validation";
   }

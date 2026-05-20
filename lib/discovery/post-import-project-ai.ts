@@ -1,5 +1,5 @@
 import { enrichProjectWithAi } from "@/lib/ai/enrich-project";
-import { isAiConfigured } from "@/lib/ai/project-ai";
+import { isAiConfigured } from "@/lib/ai/ai-config";
 import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import {
   buildProjectContentSourceSnapshot,
@@ -26,6 +26,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 
 export type AiEnrichmentStage =
+  | "config"
   | "evidence"
   | "website_evidence"
   | "ai_insight"
@@ -64,7 +65,7 @@ function shortStack(error: unknown): string | undefined {
 }
 
 function aiNotConfiguredMessage(): string {
-  return "AI 服务未配置，请检查服务器环境变量";
+  return "AI 服务未配置，请设置 AI_API_KEY 或 DEEPSEEK_API_KEY（及 DEEPSEEK_MODEL_INSIGHT / DEEPSEEK_BASE_URL）";
 }
 
 function failResult(
@@ -303,8 +304,9 @@ export async function generatePostImportProjectAi(
         aiContentError: message,
       },
     });
-    return failResult("evidence", message, {
+    return failResult("config", message, {
       ...base,
+      stage: "config",
       aiInsightStatus: "failed",
       aiContentStatus: "failed",
     });

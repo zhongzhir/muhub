@@ -24,8 +24,8 @@ export type ResolvedAiConfig = {
  *
  * Fallback order:
  * - apiKey: AI_API_KEY -> DEEPSEEK_API_KEY
- * - model: AI_MODEL -> DEEPSEEK_MODEL_INSIGHT -> DEEPSEEK_MODEL
- * - baseUrl: AI_BASE_URL -> DEEPSEEK_BASE_URL -> https://api.deepseek.com
+ * - model: AI_MODEL -> DEEPSEEK_MODEL_INSIGHT -> DEEPSEEK_MODEL -> deepseek-chat
+ * - baseUrl: AI_BASE_URL -> DEEPSEEK_BASE_URL -> https://api.deepseek.com (when DeepSeek key path)
  */
 export function getResolvedAiConfig(): ResolvedAiConfig {
   const genericApiKey = process.env.AI_API_KEY?.trim()
@@ -37,12 +37,11 @@ export function getResolvedAiConfig(): ResolvedAiConfig {
     process.env.AI_MODEL?.trim() ||
     process.env.DEEPSEEK_MODEL_INSIGHT?.trim() ||
     process.env.DEEPSEEK_MODEL?.trim() ||
-    (deepSeekApiKey ? "deepseek-chat" : "")
+    (apiKey ? "deepseek-chat" : "")
   const baseUrl =
     process.env.AI_BASE_URL?.trim() ||
-    (deepSeekApiKey
-      ? process.env.DEEPSEEK_BASE_URL?.trim() || "https://api.deepseek.com"
-      : undefined)
+    process.env.DEEPSEEK_BASE_URL?.trim() ||
+    (deepSeekApiKey && !process.env.AI_BASE_URL?.trim() ? "https://api.deepseek.com" : undefined)
 
   if (!provider) {
     throw new AiConfigError("缺少环境变量 AI_PROVIDER。")
@@ -59,5 +58,15 @@ export function getResolvedAiConfig(): ResolvedAiConfig {
     model,
     apiKey,
     ...(baseUrl ? { baseUrl } : {}),
+  }
+}
+
+/** True when AI_API_KEY or DEEPSEEK_* fallback is sufficient for chat completions. */
+export function isAiConfigured(): boolean {
+  try {
+    getResolvedAiConfig()
+    return true
+  } catch {
+    return false
   }
 }
