@@ -24,7 +24,13 @@
 
 ---
 
-## 1. Discovery 工作流形成闭环
+## chinese-independent-developer V2（2026-05-19）
+
+主板-only 默认策略、AI enrichment 门禁与人工审核回退详见：
+
+- [docs/discovery/chinese-independent-developer-v2.md](./discovery/chinese-independent-developer-v2.md)
+
+---
 
 当前已验证真实链路：
 

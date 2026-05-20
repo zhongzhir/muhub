@@ -103,6 +103,17 @@ function printSummary(result: RunChineseIndependentDeveloperImportResult): void 
     if (result.needsReviewTitles.length > 0) {
       console.log(`needsReview titles: ${result.needsReviewTitles.join(", ")}`);
     }
+    if (result.aiFailures.length > 0) {
+      console.log("\nAI enrichment failures:");
+      for (const failure of result.aiFailures) {
+        console.log(
+          `- ${failure.title} | stage=${failure.stage} | projectId=${failure.projectId ?? "-"} | ${failure.error}`,
+        );
+        if (failure.stack) {
+          console.log(`  stack: ${failure.stack.split("\n")[0]}`);
+        }
+      }
+    }
   }
   if (result.fetchErrors.length > 0) {
     console.log("\nfetch errors:");
@@ -114,7 +125,7 @@ function printSummary(result: RunChineseIndependentDeveloperImportResult): void 
     console.log("\nduplicate examples:");
     for (const dup of result.sampleDuplicates) {
       console.log(
-        `- ${dup.name} (${dup.edition}) -> /projects/${dup.existingSlug || "?"} (${dup.reason})`,
+        `- ${dup.name} (${dup.edition}) -> /projects/${dup.existingSlug || "?"} (${dup.reason}, ${dup.duplicateKind})`,
       );
     }
   }

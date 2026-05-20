@@ -402,10 +402,16 @@ export async function findDiscoveryItemByUrl(url: string): Promise<DiscoveryItem
   return list.find((i) => normalizeDiscoveryUrl(i.url) === key) ?? null;
 }
 
+export type AppendDiscoveryItemResult = {
+  duplicate: boolean;
+  existingItemId?: string;
+  existingSlug?: string;
+};
+
 /**
  * 将一条记录插入队列头部；若同 normalize URL 已存在则跳过写入。
  */
-export async function appendDiscoveryItem(item: DiscoveryItem): Promise<{ duplicate: boolean }> {
+export async function appendDiscoveryItem(item: DiscoveryItem): Promise<AppendDiscoveryItemResult> {
   if (isDbEnabled()) {
     const source = await ensureDbDiscoveryQueueSource();
     const dedupeFields = buildDiscoveryDedupeFields(item);
@@ -415,7 +421,11 @@ export async function appendDiscoveryItem(item: DiscoveryItem): Promise<{ duplic
     };
     const existing = await findDiscoveryItemByUrl(prepared.url);
     if (existing) {
-      return { duplicate: true };
+      return {
+        duplicate: true,
+        existingItemId: existing.id,
+        existingSlug: existing.projectSlug?.trim() || undefined,
+      };
     }
     const url = normalizeDiscoveryUrl(prepared.url);
     const { reviewStatus, importStatus } = mapStatusToDb(prepared.status);
@@ -464,7 +474,11 @@ export async function appendDiscoveryItem(item: DiscoveryItem): Promise<{ duplic
   };
   const strongDup = findStrongDuplicateItem(list, prepared);
   if (strongDup) {
-    return { duplicate: true };
+    return {
+      duplicate: true,
+      existingItemId: strongDup.id,
+      existingSlug: strongDup.projectSlug?.trim() || undefined,
+    };
   }
   const weakDup = findPossibleDuplicateByTitle(list, prepared);
   const nextItem: DiscoveryItem = weakDup

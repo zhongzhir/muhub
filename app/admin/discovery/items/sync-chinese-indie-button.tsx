@@ -13,19 +13,30 @@ export function SyncChineseIndieButton() {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
 
-  function run(dryRun: boolean) {
+  function run(input: { dryRun: boolean; autoImport?: boolean }) {
     setMessage(null);
     startTransition(() => {
       void (async () => {
-        const result = await syncChineseIndependentDeveloperAction({ dryRun });
+        const result = await syncChineseIndependentDeveloperAction(input);
         if (!result.ok) {
           setMessage(result.error);
           return;
         }
         const s = result.summary;
-        setMessage(
-          `${dryRun ? "预检" : "同步"}完成：解析 ${s.parsed}，可入队 ${s.queued}，重复 ${s.duplicates.length}，跳过已关闭 ${s.skippedClosed}${s.imported ? `，已导入 ${s.imported}` : ""}`,
-        );
+        const parts = [
+          `${input.dryRun ? "预检" : input.autoImport ? "自动上架" : "同步"}完成`,
+          `解析 ${s.parsed}`,
+          `可入队 ${s.queued}`,
+          `重复 ${s.duplicates.length}`,
+          `跳过已关闭 ${s.skippedClosed}`,
+        ];
+        if (input.dryRun) {
+          parts.push(`预估可自动上架 ${s.estimatedAutoImportable}`);
+        }
+        if (input.autoImport) {
+          parts.push(`已导入 ${s.imported}`, `AI 成功 ${s.aiSucceeded}`, `AI 失败 ${s.aiFailed}`);
+        }
+        setMessage(parts.join("，"));
         router.refresh();
       })();
     });
@@ -34,11 +45,19 @@ export function SyncChineseIndieButton() {
   return (
     <div className="flex flex-col items-start gap-1">
       <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={pending} className={btn} onClick={() => run(true)}>
-          {pending ? "处理中..." : "预检中国独立开发者库"}
+        <button type="button" disabled={pending} className={btn} onClick={() => run({ dryRun: true })}>
+          {pending ? "处理中..." : "预检中国独立开发者主板项目"}
         </button>
-        <button type="button" disabled={pending} className={btn} onClick={() => run(false)}>
-          {pending ? "处理中..." : "同步中国独立开发者库"}
+        <button type="button" disabled={pending} className={btn} onClick={() => run({ dryRun: false })}>
+          {pending ? "处理中..." : "同步中国独立开发者主板项目"}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          className={btn}
+          onClick={() => run({ dryRun: false, autoImport: true })}
+        >
+          {pending ? "处理中..." : "自动上架主板项目（需 AI 增强成功）"}
         </button>
       </div>
       {message ? <p className="max-w-xl text-[11px] text-zinc-500 dark:text-zinc-400">{message}</p> : null}

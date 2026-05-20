@@ -1006,6 +1006,7 @@ export type SyncChineseIndependentDeveloperResult =
 
 export async function syncChineseIndependentDeveloperAction(input: {
   dryRun?: boolean;
+  autoImport?: boolean;
   limit?: number;
 }): Promise<SyncChineseIndependentDeveloperResult> {
   const session = await auth();
@@ -1022,8 +1023,8 @@ export async function syncChineseIndependentDeveloperAction(input: {
     );
     const summary = await runChineseIndependentDeveloperImport({
       dryRun: input.dryRun === true,
-      autoImport: false,
-      edition: "all",
+      autoImport: input.autoImport === true,
+      edition: "main",
       limit: input.limit,
     });
     revalidatePath(REVALIDATE);

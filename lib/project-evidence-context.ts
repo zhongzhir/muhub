@@ -13,6 +13,26 @@ const MAX_PROJECT_DESCRIPTION_CHARS = 2200;
 const MAX_REFERENCES = 8;
 const MAX_PROJECT_SOURCES = 5;
 
+export function resolveProjectGithubUrl(input: {
+  githubUrl: string | null;
+  sources: Array<{ kind: string; url: string }>;
+}): string | null {
+  if (input.githubUrl?.trim()) {
+    return input.githubUrl.trim();
+  }
+  for (const source of input.sources) {
+    if (source.kind === "GITHUB" || source.kind === "GITEE") {
+      const url = source.url?.trim();
+      if (url) {
+        return url;
+      }
+    }
+  }
+  return null;
+}
+
+export type GithubEvidenceStatus = "resolved" | "missing" | "snapshot_only";
+
 type EvidenceLink = {
   platform: string;
   label: string | null;
@@ -102,6 +122,17 @@ export type ProjectEvidenceContext = {
     fetchedEvidence: WebsiteEvidenceSnapshot[];
   };
   gaps: string[];
+  sourcesMeta: {
+    totalCount: number;
+    includedCount: number;
+    kinds: string[];
+  };
+  githubEvidence: {
+    status: GithubEvidenceStatus;
+    resolvedUrl: string | null;
+    fromProjectField: boolean;
+    fromProjectSource: boolean;
+  };
   promptText: string;
 };
 
@@ -240,15 +271,28 @@ function buildPromptText(ctx: Omit<ProjectEvidenceContext, "promptText">): strin
     : "- 暂无人工认领/官方维护信息";
 
   const githubLines = [
-    ctx.github.url ? `- GitHub URL: ${ctx.github.url}` : "- 未提供 GitHub URL",
+    ctx.githubEvidence.resolvedUrl
+      ? `- GitHub URL（已解析）: ${ctx.githubEvidence.resolvedUrl}`
+      : "- 未提供 GitHub URL",
+    `- GitHub evidence 状态: ${ctx.githubEvidence.status}`,
+    ctx.githubEvidence.fromProjectSource && !ctx.githubEvidence.fromProjectField
+      ? "- GitHub URL 来自 ProjectSource 回退（非 Project 主字段）"
+      : null,
     ctx.github.latestSnapshot
       ? `- 最新仓库快照: ${ctx.github.latestSnapshot.repoFullName}, stars=${ctx.github.latestSnapshot.stars}, forks=${ctx.github.latestSnapshot.forks}, commits30d=${ctx.github.latestSnapshot.commitCount30d}, lastCommitAt=${ctx.github.latestSnapshot.lastCommitAt ?? "unknown"}`
-      : "- 暂无 GitHub 快照",
-  ].join("\n");
+      : "- 暂无 GitHub 快照（可依赖实时 GitHub API 抓取）",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const sourcesMetaLine = `- ProjectSource 共 ${ctx.sourcesMeta.totalCount} 条，纳入 prompt ${ctx.sourcesMeta.includedCount} 条；种类: ${ctx.sourcesMeta.kinds.join(", ") || "无"}`;
 
   return [
     "Project Evidence Context V1",
     "",
+    "0. 来源概览",
+    sourcesMetaLine,
+    `- GitHub evidence: ${ctx.githubEvidence.status}`,
     "1. 人工/官方信息",
     `- 项目: ${ctx.project.name} (${ctx.project.slug})`,
     ctx.project.shortDescription ? `- 一句话: ${ctx.project.shortDescription}` : null,
@@ -308,6 +352,16 @@ export async function buildProjectEvidenceContext(projectId: string): Promise<Pr
     },
   });
   if (!row) return null;
+
+  const resolvedGithubUrl = resolveProjectGithubUrl({
+    githubUrl: row.githubUrl,
+    sources: row.sources,
+  });
+  const githubFromProjectField = Boolean(row.githubUrl?.trim());
+  const githubFromProjectSource = Boolean(
+    !githubFromProjectField &&
+      row.sources.some((source) => source.kind === "GITHUB" || source.kind === "GITEE"),
+  );
 
   const sortedSources = [...row.sources]
     .sort((a, b) => sourceRank(b) - sourceRank(a))
@@ -375,6 +429,12 @@ export async function buildProjectEvidenceContext(projectId: string): Promise<Pr
   ].slice(0, MAX_REFERENCES);
 
   const latest = row.githubSnapshots[0] ?? null;
+  const githubEvidenceStatus: GithubEvidenceStatus = !resolvedGithubUrl
+    ? latest
+      ? "snapshot_only"
+      : "missing"
+    : "resolved";
+  const sourceKinds = [...new Set(row.sources.map((source) => source.kind))];
   const websiteCandidateUrls = collectProjectWebsiteFetchUrls({
     websiteUrl: row.websiteUrl,
     officialWebsite: row.officialInfo?.website ?? null,
@@ -392,7 +452,10 @@ export async function buildProjectEvidenceContext(projectId: string): Promise<Pr
   ) {
     gaps.push("缺少官网或明确项目主页");
   }
-  if (!row.githubUrl && !links.some((link) => link.platform.toLowerCase().includes("github"))) {
+  if (
+    !resolvedGithubUrl &&
+    !links.some((link) => link.platform.toLowerCase().includes("github"))
+  ) {
     gaps.push("缺少 GitHub，不应因此降低非技术项目的文本分析可信度");
   }
   if (!sortedSources.some((source) => source.content?.trim())) {
@@ -443,7 +506,7 @@ export async function buildProjectEvidenceContext(projectId: string): Promise<Pr
       references,
     },
     github: {
-      url: row.githubUrl ?? null,
+      url: resolvedGithubUrl,
       latestSnapshot: latest
         ? {
             repoFullName: latest.repoFullName,
@@ -470,6 +533,17 @@ export async function buildProjectEvidenceContext(projectId: string): Promise<Pr
       fetchedEvidence,
     },
     gaps,
+    sourcesMeta: {
+      totalCount: row.sources.length,
+      includedCount: sortedSources.length,
+      kinds: sourceKinds,
+    },
+    githubEvidence: {
+      status: githubEvidenceStatus,
+      resolvedUrl: resolvedGithubUrl,
+      fromProjectField: githubFromProjectField,
+      fromProjectSource: githubFromProjectSource,
+    },
   };
 
   return {

@@ -320,6 +320,134 @@ async function ensureCuratedListProjectSource(
   });
 }
 
+async function ensureRepoProjectSource(
+  tx: Prisma.TransactionClient,
+  projectId: string,
+  repoUrl: string,
+  isPrimary: boolean,
+): Promise<void> {
+  const url = repoUrl.trim();
+  if (!url) {
+    return;
+  }
+  const kind = inferRepoSourceKind(url);
+  const exists = await tx.projectSource.findFirst({
+    where: { projectId, kind, url },
+    select: { id: true },
+  });
+  if (exists) {
+    return;
+  }
+  await tx.projectSource.create({
+    data: {
+      projectId,
+      kind,
+      url,
+      isPrimary,
+    },
+  });
+}
+
+async function ensureWebsiteProjectSource(
+  tx: Prisma.TransactionClient,
+  projectId: string,
+  websiteUrl: string,
+  isPrimary: boolean,
+  websiteEvidence?: Awaited<ReturnType<typeof fetchWebsiteEvidence>> | null,
+): Promise<void> {
+  const url = websiteUrl.trim();
+  if (!url) {
+    return;
+  }
+  const exists = await tx.projectSource.findFirst({
+    where: { projectId, kind: "WEBSITE", url },
+    select: { id: true },
+  });
+  if (exists) {
+    return;
+  }
+  await tx.projectSource.create({
+    data: {
+      projectId,
+      kind: "WEBSITE",
+      url,
+      isPrimary,
+      title: bestTitleFromWebsiteEvidence(websiteEvidence ?? null) || undefined,
+      summary: bestDescriptionFromWebsiteEvidence(websiteEvidence ?? null) || undefined,
+      content: websiteEvidence?.textExcerpt ?? undefined,
+    },
+  });
+}
+
+async function mergeMissingSourcesForExistingProject(
+  tx: Prisma.TransactionClient,
+  projectId: string,
+  link: ParsedLink,
+  item: DiscoveryItem,
+  articleSource: ArticleSourceInput | null,
+  curatedSource: ArticleSourceInput | null,
+  websiteEvidence?: Awaited<ReturnType<typeof fetchWebsiteEvidence>> | null,
+): Promise<void> {
+  const chineseIndie = isChineseIndieDiscoveryItem(item);
+  if (link.websiteUrl) {
+    await tx.project.updateMany({
+      where: {
+        id: projectId,
+        OR: [{ websiteUrl: null }, { websiteUrl: "" }],
+      },
+      data: { websiteUrl: link.websiteUrl },
+    });
+    await ensureWebsiteProjectSource(
+      tx,
+      projectId,
+      link.websiteUrl,
+      chineseIndie ? true : !link.githubUrl,
+      websiteEvidence,
+    );
+  }
+  if (link.githubUrl) {
+    await tx.project.updateMany({
+      where: {
+        id: projectId,
+        OR: [{ githubUrl: null }, { githubUrl: "" }],
+      },
+      data: { githubUrl: link.githubUrl },
+    });
+    await ensureRepoProjectSource(tx, projectId, link.githubUrl, !link.websiteUrl && chineseIndie);
+  }
+  await ensureArticleProjectSource(tx, projectId, articleSource);
+  await ensureCuratedListProjectSource(tx, projectId, curatedSource, item);
+  for (const source of officialSourcesFromMeta(item)) {
+    const exists = await tx.projectSource.findFirst({
+      where: { projectId, url: source.url },
+      select: { id: true },
+    });
+    if (!exists) {
+      await tx.projectSource.create({
+        data: {
+          projectId,
+          kind: source.kind,
+          url: source.url,
+          label: source.label,
+          isPrimary: source.isPrimary,
+        },
+      });
+    }
+  }
+}
+
+async function resolveImportedFromCandidateId(item: DiscoveryItem): Promise<string | null> {
+  const candidateId = item.id?.trim();
+  if (!candidateId) {
+    return null;
+  }
+  const row = await prisma.discoveryCandidate.findUnique({
+    where: { id: candidateId },
+    select: { id: true },
+  });
+  return row?.id ?? null;
+}
+
 async function ensureArticleProjectSource(
   tx: Prisma.TransactionClient,
   projectId: string,
@@ -353,6 +481,26 @@ async function ensureArticleProjectSource(
   });
 }
 
+function normalizeMetaGithubUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+  try {
+    return normalizeGithubRepoUrl(trimmed);
+  } catch {
+    return trimmed;
+  }
+}
+
+function mergeMetaUrlsIntoLink(item: DiscoveryItem, link: ParsedLink): ParsedLink {
+  const metaGithub = stringMeta(item.meta, "githubUrl");
+  const metaWebsite = stringMeta(item.meta, "websiteUrl");
+  const githubUrl = link.githubUrl || (metaGithub ? normalizeMetaGithubUrl(metaGithub) : null);
+  const websiteUrl = link.websiteUrl || metaWebsite || null;
+  return { ...link, githubUrl, websiteUrl };
+}
+
 function parseItemLink(item: DiscoveryItem): ParsedLink {
   const raw = projectUrlFromItem(item);
   if (!raw) {
@@ -361,15 +509,13 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
   // 通用项目（manual-general）无需 URL，直接返回空链接
   if (!raw.startsWith("http")) {
     // 尝试从 meta 取 websiteUrl / referenceUrl 作为站点
-    const ws = (item.meta && typeof item.meta === "object" && "websiteUrl" in item.meta && typeof (item.meta as Record<string,unknown>).websiteUrl === "string")
-      ? ((item.meta as Record<string,unknown>).websiteUrl as string).trim()
-      : null;
-    return {
+    const ws = stringMeta(item.meta, "websiteUrl") || null;
+    return mergeMetaUrlsIntoLink(item, {
       githubUrl: null,
       websiteUrl: ws || null,
       primaryRepo: null,
       externalLinks: ws ? [{ platform: "website", url: ws, label: "官方网站", isPrimary: true }] : [],
-    };
+    });
   }
   if (isSourceArticleUrl(raw)) {
     throw new Error("条目缺少项目主页或平台项目页链接，不能把来源文章当作项目地址导入。");
@@ -387,37 +533,37 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
 
   if (parsedRepo?.platform === "github" || host === "github.com" || host.endsWith(".github.com")) {
     const githubUrl = normalizeGithubRepoUrl(raw);
-    return {
+    return mergeMetaUrlsIntoLink(item, {
       githubUrl,
       websiteUrl: null,
       primaryRepo: { kind: "GITHUB", url: githubUrl },
       externalLinks: [],
-    };
+    });
   }
 
   if (parsedRepo?.platform === "gitee") {
     const url = normalizeGithubRepoUrl(raw);
-    return {
+    return mergeMetaUrlsIntoLink(item, {
       githubUrl: null,
       websiteUrl: null,
       primaryRepo: { kind: "GITEE", url },
       externalLinks: [],
-    };
+    });
   }
 
   if (parsedSource?.type === "GITCC") {
-    return {
+    return mergeMetaUrlsIntoLink(item, {
       githubUrl: null,
       websiteUrl: parsedSource.url,
       primaryRepo: { kind: "OTHER", url: parsedSource.url, label: "GitCC" },
       externalLinks: [
         { platform: "gitcc", url: parsedSource.url, label: "GitCC 项目页", isPrimary: true },
       ],
-    };
+    });
   }
 
   if (classified?.role === "platform_project_page") {
-    return {
+    return mergeMetaUrlsIntoLink(item, {
       githubUrl: null,
       websiteUrl: classified.url,
       primaryRepo: { kind: "OTHER", url: classified.url, label: classified.label },
@@ -429,15 +575,15 @@ function parseItemLink(item: DiscoveryItem): ParsedLink {
           isPrimary: true,
         },
       ],
-    };
+    });
   }
 
-  return {
+  return mergeMetaUrlsIntoLink(item, {
     githubUrl: null,
     websiteUrl: u.href,
     primaryRepo: null,
     externalLinks: [],
-  };
+  });
 }
 
 async function createExternalLinks(
@@ -589,35 +735,19 @@ export async function importJsonDiscoveryItem(
 
   const existing = await findExistingProject(item, link);
   if (existing) {
+    const websiteEvidence = link.websiteUrl
+      ? await fetchWebsiteEvidence(link.websiteUrl).catch(() => null)
+      : null;
     await prisma.$transaction(async (tx) => {
-      if (link.websiteUrl) {
-        await tx.project.updateMany({
-          where: {
-            id: existing.id,
-            OR: [{ websiteUrl: null }, { websiteUrl: "" }],
-          },
-          data: { websiteUrl: link.websiteUrl },
-        });
-      }
-      await ensureArticleProjectSource(tx, existing.id, articleSource);
-      await ensureCuratedListProjectSource(tx, existing.id, curatedSource, item);
-      for (const source of officialSourcesFromMeta(item)) {
-        const exists = await tx.projectSource.findFirst({
-          where: { projectId: existing.id, url: source.url },
-          select: { id: true },
-        });
-        if (!exists) {
-          await tx.projectSource.create({
-            data: {
-              projectId: existing.id,
-              kind: source.kind,
-              url: source.url,
-              label: source.label,
-              isPrimary: source.isPrimary,
-            },
-          });
-        }
-      }
+      await mergeMissingSourcesForExistingProject(
+        tx,
+        existing.id,
+        link,
+        item,
+        articleSource,
+        curatedSource,
+        websiteEvidence,
+      );
       await createExternalLinks(tx, existing.id, link.externalLinks);
     });
     return {
@@ -645,6 +775,8 @@ export async function importJsonDiscoveryItem(
     websiteEvidence,
   });
 
+  const importedFromCandidateId = await resolveImportedFromCandidateId(item);
+
   const project = await prisma.$transaction(async (tx) => {
     const created = await tx.project.create({
       data: {
@@ -661,6 +793,7 @@ export async function importJsonDiscoveryItem(
         visibilityStatus: "DRAFT",
         discoverySource: item.sourceType,
         discoverySourceId: item.id,
+        importedFromCandidateId,
         discoveredAt: new Date(item.createdAt),
         sources: sourceCreates.length
           ? {

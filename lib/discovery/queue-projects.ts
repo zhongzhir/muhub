@@ -740,14 +740,22 @@ export function countBulkQueueSelection(input: {
   return urlSelected.filter((item) => allowed.has(item)).length + generalSelected.length;
 }
 
+export type DuplicateKind = "strict" | "possible" | "queue_url";
+
 export type ChineseIndieQueueDuplicate = {
   name: string;
   projectUrl: string;
   edition: ChineseIndieCandidateInput["edition"];
-  reason: ExistingProjectHit["reason"];
+  reason: ExistingProjectHit["reason"] | "queue_url";
+  duplicateKind: DuplicateKind;
   existingSlug: string;
   existingName: string;
+  existingItemId?: string;
 };
+
+function isStrictDuplicateReason(reason: ExistingProjectHit["reason"]): boolean {
+  return reason === "githubUrl" || reason === "websiteUrl" || reason === "slug";
+}
 
 export type BulkQueueChineseIndieOptions = {
   limit?: number;
@@ -834,7 +842,7 @@ function findExistingProjectInIndex(
   return null;
 }
 
-function createChineseIndieDiscoveryItem(input: ChineseIndieCandidateInput): DiscoveryItem {
+export function createChineseIndieDiscoveryItem(input: ChineseIndieCandidateInput): DiscoveryItem {
   const now = new Date().toISOString();
   const primaryUrl = input.websiteUrl || input.githubUrl || input.sourceUrl;
   return {
@@ -907,11 +915,64 @@ export async function bulkQueueChineseIndependentDeveloperProjects(
         repo: entry.name,
       });
       if (existing) {
+        if (isStrictDuplicateReason(existing.reason)) {
+          duplicates.push({
+            name: entry.name,
+            projectUrl: entry.githubUrl || entry.websiteUrl || entry.sourceUrl,
+            edition: entry.edition,
+            reason: existing.reason,
+            duplicateKind: "strict",
+            existingSlug: existing.slug,
+            existingName: existing.name,
+          });
+          continue;
+        }
+        // name-only match: possible duplicate — still queue with flag
+        const item = createChineseIndieDiscoveryItem(entry);
+        item.possibleDuplicate = true;
+        item.meta = {
+          ...item.meta,
+          duplicateKind: "possible",
+          duplicateReason: existing.reason,
+          existingSlug: existing.slug,
+          existingProjectId: existing.id,
+        };
+        if (options.dryRun) {
+          items.push(item);
+          queued += 1;
+          duplicates.push({
+            name: entry.name,
+            projectUrl: item.url,
+            edition: entry.edition,
+            reason: existing.reason,
+            duplicateKind: "possible",
+            existingSlug: existing.slug,
+            existingName: existing.name,
+          });
+          continue;
+        }
+        const appended = await appendDiscoveryItem(item);
+        if (appended.duplicate) {
+          duplicates.push({
+            name: entry.name,
+            projectUrl: item.url,
+            edition: entry.edition,
+            reason: "queue_url",
+            duplicateKind: "queue_url",
+            existingSlug: appended.existingSlug ?? "",
+            existingName: entry.name,
+            existingItemId: appended.existingItemId,
+          });
+          continue;
+        }
+        items.push(item);
+        queued += 1;
         duplicates.push({
           name: entry.name,
-          projectUrl: entry.githubUrl || entry.websiteUrl || entry.sourceUrl,
+          projectUrl: item.url,
           edition: entry.edition,
           reason: existing.reason,
+          duplicateKind: "possible",
           existingSlug: existing.slug,
           existingName: existing.name,
         });
@@ -930,9 +991,11 @@ export async function bulkQueueChineseIndependentDeveloperProjects(
           name: entry.name,
           projectUrl: item.url,
           edition: entry.edition,
-          reason: "name",
-          existingSlug: "",
+          reason: "queue_url",
+          duplicateKind: "queue_url",
+          existingSlug: appended.existingSlug ?? "",
           existingName: entry.name,
+          existingItemId: appended.existingItemId,
         });
         continue;
       }

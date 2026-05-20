@@ -146,6 +146,17 @@ function discoveryItemSearchHaystack(row: DiscoveryItem): string {
     "autoExtractionStatus",
     "autoExtractionError",
     "autoExtractionReason",
+    "aiEnrichmentStatus",
+    "aiEnrichmentStage",
+    "aiEnrichmentError",
+    "createdProjectId",
+    "importedProjectId",
+    "failureKind",
+    "existingSlug",
+    "existingItemId",
+    "importResultError",
+    "duplicateKind",
+    "duplicateReason",
   ]) {
     const value = meta[key];
     if (typeof value === "string" && value.trim()) {
@@ -397,6 +408,20 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
             const isSourceMaterial = isSourceMaterialDiscoveryItem(row);
             const sourceArticleUrl = readMetaText(row.meta, "sourceArticleUrl");
             const autoExtractionError = readMetaText(row.meta, "autoExtractionError");
+            const aiEnrichmentStatus = readMetaText(row.meta, "aiEnrichmentStatus");
+            const aiEnrichmentStage = readMetaText(row.meta, "aiEnrichmentStage");
+            const aiEnrichmentError = readMetaText(row.meta, "aiEnrichmentError");
+            const createdProjectId = readMetaText(row.meta, "createdProjectId");
+            const importedProjectId = readMetaText(row.meta, "importedProjectId");
+            const failureKind = readMetaText(row.meta, "failureKind");
+            const importResultError = readMetaText(row.meta, "importResultError");
+            const metaExistingSlug =
+              readMetaText(row.meta, "existingSlug") || readMetaText(row.meta, "importedProjectSlug");
+            const metaExistingItemId = readMetaText(row.meta, "existingItemId");
+            const metaGithubUrl = readMetaText(row.meta, "githubUrl");
+            const metaWebsiteUrl = readMetaText(row.meta, "websiteUrl");
+            const duplicateKind = readMetaText(row.meta, "duplicateKind");
+            const needsReview = row.meta?.needsReview === true;
             const extractionDuplicates = readMetaObjectArray(row.meta, "autoExtractionDuplicates");
             const materialUrl =
               readMetaText(row.meta, "extractedUrl") ||
@@ -461,6 +486,31 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 {autoExtractionError ? (
                   <p className="mt-1 max-w-md text-xs font-normal text-red-600 dark:text-red-400">
                     提取失败：{autoExtractionError}
+                  </p>
+                ) : null}
+                {needsReview || aiEnrichmentStatus === "failed" || failureKind === "infra" ? (
+                  <p className="mt-1 max-w-md text-xs font-normal text-amber-700 dark:text-amber-300">
+                    待审核
+                    {failureKind ? ` · ${failureKind}` : ""}
+                    {aiEnrichmentStage ? ` · ${aiEnrichmentStage}` : ""}
+                    {importResultError
+                      ? ` · 回写失败：${importResultError.length > 80 ? `${importResultError.slice(0, 80)}…` : importResultError}`
+                      : null}
+                    {aiEnrichmentError && !importResultError
+                      ? `：${aiEnrichmentError.length > 120 ? `${aiEnrichmentError.slice(0, 120)}…` : aiEnrichmentError}`
+                      : ""}
+                  </p>
+                ) : null}
+                {(createdProjectId || importedProjectId) && row.status !== "imported" ? (
+                  <p className="mt-1 max-w-md text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                    project: {importedProjectId ?? createdProjectId}
+                  </p>
+                ) : null}
+                {metaGithubUrl || metaWebsiteUrl ? (
+                  <p className="mt-1 max-w-md truncate text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                    {metaWebsiteUrl ? `web: ${metaWebsiteUrl}` : null}
+                    {metaWebsiteUrl && metaGithubUrl ? " · " : null}
+                    {metaGithubUrl ? `gh: ${metaGithubUrl}` : null}
                   </p>
                 ) : null}
                 {extractionDuplicates.length > 0 ? (
@@ -569,11 +619,39 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                         ? "失败"
                         : "-"}
                 </span>
+                {aiEnrichmentStatus ? (
+                  <p className="mt-1 max-w-[220px] text-[11px] text-zinc-500 dark:text-zinc-400">
+                    enrichment: {aiEnrichmentStatus}
+                    {aiEnrichmentStage ? ` @ ${aiEnrichmentStage}` : ""}
+                    {failureKind ? ` (${failureKind})` : ""}
+                  </p>
+                ) : null}
+                {(createdProjectId || importedProjectId) && (
+                  <p className="mt-0.5 max-w-[220px] truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {importedProjectId ? `imported: ${importedProjectId}` : `created: ${createdProjectId}`}
+                  </p>
+                )}
               </td>
               <td className="px-4 py-3">
                 <span className={`rounded px-2 py-0.5 text-xs ${duplicateBadgeClass(row)}`}>
-                  {row.duplicateOfId ? "重复" : row.possibleDuplicate ? "疑似" : "-"}
+                  {row.duplicateOfId ? "重复" : row.possibleDuplicate || duplicateKind === "possible" ? "疑似" : "-"}
                 </span>
+                {metaExistingSlug ? (
+                  <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                    →{" "}
+                    <Link href={`/projects/${metaExistingSlug}`} className="underline underline-offset-2">
+                      {metaExistingSlug}
+                    </Link>
+                  </p>
+                ) : null}
+                {metaExistingItemId ? (
+                  <p className="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                    item: {metaExistingItemId}
+                  </p>
+                ) : null}
+                {duplicateKind && duplicateKind !== "possible" ? (
+                  <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">{duplicateKind}</p>
+                ) : null}
               </td>
               <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-zinc-500 tabular-nums">
                 {row.createdAt.replace("T", " ").slice(0, 19)}
