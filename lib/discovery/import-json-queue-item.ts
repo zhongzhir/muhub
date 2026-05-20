@@ -545,6 +545,7 @@ async function findExistingProject(
  */
 export async function importJsonDiscoveryItem(
   item: DiscoveryItem,
+  options?: { scheduleAiEnrichment?: boolean },
 ): Promise<{
   slug: string;
   projectId: string;
@@ -689,9 +690,11 @@ export async function importJsonDiscoveryItem(
   });
 
   try {
-    scheduleProjectAiEnrichment(project.slug);
-    await updateDiscoveryAiStatus(item.id, "scheduled");
-    console.log(`[Discovery] AI enrichment scheduled for project: ${project.slug} (id=${project.id})`);
+    if (options?.scheduleAiEnrichment !== false) {
+      scheduleProjectAiEnrichment(project.slug);
+      await updateDiscoveryAiStatus(item.id, "scheduled");
+      console.log(`[Discovery] AI enrichment scheduled for project: ${project.slug} (id=${project.id})`);
+    }
   } catch (e) {
     console.error("[Discovery] AI enrichment schedule failed", e);
   }
