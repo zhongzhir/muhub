@@ -15,6 +15,15 @@ export const CHINESE_INDIE_FILES = {
   game: "README-Game.md",
 } as const;
 
+export const CHINESE_INDIE_DEFAULT_EDITION: ChineseIndieEdition = "main";
+
+export const CHINESE_INDIE_INCLUDED_FILES = [CHINESE_INDIE_FILES.main] as const;
+
+export const CHINESE_INDIE_EXCLUDED_FILES = [
+  CHINESE_INDIE_FILES.programmer,
+  CHINESE_INDIE_FILES.game,
+] as const;
+
 export type ChineseIndieEdition = keyof typeof CHINESE_INDIE_FILES;
 export type ChineseIndieStatus = "ONLINE" | "DEVELOPING" | "CLOSED";
 
@@ -286,8 +295,8 @@ export function normalizeChineseIndieProjectEntry(
 ): ChineseIndieCandidateInput {
   const { githubUrl, websiteUrl } = projectUrlsFromEntry(entry);
   const autoImportAllowed =
+    entry.edition === "main" &&
     entry.originalStatus === "ONLINE" &&
-    (entry.edition === "main" || entry.edition === "programmer") &&
     Boolean(githubUrl || websiteUrl) &&
     (entry.description?.trim().length ?? 0) >= 10;
 
@@ -319,7 +328,7 @@ export function normalizeChineseIndieProjectEntry(
 }
 
 export async function fetchChineseIndependentDeveloperFiles(
-  editions: ChineseIndieEdition[] = ["main", "programmer", "game"],
+  editions: ChineseIndieEdition[] = [CHINESE_INDIE_DEFAULT_EDITION],
 ): Promise<ChineseIndieFetchedFile[]> {
   const results: ChineseIndieFetchedFile[] = [];
 
@@ -397,9 +406,43 @@ export function parseChineseIndependentDeveloperFiles(
 
 export function shouldAutoImportChineseIndieCandidate(input: ChineseIndieCandidateInput): boolean {
   return (
+    input.edition === "main" &&
     input.originalStatus === "ONLINE" &&
-    (input.edition === "main" || input.edition === "programmer") &&
     Boolean(input.githubUrl || input.websiteUrl) &&
     (input.description?.trim().length ?? 0) >= 10
   );
+}
+
+export function isAutoImportEligibleEntry(
+  entry: ChineseIndieCandidateInput,
+  options?: { isDuplicate?: boolean },
+): boolean {
+  if (options?.isDuplicate) {
+    return false;
+  }
+  return shouldAutoImportChineseIndieCandidate(entry);
+}
+
+export function countEstimatedAutoImportable(
+  entries: ChineseIndieCandidateInput[],
+  duplicateNames: Set<string>,
+): number {
+  let count = 0;
+  for (const entry of entries) {
+    const dupKey = `${entry.name.trim().toLowerCase()}::${entry.edition}`;
+    if (isAutoImportEligibleEntry(entry, { isDuplicate: duplicateNames.has(dupKey) })) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+export function resolveChineseIndieEditions(
+  edition?: ChineseIndieEdition | "all",
+): ChineseIndieEdition[] {
+  const resolved = edition ?? CHINESE_INDIE_DEFAULT_EDITION;
+  if (resolved === "all") {
+    return ["main", "programmer", "game"];
+  }
+  return [resolved];
 }
