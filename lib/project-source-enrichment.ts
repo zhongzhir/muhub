@@ -9,6 +9,7 @@ import {
   parseProjectSourceUrl,
 } from "@/lib/project-source-url";
 import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
+import { sourceQualityDefaultsForCreate } from "@/lib/project-source-quality";
 import {
   fetchWebsiteEvidence,
   isFetchableProjectWebsiteUrl,
@@ -496,10 +497,26 @@ async function inferSourcesWithAi(input: {
   }
 }
 
+function qualityWouldBeInternal(
+  candidate: EnrichmentCandidate,
+  projectWebsiteHost: string | null,
+): boolean {
+  const quality = sourceQualityDefaultsForCreate({
+    url: candidate.url,
+    kind: candidate.kind,
+    label: candidate.label,
+    isPrimary: false,
+    origin: "enrichment",
+    projectWebsiteHost,
+  });
+  return quality.visibility === "internal";
+}
+
 async function ensureEnrichedSource(
   projectId: string,
   candidate: EnrichmentCandidate,
   existingUrlKeys: Set<string>,
+  projectWebsiteHost: string | null,
 ): Promise<boolean> {
   const normalized = normalizeSourceUrl(candidate.url);
   const key = `${candidate.kind}:${normalized.toLowerCase()}`;
@@ -519,6 +536,20 @@ async function ensureEnrichedSource(
     return false;
   }
 
+  const quality = sourceQualityDefaultsForCreate({
+    url: normalized,
+    kind: candidate.kind,
+    label: candidate.label,
+    isPrimary: false,
+    origin: "enrichment",
+    projectWebsiteHost,
+  });
+
+  if (quality.visibility === "internal") {
+    existingUrlKeys.add(key);
+    return false;
+  }
+
   await prisma.projectSource.create({
     data: {
       projectId,
@@ -526,6 +557,11 @@ async function ensureEnrichedSource(
       url: normalized,
       label: candidate.label,
       isPrimary: false,
+      trustLevel: quality.trustLevel,
+      ownershipLevel: quality.ownershipLevel,
+      entityAccuracy: quality.entityAccuracy,
+      visibility: quality.visibility,
+      verificationStatus: quality.verificationStatus,
     },
   });
   existingUrlKeys.add(key);
@@ -647,7 +683,12 @@ export async function enrichProjectSources(projectId: string): Promise<ProjectSo
       candidate.url = normalized;
     }
 
-    const added = await ensureEnrichedSource(projectId, candidate, existingUrlKeys);
+    const added = await ensureEnrichedSource(
+      projectId,
+      candidate,
+      existingUrlKeys,
+      websiteHost,
+    );
     if (added) {
       addedSources.push({
         kind: candidate.kind,
@@ -658,6 +699,8 @@ export async function enrichProjectSources(projectId: string): Promise<ProjectSo
       if ((candidate.kind === "GITHUB" || candidate.kind === "GITEE") && !trustedGithub) {
         trustedGithub = candidate.url;
       }
+    } else if (qualityWouldBeInternal(candidate, websiteHost)) {
+      skippedSources.push({ url: candidate.url, reason: "internal_weak_entity" });
     } else {
       skippedSources.push({ url: candidate.url, reason: "already_exists" });
     }

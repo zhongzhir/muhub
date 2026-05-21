@@ -10,6 +10,7 @@ import type {
 import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
 import { normalizeReferenceSources } from "@/lib/discovery/reference-sources";
 import type { ProjectPageView } from "@/lib/demo-project";
+import { parseProjectKnowledgeFromRow } from "@/lib/project-knowledge";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
 export type ProjectWithRelations = Project & {
@@ -90,6 +91,7 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     tags: row.tags?.length ? [...row.tags] : [],
     categories: stringArrayFromJson(row.categoriesJson),
     primaryCategory: row.primaryCategory ?? undefined,
+    aiKnowledge: parseProjectKnowledgeFromRow(row.aiKnowledgeJson) ?? undefined,
     isAiRelated: row.isAiRelated ?? undefined,
     isChineseTool: row.isChineseTool ?? undefined,
     externalLinks,
@@ -146,6 +148,9 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
       content: s.content ?? null,
       summary: s.summary ?? null,
       isPrimary: s.isPrimary,
+      trustLevel: s.trustLevel,
+      entityAccuracy: s.entityAccuracy,
+      visibility: s.visibility,
     })),
     fromDiscovery: Boolean(row.importedFromCandidateId),
   };

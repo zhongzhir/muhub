@@ -1,5 +1,11 @@
-import type { ProjectSourceKind } from "@prisma/client";
+import type {
+  ProjectSourceKind,
+  SourceEntityAccuracy,
+  SourceTrustLevel,
+  SourceVisibility,
+} from "@prisma/client";
 import { parseRepoUrl } from "@/lib/repo-platform";
+import { isPublicDisplaySource } from "@/lib/project-source-quality";
 
 /** 详情 / 列表展示用的一条信息源 */
 export type ProjectSourceDisplayItem = {
@@ -183,6 +189,9 @@ export type ProjectSourceRowInput = {
   content?: string | null;
   summary?: string | null;
   isPrimary: boolean;
+  trustLevel?: SourceTrustLevel | null;
+  entityAccuracy?: SourceEntityAccuracy | null;
+  visibility?: SourceVisibility | null;
 };
 
 function hostHint(url: string): string | undefined {
@@ -216,9 +225,12 @@ export function getProjectSources(input: {
   legacyGithubUrl?: string | null;
   legacyWebsiteUrl?: string | null;
   rows: ProjectSourceRowInput[];
+  /** 公开展示时仅返回 official/verified + exact + public 来源 */
+  publicOnly?: boolean;
 }): ProjectSourceDisplayItem[] {
   const out: ProjectSourceDisplayItem[] = [];
   const seen = new Set<string>();
+  const publicOnly = input.publicOnly ?? false;
 
   const push = (item: SourceAddInput) => {
     const key = `${item.kind}:${normalizeSourceUrl(item.url)}`;
@@ -243,6 +255,16 @@ export function getProjectSources(input: {
   };
 
   for (const r of input.rows) {
+    if (
+      publicOnly &&
+      !isPublicDisplaySource({
+        visibility: r.visibility ?? "public",
+        trustLevel: r.trustLevel ?? "verified",
+        entityAccuracy: r.entityAccuracy ?? "exact",
+      })
+    ) {
+      continue;
+    }
     push({
       id: r.id,
       kind: r.kind,

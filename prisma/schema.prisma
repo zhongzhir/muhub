@@ -92,6 +92,34 @@ enum ProjectSourceKind {
   OTHER
 }
 
+enum SourceTrustLevel {
+  official
+  verified
+  inferred
+}
+
+enum SourceOwnershipLevel {
+  official
+  third_party
+}
+
+enum SourceEntityAccuracy {
+  exact
+  possible
+  weak
+}
+
+enum SourceVisibility {
+  public
+  internal
+}
+
+enum SourceVerificationStatus {
+  verified
+  pending
+  failed
+}
+
 /** Discovery V2：抓取来源开关 */
 enum DiscoverySourceStatus {
   ACTIVE
@@ -591,6 +619,8 @@ model Project {
   aiError       String?
   /** AI 项目认知卡（V1） */
   aiInsight Json?
+  /** AI 结构化项目知识（V1）：分类/平台/技术信号/来源覆盖等 */
+  aiKnowledgeJson Json?
   /** AI 认知卡状态：idle | pending | success | failed */
   aiInsightStatus String?
   aiInsightUpdatedAt DateTime?
@@ -813,9 +843,15 @@ model ProjectSource {
   content   String?           @db.Text
   summary   String?           @db.Text
   isPrimary Boolean           @default(false)
+  trustLevel           SourceTrustLevel           @default(inferred)
+  ownershipLevel       SourceOwnershipLevel       @default(third_party)
+  entityAccuracy       SourceEntityAccuracy       @default(possible)
+  visibility           SourceVisibility           @default(public)
+  verificationStatus   SourceVerificationStatus   @default(pending)
   createdAt DateTime          @default(now())
 
   @@index([projectId])
+  @@index([projectId, visibility])
 }
 
 model ProjectSocialAccount {

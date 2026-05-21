@@ -20,8 +20,13 @@ import {
   type ProjectAISignals,
   type ProjectAISuggestedCategories,
 } from "@/lib/project-ai-insight";
+import {
+  categoriesJsonFromKnowledge,
+  knowledgeTagsForProject,
+  type ProjectKnowledge,
+} from "@/lib/project-knowledge";
 import { publishProjectAfterAiEnrichment } from "@/lib/project-publishing";
-import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
+import { normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
@@ -134,6 +139,7 @@ function buildLongDescriptionFromContent(
 async function applyRequiredProjectFields(input: {
   projectId: string;
   insight: ProjectAIInsight;
+  knowledge: ProjectKnowledge;
   suggestedTags: string[];
   suggestedCategories: ProjectAISuggestedCategories;
   content: ProjectAIContent | null;
@@ -187,7 +193,10 @@ async function applyRequiredProjectFields(input: {
     existing.simpleSummary?.trim() ||
     description;
 
-  let tags = normalizeSuggestedTags(input.suggestedTags);
+  let tags = knowledgeTagsForProject(input.knowledge);
+  if (!tags.length) {
+    tags = normalizeSuggestedTags(input.suggestedTags);
+  }
   if (!tags.length) {
     tags = normalizeSuggestedTags(ruleSuggest.tags);
   }
@@ -195,21 +204,8 @@ async function applyRequiredProjectFields(input: {
     tags = ["独立开发者"];
   }
 
-  const normalizedCategories = normalizeSuggestedCategories({
-    primary: input.suggestedCategories.primary ?? ruleSuggest.primaryCategory,
-    secondary: input.suggestedCategories.secondary,
-    optional: input.suggestedCategories.optional,
-  });
-  const primaryCategory =
-    normalizedCategories.primary ??
-    normalizeSuggestedCategories({ primary: ruleSuggest.primaryCategory }).primary ??
-    "other";
-
-  const categories = [
-    primaryCategory,
-    normalizedCategories.secondary,
-    ...(normalizedCategories.optional ?? []),
-  ].filter((item): item is string => Boolean(item?.trim()));
+  const primaryCategory = input.knowledge.primaryCategory?.trim() || "other";
+  const categories = categoriesJsonFromKnowledge(input.knowledge);
 
   await prisma.project.update({
     where: { id: input.projectId },
@@ -222,6 +218,7 @@ async function applyRequiredProjectFields(input: {
       ...(categories.length
         ? { categoriesJson: categories as unknown as Prisma.InputJsonValue }
         : {}),
+      aiKnowledgeJson: input.knowledge as unknown as Prisma.InputJsonValue,
     },
   });
 }
@@ -400,6 +397,7 @@ export async function generatePostImportProjectAi(
       signals,
       suggestedTags: generatedInsight.suggestedTags,
       suggestedCategories: generatedInsight.suggestedCategories,
+      knowledge: generatedInsight.knowledge,
       sourceSnapshot: snapshot,
       sourceLevel,
     });
@@ -451,6 +449,7 @@ export async function generatePostImportProjectAi(
     await applyRequiredProjectFields({
       projectId,
       insight: generatedInsight.insight,
+      knowledge: generatedInsight.knowledge,
       suggestedTags: generatedInsight.suggestedTags,
       suggestedCategories: generatedInsight.suggestedCategories,
       content: generatedContent,

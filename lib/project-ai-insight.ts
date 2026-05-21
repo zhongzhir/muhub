@@ -12,6 +12,13 @@ import {
 import {
   type WebsiteEvidenceSnapshot,
 } from "@/lib/project-url-evidence";
+import {
+  buildProjectKnowledgeFromEvidence,
+  normalizeProjectKnowledge,
+  PROJECT_KNOWLEDGE_JSON_SCHEMA_EXAMPLE,
+  saveProjectKnowledge,
+  type ProjectKnowledge,
+} from "@/lib/project-knowledge";
 import { prisma } from "@/lib/prisma";
 
 type ActivityLevel = "high" | "medium" | "low" | "unknown";
@@ -160,6 +167,7 @@ type InsightGenerateResult = {
   insight: ProjectAIInsight;
   suggestedTags: string[];
   suggestedCategories: ProjectAISuggestedCategories;
+  knowledge: ProjectKnowledge;
 };
 
 function safeString(value: unknown): string {
@@ -439,6 +447,10 @@ export function computeProjectSourceLevel(snapshot: ProjectInsightSourceSnapshot
 function ensureInsightShape(
   input: unknown,
   completeness: ProjectAICompleteness,
+  fallback?: {
+    suggestedCategories?: ProjectAISuggestedCategories;
+    evidenceSnapshot?: ProjectEvidenceSnapshot | null;
+  },
 ): InsightGenerateResult {
   const nowIso = new Date().toISOString();
   const obj = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
@@ -496,7 +508,14 @@ function ensureInsightShape(
     optional: normalizedCategories.optional,
   };
 
-  return { insight: parsed, suggestedTags, suggestedCategories };
+  const knowledgeRaw =
+    obj.knowledge && typeof obj.knowledge === "object" ? obj.knowledge : obj;
+  const knowledge = normalizeProjectKnowledge(knowledgeRaw, {
+    suggestedCategories,
+    evidenceSnapshot: fallback?.evidenceSnapshot,
+  });
+
+  return { insight: parsed, suggestedTags, suggestedCategories, knowledge };
 }
 
 export async function generateProjectAIInsight(
@@ -561,6 +580,7 @@ export async function generateProjectAIInsight(
     "请基于以下项目公开信息，输出 json，字段结构如下：",
     JSON.stringify(
       {
+        knowledge: PROJECT_KNOWLEDGE_JSON_SCHEMA_EXAMPLE.knowledge,
         insight: {
           version: "v1",
           summary: "string",
@@ -587,6 +607,8 @@ export async function generateProjectAIInsight(
       2,
     ),
     "注意：completeness 的 score/existing/missing 必须与输入一致，不要改写。",
+    "knowledge.primaryCategory 必须使用项目分类 slug（如 ai_agent、developer_tool、content_media、other），不得为空。",
+    "knowledge 必须基于 evidence 填写 platforms、techSignals、sourceCoverage，不得编造。",
     `输入快照：${JSON.stringify(snapshot)}`,
   ].filter(Boolean).join("\n\n");
 
@@ -628,7 +650,9 @@ export async function generateProjectAIInsight(
         jsonParseFailedAttempts += 1;
         throw new Error("AI 输出格式异常，请稍后重试");
       }
-      const normalized = ensureInsightShape(parsed, completeness);
+      const normalized = ensureInsightShape(parsed, completeness, {
+        evidenceSnapshot: snapshot.evidenceSnapshot,
+      });
       const sanitized = sanitizeInsightAgainstWebsiteEvidence(
         normalized.insight,
         snapshot.website.evidence,
@@ -638,9 +662,15 @@ export async function generateProjectAIInsight(
         normalized.suggestedTags = normalizeSuggestedTags(fallbackSuggest.tags.slice(0, 8));
       }
       if (!normalized.suggestedCategories.primary) {
-        normalized.suggestedCategories.primary = normalizeSuggestedCategories({
-          primary: fallbackSuggest.primaryCategory,
-        }).primary;
+        normalized.suggestedCategories.primary = normalized.knowledge.primaryCategory;
+      }
+      if (!normalized.knowledge.primaryCategory) {
+        normalized.knowledge.primaryCategory =
+          normalized.suggestedCategories.primary ??
+          normalizeSuggestedCategories({
+            primary: fallbackSuggest.primaryCategory,
+          }).primary ??
+          "other";
       }
       if (normalized.insight.activity.level === "unknown") {
         normalized.insight.activity.level = getActivityLevel(snapshot);
@@ -673,10 +703,24 @@ export async function saveProjectAIInsight(
     completeness: ProjectAICompleteness;
     suggestedTags: string[];
     suggestedCategories: ProjectAISuggestedCategories;
+    knowledge: ProjectKnowledge;
     sourceSnapshot: ProjectInsightSourceSnapshot;
     sourceLevel: ProjectAISourceLevel;
   },
 ) {
+  const knowledge = payload.sourceSnapshot.evidenceSnapshot
+    ? buildProjectKnowledgeFromEvidence({
+        evidenceSnapshot: payload.sourceSnapshot.evidenceSnapshot,
+        suggestedCategories: payload.suggestedCategories,
+        suggestedTags: payload.suggestedTags,
+        aiKnowledgePartial: payload.knowledge,
+      })
+    : normalizeProjectKnowledge(payload.knowledge, {
+        suggestedCategories: payload.suggestedCategories,
+      });
+
+  await saveProjectKnowledge(projectId, knowledge);
+
   return prisma.project.update({
     where: { id: projectId },
     data: {

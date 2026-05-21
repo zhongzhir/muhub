@@ -246,32 +246,69 @@ export function ProjectDetailInfoSections({
   const officialMediaItems = buildOfficialMediaItems(data, socials, sourceItems);
   const showOpenProjectsHelp = projectHasOpenCodeHostLinks(data, sourceItems);
 
+  const knowledge = data.aiKnowledge;
+  const displayPrimaryCategory =
+    knowledge?.primaryCategory?.trim() || data.primaryCategory?.trim() || "";
+  const displayCategories = [
+    ...(knowledge?.secondaryCategories ?? []),
+    ...(data.categories ?? []),
+  ].filter((item, index, arr) => item !== displayPrimaryCategory && arr.indexOf(item) === index);
+  const displayTags = [
+    ...(knowledge?.techSignals ?? []),
+    ...(knowledge?.platforms ?? []),
+    ...(data.tags ?? []),
+  ].filter((item, index, arr) => arr.indexOf(item) === index);
+  const hasKnowledgeSignals =
+    (knowledge?.platforms?.length ?? 0) > 0 ||
+    (knowledge?.techSignals?.length ?? 0) > 0 ||
+    (knowledge?.distributionChannels?.length ?? 0) > 0;
+
   return (
     <>
 
-      {(data.tags?.length ||
-        data.primaryCategory?.trim() ||
-        (data.categories && data.categories.length > 0) ||
+      {(displayTags.length ||
+        displayPrimaryCategory ||
+        displayCategories.length ||
         data.isAiRelated ||
-        data.isChineseTool) ? (
+        data.isChineseTool ||
+        hasKnowledgeSignals) ? (
         <section className="muhub-card mt-8 px-5 py-5 sm:px-6" data-testid="project-tags" aria-labelledby="project-type-tags-heading">
           <h2 id="project-type-tags-heading" className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             类型与标签
           </h2>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {data.primaryCategory?.trim() ? (
+            {displayPrimaryCategory ? (
               <span className="muhub-badge muhub-badge--category">
-                分类 · {getProjectCategoryLabel(data.primaryCategory.trim(), data.primaryCategory.trim())}
+                分类 · {getProjectCategoryLabel(displayPrimaryCategory, displayPrimaryCategory)}
               </span>
             ) : null}
-            {(data.categories ?? [])
-              .filter((c) => c !== data.primaryCategory)
-              .map((c) => (
-                <span key={c} className="muhub-badge muhub-badge--neutral text-xs">
-                  {c}
-                </span>
-              ))}
-            {(data.tags ?? []).map((t) => (
+            {displayCategories.map((c) => (
+              <span key={c} className="muhub-badge muhub-badge--neutral text-xs">
+                {getProjectCategoryLabel(c, c)}
+              </span>
+            ))}
+            {(knowledge?.platforms ?? []).map((platform) => (
+              <span key={`platform-${platform}`} className="muhub-badge muhub-badge--sky text-xs">
+                平台 · {platform}
+              </span>
+            ))}
+            {(knowledge?.techSignals ?? []).map((signal) => (
+              <span key={`tech-${signal}`} className="muhub-badge muhub-badge--neutral text-xs font-medium">
+                技术 · {signal}
+              </span>
+            ))}
+            {(knowledge?.distributionChannels ?? []).map((channel) => (
+              <span key={`dist-${channel}`} className="muhub-badge muhub-badge--neutral text-xs">
+                渠道 · {channel}
+              </span>
+            ))}
+            {displayTags
+              .filter(
+                (t) =>
+                  !(knowledge?.techSignals ?? []).includes(t) &&
+                  !(knowledge?.platforms ?? []).includes(t),
+              )
+              .map((t) => (
               <span key={t} className="muhub-badge muhub-badge--neutral text-xs font-medium">
                 #{t}
               </span>

@@ -6,7 +6,11 @@ import type {
   ProjectStatus,
   ProjectUpdateSourceType,
   SocialPlatform,
+  SourceEntityAccuracy,
+  SourceTrustLevel,
+  SourceVisibility,
 } from "@prisma/client";
+import type { ProjectKnowledge } from "@/lib/project-knowledge";
 
 export type DemoSocial = { platform: SocialPlatform; accountName: string; accountUrl?: string };
 export type DemoUpdate = {
@@ -34,6 +38,9 @@ export type DemoProjectSource = {
   content?: string | null;
   summary?: string | null;
   isPrimary?: boolean;
+  trustLevel?: SourceTrustLevel;
+  entityAccuracy?: SourceEntityAccuracy;
+  visibility?: SourceVisibility;
 };
 
 export type GithubSnapshotView = {
@@ -72,6 +79,8 @@ export type ProjectPageView = {
   categories?: string[];
   /** 广场筛选/卡片主类型 */
   primaryCategory?: string | null;
+  /** AI 结构化项目知识（Phase 4.1） */
+  aiKnowledge?: ProjectKnowledge | null;
   isAiRelated?: boolean | null;
   isChineseTool?: boolean | null;
   /** ProjectExternalLink 聚合（详情「外部链接」） */
