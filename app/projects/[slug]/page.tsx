@@ -228,6 +228,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const sourceItems = getProjectSources({
     legacyGithubUrl: data.githubUrl,
     legacyWebsiteUrl: data.websiteUrl,
+    publicOnly: true,
     rows: (data.sources ?? []).map((s) => ({
       id: s.id,
       kind: s.kind,
@@ -237,6 +238,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       content: null,
       summary: s.summary ?? null,
       isPrimary: Boolean(s.isPrimary),
+      trustLevel: s.trustLevel ?? undefined,
+      entityAccuracy: s.entityAccuracy ?? undefined,
+      visibility: s.visibility ?? undefined,
     })),
   });
   const gitccUrl =

@@ -139,6 +139,7 @@ async function finalizeImportedItem(input: {
   projectId: string;
   slug: string;
   aiResultStage: string;
+  needsReview?: boolean;
 }): Promise<boolean> {
   let importRetry = 0;
   let updated = false;
@@ -174,8 +175,8 @@ async function finalizeImportedItem(input: {
     importedProjectSlug: input.slug,
     failureKind: null,
     importResultError: null,
-    publishCompleted: true,
-    needsReview: false,
+    publishCompleted: input.needsReview !== true,
+    needsReview: input.needsReview === true,
     retryCount: readMetaNumber(input.item.meta, "retryCount"),
     evidenceCoverage: evidenceSnapshot?.coverage ?? null,
     evidenceConfidence: evidenceSnapshot?.confidence ?? null,
@@ -329,6 +330,7 @@ export async function runChineseIndependentDeveloperImport(
           projectId: result.projectId,
           slug: result.slug,
           aiResultStage: aiResult.stage,
+          needsReview: aiResult.needsReview === true,
         });
         if (!finalized) {
           const error = "导入回写失败：无法更新 discovery 队列项";
@@ -354,6 +356,10 @@ export async function runChineseIndependentDeveloperImport(
         imported += 1;
         aiSucceeded += 1;
         importedSlugs.push(result.slug);
+        if (aiResult.needsReview) {
+          needsReview += 1;
+          needsReviewTitles.push(item.title);
+        }
         console.info("[chinese-indie][imported]", {
           title: item.title,
           slug: result.slug,

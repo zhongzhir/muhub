@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { allocateUniqueProjectSlug } from "@/lib/project-allocate-slug";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { inferRepoSourceKind } from "@/lib/project-sources";
+import { sourceQualityDefaultsForCreate } from "@/lib/project-source-quality";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import {
   classifyProjectUrl,
@@ -316,6 +317,12 @@ async function ensureCuratedListProjectSource(
       content: curated.content,
       summary: curated.summary,
       isPrimary: false,
+      ...sourceQualityDefaultsForCreate({
+        url: curated.url,
+        kind: "WEBSITE",
+        label: "curated_repository",
+        origin: "curated",
+      }),
     },
   });
 }
@@ -338,12 +345,23 @@ async function ensureRepoProjectSource(
   if (exists) {
     return;
   }
+  const quality = sourceQualityDefaultsForCreate({
+    url,
+    kind,
+    isPrimary,
+    origin: "import",
+  });
   await tx.projectSource.create({
     data: {
       projectId,
       kind,
       url,
       isPrimary,
+      trustLevel: quality.trustLevel,
+      ownershipLevel: quality.ownershipLevel,
+      entityAccuracy: quality.entityAccuracy,
+      visibility: quality.visibility,
+      verificationStatus: quality.verificationStatus,
     },
   });
 }
@@ -366,6 +384,12 @@ async function ensureWebsiteProjectSource(
   if (exists) {
     return;
   }
+  const quality = sourceQualityDefaultsForCreate({
+    url,
+    kind: "WEBSITE",
+    isPrimary,
+    origin: "import",
+  });
   await tx.projectSource.create({
     data: {
       projectId,
@@ -375,6 +399,11 @@ async function ensureWebsiteProjectSource(
       title: bestTitleFromWebsiteEvidence(websiteEvidence ?? null) || undefined,
       summary: bestDescriptionFromWebsiteEvidence(websiteEvidence ?? null) || undefined,
       content: websiteEvidence?.textExcerpt ?? undefined,
+      trustLevel: quality.trustLevel,
+      ownershipLevel: quality.ownershipLevel,
+      entityAccuracy: quality.entityAccuracy,
+      visibility: quality.visibility,
+      verificationStatus: quality.verificationStatus,
     },
   });
 }

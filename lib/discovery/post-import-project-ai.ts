@@ -49,6 +49,8 @@ export type PostImportProjectAiResult = {
   aiContentStatus: "success" | "failed" | "skipped";
   applyFieldsStatus: "success" | "failed" | "skipped";
   publishStatus: "success" | "failed" | "skipped";
+  needsReview?: boolean;
+  publishGuardReason?: string;
   error?: string;
   stack?: string;
   insightError?: string;
@@ -290,6 +292,8 @@ export async function generatePostImportProjectAi(
     return failResult("evidence", "项目不存在或已删除", base);
   }
 
+  let cachedEvidenceSnapshot: Awaited<ReturnType<typeof buildProjectEvidenceSnapshot>> | null = null;
+
   if (!isAiConfigured()) {
     const message = aiNotConfiguredMessage();
     await prisma.project.update({
@@ -347,6 +351,7 @@ export async function generatePostImportProjectAi(
       throw new Error("无法构建 evidence snapshot");
     }
     await detectAndPersistProjectUpdateSignals(projectId, evidenceSnapshot);
+    cachedEvidenceSnapshot = evidenceSnapshot;
   } catch (error) {
     console.error("[post-import-project-ai] evidence failed", { projectId, error });
     return failResult("evidence", error, base);
@@ -475,11 +480,22 @@ export async function generatePostImportProjectAi(
 
   base.stage = "publish";
   try {
-    const publishResult = await publishProjectAfterAiEnrichment(projectId);
-    if (!publishResult.ok) {
+    const publishResult = await publishProjectAfterAiEnrichment(projectId, {
+      evidenceSnapshot: cachedEvidenceSnapshot,
+    });
+    if (publishResult.needsReview) {
+      base.publishStatus = "skipped";
+      base.needsReview = true;
+      base.publishGuardReason = publishResult.guardReason ?? publishResult.error;
+      console.warn("[post-import-project-ai] publish guard blocked auto publish", {
+        projectId,
+        reason: base.publishGuardReason,
+      });
+    } else if (!publishResult.ok) {
       throw new Error(publishResult.error ?? "自动发布失败");
+    } else {
+      base.publishStatus = "success";
     }
-    base.publishStatus = "success";
   } catch (error) {
     const message = normalizeAiError(error);
     console.error("[post-import-project-ai] publish failed", { projectId, error });

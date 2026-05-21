@@ -1,3 +1,5 @@
+import { fetchTextWithRetry } from "@/lib/fetch-with-retry";
+
 export type WebsiteEvidenceSnapshot = {
   url: string;
   finalUrl: string | null;
@@ -198,66 +200,25 @@ async function fetchWebsiteEvidenceOnce(
   }
 
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  try {
-    const resp = await fetch(url, {
-      method: "GET",
-      redirect: "follow",
-      cache: "no-store",
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: {
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      },
-    });
-    const finalUrl = resp.url || url;
-    if (!resp.ok) {
-      return {
-        url,
-        finalUrl,
-        reachable: false,
-        statusCode: resp.status,
-        errorMessage: `HTTP ${resp.status}`,
-        title: null,
-        description: null,
-        ogTitle: null,
-        ogDescription: null,
-        headings: [],
-        textExcerpt: null,
-        checkedAt,
-      };
-    }
-    const contentType = resp.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
-      return {
-        url,
-        finalUrl,
-        reachable: true,
-        statusCode: resp.status,
-        errorMessage: null,
-        title: null,
-        description: null,
-        ogTitle: null,
-        ogDescription: null,
-        headings: [],
-        textExcerpt: null,
-        checkedAt,
-      };
-    }
-    const html = await resp.text();
-    return extractWebsiteEvidenceFromHtml(html, {
-      url,
-      finalUrl,
-      statusCode: resp.status,
-    });
-  } catch (error) {
+  const resp = await fetchTextWithRetry(url, {
+    timeoutMs,
+    retries: 1,
+    allowedContentTypes: ["text/html", "application/xhtml", "text/plain"],
+    headers: {
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    },
+  });
+  const finalUrl = resp.finalUrl || url;
+  if (!resp.ok) {
     return {
       url,
-      finalUrl: null,
+      finalUrl,
       reachable: false,
-      statusCode: null,
-      errorMessage: error instanceof Error ? error.message : String(error),
+      statusCode: resp.status || null,
+      errorMessage: resp.error ?? `HTTP ${resp.status}`,
       title: null,
       description: null,
       ogTitle: null,
@@ -267,6 +228,27 @@ async function fetchWebsiteEvidenceOnce(
       checkedAt,
     };
   }
+  if (!resp.text) {
+    return {
+      url,
+      finalUrl,
+      reachable: true,
+      statusCode: resp.status,
+      errorMessage: null,
+      title: null,
+      description: null,
+      ogTitle: null,
+      ogDescription: null,
+      headings: [],
+      textExcerpt: null,
+      checkedAt,
+    };
+  }
+  return extractWebsiteEvidenceFromHtml(resp.text, {
+    url,
+    finalUrl,
+    statusCode: resp.status,
+  });
 }
 
 function shouldRetryWebsiteFetch(snapshot: WebsiteEvidenceSnapshot): boolean {

@@ -6,7 +6,8 @@ import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-norma
 import { buildProjectEvidenceContext, type ProjectEvidenceContext } from "@/lib/project-evidence-context";
 import {
   buildProjectEvidenceSnapshot,
-  formatEvidenceSnapshotForPrompt,
+  buildCompressedEvidenceSnapshot,
+  formatCompressedEvidenceForPrompt,
   type ProjectEvidenceSnapshot,
 } from "@/lib/project-evidence-snapshot";
 import {
@@ -549,7 +550,9 @@ export async function generateProjectAIInsight(
     "你必须输出 json。",
   ].join("\n");
   const evidencePrompt = snapshot.evidenceSnapshot
-    ? formatEvidenceSnapshotForPrompt(snapshot.evidenceSnapshot)
+    ? formatCompressedEvidenceForPrompt(
+        buildCompressedEvidenceSnapshot(snapshot.evidenceSnapshot),
+      )
     : snapshot.evidenceContext?.promptText ?? "";
   const sourceContext = snapshot.sourceContents
     .map((source, index) => {
@@ -557,12 +560,15 @@ export async function generateProjectAIInsight(
         source.kind === "WECHAT_ARTICLE"
           ? "公众号"
           : source.label?.trim() || source.kind;
+      const contentExcerpt = source.content
+        ? limitText(source.content, source.label?.includes("curated_repository") ? 360 : 200)
+        : null;
       return [
         `【来源${index + 1}：${sourceName}】`,
-        source.title ? `标题：${source.title}` : null,
+        source.title ? `标题：${limitText(source.title, 120)}` : null,
         source.url ? `链接：${source.url}` : null,
-        source.summary ? `摘要：${source.summary}` : null,
-        source.content ? `正文：${source.content}` : null,
+        source.summary ? `摘要：${limitText(source.summary, 160)}` : null,
+        contentExcerpt ? `正文摘录：${contentExcerpt}` : null,
       ]
         .filter(Boolean)
         .join("\n");
@@ -607,9 +613,14 @@ export async function generateProjectAIInsight(
       2,
     ),
     "注意：completeness 的 score/existing/missing 必须与输入一致，不要改写。",
-    "knowledge.primaryCategory 必须使用项目分类 slug（如 ai_agent、developer_tool、content_media、other），不得为空。",
+    "knowledge.primaryCategory 必须使用固定枚举之一：AI_VIDEO, AI_IMAGE, AI_AGENT, AI_WRITING, DEV_TOOL, PRODUCTIVITY, SEARCH, EDUCATION, FINANCE, DATA_TOOL。",
+    "knowledge.platforms 只能使用：web, ios, android, chrome_extension, desktop, api, wechat。",
+    "knowledge.distributionChannels 只能使用：github, producthunt, chrome_store, app_store, wechat, twitter。",
+    "禁止发明新的 category/platform/distribution 值。",
     "knowledge 必须基于 evidence 填写 platforms、techSignals、sourceCoverage，不得编造。",
-    `输入快照：${JSON.stringify(snapshot)}`,
+    `项目 ID：${snapshot.base.projectId}`,
+    snapshot.base.github ? `GitHub URL：${snapshot.base.github}` : null,
+    snapshot.base.website ? `官网 URL：${snapshot.base.website}` : null,
   ].filter(Boolean).join("\n\n");
 
   let lastErr = "";

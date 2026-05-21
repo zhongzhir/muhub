@@ -208,7 +208,7 @@ async function fetchGithubEvidence(repoUrl: string | null): Promise<{
       const readmeJson = (await readmeRes.json()) as { content?: string; encoding?: string };
       if (readmeJson.encoding === "base64" && typeof readmeJson.content === "string") {
         const decoded = Buffer.from(readmeJson.content, "base64").toString("utf-8");
-        readmeSummary = limitText(decoded.replace(/\s+/g, " ").trim(), 500);
+        readmeSummary = limitText(decoded.replace(/\s+/g, " ").trim(), 220);
       }
     }
     const updatedAt = repoJson.pushed_at ?? null;
@@ -406,6 +406,141 @@ export function formatEvidenceSnapshotForPrompt(snapshot: ProjectEvidenceSnapsho
       ? snapshot.signals.missingPublicInfo.join("；")
       : "当前公开信息相对完整，但仍需基于 evidence 表述，不可脑补。",
     coverageGuidance,
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
+export type CompressedEvidenceSnapshot = {
+  version: "compressed-v1";
+  generatedAt: string;
+  project: {
+    name: string;
+    tagline: string | null;
+    primaryCategory: string | null;
+  };
+  coverage: ProjectEvidenceSnapshot["coverage"];
+  confidence: ProjectEvidenceSnapshot["confidence"];
+  github: {
+    url: string | null;
+    repo: string | null;
+    description: string | null;
+    language: string | null;
+    stars: number | null;
+    readmeSummary: string | null;
+    status: CoverageLevel;
+  };
+  website: {
+    url: string | null;
+    reachable: boolean;
+    title: string | null;
+    description: string | null;
+    headings: string[];
+    summary: string | null;
+    status: CoverageLevel;
+  };
+  curated: {
+    markdownExcerpt: string | null;
+    summary: string | null;
+    status: CoverageLevel;
+  };
+};
+
+export function estimatePromptTokens(text: string): number {
+  return Math.ceil(text.length / 3.5);
+}
+
+export function buildCompressedEvidenceSnapshot(
+  snapshot: ProjectEvidenceSnapshot,
+): CompressedEvidenceSnapshot {
+  const websiteSummary =
+    snapshot.website.extractedSummary ??
+    snapshot.website.description ??
+    snapshot.website.evidence?.ogDescription ??
+    null;
+
+  return {
+    version: "compressed-v1",
+    generatedAt: snapshot.generatedAt,
+    project: {
+      name: snapshot.project.name,
+      tagline: snapshot.project.tagline,
+      primaryCategory: snapshot.project.primaryCategory,
+    },
+    coverage: snapshot.coverage,
+    confidence: snapshot.confidence,
+    github: {
+      url: snapshot.github.url,
+      repo: snapshot.github.repo,
+      description: snapshot.github.description,
+      language: snapshot.github.language,
+      stars: snapshot.github.stars,
+      readmeSummary: snapshot.github.readmeSummary
+        ? limitText(snapshot.github.readmeSummary, 220)
+        : null,
+      status: snapshot.github.status,
+    },
+    website: {
+      url: snapshot.website.url,
+      reachable: snapshot.website.reachable,
+      title: snapshot.website.title ? limitText(snapshot.website.title, 120) : null,
+      description: snapshot.website.description
+        ? limitText(snapshot.website.description, 180)
+        : null,
+      headings: snapshot.website.headings.slice(0, 4),
+      summary: websiteSummary ? limitText(websiteSummary, 280) : null,
+      status: snapshot.website.status,
+    },
+    curated: {
+      markdownExcerpt: snapshot.curated.markdownExcerpt
+        ? limitText(snapshot.curated.markdownExcerpt, 360)
+        : null,
+      summary: snapshot.curated.markdownExcerpt
+        ? limitText(snapshot.curated.markdownExcerpt, 180)
+        : null,
+      status: snapshot.curated.status,
+    },
+  };
+}
+
+export function formatCompressedEvidenceForPrompt(
+  compressed: CompressedEvidenceSnapshot,
+): string {
+  const lines = [
+    "Project Evidence Snapshot (compressed)",
+    `generatedAt: ${compressed.generatedAt}`,
+    `coverage: ${JSON.stringify(compressed.coverage)}`,
+    `confidence: ${compressed.confidence.overall} (${compressed.confidence.evidenceCompleteness}/100)`,
+    "",
+    "【GitHub】",
+    compressed.github.url
+      ? `repo=${compressed.github.repo ?? compressed.github.url}, stars=${compressed.github.stars ?? "?"}, language=${compressed.github.language ?? "?"}`
+      : "missing",
+    compressed.github.description
+      ? `desc: ${limitText(compressed.github.description, 160)}`
+      : null,
+    compressed.github.readmeSummary
+      ? `readme: ${compressed.github.readmeSummary}`
+      : null,
+    "",
+    "【官网】",
+    compressed.website.url
+      ? `reachable=${compressed.website.reachable}, title=${compressed.website.title ?? "无"}`
+      : "missing",
+    compressed.website.description
+      ? `meta: ${compressed.website.description}`
+      : null,
+    compressed.website.headings.length
+      ? `headings: ${compressed.website.headings.join(" | ")}`
+      : null,
+    compressed.website.summary ? `summary: ${compressed.website.summary}` : null,
+    "",
+    "【Curated】",
+    compressed.curated.markdownExcerpt
+      ? `excerpt: ${compressed.curated.markdownExcerpt}`
+      : "missing",
+    compressed.curated.summary && compressed.curated.summary !== compressed.curated.markdownExcerpt
+      ? `summary: ${compressed.curated.summary}`
+      : null,
   ];
   return lines.filter(Boolean).join("\n");
 }

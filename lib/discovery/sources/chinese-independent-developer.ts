@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { fetchTextWithRetry } from "@/lib/fetch-with-retry";
 import { normalizeGithubRepoUrlOrNull } from "@/lib/discovery/normalize-url";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
@@ -126,29 +127,22 @@ async function sleepMs(ms: number): Promise<void> {
 async function fetchChineseIndieRawMarkdownOnce(
   rawUrl: string,
 ): Promise<{ ok: true; markdown: string } | { ok: false; error: string }> {
-  try {
-    const resp = await fetch(rawUrl, {
-      headers: {
-        Accept: "text/plain",
-        "User-Agent": "MUHUB-Chinese-Indie-Importer",
-      },
-      cache: "no-store",
-      signal: AbortSignal.timeout(CHINESE_INDIE_FETCH_TIMEOUT_MS),
-    });
-    if (!resp.ok) {
-      return { ok: false, error: `HTTP ${resp.status}` };
-    }
-    const markdown = await resp.text();
-    if (!markdown.trim()) {
-      return { ok: false, error: "empty markdown" };
-    }
-    return { ok: true, markdown };
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
+  const resp = await fetchTextWithRetry(rawUrl, {
+    timeoutMs: CHINESE_INDIE_FETCH_TIMEOUT_MS,
+    retries: 0,
+    headers: {
+      Accept: "text/plain",
+      "User-Agent": "MUHUB-Chinese-Indie-Importer",
+    },
+  });
+  if (!resp.ok) {
+    return { ok: false, error: resp.error ?? `HTTP ${resp.status}` };
   }
+  const markdown = resp.text ?? "";
+  if (!markdown.trim()) {
+    return { ok: false, error: "empty markdown" };
+  }
+  return { ok: true, markdown };
 }
 
 async function fetchChineseIndieRawMarkdownWithRetry(input: {

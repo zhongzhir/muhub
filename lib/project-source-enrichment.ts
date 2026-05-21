@@ -9,7 +9,14 @@ import {
   parseProjectSourceUrl,
 } from "@/lib/project-source-url";
 import { inferRepoSourceKind, normalizeSourceUrl } from "@/lib/project-sources";
-import { sourceQualityDefaultsForCreate } from "@/lib/project-source-quality";
+import { fetchHeadWithRetry, fetchTextWithRetry } from "@/lib/fetch-with-retry";
+import {
+  countPublicProjectSources,
+  isBlacklistedPublicSourceUrl,
+  PUBLIC_SOURCE_LIMIT,
+  sourceCandidateScore,
+  sourceQualityDefaultsForCreate,
+} from "@/lib/project-source-quality";
 import {
   fetchWebsiteEvidence,
   isFetchableProjectWebsiteUrl,
@@ -193,6 +200,9 @@ export function classifyEnrichmentUrl(
   if (!host) {
     return null;
   }
+  if (isBlacklistedPublicSourceUrl(url)) {
+    return null;
+  }
 
   const github = normalizeGithubRepoUrlOrNull(url);
   if (github) {
@@ -227,6 +237,10 @@ export function classifyEnrichmentUrl(
   }
 
   if (SOCIAL_HOSTS.has(host) || SOCIAL_HOSTS.has(registrableDomain(host))) {
+    const socialPath = new URL(url).pathname.split("/").filter(Boolean);
+    if (socialPath.length < 1) {
+      return null;
+    }
     const kind: ProjectSourceKind =
       host.includes("bilibili") ? "BILIBILI"
       : host.includes("zhihu") ? "ZHIHU"
@@ -307,39 +321,26 @@ export function classifyEnrichmentUrl(
 }
 
 async function isUrlReachable(url: string, timeoutMs = 8000): Promise<boolean> {
-  try {
-    const head = await fetch(url, {
-      method: "HEAD",
-      redirect: "follow",
-      cache: "no-store",
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; MUHUB-SourceEnrichment/1.0; +https://muhub.app)",
-      },
-    });
-    if (head.ok || (head.status >= 300 && head.status < 400)) {
-      return true;
-    }
-  } catch {
-    // fall through to GET
+  const head = await fetchHeadWithRetry(url, {
+    timeoutMs,
+    retries: 1,
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; MUHUB-SourceEnrichment/1.0; +https://muhub.app)",
+    },
+  });
+  if (head.ok || (head.status >= 300 && head.status < 400)) {
+    return true;
   }
-  try {
-    const get = await fetch(url, {
-      method: "GET",
-      redirect: "follow",
-      cache: "no-store",
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: {
-        Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
-        "User-Agent":
-          "Mozilla/5.0 (compatible; MUHUB-SourceEnrichment/1.0; +https://muhub.app)",
-      },
-    });
-    return get.ok || (get.status >= 300 && get.status < 400);
-  } catch {
-    return false;
-  }
+  const get = await fetchTextWithRetry(url, {
+    timeoutMs,
+    retries: 0,
+    maxBytes: 32_000,
+    headers: {
+      Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
+      "User-Agent": "Mozilla/5.0 (compatible; MUHUB-SourceEnrichment/1.0; +https://muhub.app)",
+    },
+  });
+  return get.ok || (get.status >= 300 && get.status < 400);
 }
 
 function candidateKey(candidate: EnrichmentCandidate): string {
@@ -383,31 +384,21 @@ async function fetchWebsiteHtml(url: string): Promise<{ html: string; finalUrl: 
   if (!isFetchableProjectWebsiteUrl(url)) {
     return null;
   }
-  try {
-    const resp = await fetch(url, {
-      method: "GET",
-      redirect: "follow",
-      cache: "no-store",
-      signal: AbortSignal.timeout(12_000),
-      headers: {
-        Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      },
-    });
-    if (!resp.ok) {
-      return null;
-    }
-    const contentType = resp.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
-      return null;
-    }
-    const html = await resp.text();
-    return { html, finalUrl: resp.url || url };
-  } catch {
+  const resp = await fetchTextWithRetry(url, {
+    timeoutMs: 12_000,
+    retries: 1,
+    allowedContentTypes: ["text/html", "application/xhtml"],
+    headers: {
+      Accept: "text/html,application/xhtml+xml,*/*;q=0.8",
+      "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    },
+  });
+  if (!resp.ok || !resp.text) {
     return null;
   }
+  return { html: resp.text, finalUrl: resp.finalUrl || url };
 }
 
 type AiSourceInference = {
@@ -550,6 +541,12 @@ async function ensureEnrichedSource(
     return false;
   }
 
+  const publicCount = await countPublicProjectSources(projectId);
+  if (publicCount >= PUBLIC_SOURCE_LIMIT) {
+    existingUrlKeys.add(key);
+    return false;
+  }
+
   await prisma.projectSource.create({
     data: {
       projectId,
@@ -672,6 +669,29 @@ export async function enrichProjectSources(projectId: string): Promise<ProjectSo
         skippedSources.push({ url: candidate.url, reason: "unreachable" });
         continue;
       }
+    }
+
+    if (isBlacklistedPublicSourceUrl(candidate.url)) {
+      skippedSources.push({ url: candidate.url, reason: "blacklisted_path" });
+      continue;
+    }
+
+    const score = sourceCandidateScore({
+      url: candidate.url,
+      kind: candidate.kind,
+      label: candidate.label,
+      projectWebsiteHost: websiteHost,
+      projectName: row.name,
+    });
+    if (score < 58) {
+      skippedSources.push({ url: candidate.url, reason: "weak_entity_score" });
+      continue;
+    }
+
+    const publicCount = await countPublicProjectSources(projectId);
+    if (publicCount >= PUBLIC_SOURCE_LIMIT) {
+      skippedSources.push({ url: candidate.url, reason: "public_source_limit" });
+      continue;
     }
 
     if (candidate.kind === "GITHUB" || candidate.kind === "GITEE") {
