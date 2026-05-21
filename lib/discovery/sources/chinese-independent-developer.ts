@@ -1,3 +1,6 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
 import { normalizeGithubRepoUrlOrNull } from "@/lib/discovery/normalize-url";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import { parseRepoUrl } from "@/lib/repo-platform";
@@ -78,7 +81,127 @@ export type ChineseIndieFetchedFile = {
   rawUrl: string;
   markdown: string | null;
   error: string | null;
+  /** 网络失败但命中本地缓存时的 warning，不阻断解析 */
+  warning?: string | null;
+  fromCache?: boolean;
 };
+
+const CHINESE_INDIE_CACHE_DIR = path.join(
+  process.cwd(),
+  ".cache/discovery/chinese-independent-developer",
+);
+const CHINESE_INDIE_FETCH_TIMEOUT_MS = 30_000;
+const CHINESE_INDIE_FETCH_RETRY_DELAYS_MS = [2_000, 5_000, 10_000] as const;
+
+function chineseIndieForceRefresh(): boolean {
+  const raw = process.env.FORCE_REFRESH?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+function chineseIndieCachePath(fileName: string): string {
+  return path.join(CHINESE_INDIE_CACHE_DIR, fileName);
+}
+
+async function readChineseIndieCachedMarkdown(fileName: string): Promise<string | null> {
+  if (chineseIndieForceRefresh()) {
+    return null;
+  }
+  try {
+    const markdown = await fs.readFile(chineseIndieCachePath(fileName), "utf8");
+    return markdown.trim() ? markdown : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeChineseIndieCachedMarkdown(fileName: string, markdown: string): Promise<void> {
+  await fs.mkdir(CHINESE_INDIE_CACHE_DIR, { recursive: true });
+  await fs.writeFile(chineseIndieCachePath(fileName), markdown, "utf8");
+}
+
+async function sleepMs(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchChineseIndieRawMarkdownOnce(
+  rawUrl: string,
+): Promise<{ ok: true; markdown: string } | { ok: false; error: string }> {
+  try {
+    const resp = await fetch(rawUrl, {
+      headers: {
+        Accept: "text/plain",
+        "User-Agent": "MUHUB-Chinese-Indie-Importer",
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(CHINESE_INDIE_FETCH_TIMEOUT_MS),
+    });
+    if (!resp.ok) {
+      return { ok: false, error: `HTTP ${resp.status}` };
+    }
+    const markdown = await resp.text();
+    if (!markdown.trim()) {
+      return { ok: false, error: "empty markdown" };
+    }
+    return { ok: true, markdown };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function fetchChineseIndieRawMarkdownWithRetry(input: {
+  fileName: string;
+  rawUrl: string;
+}): Promise<{
+  markdown: string | null;
+  error: string | null;
+  warning: string | null;
+  fromCache: boolean;
+}> {
+  const maxAttempts = CHINESE_INDIE_FETCH_RETRY_DELAYS_MS.length + 1;
+  let lastError = "unknown fetch error";
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (attempt > 0) {
+      await sleepMs(CHINESE_INDIE_FETCH_RETRY_DELAYS_MS[attempt - 1]!);
+    }
+    const result = await fetchChineseIndieRawMarkdownOnce(input.rawUrl);
+    if (result.ok) {
+      await writeChineseIndieCachedMarkdown(input.fileName, result.markdown);
+      return {
+        markdown: result.markdown,
+        error: null,
+        warning: null,
+        fromCache: false,
+      };
+    }
+    lastError = result.error;
+    console.warn(
+      `[chinese-indie] fetch failed (${input.fileName}) attempt ${attempt + 1}/${maxAttempts}: ${lastError}`,
+    );
+  }
+
+  const cached = await readChineseIndieCachedMarkdown(input.fileName);
+  if (cached) {
+    const warning = `using cached chinese indie markdown (${input.fileName}): ${lastError}`;
+    console.warn(`[chinese-indie] ${warning}`);
+    return {
+      markdown: cached,
+      error: null,
+      warning,
+      fromCache: true,
+    };
+  }
+
+  return {
+    markdown: null,
+    error: lastError,
+    warning: null,
+    fromCache: false,
+  };
+}
 
 const DATE_SECTION_RE = /^###\s+(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*号添加/u;
 const DEVELOPER_SECTION_RE = /^####\s+(.+)$/u;
@@ -335,36 +458,16 @@ export async function fetchChineseIndependentDeveloperFiles(
   for (const edition of editions) {
     const fileName = CHINESE_INDIE_FILES[edition];
     const rawUrl = `${CHINESE_INDIE_RAW_BASE_URL}/${fileName}`;
-    try {
-      const resp = await fetch(rawUrl, {
-        headers: {
-          Accept: "text/plain",
-          "User-Agent": "MUHUB-Chinese-Indie-Importer",
-        },
-        cache: "no-store",
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!resp.ok) {
-        results.push({
-          edition,
-          fileName,
-          rawUrl,
-          markdown: null,
-          error: `HTTP ${resp.status}`,
-        });
-        continue;
-      }
-      const markdown = await resp.text();
-      results.push({ edition, fileName, rawUrl, markdown, error: null });
-    } catch (error) {
-      results.push({
-        edition,
-        fileName,
-        rawUrl,
-        markdown: null,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    const fetched = await fetchChineseIndieRawMarkdownWithRetry({ fileName, rawUrl });
+    results.push({
+      edition,
+      fileName,
+      rawUrl,
+      markdown: fetched.markdown,
+      error: fetched.error,
+      warning: fetched.warning,
+      fromCache: fetched.fromCache,
+    });
   }
 
   return results;
@@ -386,12 +489,21 @@ export function parseChineseIndependentDeveloperFiles(
   const entries: ChineseIndieCandidateInput[] = [];
 
   for (const file of files) {
-    if (file.error || !file.markdown) {
+    if (file.warning) {
       errors.push({
         edition: file.edition,
         fileName: file.fileName,
-        error: file.error ?? "empty markdown",
+        error: file.warning,
       });
+    }
+    if (file.error || !file.markdown) {
+      if (!file.markdown) {
+        errors.push({
+          edition: file.edition,
+          fileName: file.fileName,
+          error: file.error ?? "empty markdown",
+        });
+      }
       continue;
     }
     const rawEntries = parseChineseIndependentDeveloperMarkdown(file.markdown, file.edition);

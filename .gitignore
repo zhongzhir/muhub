@@ -61,5 +61,5 @@ data/growth-launch-intake-stub.json
 data/launch-plans.json
 data/site-content.json
 
-# V1.3 Growth：内容资产包（可迁移 DB）
-data/content-bundles.json
+# discovery importer local cache
+.cache/
