@@ -233,6 +233,7 @@ export async function generateProjectAIContent(
     "可以优化表达和提炼亮点，但不能超出事实边界。",
     "不得输出“行业第一”“全球领先”“大量用户”等无依据表述。",
     "如信息不足，请保守生成，并在 notes 中说明。",
+    "若 sourceSnapshot/evidence 显示官网或 curated 来源可用，不要说「公开信息有限」，改为「当前资料主要来自官网与公开收录来源」。",
     "必须输出 validation：basedOn、weakPoints、verifyBeforeUse。",
     "basedOn 应反映主要依据来源（official / ai_insight / source_snapshot / raw_fields）。",
     "weakPoints 必须指出信息不足或不确定点。",

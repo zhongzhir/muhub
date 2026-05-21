@@ -326,10 +326,35 @@ function missingKindsPresent(
   return missing;
 }
 
+function hasAdequatePublicCoverage(input: {
+  coverage: ProjectEvidenceSnapshot["coverage"];
+  sourcesTotalCount: number;
+}): boolean {
+  const { coverage, sourcesTotalCount } = input;
+  const websiteOk = coverage.website === "full" || coverage.website === "partial";
+  const curatedOk = coverage.curated === "full" || coverage.curated === "partial";
+  const supplementalOk =
+    coverage.docs !== "missing" ||
+    coverage.social !== "missing" ||
+    coverage.github !== "missing";
+  return (websiteOk && curatedOk) || (websiteOk && supplementalOk) || (curatedOk && sourcesTotalCount >= 3);
+}
+
 export function formatEvidenceSnapshotForPrompt(snapshot: ProjectEvidenceSnapshot): string {
   const missingCoverage = Object.entries(snapshot.coverage)
     .filter(([, level]) => level === "missing")
     .map(([key]) => key);
+  const adequateCoverage = hasAdequatePublicCoverage({
+    coverage: snapshot.coverage,
+    sourcesTotalCount: snapshot.sources.totalCount,
+  });
+  const coverageGuidance = adequateCoverage
+    ? "当前资料主要来自官网、curated 列表与已收录公开来源；请基于 evidence 整理，不要说「当前公开信息有限」。"
+    : !snapshot.github.url && snapshot.website.status === "missing"
+      ? "当前公开信息有限：缺少可用 GitHub 与官网 evidence，请明确说明信息不足，不要猜测。"
+      : !snapshot.github.url && snapshot.website.reachable
+        ? "缺少 GitHub，但官网与/或 curated 来源可用；请说明「当前资料主要来自官网与公开收录来源」，不要无根据说公开信息有限。"
+        : null;
   const lines = [
     "Project Evidence Snapshot V2",
     `generatedAt: ${snapshot.generatedAt}`,
@@ -380,9 +405,7 @@ export function formatEvidenceSnapshotForPrompt(snapshot: ProjectEvidenceSnapsho
     snapshot.signals.missingPublicInfo.length
       ? snapshot.signals.missingPublicInfo.join("；")
       : "当前公开信息相对完整，但仍需基于 evidence 表述，不可脑补。",
-    !snapshot.github.url && !snapshot.website.reachable
-      ? "当前公开信息有限：缺少可用 GitHub 与官网 evidence，请明确说明信息不足，不要猜测。"
-      : null,
+    coverageGuidance,
   ];
   return lines.filter(Boolean).join("\n");
 }
@@ -474,7 +497,8 @@ export async function buildProjectEvidenceSnapshot(
     websiteText.includes("docs") ||
     websiteText.includes("文档");
   const hasSocial = Object.values(socialAccounts).some(Boolean) ||
-    kinds.some((kind) => ["TWITTER", "WECHAT", "DISCORD", "BILIBILI", "DOUYIN"].includes(kind));
+    kinds.some((kind) => ["TWITTER", "WECHAT", "DISCORD", "BILIBILI", "DOUYIN", "ZHIHU", "XIAOHONGSHU"].includes(kind)) ||
+    row.sources.some((source) => source.label?.startsWith("enriched_"));
 
   const githubCoverage = coverageFromGithub({
     url: resolvedGithubUrl,
@@ -504,15 +528,20 @@ export async function buildProjectEvidenceSnapshot(
   };
 
   const missingPublicInfo: string[] = [];
-  if (!resolvedGithubUrl) {
+  const adequateCoverage =
+    (websiteCoverage !== "missing" && curatedCoverage !== "missing") ||
+    (websiteCoverage !== "missing" && (docsCoverage !== "missing" || socialCoverage !== "missing")) ||
+    (curatedCoverage !== "missing" && row.sources.length >= 3);
+
+  if (!resolvedGithubUrl && !adequateCoverage) {
     missingPublicInfo.push("缺少 GitHub 公开仓库信息");
   }
   if (!websiteUrl) {
     missingPublicInfo.push("缺少官网 URL");
-  } else if (!websiteEvidence?.reachable) {
+  } else if (!websiteEvidence?.reachable && websiteCoverage === "missing") {
     missingPublicInfo.push("官网当前不可达或静态信息极少");
   }
-  if (!curatedSource?.content?.trim()) {
+  if (!curatedSource?.content?.trim() && curatedCoverage === "missing" && !adequateCoverage) {
     missingPublicInfo.push("缺少 curated 列表正文");
   }
   if (missingKinds.includes("WECHAT_ARTICLE")) {

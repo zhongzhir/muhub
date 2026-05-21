@@ -519,7 +519,8 @@ export async function generateProjectAIInsight(
     "你的任务不是评价项目优劣，也不是给投资建议，而是把项目公开信息整理为结构化中文认知卡。",
     "只能依据输入 evidence 整理，不得编造不存在的事实。",
     "不得输出“值得投资”“行业领先”“前景巨大”“强烈推荐”等武断结论。",
-    "信息不足时应明确说“当前公开信息有限”，不要猜测。",
+    "仅当 evidence 显示 GitHub 与官网均 missing、且 curated/其他来源 coverage 也低时，才在 sourceNotes 中说明「当前公开信息有限」。",
+    "若官网 coverage 为 full/partial，或 curated coverage 为 full，或存在 docs/social/product 来源，应表述为「当前资料主要来自官网与公开收录来源」，不要无根据说公开信息有限。",
     "如果 evidence 中 website fetchedEvidence 显示 reachable=true，禁止声称官网无法访问、打不开或不可访问。",
     "如果页面是 JS 动态渲染导致正文较少，应表述为“公开静态信息有限”，而不是“官网无法访问”。",
     "sourceNotes 需要明确标注信息来源类型（例如 GitHub / 官网抓取证据 / 项目描述 / curated 列表），并指出缺失来源。",
@@ -555,7 +556,8 @@ export async function generateProjectAIInsight(
     evidencePrompt ? `【Evidence Snapshot / 信息覆盖】\n${evidencePrompt}` : null,
     sourceContext ? `【来源正文摘要】\n${sourceContext}` : null,
     "【任务】\n请结构化分析该项目，重点识别功能、目标用户、使用场景、亮点、价值信号和信息不足点。",
-    "若 GitHub missing 或官网 unreachable，必须在 summary/whatItIs/sourceNotes 中明确写「当前公开信息有限」，不得脑补。",
+    "仅当 GitHub missing 且官网 unreachable 且 curated/docs/social coverage 均低时，才在 summary/whatItIs/sourceNotes 中写「当前公开信息有限」。",
+    "若仅有 GitHub missing 但官网或 curated 来源可用，应写「当前资料主要来自官网与公开收录来源」，不得脑补 GitHub 信息。",
     "请基于以下项目公开信息，输出 json，字段结构如下：",
     JSON.stringify(
       {

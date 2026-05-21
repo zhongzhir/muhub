@@ -9,6 +9,7 @@ import {
 } from "@/lib/project-ai-content";
 import { buildProjectEvidenceSnapshot } from "@/lib/project-evidence-snapshot";
 import { detectAndPersistProjectUpdateSignals } from "@/lib/project-update-signals";
+import { enrichProjectSources } from "@/lib/project-source-enrichment";
 import {
   buildProjectInsightSourceSnapshot,
   computeProjectCompleteness,
@@ -27,6 +28,7 @@ import type { Prisma } from "@prisma/client";
 
 export type AiEnrichmentStage =
   | "config"
+  | "source_enrichment"
   | "evidence"
   | "website_evidence"
   | "ai_insight"
@@ -265,7 +267,7 @@ async function validateAppliedFields(projectId: string): Promise<string | null> 
 }
 
 /**
- * 导入后完整 AI enrichment（evidence → 认知卡 → 增强版 → 字段写入 → 发布）。
+ * 导入后完整 AI enrichment（source enrichment → evidence → 认知卡 → 增强版 → 字段写入 → 发布）。
  */
 export async function generatePostImportProjectAi(
   projectId: string,
@@ -323,6 +325,24 @@ export async function generatePostImportProjectAi(
       aiContentError: null,
     },
   });
+
+  base.stage = "source_enrichment";
+  try {
+    const enrichResult = await enrichProjectSources(projectId);
+    console.info("[post-import-project-ai] source_enrichment", {
+      projectId,
+      added: enrichResult.addedSources.length,
+      skipped: enrichResult.skippedSources.length,
+      confidence: enrichResult.confidence,
+      githubUrlUpdated: enrichResult.githubUrlUpdated,
+      notes: enrichResult.notes,
+    });
+  } catch (error) {
+    console.warn("[post-import-project-ai] source_enrichment failed (non-blocking)", {
+      projectId,
+      error,
+    });
+  }
 
   try {
     const evidenceSnapshot = await buildProjectEvidenceSnapshot(projectId);
