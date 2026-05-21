@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
-import { normalizeSuggestedTags } from "@/lib/tag-normalization";
+import { recordOperatorTagChanges } from "@/lib/operator-learning";
+import { normalizedChineseTags } from "@/lib/project-tag-normalizer";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export async function POST(
     select: {
       id: true,
       slug: true,
+      name: true,
       tags: true,
       aiSuggestedTags: true,
     },
@@ -57,8 +59,8 @@ export async function POST(
     return Response.json({ ok: false, error: "项目不存在或已删除。" }, { status: 404 });
   }
 
-  const suggested = normalizeSuggestedTags(parseInputTags(row.aiSuggestedTags));
-  const selected = normalizeSuggestedTags(parseInputTags(body.tags));
+  const suggested = normalizedChineseTags(parseInputTags(row.aiSuggestedTags));
+  const selected = normalizedChineseTags(parseInputTags(body.tags));
   const source = selected.length ? selected : suggested;
   if (!source.length) {
     return Response.json({ ok: false, error: "暂无可应用的 AI 推荐标签。" }, { status: 400 });
@@ -67,11 +69,17 @@ export async function POST(
   const nextTags =
     mode === "replace"
       ? source
-      : normalizeSuggestedTags([...row.tags, ...source]);
+      : normalizedChineseTags([...row.tags, ...source]);
 
   await prisma.project.update({
     where: { id: row.id },
     data: { tags: nextTags },
+  });
+  await recordOperatorTagChanges({
+    projectId: row.id,
+    projectName: row.name,
+    beforeTags: row.tags,
+    afterTags: nextTags,
   });
   await prisma.projectAiOpsLog.create({
     data: {

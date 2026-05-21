@@ -15,11 +15,13 @@ import {
 } from "@/lib/project-url-evidence";
 import {
   buildProjectKnowledgeFromEvidence,
+  finalizeProjectKnowledge,
   normalizeProjectKnowledge,
   PROJECT_KNOWLEDGE_JSON_SCHEMA_EXAMPLE,
   saveProjectKnowledge,
   type ProjectKnowledge,
 } from "@/lib/project-knowledge";
+import { normalizedChineseTags } from "@/lib/project-tag-normalizer";
 import { prisma } from "@/lib/prisma";
 
 type ActivityLevel = "high" | "medium" | "low" | "unknown";
@@ -497,7 +499,15 @@ function ensureInsightShape(
     generatedAt: safeString(insightObj.generatedAt) || nowIso,
   };
 
-  const suggestedTags = normalizeSuggestedTags(safeStringArray(obj.suggestedTags, 8));
+  const knowledgeRaw =
+    obj.knowledge && typeof obj.knowledge === "object"
+      ? (obj.knowledge as Record<string, unknown>)
+      : {};
+  const suggestedTags = normalizedChineseTags(safeStringArray(obj.suggestedTags, 12), {
+    projectName: fallback?.evidenceSnapshot?.project.name,
+    description: fallback?.evidenceSnapshot?.project.description ?? undefined,
+    techSignals: safeStringArray(knowledgeRaw.techSignals, 10),
+  });
   const normalizedCategories = normalizeSuggestedCategories({
     primary: safeString(categoryObj.primary) || undefined,
     secondary: safeString(categoryObj.secondary) || undefined,
@@ -509,11 +519,18 @@ function ensureInsightShape(
     optional: normalizedCategories.optional,
   };
 
-  const knowledgeRaw =
-    obj.knowledge && typeof obj.knowledge === "object" ? obj.knowledge : obj;
-  const knowledge = normalizeProjectKnowledge(knowledgeRaw, {
-    suggestedCategories,
-    evidenceSnapshot: fallback?.evidenceSnapshot,
+  const knowledge = finalizeProjectKnowledge({
+    knowledge: normalizeProjectKnowledge(knowledgeRaw, {
+      suggestedCategories,
+      evidenceSnapshot: fallback?.evidenceSnapshot,
+    }),
+    projectName: fallback?.evidenceSnapshot?.project.name,
+    tagline: fallback?.evidenceSnapshot?.project.tagline,
+    description: fallback?.evidenceSnapshot?.project.description,
+    useCases: parsed.useCases,
+    highlights: parsed.highlights,
+    whatItIs: parsed.whatItIs,
+    summary: parsed.summary,
   });
 
   return { insight: parsed, suggestedTags, suggestedCategories, knowledge };
@@ -618,6 +635,10 @@ export async function generateProjectAIInsight(
     "knowledge.distributionChannels 只能使用：github, producthunt, chrome_store, app_store, wechat, twitter。",
     "禁止发明新的 category/platform/distribution 值。",
     "knowledge 必须基于 evidence 填写 platforms、techSignals、sourceCoverage，不得编造。",
+    "suggestedTags 与 knowledge 相关标签优先输出中文（如 声音克隆、文本转语音），保留必要品牌英文名。",
+    "不要输出 creator、marketer、future、platform、solution 等泛化标签，除非 evidence 明确强调。",
+    "不要因为项目使用 AI 技术就归类为 AI智能体；只有存在自主工作流、多步执行、任务编排、工具调用等智能体特征时才用 AI_AGENT。",
+    "优先根据项目真实功能描述分类：配音/语音/克隆类 → 设计与创意工具；视频生成 → 内容工具；开发框架/SDK → 开发工具。",
     `项目 ID：${snapshot.base.projectId}`,
     snapshot.base.github ? `GitHub URL：${snapshot.base.github}` : null,
     snapshot.base.website ? `官网 URL：${snapshot.base.website}` : null,
@@ -730,7 +751,11 @@ export async function saveProjectAIInsight(
         suggestedCategories: payload.suggestedCategories,
       });
 
-  await saveProjectKnowledge(projectId, knowledge);
+  await saveProjectKnowledge(projectId, knowledge, {
+    projectName: payload.sourceSnapshot.base.name,
+    description: payload.sourceSnapshot.base.description,
+    useCases: payload.insight.useCases,
+  });
 
   return prisma.project.update({
     where: { id: projectId },

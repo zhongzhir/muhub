@@ -23,6 +23,9 @@ import {
 import {
   categoriesJsonFromKnowledge,
   knowledgeTagsForProject,
+  knowledgeCategoryToProjectSlug,
+  KNOWLEDGE_CATEGORIES,
+  type KnowledgeCategory,
   type ProjectKnowledge,
 } from "@/lib/project-knowledge";
 import { publishProjectAfterAiEnrichment } from "@/lib/project-publishing";
@@ -195,7 +198,11 @@ async function applyRequiredProjectFields(input: {
     existing.simpleSummary?.trim() ||
     description;
 
-  let tags = knowledgeTagsForProject(input.knowledge);
+  let tags = knowledgeTagsForProject(input.knowledge, {
+    projectName: existing.name,
+    description: existing.description,
+    useCases: input.insight.useCases,
+  });
   if (!tags.length) {
     tags = normalizeSuggestedTags(input.suggestedTags);
   }
@@ -206,7 +213,11 @@ async function applyRequiredProjectFields(input: {
     tags = ["独立开发者"];
   }
 
-  const primaryCategory = input.knowledge.primaryCategory?.trim() || "other";
+  const primaryCategory = (KNOWLEDGE_CATEGORIES as readonly string[]).includes(
+    input.knowledge.primaryCategory,
+  )
+    ? knowledgeCategoryToProjectSlug(input.knowledge.primaryCategory as KnowledgeCategory)
+    : input.knowledge.primaryCategory?.trim() || "other";
   const categories = categoriesJsonFromKnowledge(input.knowledge);
 
   await prisma.project.update({

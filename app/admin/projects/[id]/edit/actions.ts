@@ -9,6 +9,10 @@ import {
   type ParsedAdminProjectInput,
 } from "@/lib/admin-project-edit";
 import { writeProjectActionLog } from "@/lib/project-action-log";
+import {
+  recordOperatorCategoryChange,
+  recordOperatorTagChanges,
+} from "@/lib/operator-learning";
 import { prisma } from "@/lib/prisma";
 
 export type AdminProjectEditFormState = {
@@ -125,6 +129,11 @@ export async function saveAdminProject(
     select: {
       id: true,
       slug: true,
+      name: true,
+      tagline: true,
+      description: true,
+      primaryCategory: true,
+      tags: true,
       status: true,
       visibilityStatus: true,
       isPublic: true,
@@ -267,6 +276,21 @@ export async function saveAdminProject(
       nextVisibilityStatus: updated.visibilityStatus,
       isPublic: updated.isPublic,
       publishedAt: updated.publishedAt?.toISOString() ?? null,
+    });
+
+    await recordOperatorCategoryChange({
+      projectId: existing.id,
+      projectName: existing.name,
+      beforeCategory: existing.primaryCategory,
+      afterCategory: parsed.primaryCategory,
+      signalTags: parsed.tags,
+      signalText: [existing.name, parsed.tagline, parsed.description].filter(Boolean).join(" "),
+    });
+    await recordOperatorTagChanges({
+      projectId: existing.id,
+      projectName: existing.name,
+      beforeTags: existing.tags,
+      afterTags: parsed.tags,
     });
 
     revalidateProjectPaths(existing.id, existing.slug);

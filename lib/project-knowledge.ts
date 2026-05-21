@@ -1,6 +1,12 @@
 import type { Prisma } from "@prisma/client";
 
 import type { ProjectEvidenceSnapshot, CoverageLevel } from "@/lib/project-evidence-snapshot";
+import {
+  applyCategoryDecisionToKnowledge,
+  decideProjectCategory,
+  type CategoryConfidence,
+} from "@/lib/project-category-decision";
+import { normalizedChineseTagsFromKnowledge, semanticTagScore, normalizedChineseTags } from "@/lib/project-tag-normalizer";
 import { normalizePrimaryCategoryToSlug, type ProjectCategory } from "@/lib/projects/project-categories";
 import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { prisma } from "@/lib/prisma";
@@ -69,6 +75,9 @@ export type ProjectKnowledge = {
   statusSignals?: ProjectKnowledgeStatusSignals;
   sourceCoverage?: ProjectKnowledgeCoverage;
   generatedAt: string;
+  categoryConfidence?: CategoryConfidence;
+  needsCategoryReview?: boolean;
+  categoryDecisionReason?: string;
 };
 
 export type KnowledgeValidationAction =
@@ -390,6 +399,33 @@ export function normalizeProjectKnowledge(
   return validated.knowledge;
 }
 
+export function finalizeProjectKnowledge(input: {
+  knowledge: ProjectKnowledge;
+  projectName?: string | null;
+  tagline?: string | null;
+  description?: string | null;
+  useCases?: string[];
+  highlights?: string[];
+  whatItIs?: string | null;
+  summary?: string | null;
+}): ProjectKnowledge {
+  const validated = validateProjectKnowledge(input.knowledge);
+  const decision = decideProjectCategory({
+    aiSuggestedCategory: validated.knowledge.primaryCategory,
+    projectName: input.projectName,
+    tagline: input.tagline,
+    description: input.description,
+    tags: input.knowledge.techSignals,
+    techSignals: input.knowledge.techSignals,
+    targetUsers: input.knowledge.targetUsers,
+    useCases: input.useCases,
+    highlights: input.highlights,
+    whatItIs: input.whatItIs,
+    summary: input.summary,
+  });
+  return applyCategoryDecisionToKnowledge(validated.knowledge, decision);
+}
+
 export function buildProjectKnowledgeFromEvidence(input: {
   evidenceSnapshot: ProjectEvidenceSnapshot;
   suggestedCategories: ProjectAISuggestedCategories;
@@ -416,21 +452,33 @@ export function buildProjectKnowledgeFromEvidence(input: {
     }
   }
 
-  return validateProjectKnowledge(knowledge).knowledge;
+  return finalizeProjectKnowledge({
+    knowledge: validateProjectKnowledge(knowledge).knowledge,
+    projectName: input.evidenceSnapshot.project.name,
+    tagline: input.evidenceSnapshot.project.tagline,
+    description: input.evidenceSnapshot.project.description,
+  });
 }
 
-export function knowledgeTagsForProject(knowledge: ProjectKnowledge): string[] {
-  const tags = new Set<string>();
-  for (const item of knowledge.targetUsers ?? []) {
-    tags.add(item);
-  }
-  for (const item of knowledge.techSignals ?? []) {
-    tags.add(item);
-  }
-  for (const item of knowledge.platforms ?? []) {
-    tags.add(item);
-  }
-  return normalizeSuggestedTags([...tags]).slice(0, 12);
+export function knowledgeTagsForProject(
+  knowledge: ProjectKnowledge,
+  context?: {
+    projectName?: string | null;
+    description?: string | null;
+    useCases?: string[];
+  },
+): string[] {
+  const signalTags = normalizedChineseTagsFromKnowledge({
+    techSignals: knowledge.techSignals,
+    projectName: context?.projectName,
+    description: context?.description,
+    useCases: context?.useCases,
+  });
+  const audienceTags = normalizedChineseTags(
+    (knowledge.targetUsers ?? []).filter((tag) => semanticTagScore(tag, context) >= 50),
+    context,
+  );
+  return normalizedChineseTags([...signalTags, ...audienceTags], context);
 }
 
 export function categoriesJsonFromKnowledge(knowledge: ProjectKnowledge): string[] {
@@ -450,20 +498,30 @@ export function categoriesJsonFromKnowledge(knowledge: ProjectKnowledge): string
 export async function saveProjectKnowledge(
   projectId: string,
   knowledge: ProjectKnowledge,
+  context?: {
+    projectName?: string | null;
+    description?: string | null;
+    useCases?: string[];
+  },
 ): Promise<void> {
-  const validated = validateProjectKnowledge(knowledge);
-  const categories = categoriesJsonFromKnowledge(validated.knowledge);
-  const tags = knowledgeTagsForProject(validated.knowledge);
+  const finalized = finalizeProjectKnowledge({
+    knowledge: validateProjectKnowledge(knowledge).knowledge,
+    projectName: context?.projectName,
+    description: context?.description,
+    useCases: context?.useCases,
+  });
+  const categories = categoriesJsonFromKnowledge(finalized);
+  const tags = knowledgeTagsForProject(finalized, context);
   const primarySlug = (KNOWLEDGE_CATEGORIES as readonly string[]).includes(
-    validated.knowledge.primaryCategory,
+    finalized.primaryCategory,
   )
-    ? knowledgeCategoryToProjectSlug(validated.knowledge.primaryCategory as KnowledgeCategory)
-    : normalizeCategorySlug(validated.knowledge.primaryCategory, "other");
+    ? knowledgeCategoryToProjectSlug(finalized.primaryCategory as KnowledgeCategory)
+    : normalizeCategorySlug(finalized.primaryCategory, "other");
 
   await prisma.project.update({
     where: { id: projectId },
     data: {
-      aiKnowledgeJson: validated.knowledge as unknown as Prisma.InputJsonValue,
+      aiKnowledgeJson: finalized as unknown as Prisma.InputJsonValue,
       primaryCategory: primarySlug,
       categoriesJson: categories as unknown as Prisma.InputJsonValue,
       tags,

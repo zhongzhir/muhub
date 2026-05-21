@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { ProjectSourceKind } from "@prisma/client";
 
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { recordOperatorSourceVisibilityChange } from "@/lib/operator-learning";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +89,7 @@ function mapKind(raw: unknown, rawLabel: string | null): { kind: ProjectSourceKi
 async function findProject(id: string) {
   return prisma.project.findFirst({
     where: { id, deletedAt: null },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, name: true },
   });
 }
 
@@ -198,7 +199,7 @@ export async function PATCH(
   }
   const existing = await prisma.projectSource.findFirst({
     where: { id: sourceId, projectId: project.id },
-    select: { id: true, kind: true },
+    select: { id: true, kind: true, visibility: true },
   });
   if (!existing) {
     return Response.json({ ok: false, error: "Source not found" }, { status: 404 });
@@ -218,6 +219,11 @@ export async function PATCH(
   }
   const mapped = mapKind(kindChoice, label);
   const isPrimary = Boolean(body.isPrimary);
+  const visibilityRaw = cleanOptionalString(body.visibility);
+  const visibility =
+    visibilityRaw === "public" || visibilityRaw === "internal"
+      ? visibilityRaw
+      : undefined;
 
   const source = await prisma.$transaction(async (tx) => {
     if (isPrimary) {
@@ -236,9 +242,20 @@ export async function PATCH(
         summary: cleanOptionalString(body.summary),
         content: cleanOptionalString(body.content),
         isPrimary,
+        ...(visibility ? { visibility } : {}),
       },
     });
   });
+
+  if (visibility && visibility !== existing.visibility) {
+    await recordOperatorSourceVisibilityChange({
+      projectId: project.id,
+      projectName: project.name,
+      sourceId,
+      beforeVisibility: existing.visibility,
+      afterVisibility: visibility,
+    });
+  }
 
   revalidatePath(`/admin/projects/${project.id}/edit`);
   revalidatePath(`/projects/${project.slug}`);

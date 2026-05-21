@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { recordOperatorCategoryChange } from "@/lib/operator-learning";
 import { prisma } from "@/lib/prisma";
 import { normalizePrimaryCategoryToSlug } from "@/lib/projects/project-categories";
 
@@ -36,7 +37,7 @@ export async function PATCH(
   const { id } = await ctx.params;
   const row = await prisma.project.findFirst({
     where: { id, deletedAt: null },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, name: true, primaryCategory: true, tags: true, tagline: true, description: true },
   });
   if (!row) {
     return Response.json({ ok: false, error: "Project not found" }, { status: 404 });
@@ -45,6 +46,15 @@ export async function PATCH(
   await prisma.project.update({
     where: { id: row.id },
     data: { primaryCategory },
+  });
+
+  await recordOperatorCategoryChange({
+    projectId: row.id,
+    projectName: row.name,
+    beforeCategory: row.primaryCategory,
+    afterCategory: primaryCategory,
+    signalTags: row.tags,
+    signalText: [row.name, row.tagline, row.description].filter(Boolean).join(" "),
   });
 
   revalidatePath(`/admin/projects/${row.id}/edit`);
