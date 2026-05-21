@@ -149,6 +149,7 @@ export async function POST(
       signals,
       suggestedTags: generated.suggestedTags,
       suggestedCategories: generated.suggestedCategories,
+      knowledge: generated.knowledge,
       sourceSnapshot: snapshot,
       sourceLevel,
     });
