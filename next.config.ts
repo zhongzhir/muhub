@@ -46,9 +46,33 @@ const securityHeaders = [
     : []),
 ];
 
+const TRAINING_HOSTS = ["training.muhub.cn", "training.localhost"] as const;
+
+const TRAINING_HOST_REWRITES = TRAINING_HOSTS.flatMap((host) =>
+  (
+    [
+      { source: "/", destination: "/training" },
+      { source: "/register", destination: "/training/register" },
+      { source: "/homework", destination: "/training/homework" },
+      { source: "/admin", destination: "/training/admin" },
+      { source: "/cases", destination: "/training/cases" },
+      { source: "/projects", destination: "/training/projects" },
+    ] as const
+  ).map(({ source, destination }) => ({
+    source,
+    destination,
+    has: [{ type: "host" as const, value: host }],
+  })),
+);
+
 const nextConfig: NextConfig = {
   // StrictMode 双挂载 + React 19 + SessionProvider 会在 E2E/`next start` 下触发 useInsertionEffect 报错
   reactStrictMode: false,
+  async rewrites() {
+    return {
+      beforeFiles: TRAINING_HOST_REWRITES,
+    };
+  },
   images: {
     remotePatterns: [
       {

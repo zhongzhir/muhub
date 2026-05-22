@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
+import { isTrainingHost } from "@/lib/pwa/training-host";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
@@ -102,16 +103,18 @@ const { auth } = NextAuth({
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ── 0. 子域名路由：training.muhub.cn → /training ─────────────────────────
-  // Nginx 将 Host: training.muhub.cn 透传过来，此处识别后 rewrite 到 /training
+  // ── 0. 子域名路由：training.muhub.cn → /training（URL 保持根路径） ─────────
   const host = req.headers.get("host") ?? "";
-  if (host.startsWith("training.")) {
-    const sharedAsset =
+  if (isTrainingHost(host)) {
+    const passthrough =
+      pathname.startsWith("/training") ||
+      pathname.startsWith("/api/") ||
+      pathname.startsWith("/_next/") ||
       pathname.startsWith("/icons/") ||
       pathname === "/apple-touch-icon.png" ||
       pathname === "/icon.png" ||
       pathname === "/favicon.ico";
-    if (pathname.startsWith("/training") || sharedAsset) {
+    if (passthrough) {
       return NextResponse.next();
     }
     const url = req.nextUrl.clone();
@@ -180,6 +183,8 @@ export default async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    // 根路径必须显式匹配（training 子域 / → /training rewrite）
+    "/",
     // 鉴权保护路由（NextAuth 处理）
     "/dashboard/:path*",
     "/me/:path*",
@@ -188,7 +193,6 @@ export const config = {
     // API 路由（限流处理）
     "/api/:path*",
     // 子域名路由（training.muhub.cn → /training）
-    // 需要覆盖所有路径；静态资源由 Nginx 直接处理，不会到达此处
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
