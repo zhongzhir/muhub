@@ -61,5 +61,9 @@ data/growth-launch-intake-stub.json
 data/launch-plans.json
 data/site-content.json
 
+# Training V1：报名与作业本地 JSON（可迁移 DB）
+data/training-registrations.json
+data/training-homework.json
+
 # discovery importer local cache
 .cache/
