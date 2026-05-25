@@ -1,7 +1,11 @@
 import type { Prisma } from "@prisma/client";
 import { getDeepSeekClient } from "@/lib/deepseek";
 import { prisma } from "@/lib/prisma";
-import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
+import {
+  isEnglishDominantProjectText,
+  sanitizeChineseProjectList,
+  sanitizeChineseProjectText,
+} from "@/lib/zh-normalization";
 
 export type ProjectAIContent = {
   version: "v1";
@@ -164,50 +168,53 @@ function normalizeContent(input: unknown, snapshot: ProjectContentSourceSnapshot
     },
     copy: {
       oneLiner: clamp(
-        normalizeChineseExpression(asString(copy.oneLiner) || "信息不足，当前仅能给出保守传播描述。"),
+        sanitizeChineseProjectText(asString(copy.oneLiner) || "信息不足，当前仅能给出保守传播描述。"),
         120,
       ),
       short: clamp(
-        normalizeChineseExpression(asString(copy.short) || "信息不足，建议先补充官方信息后再生成传播文案。"),
+        sanitizeChineseProjectText(asString(copy.short) || "信息不足，建议先补充官方信息后再生成传播文案。"),
         220,
       ),
       medium: clamp(
-        normalizeChineseExpression(asString(copy.medium) || "信息不足，建议补充项目亮点、目标用户和使用场景。"),
+        sanitizeChineseProjectText(asString(copy.medium) || "信息不足，建议补充项目亮点、目标用户和使用场景。"),
         500,
       ),
       long: clamp(
-        normalizeChineseExpression(
+        sanitizeChineseProjectText(
           asString(copy.long) || "当前公开信息较少，暂无法生成完整长文案，请先补充官方介绍与使用场景。",
         ),
         1200,
       ),
       audienceVersions: {
-        general: clamp(normalizeChineseExpression(asString(audience.general)), 220) || undefined,
-        business: clamp(normalizeChineseExpression(asString(audience.business)), 220) || undefined,
-        creator: clamp(normalizeChineseExpression(asString(audience.creator)), 220) || undefined,
-        developer: clamp(normalizeChineseExpression(asString(audience.developer)), 220) || undefined,
+        general: clamp(sanitizeChineseProjectText(asString(audience.general)), 220) || undefined,
+        business: clamp(sanitizeChineseProjectText(asString(audience.business)), 220) || undefined,
+        creator: clamp(sanitizeChineseProjectText(asString(audience.creator)), 220) || undefined,
+        developer: clamp(sanitizeChineseProjectText(asString(audience.developer)), 220) || undefined,
       },
     },
     poster: {
-      title: clamp(normalizeChineseExpression(asString(poster.title) || snapshot.name), 60),
+      title: clamp(sanitizeChineseProjectText(asString(poster.title) || snapshot.name), 60),
       subtitle: clamp(
-        normalizeChineseExpression(asString(poster.subtitle) || "基于公开与官方信息整理的传播草稿"),
+        sanitizeChineseProjectText(asString(poster.subtitle) || "基于公开与官方信息整理的传播草稿"),
         100,
       ),
-      highlights: normalizeChineseList(asStringArray(poster.highlights, 5)),
-      targetUsers: clamp(normalizeChineseExpression(asString(poster.targetUsers) || "信息不足，建议补充目标用户"), 120),
-      callToAction: clamp(
-        normalizeChineseExpression(asString(poster.callToAction) || "欢迎了解项目详情并联系项目方"),
+      highlights: sanitizeChineseProjectList(asStringArray(poster.highlights, 5)),
+      targetUsers: clamp(
+        sanitizeChineseProjectText(asString(poster.targetUsers) || "信息不足，建议补充目标用户"),
         120,
       ),
-      contactLine: clamp(normalizeChineseExpression(asString(poster.contactLine)), 120) || undefined,
-      linkLine: clamp(normalizeChineseExpression(asString(poster.linkLine)), 180) || undefined,
+      callToAction: clamp(
+        sanitizeChineseProjectText(asString(poster.callToAction) || "欢迎了解项目详情并联系项目方"),
+        120,
+      ),
+      contactLine: clamp(sanitizeChineseProjectText(asString(poster.contactLine)), 120) || undefined,
+      linkLine: clamp(sanitizeChineseProjectText(asString(poster.linkLine)), 180) || undefined,
     },
-    notes: normalizeChineseList(asStringArray(obj.notes, 8)),
+    notes: sanitizeChineseProjectList(asStringArray(obj.notes, 8)),
     validation: {
-      basedOn: normalizeChineseList(asStringArray((obj.validation as Record<string, unknown> | undefined)?.basedOn, 5)),
-      weakPoints: normalizeChineseList(asStringArray((obj.validation as Record<string, unknown> | undefined)?.weakPoints, 8)),
-      verifyBeforeUse: normalizeChineseList(asStringArray(
+      basedOn: sanitizeChineseProjectList(asStringArray((obj.validation as Record<string, unknown> | undefined)?.basedOn, 5)),
+      weakPoints: sanitizeChineseProjectList(asStringArray((obj.validation as Record<string, unknown> | undefined)?.weakPoints, 8)),
+      verifyBeforeUse: sanitizeChineseProjectList(asStringArray(
         (obj.validation as Record<string, unknown> | undefined)?.verifyBeforeUse,
         8,
       )),
@@ -226,6 +233,8 @@ export async function generateProjectAIContent(
   const mode = options?.mode === "expressive" ? "expressive" : "balanced";
   const systemPrompt = [
     "你是 MUHUB 的项目传播表达助手。",
+    "输出语言必须为简体中文。copy、poster、notes、validation 等面向读者的字段必须中文。",
+    "品牌名、产品名、专有技术名、代码库名、API 名称可保留英文。",
     "你的任务不是评价项目，也不是编造营销故事，而是基于已提供信息生成适合传播的中文草稿。",
     "你需要先理解项目价值、目标用户与使用场景，再做表达重构，不是机械复述原文。",
     "可以重组信息顺序，可以提炼更有传播力的中文句子。",
@@ -305,11 +314,15 @@ export async function generateProjectAIContent(
   });
   for (let i = 0; i < 2; i += 1) {
     try {
+      const retryHint =
+        i > 0
+          ? "\n\n【重要】上次输出英文比例过高。请全部改用简体中文描述，仅保留必要英文品牌/技术名。"
+          : "";
       const response = await client.chat.completions.create({
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: `${prompt}${retryHint}` },
         ],
         response_format: { type: "json_object" },
         max_tokens: 4000,
@@ -335,6 +348,15 @@ export async function generateProjectAIContent(
         throw new Error("AI 输出格式异常，请稍后重试");
       }
       const normalized = normalizeContent(parsed, snapshot);
+      const englishHeavy = [
+        normalized.copy.oneLiner,
+        normalized.copy.short,
+        normalized.copy.medium,
+        normalized.poster.subtitle,
+      ].some((item) => isEnglishDominantProjectText(item));
+      if (englishHeavy && i === 0) {
+        throw new Error("AI 输出英文比例过高，正在重试简体中文生成");
+      }
       if (!normalized.poster.highlights.length) {
         normalized.poster.highlights = ["基于现有信息整理，建议补充更多官方资料后再发布"];
       }

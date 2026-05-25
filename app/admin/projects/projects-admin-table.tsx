@@ -55,7 +55,7 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 max-w-full space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
         <span className="text-zinc-600 dark:text-zinc-400">已选 {selected.size} 项</span>
         <button type="button" disabled={pending} onClick={() => runBulk("publish")} className="rounded bg-emerald-700 px-2 py-1 text-xs text-white disabled:opacity-60">
@@ -70,8 +70,8 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
         {message ? <span className="text-xs text-zinc-500">{message}</span> : null}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
-        <table className="min-w-full text-left text-sm">
+      <div className="w-full max-w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
+        <table className="min-w-[960px] w-full table-fixed text-left text-sm">
           <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium uppercase text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/80">
             <tr>
               <th className="px-3 py-3">
@@ -87,14 +87,14 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
                   }}
                 />
               </th>
-              <th className="px-4 py-3">项目名称</th>
-              <th className="px-4 py-3">状态</th>
-              <th className="px-4 py-3">可见性</th>
-              <th className="px-4 py-3">分类</th>
-              <th className="px-4 py-3">标签</th>
-              <th className="px-4 py-3">公开</th>
-              <th className="px-4 py-3">更新时间</th>
-              <th className="px-4 py-3">操作</th>
+              <th className="w-[220px] px-4 py-3">项目名称</th>
+              <th className="w-[88px] px-4 py-3">状态</th>
+              <th className="w-[88px] px-4 py-3">可见性</th>
+              <th className="w-[120px] px-4 py-3">分类</th>
+              <th className="w-[180px] px-4 py-3">标签</th>
+              <th className="w-[56px] px-4 py-3">公开</th>
+              <th className="w-[140px] px-4 py-3">更新时间</th>
+              <th className="w-[220px] px-4 py-3">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -119,14 +119,14 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
                       }}
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
-                    {r.name}
-                    <p className="mt-0.5 text-xs font-normal text-zinc-500">{r.tagline || "—"}</p>
+                  <td className="max-w-[220px] px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                    <div className="truncate">{r.name}</div>
+                    <p className="mt-0.5 truncate text-xs font-normal text-zinc-500">{r.tagline || "—"}</p>
                   </td>
                   <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">{r.status}</td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.visibilityStatus}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.primaryCategory || "—"}</td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.tags.length ? r.tags.slice(0, 4).map((tag) => `#${tag}`).join(" ") : "—"}</td>
+                  <td className="max-w-[120px] truncate px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.primaryCategory || "—"}</td>
+                  <td className="max-w-[180px] truncate px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.tags.length ? r.tags.slice(0, 4).map((tag) => `#${tag}`).join(" ") : "—"}</td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.isPublic ? "是" : "否"}</td>
                   <td className="px-4 py-3 text-xs text-zinc-500">{r.updatedAtText}</td>
                   <td className="px-4 py-3">

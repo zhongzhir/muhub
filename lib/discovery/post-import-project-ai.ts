@@ -45,6 +45,8 @@ export type AiEnrichmentStage =
   | "publish"
   | "done";
 
+export type EnrichProjectSource = "github_queue" | "chinese_indie" | "manual";
+
 export type PostImportProjectAiResult = {
   success: boolean;
   stage: AiEnrichmentStage | string;
@@ -277,10 +279,49 @@ async function validateAppliedFields(projectId: string): Promise<string | null> 
 }
 
 /**
+ * 导入后完整 AI enrichment（source enrichment → evidence → 认知卡 → 增强版 → 字段写入 → 可选发布）。
+ */
+export async function enrichProjectAfterImport(
+  projectId: string,
+  options?: { source?: EnrichProjectSource; skipPublish?: boolean },
+): Promise<PostImportProjectAiResult> {
+  console.info("[enrichProjectAfterImport] start", {
+    projectId,
+    source: options?.source ?? "manual",
+    skipPublish: options?.skipPublish === true,
+  });
+  const result = await generatePostImportProjectAi(projectId, {
+    skipPublish: options?.skipPublish === true,
+  });
+  console.info("[enrichProjectAfterImport] done", {
+    projectId,
+    source: options?.source ?? "manual",
+    success: result.success,
+    stage: result.stage,
+  });
+  return result;
+}
+
+/** 后台导入后不阻塞 UI，异步触发完整 enrichment。 */
+export function scheduleEnrichProjectAfterImport(
+  projectId: string,
+  options?: { source?: EnrichProjectSource; skipPublish?: boolean },
+): void {
+  void enrichProjectAfterImport(projectId, options).catch((error) => {
+    console.error("[scheduleEnrichProjectAfterImport] failed", {
+      projectId,
+      source: options?.source ?? "manual",
+      error,
+    });
+  });
+}
+
+/**
  * 导入后完整 AI enrichment（source enrichment → evidence → 认知卡 → 增强版 → 字段写入 → 发布）。
  */
 export async function generatePostImportProjectAi(
   projectId: string,
+  options?: { skipPublish?: boolean },
 ): Promise<PostImportProjectAiResult> {
   const base: PostImportProjectAiResult = {
     success: false,
@@ -490,6 +531,14 @@ export async function generatePostImportProjectAi(
   }
 
   base.stage = "publish";
+  if (options?.skipPublish) {
+    base.publishStatus = "skipped";
+    return {
+      ...base,
+      success: true,
+      stage: "done",
+    };
+  }
   try {
     const publishResult = await publishProjectAfterAiEnrichment(projectId, {
       evidenceSnapshot: cachedEvidenceSnapshot,

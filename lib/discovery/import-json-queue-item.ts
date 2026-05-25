@@ -17,7 +17,10 @@ import {
   isSourceArticleUrl,
 } from "@/lib/project-url-classifier";
 import { isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
-import { scheduleProjectAiEnrichment } from "@/lib/ai/enrich-project";
+import {
+  scheduleEnrichProjectAfterImport,
+  type EnrichProjectSource,
+} from "@/lib/discovery/post-import-project-ai";
 import { createProjectActivity } from "@/lib/activity/project-activity-service";
 import { CHINESE_INDIE_SOURCE_KEY } from "@/lib/discovery/sources/chinese-independent-developer";
 import {
@@ -28,6 +31,17 @@ import {
 
 function isChineseIndieDiscoveryItem(item: DiscoveryItem): boolean {
   return stringMeta(item.meta, "sourceKey") === CHINESE_INDIE_SOURCE_KEY;
+}
+
+function detectEnrichmentSource(item: DiscoveryItem): EnrichProjectSource {
+  if (isChineseIndieDiscoveryItem(item)) {
+    return "chinese_indie";
+  }
+  const source = stringMeta(item.meta, "source").toLowerCase();
+  if (source === "github" || item.sourceType === "github" || stringMeta(item.meta, "githubUrl")) {
+    return "github_queue";
+  }
+  return "manual";
 }
 
 function buildDiscoveryImportSourceCreates(input: {
@@ -853,9 +867,15 @@ export async function importJsonDiscoveryItem(
 
   try {
     if (options?.scheduleAiEnrichment !== false) {
-      scheduleProjectAiEnrichment(project.slug);
+      const enrichmentSource = detectEnrichmentSource(item);
+      scheduleEnrichProjectAfterImport(project.id, {
+        source: enrichmentSource,
+        skipPublish: true,
+      });
       await updateDiscoveryAiStatus(item.id, "scheduled");
-      console.log(`[Discovery] AI enrichment scheduled for project: ${project.slug} (id=${project.id})`);
+      console.log(
+        `[Discovery] post-import AI enrichment scheduled for project: ${project.slug} (id=${project.id}, source=${enrichmentSource})`,
+      );
     }
   } catch (e) {
     console.error("[Discovery] AI enrichment schedule failed", e);

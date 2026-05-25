@@ -219,7 +219,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 max-w-full space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
         <label className="min-w-[220px] flex-1 text-sm text-zinc-700 dark:text-zinc-300">
           检索队列
@@ -381,8 +381,8 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
           没有匹配「{searchQuery.trim()}」的队列条目。
         </p>
       ) : (
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <table className="w-full min-w-[980px] text-left text-sm">
+      <div className="w-full max-w-full overflow-x-auto rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <table className="w-full min-w-[980px] table-fixed text-left text-sm">
         <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
           <tr>
             <th className="px-3 py-3">
@@ -393,9 +393,9 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                 aria-label="全选当前页"
               />
             </th>
-            <th className="px-4 py-3">项目</th>
-            <th className="px-4 py-3">来源</th>
-            <th className="px-4 py-3">Meta</th>
+            <th className="w-[320px] px-4 py-3">项目</th>
+            <th className="w-[88px] px-4 py-3">来源</th>
+            <th className="w-[280px] px-4 py-3">Meta</th>
             <th className="px-4 py-3">状态</th>
             <th className="px-4 py-3">AI</th>
             <th className="px-4 py-3">Duplicate</th>
@@ -437,7 +437,7 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                   aria-label={`选择 ${row.title}`}
                 />
               </td>
-              <td className="px-4 py-3 font-medium">
+              <td className="max-w-[320px] px-4 py-3 font-medium">
                 {isSourceMaterial ? (
                   <div className="mb-1 flex flex-wrap gap-1">
                     <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[11px] font-normal text-violet-800 dark:bg-violet-950 dark:text-violet-200">
@@ -475,11 +475,10 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                       href={sourceArticleUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-1 text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                      className="ml-1 block truncate text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                      title={sourceArticleUrl}
                     >
-                      {sourceArticleUrl.length > 56
-                        ? `${sourceArticleUrl.slice(0, 56)}…`
-                        : sourceArticleUrl}
+                      {sourceArticleUrl}
                     </a>
                   </p>
                 ) : null}
@@ -545,13 +544,13 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                   </div>
                 ) : null}
                 {row.description ? (
-                  <p className="mt-1 max-w-md text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 line-clamp-2 max-w-full text-xs font-normal text-zinc-500 dark:text-zinc-400">
                     {row.description}
                   </p>
                 ) : null}
               </td>
-              <td className="px-4 py-3 text-xs">{row.sourceType}</td>
-              <td className="px-4 py-3">
+              <td className="max-w-[88px] truncate px-4 py-3 text-xs">{row.sourceType}</td>
+              <td className="max-w-[280px] px-4 py-3">
                 {(() => {
                   const source = readMetaText(row.meta, "source") ?? row.sourceType;
                   const intent = readMetaText(row.meta, "intent");

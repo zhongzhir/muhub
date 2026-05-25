@@ -10,6 +10,7 @@ import { normalizedChineseTagsFromKnowledge, semanticTagScore, normalizedChinese
 import { normalizePrimaryCategoryToSlug, type ProjectCategory } from "@/lib/projects/project-categories";
 import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { prisma } from "@/lib/prisma";
+import { sanitizeChineseProjectList, sanitizeChineseProjectText } from "@/lib/zh-normalization";
 import type { ProjectAISuggestedCategories } from "@/lib/project-ai-insight";
 
 export const KNOWLEDGE_CATEGORIES = [
@@ -354,8 +355,10 @@ export function normalizeProjectKnowledge(
       ...asStringArray(obj.secondaryCategories, 5),
       ...(fallback?.secondaryCategories ?? []),
     ],
-    projectType: typeof obj.projectType === "string" ? obj.projectType.trim().slice(0, 80) : undefined,
-    targetUsers: asStringArray(obj.targetUsers, 8),
+    projectType: typeof obj.projectType === "string"
+      ? sanitizeChineseProjectText(obj.projectType.trim().slice(0, 80))
+      : undefined,
+    targetUsers: sanitizeChineseProjectList(asStringArray(obj.targetUsers, 8)),
     platforms: asStringArray(obj.platforms, 8),
     techSignals: asStringArray(obj.techSignals, 10),
     distributionChannels: asStringArray(obj.distributionChannels, 8),
@@ -544,8 +547,8 @@ export const PROJECT_KNOWLEDGE_JSON_SCHEMA_EXAMPLE = {
   knowledge: {
     primaryCategory: "AI_AGENT",
     secondaryCategories: ["AI_VIDEO"],
-    projectType: "AI video generator",
-    targetUsers: ["creator", "marketer"],
+    projectType: "AI 视频生成工具",
+    targetUsers: ["内容创作者", "营销人员"],
     platforms: ["web"],
     techSignals: ["multimodal", "video-generation"],
     distributionChannels: ["producthunt", "github"],

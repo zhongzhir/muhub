@@ -11,7 +11,7 @@ import {
 } from "@/lib/discovery/chinese-indie-auto-import";
 import { buildProjectEvidenceSnapshot } from "@/lib/project-evidence-snapshot";
 import { importJsonDiscoveryItem } from "@/lib/discovery/import-json-queue-item";
-import { generatePostImportProjectAi } from "@/lib/discovery/post-import-project-ai";
+import { enrichProjectAfterImport } from "@/lib/discovery/post-import-project-ai";
 import {
   bulkQueueChineseIndependentDeveloperProjects,
   type BulkQueueChineseIndieResult,
@@ -268,7 +268,7 @@ export async function runChineseIndependentDeveloperImport(
         }
 
         let retryCount = readMetaNumber(item.meta, "retryCount");
-        let aiResult = await generatePostImportProjectAi(result.projectId);
+        let aiResult = await enrichProjectAfterImport(result.projectId, { source: "chinese_indie" });
         while (!aiResult.success) {
           const error =
             aiResult.error ??
@@ -294,7 +294,7 @@ export async function runChineseIndependentDeveloperImport(
               failureKind,
               retryCount,
             });
-            aiResult = await generatePostImportProjectAi(result.projectId);
+            aiResult = await enrichProjectAfterImport(result.projectId, { source: "chinese_indie" });
             continue;
           }
           const failure = {

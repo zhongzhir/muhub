@@ -2,7 +2,13 @@ import type { Prisma } from "@prisma/client";
 import { suggestAdminProjectClassificationAndTags } from "@/lib/admin-project-classify-suggest";
 import { getDeepSeekClient, getDeepSeekCompatibleModel } from "@/lib/deepseek";
 import { normalizeSuggestedCategories, normalizeSuggestedTags } from "@/lib/tag-normalization";
-import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
+import {
+  isEnglishDominantProjectText,
+  normalizeChineseExpression,
+  normalizeChineseList,
+  sanitizeChineseProjectList,
+  sanitizeChineseProjectText,
+} from "@/lib/zh-normalization";
 import { buildProjectEvidenceContext, type ProjectEvidenceContext } from "@/lib/project-evidence-context";
 import {
   buildProjectEvidenceSnapshot,
@@ -536,6 +542,32 @@ function ensureInsightShape(
   return { insight: parsed, suggestedTags, suggestedCategories, knowledge };
 }
 
+function sanitizeProjectAIInsightText(
+  insight: ProjectAIInsight,
+  projectName?: string | null,
+): ProjectAIInsight {
+  const preserve = projectName?.trim() ? [projectName.trim()] : [];
+  return {
+    ...insight,
+    summary: sanitizeChineseProjectText(insight.summary, { preserveTokens: preserve }),
+    whatItIs: sanitizeChineseProjectText(insight.whatItIs, { preserveTokens: preserve }),
+    whoFor: sanitizeChineseProjectList(insight.whoFor, { preserveTokens: preserve }),
+    useCases: sanitizeChineseProjectList(insight.useCases, { preserveTokens: preserve }),
+    highlights: sanitizeChineseProjectList(insight.highlights, { preserveTokens: preserve }),
+    valueSignals: sanitizeChineseProjectList(insight.valueSignals, { preserveTokens: preserve }),
+    activity: {
+      ...insight.activity,
+      signals: sanitizeChineseProjectList(insight.activity.signals, { preserveTokens: preserve }),
+    },
+    risks: sanitizeChineseProjectList(insight.risks, { preserveTokens: preserve }),
+    suggestions: sanitizeChineseProjectList(insight.suggestions, { preserveTokens: preserve }),
+    sourceNotes: sanitizeChineseProjectList(insight.sourceNotes, { preserveTokens: preserve }),
+    publishingAnalysis: insight.publishingAnalysis
+      ? sanitizeChineseProjectText(insight.publishingAnalysis, { preserveTokens: preserve })
+      : insight.publishingAnalysis,
+  };
+}
+
 export async function generateProjectAIInsight(
   snapshot: ProjectInsightSourceSnapshot,
   completeness: ProjectAICompleteness,
@@ -553,6 +585,8 @@ export async function generateProjectAIInsight(
   });
   const systemPrompt = [
     "你是 MUHUB 的项目公开信息整理助手。",
+    "输出语言必须为简体中文。summary、whatItIs、whoFor、useCases、highlights、valueSignals、risks、suggestions、sourceNotes 等描述性字段必须中文。",
+    "品牌名、产品名、专有技术名、代码库名、API 名称可保留英文（如 GitHub、RAG、LLM、owner/repo）。",
     "你的任务不是评价项目优劣，也不是给投资建议，而是把项目公开信息整理为结构化中文认知卡。",
     "只能依据输入 evidence 整理，不得编造不存在的事实。",
     "不得输出“值得投资”“行业领先”“前景巨大”“强烈推荐”等武断结论。",
@@ -600,6 +634,7 @@ export async function generateProjectAIInsight(
     "【任务】\n请结构化分析该项目，重点识别功能、目标用户、使用场景、亮点、价值信号和信息不足点。",
     "仅当 GitHub missing 且官网 unreachable 且 curated/docs/social coverage 均低时，才在 summary/whatItIs/sourceNotes 中写「当前公开信息有限」。",
     "若仅有 GitHub missing 但官网或 curated 来源可用，应写「当前资料主要来自官网与公开收录来源」，不得脑补 GitHub 信息。",
+    "所有面向读者的描述字段必须使用简体中文，不得中英混杂整句输出。",
     "请基于以下项目公开信息，输出 json，字段结构如下：",
     JSON.stringify(
       {
@@ -635,6 +670,7 @@ export async function generateProjectAIInsight(
     "knowledge.distributionChannels 只能使用：github, producthunt, chrome_store, app_store, wechat, twitter。",
     "禁止发明新的 category/platform/distribution 值。",
     "knowledge 必须基于 evidence 填写 platforms、techSignals、sourceCoverage，不得编造。",
+    "knowledge.targetUsers 必须使用中文描述目标用户（如 独立开发者、内容创作者），不要输出 creator/marketer 等英文泛化标签。",
     "suggestedTags 与 knowledge 相关标签优先输出中文（如 声音克隆、文本转语音），保留必要品牌英文名。",
     "不要输出 creator、marketer、future、platform、solution 等泛化标签，除非 evidence 明确强调。",
     "不要因为项目使用 AI 技术就归类为 AI智能体；只有存在自主工作流、多步执行、任务编排、工具调用等智能体特征时才用 AI_AGENT。",
@@ -653,11 +689,15 @@ export async function generateProjectAIInsight(
   });
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
+      const retryHint =
+        attempt > 0
+          ? "\n\n【重要】上次输出英文比例过高。请全部改用简体中文描述，仅保留必要英文品牌/技术名。"
+          : "";
       const response = await client.chat.completions.create({
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: `${prompt}${retryHint}` },
         ],
         response_format: { type: "json_object" },
         max_tokens: 3000,
@@ -685,6 +725,16 @@ export async function generateProjectAIInsight(
       const normalized = ensureInsightShape(parsed, completeness, {
         evidenceSnapshot: snapshot.evidenceSnapshot,
       });
+      normalized.insight = sanitizeProjectAIInsightText(normalized.insight, snapshot.base.name);
+      const englishHeavy = [
+        normalized.insight.summary,
+        normalized.insight.whatItIs,
+        ...normalized.insight.whoFor,
+        ...normalized.insight.useCases,
+      ].some((item) => isEnglishDominantProjectText(item));
+      if (englishHeavy && attempt === 0) {
+        throw new Error("AI 输出英文比例过高，正在重试简体中文生成");
+      }
       const sanitized = sanitizeInsightAgainstWebsiteEvidence(
         normalized.insight,
         snapshot.website.evidence,
@@ -751,6 +801,11 @@ export async function saveProjectAIInsight(
         suggestedCategories: payload.suggestedCategories,
       });
 
+  const sanitizedInsight = sanitizeProjectAIInsightText(
+    payload.insight,
+    payload.sourceSnapshot.base.name,
+  );
+
   await saveProjectKnowledge(projectId, knowledge, {
     projectName: payload.sourceSnapshot.base.name,
     description: payload.sourceSnapshot.base.description,
@@ -760,7 +815,7 @@ export async function saveProjectAIInsight(
   return prisma.project.update({
     where: { id: projectId },
     data: {
-      aiInsight: payload.insight as unknown as Prisma.InputJsonValue,
+      aiInsight: sanitizedInsight as unknown as Prisma.InputJsonValue,
       aiSignals: payload.signals as unknown as Prisma.InputJsonValue,
       aiCompleteness: payload.completeness as unknown as Prisma.InputJsonValue,
       aiSuggestedTags: payload.suggestedTags as unknown as Prisma.InputJsonValue,
