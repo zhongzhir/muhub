@@ -21,6 +21,7 @@ import {
   scheduleEnrichProjectAfterImport,
   type EnrichProjectSource,
 } from "@/lib/discovery/post-import-project-ai";
+import { refreshProjectGithubFacts } from "@/lib/github-sync";
 import { createProjectActivity } from "@/lib/activity/project-activity-service";
 import { CHINESE_INDIE_SOURCE_KEY } from "@/lib/discovery/sources/chinese-independent-developer";
 import {
@@ -866,6 +867,16 @@ export async function importJsonDiscoveryItem(
   });
 
   try {
+    if (link.githubUrl) {
+      const githubRefresh = await refreshProjectGithubFacts(project.id);
+      if (!githubRefresh.ok) {
+        console.warn("[Discovery] GitHub facts refresh failed after import", {
+          projectId: project.id,
+          slug: project.slug,
+          lastFetchError: githubRefresh.lastFetchError,
+        });
+      }
+    }
     if (options?.scheduleAiEnrichment !== false) {
       const enrichmentSource = detectEnrichmentSource(item);
       scheduleEnrichProjectAfterImport(project.id, {

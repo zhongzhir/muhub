@@ -3,8 +3,10 @@
  * 仅 REST GET，无定时任务 / Webhook / OAuth。
  */
 
+import type { Prisma } from "@prisma/client";
 import { fetchGitHubLatestRelease, fetchGiteeRepoApi } from "@/lib/github";
 import { createReleaseProjectUpdate } from "@/lib/github-release-update";
+import { resolveProjectGithubUrl } from "@/lib/project-evidence-context";
 import { parseRepoUrl } from "@/lib/repo-platform";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
@@ -33,6 +35,8 @@ function buildGithubHeaders(): Record<string, string> {
 
 type GitHubRepoApi = {
   full_name?: string;
+  description?: string | null;
+  language?: string | null;
   default_branch?: string | null;
   stargazers_count?: number;
   forks_count?: number;
@@ -41,6 +45,7 @@ type GitHubRepoApi = {
   watchers?: number;
   watchers_count?: number;
   pushed_at?: string | null;
+  license?: { spdx_id?: string | null; name?: string | null } | null;
 };
 
 type GitHubCommitApi = {
@@ -57,15 +62,25 @@ export type GithubSnapshotPayload = {
   forks: number;
   openIssues: number;
   watchers: number;
-  contributorsCount: number;
+  contributorsCount: number | null;
   lastCommitAt: Date | null;
   latestReleaseTag: string | null;
   latestReleaseAt: Date | null;
+  description?: string | null;
+  language?: string | null;
+  topics?: string[];
+  license?: string | null;
+  openPullRequests?: number | null;
 };
 
 export type FetchSnapshotResult =
   | { ok: true; data: GithubSnapshotPayload }
-  | { ok: false; reason: "not_found" | "api_error" };
+  | { ok: false; reason: "not_found" | "api_error"; message?: string };
+
+export type RefreshProjectGithubFactsResult =
+  | { ok: true; refreshed: true }
+  | { ok: true; refreshed: false; reason: "no_repo_url" | "skipped" }
+  | { ok: false; lastFetchError: string; refreshed: false };
 
 function parseIsoDate(s: string | null | undefined): Date | null {
   if (!s) {
@@ -107,6 +122,60 @@ async function fetchContributorsCount(
   } catch {
     return null;
   }
+}
+
+async function fetchRepoTopics(
+  owner: string,
+  repo: string,
+  headers: Record<string, string>,
+): Promise<string[] | null> {
+  try {
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/topics`;
+    const res = await fetch(url, { headers, cache: "no-store" });
+    if (!res.ok) {
+      return null;
+    }
+    const json = (await res.json()) as { names?: unknown };
+    if (!Array.isArray(json.names)) {
+      return null;
+    }
+    return json.names.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchOpenPullRequestsCount(
+  owner: string,
+  repo: string,
+  headers: Record<string, string>,
+): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`repo:${owner}/${repo} is:pr is:open`);
+    const url = `https://api.github.com/search/issues?q=${q}&per_page=1`;
+    const res = await fetch(url, { headers, cache: "no-store" });
+    if (!res.ok) {
+      return null;
+    }
+    const json = (await res.json()) as { total_count?: unknown };
+    return typeof json.total_count === "number" ? json.total_count : null;
+  } catch {
+    return null;
+  }
+}
+
+function licenseFromRepoJson(json: GitHubRepoApi): string | null {
+  const license = json.license;
+  if (!license) {
+    return null;
+  }
+  if (typeof license.spdx_id === "string" && license.spdx_id.trim() && license.spdx_id !== "NOASSERTION") {
+    return license.spdx_id.trim();
+  }
+  if (typeof license.name === "string" && license.name.trim()) {
+    return license.name.trim();
+  }
+  return null;
 }
 
 async function fetchLatestCommitDate(
@@ -176,7 +245,11 @@ export async function fetchGithubSnapshotPayload(
     }
 
     if (!res.ok) {
-      return { ok: false, reason: "api_error" };
+      return {
+        ok: false,
+        reason: "api_error",
+        message: `GitHub API ${res.status}`,
+      };
     }
 
     const json = (await res.json()) as GitHubRepoApi;
@@ -190,10 +263,12 @@ export async function fetchGithubSnapshotPayload(
       lastCommitAt = await fetchLatestCommitDate(owner, repo, headers);
     }
 
-    const contributorsCount =
-      (await fetchContributorsCount(owner, repo, headers)) ?? 0;
-
-    const releaseInfo = await fetchGitHubLatestRelease(owner, repo, headers);
+    const [contributorsCount, topics, openPullRequests, releaseInfo] = await Promise.all([
+      fetchContributorsCount(owner, repo, headers),
+      fetchRepoTopics(owner, repo, headers),
+      fetchOpenPullRequestsCount(owner, repo, headers),
+      fetchGitHubLatestRelease(owner, repo, headers),
+    ]);
     const latestReleaseTag = releaseInfo?.tag ?? null;
     const latestReleaseAt = releaseInfo?.publishedAt ?? null;
 
@@ -217,10 +292,23 @@ export async function fetchGithubSnapshotPayload(
         lastCommitAt,
         latestReleaseTag,
         latestReleaseAt,
+        description:
+          typeof json.description === "string" && json.description.trim()
+            ? json.description.trim()
+            : null,
+        language:
+          typeof json.language === "string" && json.language.trim() ? json.language.trim() : null,
+        topics: topics ?? undefined,
+        license: licenseFromRepoJson(json),
+        openPullRequests,
       },
     };
-  } catch {
-    return { ok: false, reason: "api_error" };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: "api_error",
+      message: error instanceof Error ? error.message : "GitHub API request failed",
+    };
   }
 }
 
@@ -258,12 +346,252 @@ export async function fetchGiteeSnapshotPayload(
       forks,
       openIssues: 0,
       watchers: 0,
-      contributorsCount: 0,
+      contributorsCount: null,
       lastCommitAt,
       latestReleaseTag: null,
       latestReleaseAt: null,
     },
   };
+}
+
+function parseAiSignalsJson(raw: Prisma.JsonValue | null): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+  return raw as Record<string, unknown>;
+}
+
+function parseAiSignalsGithub(raw: Prisma.JsonValue | null): Record<string, unknown> {
+  const root = parseAiSignalsJson(raw);
+  const github = root.github;
+  if (!github || typeof github !== "object" || Array.isArray(github)) {
+    return {};
+  }
+  return github as Record<string, unknown>;
+}
+
+async function persistGithubFetchError(projectId: string, message: string): Promise<void> {
+  const row = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+    select: { aiSignals: true },
+  });
+  if (!row) {
+    return;
+  }
+  const prevGithub = parseAiSignalsGithub(row.aiSignals);
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      aiSignals: {
+        ...parseAiSignalsJson(row.aiSignals),
+        github: {
+          ...prevGithub,
+          lastFetchError: message.slice(0, 500),
+          lastFetchAt: new Date().toISOString(),
+        },
+      } as Prisma.InputJsonValue,
+    },
+  });
+}
+
+async function persistGithubFetchSuccess(
+  projectId: string,
+  payload: GithubSnapshotPayload,
+): Promise<void> {
+  const row = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+    select: { aiSignals: true },
+  });
+  if (!row) {
+    return;
+  }
+  const prevGithub = parseAiSignalsGithub(row.aiSignals);
+  const { lastFetchError, ...restGithub } = prevGithub;
+  void lastFetchError;
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      aiSignals: {
+        ...parseAiSignalsJson(row.aiSignals),
+        github: {
+          ...restGithub,
+          description: payload.description ?? restGithub.description ?? null,
+          language: payload.language ?? restGithub.language ?? null,
+          topics: payload.topics ?? restGithub.topics ?? undefined,
+          license: payload.license ?? restGithub.license ?? null,
+          openPullRequests: payload.openPullRequests ?? restGithub.openPullRequests ?? null,
+          lastFetchAt: new Date().toISOString(),
+          lastFetchError: null,
+        },
+      } as Prisma.InputJsonValue,
+    },
+  });
+}
+
+type PreviousGithubSnapshot = {
+  stars: number;
+  forks: number;
+  openIssues: number;
+  watchers: number;
+  contributorsCount: number;
+  lastCommitAt: Date | null;
+  defaultBranch: string | null;
+  latestReleaseTag: string | null;
+  latestReleaseAt: Date | null;
+};
+
+function mergeSnapshotWithPrevious(
+  fetched: GithubSnapshotPayload,
+  prev: PreviousGithubSnapshot | null,
+): GithubSnapshotPayload {
+  if (!prev) {
+    return {
+      ...fetched,
+      contributorsCount: fetched.contributorsCount ?? 0,
+    };
+  }
+  return {
+    ...fetched,
+    contributorsCount: fetched.contributorsCount ?? prev.contributorsCount,
+  };
+}
+
+async function insertGithubRepoSnapshot(
+  projectId: string,
+  data: GithubSnapshotPayload,
+  prevSnap: { latestReleaseTag: string | null } | null,
+): Promise<void> {
+  await prisma.githubRepoSnapshot.create({
+    data: {
+      projectId,
+      repoPlatform: data.repoPlatform,
+      repoOwner: data.repoOwner,
+      repoName: data.repoName,
+      repoFullName: data.repoFullName,
+      defaultBranch: data.defaultBranch,
+      stars: data.stars,
+      forks: data.forks,
+      openIssues: data.openIssues,
+      watchers: data.watchers,
+      commitCount7d: 0,
+      commitCount30d: 0,
+      contributorsCount: data.contributorsCount ?? 0,
+      lastCommitAt: data.lastCommitAt,
+      latestReleaseTag: data.latestReleaseTag,
+      latestReleaseAt: data.latestReleaseAt,
+    },
+  });
+
+  const tag = data.latestReleaseTag?.trim();
+  const releaseAt = data.latestReleaseAt;
+  if (tag && releaseAt && (!prevSnap?.latestReleaseTag || prevSnap.latestReleaseTag !== tag)) {
+    try {
+      await createReleaseProjectUpdate({
+        projectId,
+        platform: data.repoPlatform,
+        owner: data.repoOwner,
+        repo: data.repoName,
+        tag,
+        releaseAt,
+      });
+    } catch (e) {
+      console.error("[insertGithubRepoSnapshot] release update", e);
+    }
+  }
+}
+
+/**
+ * 为项目拉取最新 GitHub/Gitee 仓库指标并写入 GithubRepoSnapshot。
+ * API 失败时不写入快照、不用 0 覆盖已有值，并在 aiSignals.github.lastFetchError 记录错误。
+ */
+export async function refreshProjectGithubFacts(
+  projectId: string,
+): Promise<RefreshProjectGithubFactsResult> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { ok: false, refreshed: false, lastFetchError: "未配置数据库" };
+  }
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+    select: {
+      id: true,
+      githubUrl: true,
+      aiSignals: true,
+      sources: {
+        select: { kind: true, url: true },
+        orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+      },
+    },
+  });
+
+  if (!project) {
+    return { ok: false, refreshed: false, lastFetchError: "项目不存在或已删除" };
+  }
+
+  const rawUrl = resolveProjectGithubUrl({
+    githubUrl: project.githubUrl,
+    sources: project.sources,
+  });
+  if (!rawUrl) {
+    return { ok: true, refreshed: false, reason: "no_repo_url" };
+  }
+
+  const parsed = parseRepoUrl(rawUrl);
+  if (!parsed) {
+    const message = "仓库地址格式错误（当前支持 GitHub、Gitee）";
+    await persistGithubFetchError(projectId, message);
+    return { ok: false, refreshed: false, lastFetchError: message };
+  }
+
+  const fetched =
+    parsed.platform === "github"
+      ? await fetchGithubSnapshotPayload(parsed.owner, parsed.repo)
+      : await fetchGiteeSnapshotPayload(parsed.owner, parsed.repo);
+
+  if (!fetched.ok) {
+    const message =
+      fetched.reason === "not_found"
+        ? "未找到该仓库"
+        : fetched.message?.trim() || "仓库数据请求失败，请稍后再试";
+    await persistGithubFetchError(projectId, message);
+    console.warn("[refreshProjectGithubFacts] fetch failed", {
+      projectId,
+      rawUrl,
+      reason: fetched.reason,
+      message,
+    });
+    return { ok: false, refreshed: false, lastFetchError: message };
+  }
+
+  const prevSnap = await prisma.githubRepoSnapshot.findFirst({
+    where: { projectId },
+    orderBy: { fetchedAt: "desc" },
+    select: {
+      stars: true,
+      forks: true,
+      openIssues: true,
+      watchers: true,
+      contributorsCount: true,
+      lastCommitAt: true,
+      defaultBranch: true,
+      latestReleaseTag: true,
+      latestReleaseAt: true,
+    },
+  });
+
+  const merged = mergeSnapshotWithPrevious(fetched.data, prevSnap);
+
+  try {
+    await insertGithubRepoSnapshot(projectId, merged, prevSnap);
+    await persistGithubFetchSuccess(projectId, merged);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "写入仓库快照失败";
+    console.error("[refreshProjectGithubFacts]", error);
+    await persistGithubFetchError(projectId, message);
+    return { ok: false, refreshed: false, lastFetchError: message };
+  }
+
+  return { ok: true, refreshed: true };
 }
 
 export type SyncGithubSnapshotResult =
@@ -301,82 +629,16 @@ export async function syncGithubSnapshotForProjectSlug(
     return { ok: false, message: "项目不存在或已被删除。" };
   }
 
-  const rawUrl = project.githubUrl?.trim();
-  if (!rawUrl) {
+  if (!project.githubUrl?.trim()) {
     return { ok: false, message: "未配置代码仓库地址" };
   }
 
-  const parsed = parseRepoUrl(rawUrl);
-  if (!parsed) {
-    return { ok: false, message: "仓库地址格式错误（当前支持 GitHub、Gitee）" };
+  const result = await refreshProjectGithubFacts(project.id);
+  if (result.ok && result.refreshed) {
+    return { ok: true };
   }
-
-  const fetched =
-    parsed.platform === "github"
-      ? await fetchGithubSnapshotPayload(parsed.owner, parsed.repo)
-      : await fetchGiteeSnapshotPayload(parsed.owner, parsed.repo);
-  if (!fetched.ok) {
-    return {
-      ok: false,
-      message:
-        fetched.reason === "not_found"
-          ? "未找到该仓库"
-          : "仓库数据请求失败，请稍后再试",
-    };
+  if (result.ok && !result.refreshed) {
+    return { ok: false, message: "未配置代码仓库地址" };
   }
-
-  const prevSnap = await prisma.githubRepoSnapshot.findFirst({
-    where: { projectId: project.id },
-    orderBy: { fetchedAt: "desc" },
-    select: { latestReleaseTag: true },
-  });
-
-  try {
-    await prisma.githubRepoSnapshot.create({
-      data: {
-        projectId: project.id,
-        repoPlatform: fetched.data.repoPlatform,
-        repoOwner: fetched.data.repoOwner,
-        repoName: fetched.data.repoName,
-        repoFullName: fetched.data.repoFullName,
-        defaultBranch: fetched.data.defaultBranch,
-        stars: fetched.data.stars,
-        forks: fetched.data.forks,
-        openIssues: fetched.data.openIssues,
-        watchers: fetched.data.watchers,
-        commitCount7d: 0,
-        commitCount30d: 0,
-        contributorsCount: fetched.data.contributorsCount,
-        lastCommitAt: fetched.data.lastCommitAt,
-        latestReleaseTag: fetched.data.latestReleaseTag,
-        latestReleaseAt: fetched.data.latestReleaseAt,
-      },
-    });
-  } catch (e) {
-    console.error("[syncGithubSnapshotForProjectSlug]", e);
-    return { ok: false, message: "仓库数据请求失败，请稍后再试" };
-  }
-
-  const tag = fetched.data.latestReleaseTag?.trim();
-  const releaseAt = fetched.data.latestReleaseAt;
-  if (
-    tag &&
-    releaseAt &&
-    (!prevSnap?.latestReleaseTag || prevSnap.latestReleaseTag !== tag)
-  ) {
-    try {
-      await createReleaseProjectUpdate({
-        projectId: project.id,
-        platform: parsed.platform,
-        owner: parsed.owner,
-        repo: parsed.repo,
-        tag,
-        releaseAt,
-      });
-    } catch (e) {
-      console.error("[syncGithubSnapshotForProjectSlug] release update", e);
-    }
-  }
-
-  return { ok: true };
+  return { ok: false, message: result.lastFetchError };
 }

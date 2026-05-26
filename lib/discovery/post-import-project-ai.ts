@@ -9,6 +9,7 @@ import {
 } from "@/lib/project-ai-content";
 import { buildProjectEvidenceSnapshot } from "@/lib/project-evidence-snapshot";
 import { detectAndPersistProjectUpdateSignals } from "@/lib/project-update-signals";
+import { refreshProjectGithubFacts } from "@/lib/github-sync";
 import { enrichProjectSources } from "@/lib/project-source-enrichment";
 import {
   buildProjectInsightSourceSnapshot,
@@ -394,6 +395,14 @@ export async function generatePostImportProjectAi(
     console.warn("[post-import-project-ai] source_enrichment failed (non-blocking)", {
       projectId,
       error,
+    });
+  }
+
+  const githubRefresh = await refreshProjectGithubFacts(projectId);
+  if (!githubRefresh.ok) {
+    console.warn("[post-import-project-ai] github facts refresh failed (non-blocking)", {
+      projectId,
+      lastFetchError: githubRefresh.lastFetchError,
     });
   }
 

@@ -35,6 +35,9 @@ export function parseGitHubRepoUrl(raw: string): { owner: string; repo: string }
   return { owner: p.owner, repo: p.repo };
 }
 
+export { refreshProjectGithubFacts } from "@/lib/github-sync";
+export type { RefreshProjectGithubFactsResult } from "@/lib/github-sync";
+
 export type FetchGitHubRepoResult =
   | { ok: true; data: GitHubRepoImportPayload }
   | { ok: false; reason: "not_found" | "api_error" };

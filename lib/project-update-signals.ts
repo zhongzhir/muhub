@@ -204,25 +204,5 @@ export async function detectAndPersistProjectUpdateSignals(
     await persistSignal(projectId, signal, sourceType, null, { version: "v2" });
   }
 
-  if (snapshot.github.url && snapshot.github.stars != null) {
-    const parsed = snapshot.github.repo?.split("/");
-    await prisma.githubRepoSnapshot.create({
-      data: {
-        projectId,
-        repoFullName: snapshot.github.repo ?? snapshot.github.url,
-        repoOwner: parsed?.[0] ?? null,
-        repoName: parsed?.[1] ?? null,
-        repoPlatform: "github",
-        stars: snapshot.github.stars,
-        forks: 0,
-        watchers: 0,
-        openIssues: 0,
-        lastCommitAt: snapshot.github.updatedAt ? new Date(snapshot.github.updatedAt) : null,
-        latestReleaseTag:
-          snapshot.github.releaseCount && snapshot.github.releaseCount > 0 ? "latest" : null,
-      },
-    });
-  }
-
   return signals;
 }

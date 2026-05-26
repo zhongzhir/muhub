@@ -8,6 +8,8 @@ import {
 } from "@/lib/project-publishing";
 import { prisma } from "@/lib/prisma";
 import { writeProjectActionLog } from "@/lib/project-action-log";
+import { refreshProjectGithubFacts } from "@/lib/github-sync";
+import { resolveProjectGithubUrl } from "@/lib/project-evidence-context";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +118,21 @@ export async function POST(req: Request) {
       }
 
       try {
+        const repoUrl = resolveProjectGithubUrl({
+          githubUrl: row.githubUrl,
+          sources: row.sources,
+        });
+        if (repoUrl) {
+          const githubRefresh = await refreshProjectGithubFacts(row.id);
+          if (!githubRefresh.ok) {
+            console.warn("[bulk-action] github facts refresh failed before publish", {
+              projectId: row.id,
+              slug: row.slug,
+              lastFetchError: githubRefresh.lastFetchError,
+            });
+          }
+        }
+
         await prisma.$transaction(async (tx) => {
           await tx.project.update({
             where: { id: row.id },
