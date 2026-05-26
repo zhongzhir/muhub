@@ -1,45 +1,17 @@
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
 import { scheduleEnrichProjectAfterImport } from "@/lib/discovery/post-import-project-ai";
+import {
+  buildPublishProjectUpdateData,
+  evaluateProjectPublishReadiness,
+  PARTIAL_AI_PUBLISH_NOTICE,
+  type BulkPublishItemResult,
+} from "@/lib/project-publishing";
 import { prisma } from "@/lib/prisma";
 import { writeProjectActionLog } from "@/lib/project-action-log";
 
 export const dynamic = "force-dynamic";
 
 type BulkIntent = "publish" | "hide" | "archive";
-
-type ProjectBulkRow = {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-  publishedAt: Date | null;
-  aiInsightStatus: string | null;
-  aiContentStatus: string | null;
-  aiKnowledgeJson: unknown;
-  tagline: string | null;
-  description: string | null;
-  sourceType: string | null;
-};
-
-function publishReadinessIssues(row: ProjectBulkRow): string[] {
-  const issues: string[] = [];
-  if (row.aiInsightStatus !== "success") {
-    issues.push("AI 认知卡未成功生成");
-  }
-  if (row.aiContentStatus !== "success") {
-    issues.push("AI 增强版内容未成功生成");
-  }
-  if (!row.aiKnowledgeJson || typeof row.aiKnowledgeJson !== "object") {
-    issues.push("缺少 AI 知识库（aiKnowledgeJson）");
-  }
-  if (!row.tagline?.trim()) {
-    issues.push("缺少一句话简介");
-  }
-  if (!row.description?.trim()) {
-    issues.push("缺少项目简介");
-  }
-  return issues;
-}
 
 export async function POST(req: Request) {
   try {
@@ -80,63 +52,127 @@ export async function POST(req: Request) {
       aiInsightStatus: true,
       aiContentStatus: true,
       aiKnowledgeJson: true,
+      aiStatus: true,
       tagline: true,
       description: true,
+      primaryCategory: true,
+      websiteUrl: true,
+      githubUrl: true,
       sourceType: true,
+      sources: {
+        select: { kind: true, url: true, label: true },
+      },
     },
   });
 
   if (intent === "publish") {
-    const blocked = rows
-      .map((row) => ({ row, issues: publishReadinessIssues(row) }))
-      .filter((item) => item.issues.length > 0);
+    const published: BulkPublishItemResult[] = [];
+    const skipped: BulkPublishItemResult[] = [];
+    const blocked: BulkPublishItemResult[] = [];
+    const partial_ai: BulkPublishItemResult[] = [];
 
-    for (const item of blocked) {
-      if (item.row.aiInsightStatus !== "success" || item.row.aiContentStatus !== "success") {
-        scheduleEnrichProjectAfterImport(item.row.id, {
-          source: item.row.sourceType === "discovery-json-queue" ? "github_queue" : "manual",
-          skipPublish: true,
+    for (const row of rows) {
+      const readiness = evaluateProjectPublishReadiness({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        status: row.status,
+        publishedAt: row.publishedAt,
+        aiInsightStatus: row.aiInsightStatus,
+        aiContentStatus: row.aiContentStatus,
+        aiKnowledgeJson: row.aiKnowledgeJson,
+        aiStatus: row.aiStatus,
+        tagline: row.tagline,
+        description: row.description,
+        primaryCategory: row.primaryCategory,
+        websiteUrl: row.websiteUrl,
+        githubUrl: row.githubUrl,
+        sources: row.sources,
+      });
+
+      const itemBase = { id: row.id, name: row.name, slug: row.slug };
+
+      if (readiness.outcome === "skipped") {
+        skipped.push({
+          ...itemBase,
+          reason: readiness.issues[0] ?? "已跳过",
+        });
+        continue;
+      }
+
+      if (readiness.outcome === "blocked") {
+        if (row.aiInsightStatus !== "success" || row.aiContentStatus !== "success") {
+          scheduleEnrichProjectAfterImport(row.id, {
+            source: row.sourceType === "discovery-json-queue" ? "github_queue" : "manual",
+            skipPublish: true,
+          });
+        }
+        blocked.push({
+          ...itemBase,
+          issues: readiness.issues,
+          reason: readiness.issues.join("；"),
+        });
+        continue;
+      }
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          await tx.project.update({
+            where: { id: row.id },
+            data: buildPublishProjectUpdateData({
+              publishedAt: row.publishedAt,
+              primaryCategory: readiness.primaryCategory,
+              readiness,
+            }),
+          });
+          await writeProjectActionLog(
+            {
+              projectId: row.id,
+              action: "publish",
+              detail:
+                readiness.publishQuality === "partial_ai"
+                  ? `项目列表批量发布（partial_ai）：${PARTIAL_AI_PUBLISH_NOTICE}`
+                  : "项目列表批量发布",
+            },
+            tx,
+          );
+        });
+
+        if (readiness.publishQuality === "partial_ai") {
+          partial_ai.push({
+            ...itemBase,
+            notice: readiness.notice ?? PARTIAL_AI_PUBLISH_NOTICE,
+          });
+        } else {
+          published.push(itemBase);
+        }
+      } catch (error) {
+        blocked.push({
+          ...itemBase,
+          reason: error instanceof Error ? error.message : "发布失败",
         });
       }
     }
 
-    if (blocked.length > 0) {
-      const preview = blocked
-        .slice(0, 5)
-        .map((item) => `${item.row.name}（${item.issues.join("；")}）`)
-        .join("；");
-      return Response.json(
-        {
-          ok: false,
-          error: `有 ${blocked.length} 个项目尚未完成 AI enrichment，已阻止批量发布并尝试重新触发 AI：${preview}${blocked.length > 5 ? "…" : ""}`,
-          blockedCount: blocked.length,
-        },
-        { status: 400 },
-      );
-    }
+    const totalHandled = published.length + partial_ai.length + skipped.length + blocked.length;
+    return Response.json({
+      ok: true,
+      intent,
+      count: totalHandled,
+      published,
+      skipped,
+      blocked,
+      partial_ai,
+      message:
+        partial_ai.length > 0
+          ? `${PARTIAL_AI_PUBLISH_NOTICE}（${partial_ai.length} 个项目为 partial_ai）`
+          : undefined,
+    });
   }
 
   await prisma.$transaction(async (tx) => {
     for (const row of rows) {
-      if (intent === "publish") {
-        await tx.project.update({
-          where: { id: row.id },
-          data: {
-            status: "PUBLISHED",
-            visibilityStatus: "PUBLISHED",
-            isPublic: true,
-            publishedAt: row.publishedAt ?? new Date(),
-          },
-        });
-        await writeProjectActionLog(
-          {
-            projectId: row.id,
-            action: "publish",
-            detail: "项目列表批量发布",
-          },
-          tx,
-        );
-      } else if (intent === "hide") {
+      if (intent === "hide") {
         await tx.project.update({
           where: { id: row.id },
           data: {
@@ -174,5 +210,5 @@ export async function POST(req: Request) {
     }
   });
 
-  return Response.json({ ok: true, count: rows.length });
+  return Response.json({ ok: true, count: rows.length, intent });
 }

@@ -28,7 +28,7 @@ import {
   type KnowledgeCategory,
   type ProjectKnowledge,
 } from "@/lib/project-knowledge";
-import { publishProjectAfterAiEnrichment } from "@/lib/project-publishing";
+import { publishProjectAfterAiEnrichment, syncProjectPublishQualityFields } from "@/lib/project-publishing";
 import { normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { prisma } from "@/lib/prisma";
@@ -518,8 +518,9 @@ export async function generatePostImportProjectAi(
     base.applyFieldsStatus = "success";
     await prisma.project.update({
       where: { id: projectId },
-      data: { aiStatus: "done", aiError: null },
+      data: { aiError: null },
     });
+    await syncProjectPublishQualityFields(projectId);
   } catch (error) {
     const message = normalizeAiError(error);
     console.error("[post-import-project-ai] apply_fields failed", { projectId, error });
@@ -556,6 +557,7 @@ export async function generatePostImportProjectAi(
     } else {
       base.publishStatus = "success";
     }
+    await syncProjectPublishQualityFields(projectId);
   } catch (error) {
     const message = normalizeAiError(error);
     console.error("[post-import-project-ai] publish failed", { projectId, error });
