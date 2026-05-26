@@ -24,6 +24,9 @@ import type { DiscoveryItem } from "@/agents/discovery/discovery-types";
 const btn =
   "rounded border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800";
 
+const CHECKBOX_COL_CLASS = "w-12 min-w-12 max-w-12 shrink-0 px-0 py-3 text-center";
+const CHECKBOX_WRAP_CLASS = "flex items-center justify-center";
+
 function readMetaText(meta: Record<string, unknown> | undefined, key: string): string | null {
   const value = meta?.[key];
   if (typeof value !== "string") {
@@ -385,15 +388,17 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
       <table className="w-full min-w-[980px] table-fixed text-left text-sm">
         <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
           <tr>
-            <th className="px-3 py-3">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={toggleAllCurrentPage}
-                aria-label="全选当前页"
-              />
+            <th className={CHECKBOX_COL_CLASS}>
+              <div className={CHECKBOX_WRAP_CLASS}>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAllCurrentPage}
+                  aria-label="全选当前页"
+                />
+              </div>
             </th>
-            <th className="w-[320px] px-4 py-3">项目</th>
+            <th className="min-w-0 px-4 py-3">项目</th>
             <th className="w-[88px] px-4 py-3">来源</th>
             <th className="w-[280px] px-4 py-3">Meta</th>
             <th className="px-4 py-3">状态</th>
@@ -429,15 +434,17 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
 
             return (
             <tr key={row.id} className="align-top text-zinc-800 dark:text-zinc-200">
-              <td className="px-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(row.id)}
-                  onChange={() => toggleRow(row.id)}
-                  aria-label={`选择 ${row.title}`}
-                />
+              <td className={CHECKBOX_COL_CLASS}>
+                <div className={CHECKBOX_WRAP_CLASS}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(row.id)}
+                    onChange={() => toggleRow(row.id)}
+                    aria-label={`选择 ${row.title}`}
+                  />
+                </div>
               </td>
-              <td className="max-w-[320px] px-4 py-3 font-medium">
+              <td className="min-w-0 overflow-hidden px-4 py-3 font-medium">
                 {isSourceMaterial ? (
                   <div className="mb-1 flex flex-wrap gap-1">
                     <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[11px] font-normal text-violet-800 dark:bg-violet-950 dark:text-violet-200">
@@ -461,12 +468,15 @@ export function DiscoveryJsonQueueTable({ items }: { items: DiscoveryItem[] }) {
                     href={materialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                    className="block truncate text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                    title={row.title}
                   >
                     {row.title}
                   </a>
                 ) : (
-                  <span>{row.title}</span>
+                  <span className="block truncate" title={row.title}>
+                    {row.title}
+                  </span>
                 )}
                 {sourceArticleUrl && sourceArticleUrl !== materialUrl ? (
                   <p className="mt-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">

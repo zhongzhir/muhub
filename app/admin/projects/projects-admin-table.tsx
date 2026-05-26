@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import type { ProjectAiPublishQuality } from "@/lib/project-publishing";
+
 type ProjectRow = {
   id: string;
   slug: string;
@@ -15,7 +17,37 @@ type ProjectRow = {
   tags: string[];
   isPublic: boolean;
   updatedAtText: string;
+  aiPublishQuality: ProjectAiPublishQuality;
 };
+
+function aiPublishQualityLabel(quality: ProjectAiPublishQuality): string {
+  switch (quality) {
+    case "full_ai":
+      return "full_ai";
+    case "partial_ai":
+      return "partial_ai";
+    case "failed":
+      return "failed";
+    default:
+      return "pending";
+  }
+}
+
+function aiPublishQualityClass(quality: ProjectAiPublishQuality): string {
+  switch (quality) {
+    case "full_ai":
+      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200";
+    case "partial_ai":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200";
+    case "failed":
+      return "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200";
+    default:
+      return "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200";
+  }
+}
+
+const CHECKBOX_COL_CLASS = "w-12 min-w-12 max-w-12 shrink-0 px-0 py-3 text-center";
+const CHECKBOX_WRAP_CLASS = "flex items-center justify-center";
 
 export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
   const router = useRouter();
@@ -39,12 +71,35 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: Array.from(selected), intent }),
       });
-      const json = (await res.json()) as { ok?: boolean; error?: string; count?: number };
+      const json = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        count?: number;
+        message?: string;
+        published?: Array<{ name: string }>;
+        skipped?: Array<{ name: string; reason?: string }>;
+        blocked?: Array<{ name: string; reason?: string }>;
+        partial_ai?: Array<{ name: string; notice?: string }>;
+      };
       if (!res.ok || !json.ok) {
         setMessage(json.error ?? "批量操作失败。");
         return;
       }
-      setMessage(`批量操作完成，共处理 ${json.count ?? 0} 个项目。`);
+      if (intent === "publish") {
+        const parts = [
+          json.published?.length ? `发布 ${json.published.length}` : null,
+          json.partial_ai?.length ? `partial_ai ${json.partial_ai.length}` : null,
+          json.skipped?.length ? `跳过 ${json.skipped.length}` : null,
+          json.blocked?.length ? `阻止 ${json.blocked.length}` : null,
+        ].filter(Boolean);
+        setMessage(
+          parts.length
+            ? `批量发布完成：${parts.join("，")}。${json.message ? ` ${json.message}` : ""}`
+            : json.message ?? "批量发布完成。",
+        );
+      } else {
+        setMessage(`批量操作完成，共处理 ${json.count ?? 0} 个项目。`);
+      }
       setSelected(new Set());
       router.refresh();
     } catch {
@@ -71,25 +126,28 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
       </div>
 
       <div className="w-full max-w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
-        <table className="min-w-[960px] w-full table-fixed text-left text-sm">
+        <table className="min-w-[1040px] w-full table-fixed text-left text-sm">
           <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium uppercase text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/80">
             <tr>
-              <th className="px-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={allOnPage}
-                  onChange={() => {
-                    if (allOnPage) {
-                      setSelected(new Set());
-                    } else {
-                      setSelected(new Set(rows.map((r) => r.id)));
-                    }
-                  }}
-                />
+              <th className={CHECKBOX_COL_CLASS}>
+                <div className={CHECKBOX_WRAP_CLASS}>
+                  <input
+                    type="checkbox"
+                    checked={allOnPage}
+                    onChange={() => {
+                      if (allOnPage) {
+                        setSelected(new Set());
+                      } else {
+                        setSelected(new Set(rows.map((r) => r.id)));
+                      }
+                    }}
+                  />
+                </div>
               </th>
-              <th className="w-[220px] px-4 py-3">项目名称</th>
+              <th className="min-w-0 px-4 py-3">项目名称</th>
               <th className="w-[88px] px-4 py-3">状态</th>
               <th className="w-[88px] px-4 py-3">可见性</th>
+              <th className="w-[96px] px-4 py-3">AI状态</th>
               <th className="w-[120px] px-4 py-3">分类</th>
               <th className="w-[180px] px-4 py-3">标签</th>
               <th className="w-[56px] px-4 py-3">公开</th>
@@ -100,31 +158,38 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={10} className="px-4 py-8 text-center text-zinc-500">
                   暂无项目
                 </td>
               </tr>
             ) : (
               rows.map((r) => (
                 <tr key={r.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/60">
-                  <td className="px-3 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(r.id)}
-                      onChange={() => {
-                        const next = new Set(selected);
-                        if (next.has(r.id)) next.delete(r.id);
-                        else next.add(r.id);
-                        setSelected(next);
-                      }}
-                    />
+                  <td className={CHECKBOX_COL_CLASS}>
+                    <div className={CHECKBOX_WRAP_CLASS}>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(r.id)}
+                        onChange={() => {
+                          const next = new Set(selected);
+                          if (next.has(r.id)) next.delete(r.id);
+                          else next.add(r.id);
+                          setSelected(next);
+                        }}
+                      />
+                    </div>
                   </td>
-                  <td className="max-w-[220px] px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                  <td className="min-w-0 overflow-hidden px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
                     <div className="truncate">{r.name}</div>
                     <p className="mt-0.5 truncate text-xs font-normal text-zinc-500">{r.tagline || "—"}</p>
                   </td>
                   <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">{r.status}</td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.visibilityStatus}</td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded px-2 py-0.5 text-xs ${aiPublishQualityClass(r.aiPublishQuality)}`}>
+                      {aiPublishQualityLabel(r.aiPublishQuality)}
+                    </span>
+                  </td>
                   <td className="max-w-[120px] truncate px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.primaryCategory || "—"}</td>
                   <td className="max-w-[180px] truncate px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.tags.length ? r.tags.slice(0, 4).map((tag) => `#${tag}`).join(" ") : "—"}</td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.isPublic ? "是" : "否"}</td>
