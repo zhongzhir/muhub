@@ -72,7 +72,7 @@ async function appendSnapshot(projectId: string, live: GithubSnapshotPayload): P
       watchers: live.watchers,
       commitCount7d: 0,
       commitCount30d: 0,
-      contributorsCount: live.contributorsCount,
+      contributorsCount: live.contributorsCount ?? 0,
       lastCommitAt: live.lastCommitAt,
       latestReleaseTag: live.latestReleaseTag,
       latestReleaseAt: live.latestReleaseAt,
