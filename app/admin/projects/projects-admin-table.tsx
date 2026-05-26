@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 
 import type { ProjectAiPublishQuality } from "@/lib/project-publishing";
 
-type ProjectRow = {
+export type ProjectRow = {
   id: string;
   slug: string;
   name: string;

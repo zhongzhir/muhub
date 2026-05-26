@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PROJECT_ACTIVE_FILTER } from "@/lib/project-active-filter";
+import { resolveProjectAiPublishQuality } from "@/lib/project-publishing";
 import type { Prisma, ProjectStatus, ProjectVisibilityStatus } from "@prisma/client";
-import { ProjectsAdminTable } from "./projects-admin-table";
+import { ProjectsAdminTable, type ProjectRow } from "./projects-admin-table";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,51 @@ function qp(sp: SearchParams, key: string): string {
     return (value[0] ?? "").trim();
   }
   return (value ?? "").trim();
+}
+
+function mapProjectAdminRow(
+  row: {
+    id: string;
+    slug: string;
+    name: string;
+    tagline: string | null;
+    status: string;
+    visibilityStatus: string;
+    primaryCategory: string | null;
+    tags: string[];
+    isPublic: boolean;
+    updatedAt: Date;
+    aiInsightStatus: string | null;
+    aiContentStatus: string | null;
+    aiKnowledgeJson: unknown;
+    aiStatus: string | null;
+  },
+): ProjectRow {
+  let aiPublishQuality: ProjectRow["aiPublishQuality"] = "pending";
+  try {
+    aiPublishQuality = resolveProjectAiPublishQuality({
+      aiInsightStatus: row.aiInsightStatus,
+      aiContentStatus: row.aiContentStatus,
+      aiKnowledgeJson: row.aiKnowledgeJson,
+      aiStatus: row.aiStatus,
+    });
+  } catch {
+    aiPublishQuality = "pending";
+  }
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    tagline: row.tagline,
+    status: row.status,
+    visibilityStatus: row.visibilityStatus,
+    primaryCategory: row.primaryCategory,
+    tags: row.tags,
+    isPublic: row.isPublic,
+    updatedAtText: row.updatedAt.toISOString().replace("T", " ").slice(0, 19),
+    aiPublishQuality,
+  };
 }
 
 export default async function AdminProjectsListPage({
@@ -68,6 +114,10 @@ export default async function AdminProjectsListPage({
       tags: true,
       isPublic: true,
       updatedAt: true,
+      aiInsightStatus: true,
+      aiContentStatus: true,
+      aiKnowledgeJson: true,
+      aiStatus: true,
     },
     orderBy: { updatedAt: "desc" },
     take: 300,
@@ -134,20 +184,7 @@ export default async function AdminProjectsListPage({
         </form>
       </section>
 
-      <ProjectsAdminTable
-        rows={rows.map((r) => ({
-          id: r.id,
-          slug: r.slug,
-          name: r.name,
-          tagline: r.tagline,
-          status: r.status,
-          visibilityStatus: r.visibilityStatus,
-          primaryCategory: r.primaryCategory,
-          tags: r.tags,
-          isPublic: r.isPublic,
-          updatedAtText: r.updatedAt.toISOString().replace("T", " ").slice(0, 19),
-        }))}
-      />
+      <ProjectsAdminTable rows={rows.map(mapProjectAdminRow)} />
     </div>
   );
 }

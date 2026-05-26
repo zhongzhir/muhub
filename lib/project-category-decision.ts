@@ -209,7 +209,6 @@ function pickBestCategory(
 
 function computeConfidence(
   scores: Partial<Record<KnowledgeCategory, number>>,
-  _winner: KnowledgeCategory,
 ): CategoryConfidence {
   const sorted = ALL_CATEGORIES.map((cat) => scores[cat] ?? 0).sort((a, b) => b - a);
   const top = sorted[0] ?? 0;
@@ -302,7 +301,7 @@ export function decideProjectCategory(input: CategorySemanticInput): CategoryDec
     bump(scores, "AI_AGENT", -20);
   }
 
-  const categoryConfidence = computeConfidence(scores, knowledgeCategory);
+  const categoryConfidence = computeConfidence(scores);
   const needsCategoryReview = categoryConfidence === "low";
   const projectSlug = knowledgeCategoryToProjectSlug(knowledgeCategory);
   const label = getProjectCategoryLabel(projectSlug, projectSlug);
