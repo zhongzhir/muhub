@@ -16,7 +16,7 @@ import { parseSingleProjectTag } from "@/lib/projects/project-tags";
 import { PROJECT_PLAZA_FILTER } from "@/lib/project-active-filter";
 import { prisma } from "@/lib/prisma";
 
-export type PlazaSortMode = "new" | "updated" | "github" | "recommended";
+export type PlazaSortMode = "new" | "updated" | "published" | "github" | "recommended";
 
 export type ProjectListItem = {
   slug: string;
@@ -60,6 +60,7 @@ type PlazaDbRow = {
   description: string | null;
   createdAt: Date;
   updatedAt: Date;
+  publishedAt: Date | null;
   status: ProjectStatus;
   githubUrl: string | null;
   websiteUrl: string | null;
@@ -104,12 +105,23 @@ function mapPlazaRow(r: PlazaDbRow): ProjectListItem {
   };
 }
 
+function plazaPublishedSortTime(row: PlazaDbRow): number {
+  return (row.publishedAt ?? row.createdAt).getTime();
+}
+
 function sortPlazaItems(items: ProjectListItem[], rows: PlazaDbRow[], sort: PlazaSortMode): ProjectListItem[] {
   const bySlug = new Map(rows.map((r) => [r.slug, r]));
   const list = [...items];
 
   if (sort === "updated") {
     list.sort((a, b) => bySlug.get(b.slug)!.updatedAt.getTime() - bySlug.get(a.slug)!.updatedAt.getTime());
+    return list;
+  }
+
+  if (sort === "published") {
+    list.sort(
+      (a, b) => plazaPublishedSortTime(bySlug.get(b.slug)!) - plazaPublishedSortTime(bySlug.get(a.slug)!),
+    );
     return list;
   }
 
@@ -191,6 +203,7 @@ const plazaSelect = {
   description: true,
   createdAt: true,
   updatedAt: true,
+  publishedAt: true,
   status: true,
   githubUrl: true,
   websiteUrl: true,
@@ -321,7 +334,7 @@ export async function fetchPublicProjects(
   const where: Prisma.ProjectWhereInput =
     parts.length === 1 ? parts[0]! : { AND: parts };
 
-  const sortMode: PlazaSortMode = filters.sort ?? "new";
+  const sortMode: PlazaSortMode = filters.sort ?? "updated";
 
   try {
     const rows = (await prisma.project.findMany({

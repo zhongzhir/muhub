@@ -43,7 +43,7 @@ export default async function HomePage() {
               <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">来自 AI 原生生态的真实项目，持续更新</p>
             </div>
             <Link
-              href="/projects?sort=new"
+              href="/projects"
               className="text-sm font-medium text-teal-700 underline-offset-4 hover:underline dark:text-teal-400"
             >
               查看项目广场 →

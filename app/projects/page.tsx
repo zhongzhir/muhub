@@ -68,10 +68,10 @@ function parseBoolQuery(v: string | string[] | undefined): boolean | undefined {
 
 function parseSort(raw: string | string[] | undefined): PlazaSortMode {
   const s = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? "";
-  if (s === "updated" || s === "github" || s === "recommended") {
+  if (s === "new" || s === "published" || s === "github" || s === "recommended") {
     return s;
   }
-  return "new";
+  return "updated";
 }
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -114,7 +114,7 @@ export default async function ProjectsListPage({
     hw != null ||
     hd != null ||
     hg != null ||
-    sort !== "new";
+    sort !== "updated";
 
   const hasListFilters =
     Boolean(searchTerm) || hasNonSearchFilters;
@@ -160,7 +160,7 @@ export default async function ProjectsListPage({
   } else if (hg === false) {
     filterQuery.set("hg", "0");
   }
-  if (sort !== "new") {
+  if (sort !== "updated") {
     filterQuery.set("sort", sort);
   }
   const filterQS = filterQuery.toString();
@@ -259,8 +259,9 @@ export default async function ProjectsListPage({
                   defaultValue={sort}
                   className="muhub-input px-2 py-1.5"
                 >
-                  <option value="new">最新收录</option>
                   <option value="updated">最近更新</option>
+                  <option value="published">最新发布</option>
+                  <option value="new">最新收录</option>
                   <option value="github">GitHub 热度（快照星标）</option>
                   <option value="recommended">推荐（完整度+AI 等规则）</option>
                 </select>
