@@ -8,6 +8,7 @@ import {
   markDiscoverySignalReviewedAction,
   rejectDiscoverySignalAction,
 } from "../actions";
+import { extractEntityHintsForSignalAction } from "../../entities/actions";
 
 export function SignalDetailActions(props: {
   signalId: string;
@@ -42,6 +43,27 @@ export function SignalDetailActions(props: {
           className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-emerald-800"
         >
           转为候选项目
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              setMessage(null);
+              const r = await extractEntityHintsForSignalAction(signalId);
+              if (r.ok) {
+                setMessage(
+                  `Entity Hint 抽取完成：新增 ${r.extracted}，跳过 ${r.skipped}，重复 ${r.duplicate}。`,
+                );
+                router.refresh();
+                return;
+              }
+              setMessage(r.error);
+            })
+          }
+          className="rounded-lg border border-violet-300 px-4 py-2 text-sm text-violet-800 disabled:opacity-50 dark:border-violet-900 dark:text-violet-300"
+        >
+          抽取 Entity Hint
         </button>
         {canMarkReviewed ? (
           <button

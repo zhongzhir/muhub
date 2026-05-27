@@ -190,6 +190,12 @@ export default async function AdminDiscoveryListPage({
             线索池 / Signals
           </Link>
           <Link
+            href="/admin/discovery/entities"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+          >
+            Entity Hints（E1）
+          </Link>
+          <Link
             href="/admin/discovery/tasks"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >

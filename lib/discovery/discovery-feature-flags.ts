@@ -41,3 +41,16 @@ export function getTrainingProjectsMode(): "static" | "live" {
   const raw = process.env.TRAINING_PROJECTS_MODE?.trim().toLowerCase();
   return raw === "live" ? "live" : "static";
 }
+
+/** Entity Discovery E1：总开关 */
+export function isEntityDiscoveryEnabled(): boolean {
+  return envFlag("ENTITY_DISCOVERY_ENABLED", false);
+}
+
+/** Entity Discovery E1：Signal → EntityHint 抽取 */
+export function isEntityHintExtractionEnabled(): boolean {
+  if (!isEntityDiscoveryEnabled()) {
+    return false;
+  }
+  return envFlag("ENTITY_HINT_EXTRACTION_ENABLED", false);
+}

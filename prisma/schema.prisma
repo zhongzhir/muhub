@@ -427,10 +427,39 @@ model DiscoverySignal {
   metadataJson         Json?
   convertedCandidateId String?
   convertedCandidate   DiscoveryCandidate?   @relation("DiscoverySignalConvertedCandidate", fields: [convertedCandidateId], references: [id], onDelete: SetNull)
+  entityHints          EntityHint[]
 
   @@index([sourceType, status, createdAt(sort: Desc)])
   @@index([sourceId, createdAt(sort: Desc)])
   @@index([convertedCandidateId])
+}
+
+/** Entity Discovery E1：从 Signal 抽取的实体线索（不要求完整 Project 字段） */
+model EntityHint {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  name               String
+  normalizedName     String
+  entityType         String
+  discoveryScopes    Json?
+  sourceSignalId     String?
+  sourceSignal       DiscoverySignal? @relation(fields: [sourceSignalId], references: [id], onDelete: SetNull)
+  sourceUrl          String?
+  sourceTitle        String?
+  sourceTextSnippet  String?  @db.Text
+  evidenceJson       Json?
+  confidence         Float?
+  status             String   @default("PENDING")
+  reason             String?  @db.Text
+  /** E1 轻量去重：sourceSignalId + normalizedName + scopes */
+  dedupeKey          String   @unique
+
+  @@index([entityType, status])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([sourceSignalId])
+  @@index([normalizedName])
 }
 
 /** Discovery V2：候选 Enrichment 任务（审计；不落原始 HTML） */
