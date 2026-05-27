@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { DISCOVERY_SCOPES } from "@/lib/discovery/discovery-scopes";
 import { ENTITY_HINT_STATUSES, ENTITY_TYPES } from "@/lib/discovery/entity/types";
 import { EntityHintStatusButtons } from "./entity-hint-status-buttons";
+import { DiscoveryHubNav } from "../discovery-hub-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -117,16 +118,17 @@ export default async function AdminDiscoveryEntitiesPage({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-zinc-500">
-        <Link href="/admin/discovery" className="underline">
-          ← Discovery
-        </Link>
-      </p>
+      <DiscoveryHubNav current="entities" />
 
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Entity Hints（E1）</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">实体线索 · Entity Hint (E1)</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          从 Signal 抽取的实体线索；不要求完整 Project 字段。总计 {total} 条，待审 {pending} 条。
+          从 Signal 抽取的机构、实验室、项目名等<strong>不完整实体线索</strong>。不要求 website/repo；人工
+          ACCEPT/REJECT 即可。总计 {total} 条，待审 {pending} 条。
+        </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Entity E2（合并、验证、晋升 Project）<strong>暂缓</strong>。抽取需开启{" "}
+          <code className="text-[11px]">ENTITY_*</code> 环境变量或 Signal 详情页手动触发。
         </p>
       </header>
 

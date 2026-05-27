@@ -17,6 +17,7 @@ import { DiscoveryListFilters } from "./discovery-list-filters";
 import { RunDiscoveryBar } from "./run-discovery-bar";
 import { DiscoveryReviewSpotlights } from "./discovery-review-spotlights";
 import { RecomputeReviewPriorityButton } from "./recompute-priority-button";
+import { DiscoveryHubNav } from "./discovery-hub-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -136,72 +137,25 @@ export default async function AdminDiscoveryListPage({
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <header className="space-y-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">待筛选项目</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">候选项目 · Candidate</h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            先在这里筛选候选项目，再收录为正式项目并进入项目编辑页继续保存草稿、检查并发布。
+            GitHub / Product Hunt / 高置信 Signal 等进入此池。审核通过后导入为正式 Project（草稿 → 编辑 → 发布）。
           </p>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            当前试运营主流程：项目发现队列 → 导入项目草稿 → 项目编辑页补全来源与 AI分析 → 发布。/admin/discovery 待筛选工作台暂作为高级筛选视图。
+          <p className="mt-1 text-sm text-zinc-500">
+            名单、公告、实验室等<strong>不完整线索</strong>请先走{" "}
+            <Link href="/admin/discovery/signals" className="underline">
+              线索池
+            </Link>
+            与{" "}
+            <Link href="/admin/discovery/entities" className="underline">
+              实体线索 (E1)
+            </Link>
+            ，勿强行在此创建 Candidate。
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/discovery?importStatus=PENDING&sort=firstSeenAt&order=desc"
-            className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white dark:border-zinc-200 dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            待筛选项目列表
-          </Link>
-          <Link
-            href="/admin/discovery/daily"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            今日 AI 发现工作台
-          </Link>
-          <Link
-            href="/admin/discovery/items"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            JSON 发现队列
-          </Link>
-          <Link
-            href="/admin/discovery/mobile"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            手机采集箱
-          </Link>
-          <Link
-            href="/admin/discovery?material=source_material&importStatus=PENDING&sort=firstSeenAt&order=desc"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            待提取素材
-          </Link>
-          <Link
-            href="/admin/discovery/sources"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            Source Network · 信息源
-          </Link>
-          <Link
-            href="/admin/discovery/signals"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            线索池 / Signals
-          </Link>
-          <Link
-            href="/admin/discovery/entities"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            Entity Hints（E1）
-          </Link>
-          <Link
-            href="/admin/discovery/tasks"
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
-          >
-            抓取与任务工作台
-          </Link>
-        </div>
+        <DiscoveryHubNav current="candidates" />
       </header>
 
       <RunDiscoveryBar />

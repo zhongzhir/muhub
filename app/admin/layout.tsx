@@ -74,7 +74,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 href="/admin/discovery/sources"
                 className="text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
               >
-                来源管理
+                信息源
+              </Link>
+              <Link
+                href="/admin/discovery/signals"
+                className="text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                线索池
+              </Link>
+              <Link
+                href="/admin/discovery/entities"
+                className="text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                实体线索
+              </Link>
+              <Link
+                href="/admin/discovery/daily"
+                className="text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                今日工作台
               </Link>
               <Link
                 href="/admin/discovery/tasks"

@@ -10,6 +10,7 @@ import {
 } from "@/lib/discovery/source-network/source-kinds";
 import { parseScopesFromConfigJson } from "@/lib/discovery/scope-from-config";
 import { RunDiscoverySourceButton } from "../run-discovery-source-button";
+import { DiscoveryHubNav } from "../discovery-hub-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -39,17 +40,25 @@ export default async function AdminDiscoverySourcesPage({
 
   return (
     <div className="space-y-8">
-      <p className="text-sm text-zinc-500">
-        <Link href="/admin/discovery" className="underline">
-          ← 候选列表
-        </Link>
-      </p>
+      <DiscoveryHubNav current="sources" />
 
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Source Network · 信息源网络</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Source Network · 信息源</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-            人工维护高质量信息源，AI 负责发现、抓取、过滤与转候选。不人工维护项目库。
+            <strong>感知层第一步：</strong>人工维护高质量 RSS、官网名单、协会公告等来源；系统跑 Source 后产出
+            Signal 或 Candidate。不人工维护项目库。
+          </p>
+          <p className="mt-1 text-sm text-zinc-500">
+            publishing_ai 来源请在 config 中标注 scope；跑完后到{" "}
+            <Link href="/admin/discovery/signals" className="underline">
+              线索池
+            </Link>{" "}
+            或{" "}
+            <Link href="/admin/discovery" className="underline">
+              候选项目
+            </Link>{" "}
+            查看产出。
           </p>
         </div>
         <Link

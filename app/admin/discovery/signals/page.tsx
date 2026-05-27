@@ -3,6 +3,7 @@ import type { DiscoverySignalStatus, Prisma } from "@prisma/client";
 import { getDiscoverySignalPriority } from "@/lib/discovery/signal-priority";
 import { getDiscoverySignalSourceStats } from "@/lib/discovery/signal-source-stats";
 import { prisma } from "@/lib/prisma";
+import { DiscoveryHubNav } from "../discovery-hub-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -160,15 +161,16 @@ export default async function AdminDiscoverySignalsPage({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-zinc-500">
-        <Link href="/admin/discovery" className="underline">
-          ← 候选列表
-        </Link>
-      </p>
+      <DiscoveryHubNav current="signals" />
+
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">线索池 / Signals</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">线索池 · Signal</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          NEWS / SOCIAL / BLOG 等非结构化线索先进入信号池，再人工转为候选项目。
+          RSS / 新闻 / 公告等<strong>原始条目</strong>。可「转为候选项目」（高置信产品发布）或「抽取 Entity
+          Hint」（机构/实验室/名单项，E1）。
+        </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          同一 URL 可能同时存在 Signal、Candidate、EntityHint — 以 Signal 为来源真相，详见 runbook。
         </p>
       </header>
       <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
