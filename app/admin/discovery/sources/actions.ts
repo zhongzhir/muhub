@@ -5,6 +5,7 @@ import type { DiscoverySourceStatus } from "@prisma/client";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
 import {
   createDiscoverySourceRecord,
+  copyDiscoverySourceAsWebsiteScan,
   updateDiscoverySourceRecord,
   type CreateDiscoverySourceInput,
 } from "@/lib/discovery/source-network/source-crud";
@@ -104,6 +105,26 @@ export async function updateDiscoverySourceAction(
     revalidatePath("/admin/discovery/sources");
     revalidatePath(`/admin/discovery/sources/${id}`);
     return { ok: true, id };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function copyDiscoverySourceAsWebsiteScanAction(
+  sourceId: string,
+): Promise<SourceAdminResult> {
+  try {
+    await requireMuHubAdmin();
+  } catch (e) {
+    return { ok: false, error: e instanceof AdminAuthError ? e.message : "无权限" };
+  }
+
+  try {
+    const row = await copyDiscoverySourceAsWebsiteScan(sourceId.trim());
+    revalidatePath("/admin/discovery/sources");
+    revalidatePath(`/admin/discovery/sources/${sourceId}`);
+    revalidatePath(`/admin/discovery/sources/${row.id}`);
+    return { ok: true, id: row.id, key: row.key };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }

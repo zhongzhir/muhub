@@ -12,6 +12,7 @@ import { parseScopesFromConfigJson } from "@/lib/discovery/scope-from-config";
 import { parseWebsiteScanConfig } from "@/lib/discovery/website-scan/parse-config";
 import { RunDiscoverySourceButton } from "../../run-discovery-source-button";
 import { DiscoverySourceForm } from "../source-form";
+import { CopyAsWebsiteScanButton } from "../copy-as-website-scan-button";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,8 @@ export default async function AdminDiscoverySourceDetailPage({
   const scanConfig = parseWebsiteScanConfig(source.configJson, source.key);
   const lastRun = source.runs[0];
   const isWebsiteScan = scanConfig !== null;
+  const sourceKind = parseSourceKind(source.configJson);
+  const isLegacyWebsite = sourceKind === "WEBSITE";
 
   type WebsiteScanSummary = {
     fetchedPages?: number;
@@ -74,6 +77,12 @@ export default async function AdminDiscoverySourceDetailPage({
           ← 来源网络
         </Link>
       </p>
+
+      {isLegacyWebsite ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          该来源为旧 WEBSITE 类型。对于门户/内容网站，建议复制为 WEBSITE_SCAN 来源，避免直接修改类型导致 configJson 不兼容。
+        </div>
+      ) : null}
 
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{source.name}</h1>
@@ -137,6 +146,7 @@ export default async function AdminDiscoverySourceDetailPage({
 
       <div className="flex flex-wrap gap-3 text-sm">
         <RunDiscoverySourceButton sourceKey={source.key} label="手动运行此来源" />
+        {isLegacyWebsite ? <CopyAsWebsiteScanButton sourceId={source.id} /> : null}
         <Link
           className="rounded border border-zinc-300 px-3 py-1.5 text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           href={mergeAdminCandidateListUrl(new URLSearchParams(), {

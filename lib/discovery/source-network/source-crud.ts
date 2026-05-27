@@ -2,11 +2,14 @@ import type { DiscoverySourceStatus, DiscoverySourceType, Prisma } from "@prisma
 import { prisma } from "@/lib/prisma";
 import {
   parseSourceKind,
+  parseSourceOwner,
   slugifySourceKey,
+  sourceUrlFromConfig,
   type SourceKind,
   type SourceOwner,
 } from "@/lib/discovery/source-network/source-kinds";
 import { mergeDiscoveryScopes, type DiscoveryScope } from "@/lib/discovery/discovery-scopes";
+import { parseScopesFromConfigJson } from "@/lib/discovery/scope-from-config";
 
 export type CreateDiscoverySourceInput = {
   name: string;
@@ -112,7 +115,12 @@ export async function createDiscoverySourceRecord(
       key,
       name: input.name.trim(),
       type,
-      subtype: input.sourceKind === "GITHUB_TOPIC" ? "topic" : "publishing_manual",
+      subtype:
+        input.sourceKind === "GITHUB_TOPIC"
+          ? "topic"
+          : input.sourceKind === "WEBSITE_SCAN"
+            ? "website_scan"
+            : "publishing_manual",
       status: input.status ?? "TESTING",
       notes: input.notes?.trim() || null,
       configJson: configJson as Prisma.InputJsonValue,
@@ -121,6 +129,66 @@ export async function createDiscoverySourceRecord(
   });
 
   return row;
+}
+
+const WEBSITE_SCAN_COPY_DEFAULTS = {
+  maxDepth: 2,
+  maxPages: 50,
+  includeKeywords: ["AI", "人工智能", "大模型", "数字出版", "AIGC"],
+  excludePatterns: ["login", "comment"],
+} as const;
+
+/** 从旧 WEBSITE 来源复制为新 WEBSITE_SCAN 来源（不修改原来源） */
+export async function copyDiscoverySourceAsWebsiteScan(
+  sourceId: string,
+): Promise<{ id: string; key: string }> {
+  const existing = await prisma.discoverySource.findUnique({ where: { id: sourceId } });
+  if (!existing) {
+    throw new Error("来源不存在");
+  }
+
+  const kind = parseSourceKind(existing.configJson);
+  if (kind === "WEBSITE_SCAN") {
+    throw new Error("已是 WEBSITE_SCAN 来源");
+  }
+  if (kind !== "WEBSITE") {
+    throw new Error("仅支持从 WEBSITE 类型来源复制");
+  }
+
+  const url = sourceUrlFromConfig(existing.configJson);
+  if (!url) {
+    throw new Error("原来源缺少 URL");
+  }
+
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch {
+    throw new Error("原 URL 无效");
+  }
+
+  const scopes = parseScopesFromConfigJson(existing.configJson);
+  const sourceOwner = parseSourceOwner(existing.configJson);
+  const copyNote = `由来源 ${existing.key} 复制为 WEBSITE_SCAN`;
+  const notes = existing.notes?.trim()
+    ? `${existing.notes.trim()}\n${copyNote}`
+    : copyNote;
+
+  return createDiscoverySourceRecord({
+    name: existing.name.trim(),
+    url,
+    sourceKind: "WEBSITE_SCAN",
+    status: "TESTING",
+    notes,
+    sourceOwner,
+    scopes: scopes.length > 0 ? scopes : ["publishing_ai"],
+    startUrls: [url],
+    allowedDomains: [hostname],
+    maxDepth: WEBSITE_SCAN_COPY_DEFAULTS.maxDepth,
+    maxPages: WEBSITE_SCAN_COPY_DEFAULTS.maxPages,
+    includeKeywords: [...WEBSITE_SCAN_COPY_DEFAULTS.includeKeywords],
+    excludePatterns: [...WEBSITE_SCAN_COPY_DEFAULTS.excludePatterns],
+  });
 }
 
 export async function updateDiscoverySourceRecord(
