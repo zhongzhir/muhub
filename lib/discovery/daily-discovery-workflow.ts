@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { runDiscoveryClassification } from "@/lib/discovery/classification/run-classification";
 import { runDiscoveryEnrichment } from "@/lib/discovery/enrichment/run-enrichment-job";
 import { persistReviewPriorityForCandidateId } from "@/lib/discovery/persist-review-priority";
+import { isPublishingDiscoveryPipelineEnabled } from "@/lib/discovery/discovery-feature-flags";
+import { runPublishingDiscoveryPipeline } from "@/lib/discovery/publishing/publishing-discovery-pipeline";
 import type { Prisma } from "@prisma/client";
 
 export type DailyDiscoveryWorkflowOptions = {
@@ -17,6 +19,7 @@ export type DailyDiscoveryWorkflowSummary = {
   finishedAt: string;
   durationMs: number;
   sources: Awaited<ReturnType<typeof runDiscoveryScheduledJob>> | null;
+  publishingPipeline: Awaited<ReturnType<typeof runPublishingDiscoveryPipeline>> | null;
   candidates: {
     scanned: number;
     enriched: number;
@@ -41,6 +44,10 @@ export async function runDailyDiscoveryWorkflow(
   const candidateLimit = limitFromOptions(options);
 
   const sources = runSources ? await runDiscoveryScheduledJob() : null;
+  const publishingPipeline =
+    runSources && isPublishingDiscoveryPipelineEnabled()
+      ? await runPublishingDiscoveryPipeline({ delayMs: 600 })
+      : null;
   const candidateWork: Prisma.DiscoveryCandidateWhereInput[] = [{ reviewPriorityScore: 0 }];
   if (runEnrichment) {
     candidateWork.push({ enrichmentStatus: "PENDING" });
@@ -125,6 +132,7 @@ export async function runDailyDiscoveryWorkflow(
     finishedAt: new Date(finishedAtMs).toISOString(),
     durationMs: finishedAtMs - startedAtMs,
     sources,
+    publishingPipeline,
     candidates: {
       scanned: candidates.length,
       enriched,

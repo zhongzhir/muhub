@@ -14,6 +14,33 @@
 
 import { PrismaClient, DiscoverySourceType, DiscoverySourceStatus } from "@prisma/client";
 
+const PUBLISHING_SCOPE = ["publishing_ai"] as const;
+
+function withPublishingScope(configJson: Record<string, unknown>): Record<string, unknown> {
+  const mode = configJson.mode;
+  let sourceKind = configJson.sourceKind;
+  if (!sourceKind) {
+    if (mode === "rss") {
+      sourceKind = "RSS";
+    } else if (mode === "github_topic") {
+      sourceKind = "GITHUB_TOPIC";
+    } else if (mode === "website_list") {
+      sourceKind = "WEBSITE";
+    } else {
+      sourceKind = "OTHER";
+    }
+  }
+  return {
+    ...configJson,
+    industry: configJson.industry ?? "publishing",
+    scopes: [...PUBLISHING_SCOPE],
+    sourceOwner: configJson.sourceOwner ?? "system",
+    sourceKind,
+    filterMode: configJson.filterMode ?? "relaxed",
+    requireAiHint: false,
+  };
+}
+
 const prisma = new PrismaClient();
 
 type SourceDef = {
@@ -44,44 +71,45 @@ const PUBLISHING_SOURCES: SourceDef[] = [
     type: DiscoverySourceType.NEWS,
     subtype: "publishing_international",
     description: "美国出版行业权威媒体，覆盖图书、数字出版、AI应用等",
-    configJson: {
+    configJson: withPublishingScope({
       mode: "rss",
-      url: "https://www.publishersweekly.com/pw/feeds/index.html",
+      sourceKind: "RSS",
+      url: "https://www.publishersweekly.com/pw/feeds/recent/index.xml",
       label: "Publishers Weekly RSS",
       region: "us",
-      industry: "publishing",
-    },
-    status: DiscoverySourceStatus.ACTIVE,
+      filterMode: "relaxed",
+    }),
+    status: DiscoverySourceStatus.PAUSED,
   },
   {
     key: "publishing-the-bookseller",
     name: "The Bookseller",
     type: DiscoverySourceType.NEWS,
     subtype: "publishing_international",
-    description: "英国出版行业领先媒体，关注出版技术与数字转型",
-    configJson: {
+    description: "英国出版行业领先媒体（RSS 待修复）",
+    configJson: withPublishingScope({
       mode: "rss",
+      sourceKind: "RSS",
       url: "https://www.thebookseller.com/rss.xml",
       label: "The Bookseller RSS",
       region: "uk",
-      industry: "publishing",
-    },
-    status: DiscoverySourceStatus.ACTIVE,
+    }),
+    status: DiscoverySourceStatus.PAUSED,
   },
   {
     key: "publishing-hot-sheet",
     name: "The Hot Sheet",
     type: DiscoverySourceType.BLOG,
     subtype: "publishing_international",
-    description: "面向出版业专业人士的新闻通讯，关注出版AI与数字变革",
-    configJson: {
+    description: "面向出版业专业人士的新闻通讯（RSS 404，待修复）",
+    configJson: withPublishingScope({
       mode: "rss",
+      sourceKind: "RSS",
       url: "https://hotsheetpub.com/feed/",
       label: "Hot Sheet RSS",
       region: "us",
-      industry: "publishing",
-    },
-    status: DiscoverySourceStatus.ACTIVE,
+    }),
+    status: DiscoverySourceStatus.PAUSED,
   },
   {
     key: "publishing-alli-blog",
@@ -89,13 +117,14 @@ const PUBLISHING_SOURCES: SourceDef[] = [
     type: DiscoverySourceType.BLOG,
     subtype: "publishing_international",
     description: "独立作者联盟，关注AI写作工具与自助出版技术",
-    configJson: {
+    configJson: withPublishingScope({
       mode: "rss",
+      sourceKind: "RSS",
       url: "https://selfpublishingadvice.org/feed/",
       label: "ALLi Blog RSS",
       region: "international",
-      industry: "publishing",
-    },
+      filterMode: "relaxed",
+    }),
     status: DiscoverySourceStatus.ACTIVE,
   },
   {
@@ -104,13 +133,14 @@ const PUBLISHING_SOURCES: SourceDef[] = [
     type: DiscoverySourceType.BLOG,
     subtype: "publishing_international",
     description: "出版行业资深博主，深度分析出版技术与AI工具趋势",
-    configJson: {
+    configJson: withPublishingScope({
       mode: "rss",
+      sourceKind: "RSS",
       url: "https://janefriedman.com/feed/",
       label: "Jane Friedman RSS",
       region: "us",
-      industry: "publishing",
-    },
+      filterMode: "relaxed",
+    }),
     status: DiscoverySourceStatus.ACTIVE,
   },
   {
@@ -119,29 +149,29 @@ const PUBLISHING_SOURCES: SourceDef[] = [
     type: DiscoverySourceType.NEWS,
     subtype: "publishing_international",
     description: "专注数字出版技术、电子书与出版AI应用",
-    configJson: {
+    configJson: withPublishingScope({
       mode: "website_list",
+      sourceKind: "WEBSITE",
       url: "https://www.digitalbookworld.com/",
       label: "Digital Book World",
       region: "us",
-      industry: "publishing",
-    },
-    status: DiscoverySourceStatus.PAUSED, // 待确认RSS可用性
+    }),
+    status: DiscoverySourceStatus.PAUSED,
   },
   {
     key: "publishing-futurebook",
     name: "FutureBook (The Bookseller)",
     type: DiscoverySourceType.NEWS,
     subtype: "publishing_international",
-    description: "The Bookseller旗下数字出版专栏，关注出版技术创新",
-    configJson: {
+    description: "The Bookseller旗下数字出版专栏（RSS 待修复）",
+    configJson: withPublishingScope({
       mode: "rss",
+      sourceKind: "RSS",
       url: "https://www.thebookseller.com/futurebook/rss.xml",
       label: "FutureBook RSS",
       region: "uk",
-      industry: "publishing",
-    },
-    status: DiscoverySourceStatus.ACTIVE,
+    }),
+    status: DiscoverySourceStatus.PAUSED,
   },
 
   // ──────────────────────────────────────────
@@ -153,14 +183,14 @@ const PUBLISHING_SOURCES: SourceDef[] = [
     type: DiscoverySourceType.BLOG,
     subtype: "publishing_tools",
     description: "Reedsy出版服务平台博客，关注AI写作工具与出版流程",
-    configJson: {
+    configJson: withPublishingScope({
       mode: "rss",
+      sourceKind: "RSS",
       url: "https://blog.reedsy.com/feed/",
       label: "Reedsy Blog RSS",
       region: "international",
-      industry: "publishing",
-    },
-    status: DiscoverySourceStatus.ACTIVE,
+    }),
+    status: DiscoverySourceStatus.PAUSED,
   },
   {
     key: "publishing-publishing-perspectives",
@@ -168,13 +198,14 @@ const PUBLISHING_SOURCES: SourceDef[] = [
     type: DiscoverySourceType.NEWS,
     subtype: "publishing_international",
     description: "国际出版行业媒体，覆盖全球出版技术与AI应用动态",
-    configJson: {
+    configJson: withPublishingScope({
       mode: "rss",
+      sourceKind: "RSS",
       url: "https://publishingperspectives.com/feed/",
       label: "Publishing Perspectives RSS",
       region: "international",
-      industry: "publishing",
-    },
+      filterMode: "relaxed",
+    }),
     status: DiscoverySourceStatus.ACTIVE,
   },
 
@@ -261,6 +292,48 @@ const PUBLISHING_SOURCES: SourceDef[] = [
     },
     status: DiscoverySourceStatus.PAUSED,
   },
+
+  // ──────────────────────────────────────────
+  // GitHub：出版相关 topic 发现（Phase 2）
+  // ──────────────────────────────────────────
+  {
+    key: "publishing-github-topics",
+    name: "Publishing GitHub Topics",
+    type: DiscoverySourceType.GITHUB,
+    subtype: "topic",
+    description: "GitHub topics：出版、数字出版、电子书等",
+    configJson: withPublishingScope({
+      mode: "github_topic",
+      sourceKind: "GITHUB_TOPIC",
+      topics: [
+        "publishing",
+        "digital-publishing",
+        "ebook",
+        "epub",
+        "book-publishing",
+        "self-publishing",
+      ],
+      perPage: 30,
+      sort: "stars",
+    }),
+    status: DiscoverySourceStatus.ACTIVE,
+  },
+  {
+    key: "publishing-github-ai-topics",
+    name: "Publishing × AI GitHub Topics",
+    type: DiscoverySourceType.GITHUB,
+    subtype: "topic",
+    description: "GitHub topics：出版场景 × AI 交叉",
+    configJson: withPublishingScope({
+      mode: "github_topic",
+      sourceKind: "GITHUB_TOPIC",
+      topics: ["writing-assistant", "ai-writing", "text-generation", "nlp", "llm"],
+      perPage: 20,
+      sort: "updated",
+      requirePublishingKeyword: true,
+    }),
+    status: DiscoverySourceStatus.ACTIVE,
+  },
 ];
 
 async function main(): Promise<void> {
@@ -272,19 +345,44 @@ async function main(): Promise<void> {
   console.log(`[seed:publishing] 开始写入 ${PUBLISHING_SOURCES.length} 个出版行业信息源…`);
 
   let created = 0;
+  let updated = 0;
   let skipped = 0;
   let failed = 0;
 
-  for (const src of PUBLISHING_SOURCES) {
+  for (const raw of PUBLISHING_SOURCES) {
+    const src = {
+      ...raw,
+      configJson: withPublishingScope(raw.configJson),
+    };
     try {
       const existing = await prisma.discoverySource.findUnique({
         where: { key: src.key },
-        select: { id: true, name: true },
+        select: { id: true, name: true, configJson: true },
       });
 
       if (existing) {
-        console.log(`  [SKIP] ${src.key} (已存在: ${existing.name})`);
-        skipped++;
+        const prev =
+          existing.configJson && typeof existing.configJson === "object" && !Array.isArray(existing.configJson)
+            ? (existing.configJson as Record<string, unknown>)
+            : {};
+        const merged = withPublishingScope({ ...prev, ...src.configJson });
+        const changed =
+          JSON.stringify(prev) !== JSON.stringify(merged) || existing.name !== src.name;
+        if (changed) {
+          await prisma.discoverySource.update({
+            where: { id: existing.id },
+            data: {
+              configJson: merged as never,
+              status: src.status,
+              name: src.name,
+            },
+          });
+          console.log(`  [UPD]  ${src.key} — sync config/status`);
+          updated++;
+        } else {
+          console.log(`  [SKIP] ${src.key} (已存在: ${existing.name})`);
+          skipped++;
+        }
         continue;
       }
 
@@ -307,7 +405,9 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log(`\n[seed:publishing-sources] 完成：新建 ${created}，跳过 ${skipped}，失败 ${failed}`);
+  console.log(
+    `\n[seed:publishing-sources] 完成：新建 ${created}，更新 ${updated}，跳过 ${skipped}，失败 ${failed}`,
+  );
 }
 
 main()

@@ -123,6 +123,7 @@ enum SourceVerificationStatus {
 /** Discovery V2：抓取来源开关 */
 enum DiscoverySourceStatus {
   ACTIVE
+  TESTING
   PAUSED
   DISABLED
 }
@@ -255,6 +256,8 @@ model DiscoverySource {
   institutionRegion String?
   status          DiscoverySourceStatus @default(ACTIVE)
   configJson      Json?
+  /** Source Network：运营备注（人工维护信息源，非项目） */
+  notes           String?               @db.Text
   scheduleCron    String?
   lastRunAt       DateTime?
   lastSuccessAt   DateTime?
@@ -420,6 +423,8 @@ model DiscoverySignal {
   guessedGithubUrl     String?
   status               DiscoverySignalStatus @default(PENDING)
   reviewNote           String?               @db.Text
+  /** Signal 层：置信度、过滤原因等（宽松 JSON） */
+  metadataJson         Json?
   convertedCandidateId String?
   convertedCandidate   DiscoveryCandidate?   @relation("DiscoverySignalConvertedCandidate", fields: [convertedCandidateId], references: [id], onDelete: SetNull)
 
@@ -672,6 +677,14 @@ model Project {
   publishedAt  DateTime?
   /** 非空表示已软删除；广场与详情不显；slug 仍占用直至恢复或未来硬删 */
   deletedAt    DateTime?
+
+  /** Vertical Discovery：行业 scope 列表，如 ["general","publishing_ai"] */
+  discoveryScopes Json?
+  /** AI 结构化项目画像（宽松 JSON，第一版无强 schema） */
+  aiStructuredProfileJson Json?
+  /** AI 结构化画像状态：idle | pending | success | failed */
+  aiStructuredProfileStatus String?
+  aiStructuredProfileUpdatedAt DateTime?
 
   /** Discovery V2：溯源（人工审核导入后写入） */
   discoverySource           String?

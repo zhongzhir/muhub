@@ -32,6 +32,7 @@ export type CandidateListRow = {
   multiSource: boolean;
   productHuntFused: boolean;
   contributingLabels: string[];
+  highConfidenceCandidate: boolean;
 };
 
 function Flag({ on, label }: { on: boolean; label: string }) {
@@ -234,6 +235,11 @@ export function DiscoveryCandidatesTable(props: {
                   >
                     {r.title}
                   </Link>
+                  {r.highConfidenceCandidate ? (
+                    <span className="ml-1 rounded bg-teal-100 px-1 py-0.5 text-[9px] font-medium text-teal-900 dark:bg-teal-950 dark:text-teal-200">
+                      高置信
+                    </span>
+                  ) : null}
                   {r.repoUrl ? (
                     <div className="truncate text-[10px] text-zinc-500">
                       <a href={r.repoUrl} target="_blank" rel="noreferrer" className="hover:underline">

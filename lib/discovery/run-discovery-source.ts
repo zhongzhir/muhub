@@ -16,6 +16,10 @@ import { upsertProductHuntDiscoveryCandidate } from "@/lib/discovery/upsert-prod
 import { runInstitutionDiscovery } from "@/lib/discovery/institution/run-institution-discovery";
 import type { Prisma } from "@prisma/client";
 import { upsertDiscoverySignalFromSeed } from "@/lib/discovery/signals";
+import { runRssDiscoveryForSource } from "@/lib/discovery/rss/run-rss-discovery-for-source";
+import { parseScopesFromConfigJson } from "@/lib/discovery/scope-from-config";
+import { inferPublishingAiScopeByRules } from "@/lib/discovery/infer-discovery-scopes";
+import { assessGithubPublishingRelevance } from "@/lib/discovery/github/github-publishing-relevance-filter";
 
 export type RunDiscoverySourceSummary = {
   runId: string;
@@ -127,8 +131,8 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
   let newCandidateCount = 0;
   let updatedCandidateCount = 0;
 
-  if (source.status !== "ACTIVE") {
-    const msg = `Source ${key} is not ACTIVE (status=${source.status})`;
+  if (source.status !== "ACTIVE" && source.status !== "TESTING") {
+    const msg = `Source ${key} is not runnable (status=${source.status})`;
     logs.push(`[${key}] ${msg}`);
     await finalizeDiscoveryRun({
       runId: run.id,
@@ -156,6 +160,8 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
   try {
     if (source.type === "NEWS" || source.type === "SOCIAL" || source.type === "BLOG") {
       const config = (source.configJson ?? {}) as {
+        mode?: string;
+        url?: string;
         signals?: Array<{
           signalType?: string;
           title?: string;
@@ -166,9 +172,51 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
         }>;
         title?: string;
         summary?: string;
-        url?: string;
         rawText?: string;
       };
+
+      const scopes = parseScopesFromConfigJson(source.configJson);
+      if (scopes.length > 0) {
+        logs.push(`[${key}] scopes=${scopes.join(",")}`);
+      }
+
+      if (config.mode === "rss" && config.url?.trim()) {
+        const rss = await runRssDiscoveryForSource({ source, logs });
+        fetchedCount = rss.fetchedCount;
+        parsedCount = rss.parsedCount;
+        newCandidateCount = rss.newCandidateCount;
+        updatedCandidateCount = rss.updatedCandidateCount;
+
+        const status =
+          rss.error && parsedCount === 0
+            ? "FAILED"
+            : rss.error
+              ? "PARTIAL"
+              : "SUCCESS";
+
+        await finalizeDiscoveryRun({
+          runId: run.id,
+          sourceId: source.id,
+          status,
+          logs: [...logs, `[${key}] RSS ingestion done parsed=${parsedCount}`],
+          fetchedCount,
+          parsedCount,
+          newCandidateCount,
+          updatedCandidateCount,
+          errorMessage: rss.error ?? null,
+        });
+
+        return {
+          runId: run.id,
+          ok: status !== "FAILED",
+          logs,
+          error: status === "FAILED" ? rss.error : undefined,
+          fetchedCount,
+          parsedCount,
+          newCandidateCount,
+          updatedCandidateCount,
+        };
+      }
 
       const seeds =
         Array.isArray(config.signals) && config.signals.length > 0
@@ -264,12 +312,20 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
         topics?: string[];
         perPage?: number;
         sort?: "stars" | "updated";
+        requirePublishingKeyword?: boolean;
       } | null;
       const topics = Array.isArray(config?.topics) ? config!.topics : [];
       const perPage = typeof config?.perPage === "number" ? config!.perPage : 30;
       const sort = config?.sort === "updated" ? "updated" : "stars";
+      const scopes = parseScopesFromConfigJson(source.configJson);
+      if (scopes.length > 0) {
+        logs.push(`[${key}] scopes=${scopes.join(",")}`);
+      }
 
       let topicErrors = 0;
+      let filteredByKeyword = 0;
+      let filteredByRelevance = 0;
+      const isPublishingScope = scopes.includes("publishing_ai");
       for (const topic of topics) {
         const res = await fetchGithubRepositoriesByTopic(topic, { sort, perPage });
         if (!res.ok) {
@@ -282,6 +338,50 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
           const payload = mapGithubSearchItemToCandidatePayload(it);
           if (!payload) {
             continue;
+          }
+          const topicsList = Array.isArray(it.topics) ? it.topics : [];
+          if (isPublishingScope || config?.requirePublishingKeyword) {
+            const relevance = assessGithubPublishingRelevance({
+              title: payload.title,
+              description: payload.descriptionRaw,
+              topics: topicsList,
+              strict: !config?.requirePublishingKeyword,
+            });
+            if (!relevance.pass) {
+              filteredByRelevance += 1;
+              continue;
+            }
+            parsedCount += 1;
+            const up = await upsertGithubDiscoveryCandidate(prisma, {
+              sourceId: source.id,
+              sourceKey: source.key,
+              runId: run.id,
+              payload,
+              mode: "full",
+              relevanceMeta: {
+                confidence: relevance.confidence,
+                reasons: relevance.reasons,
+                highConfidenceCandidate: relevance.confidence >= 0.72,
+              },
+            });
+            if (up.created) {
+              newCandidateCount += 1;
+            } else {
+              updatedCandidateCount += 1;
+            }
+            continue;
+          }
+          if (config?.requirePublishingKeyword) {
+            const rule = inferPublishingAiScopeByRules({
+              title: payload.title,
+              summary: payload.summary,
+              descriptionRaw: payload.descriptionRaw,
+              tagsJson: payload.tagsJson,
+            });
+            if (!rule.signals.includes("keyword:publishing")) {
+              filteredByKeyword += 1;
+              continue;
+            }
           }
           parsedCount += 1;
           const up = await upsertGithubDiscoveryCandidate(prisma, {
@@ -297,6 +397,13 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
             updatedCandidateCount += 1;
           }
         }
+      }
+
+      if (filteredByRelevance > 0) {
+        logs.push(`[${key}] filteredByPublishingRelevance=${filteredByRelevance}`);
+      }
+      if (filteredByKeyword > 0) {
+        logs.push(`[${key}] filteredByPublishingKeyword=${filteredByKeyword}`);
       }
 
       const status =

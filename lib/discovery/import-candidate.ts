@@ -22,6 +22,8 @@ import {
   inferReferenceSourcesFromCandidate,
   mergeReferenceSources,
 } from "@/lib/discovery/reference-sources";
+import { resolveCandidateDiscoveryScopes } from "@/lib/discovery/infer-discovery-scopes";
+import { isVerticalDiscoveryEnabled } from "@/lib/discovery/discovery-feature-flags";
 
 function taglineFromSummary(summary: string | null | undefined): string | null {
   if (!summary?.trim()) {
@@ -78,7 +80,7 @@ export async function approveDiscoveryCandidateImport(
   const cand = await prisma.discoveryCandidate.findUnique({
     where: { id: candidateId },
     include: {
-      source: { select: { key: true, type: true } },
+      source: { select: { key: true, type: true, configJson: true } },
       enrichmentLinks: { select: { platform: true, url: true, isAccepted: true } },
     },
   });
@@ -151,6 +153,10 @@ export async function approveDiscoveryCandidateImport(
   const sourceKey = cand.source.key;
   const discoveredAt = new Date();
   const classifySlice = projectCreateClassificationSlice(cand);
+  const discoveryScopes =
+    isVerticalDiscoveryEnabled()
+      ? resolveCandidateDiscoveryScopes(cand, cand.source)
+      : undefined;
 
   const result = await prisma.$transaction(async (tx) => {
     const project = await tx.project.create({
@@ -173,6 +179,9 @@ export async function approveDiscoveryCandidateImport(
         discoverySourceId: sourceKey,
         discoveredAt,
         importedFromCandidateId: cand.id,
+        ...(discoveryScopes
+          ? { discoveryScopes: discoveryScopes as unknown as Prisma.InputJsonValue }
+          : {}),
         ...classifySlice,
         sources: repoSource
           ? {

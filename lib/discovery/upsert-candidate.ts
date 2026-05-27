@@ -10,6 +10,8 @@ import {
 } from "@/lib/discovery/reference-sources";
 import type { JsonValue } from "@/lib/discovery/types";
 import { fallbackSlugBase, isValidProjectSlug, slugifyProjectName } from "@/lib/project-slug";
+import { parseScopesFromConfigJson, attachDiscoveryScopesToMetadata } from "@/lib/discovery/scope-from-config";
+import { inferPublishingAiScopeByRules } from "@/lib/discovery/infer-discovery-scopes";
 
 function asObject(v: unknown): Record<string, unknown> {
   if (v && typeof v === "object" && !Array.isArray(v)) {
@@ -45,6 +47,37 @@ function shouldPreserveTextFields(review: DiscoveryReviewStatus): boolean {
   return review !== "PENDING";
 }
 
+async function sourceScopesForCandidate(
+  db: PrismaClient,
+  sourceId: string,
+): Promise<ReturnType<typeof parseScopesFromConfigJson>> {
+  const row = await db.discoverySource.findUnique({
+    where: { id: sourceId },
+    select: { configJson: true },
+  });
+  return parseScopesFromConfigJson(row?.configJson);
+}
+
+function metadataWithDiscoveryScopes(
+  base: Record<string, unknown>,
+  sourceScopes: ReturnType<typeof parseScopesFromConfigJson>,
+  cand: Pick<GithubCandidatePayload, "title" | "summary" | "descriptionRaw" | "tagsJson">,
+  extra?: Record<string, unknown>,
+): Prisma.InputJsonValue {
+  let meta = attachDiscoveryScopesToMetadata({ ...base, ...extra }, sourceScopes);
+  const rule = inferPublishingAiScopeByRules({
+    title: cand.title,
+    summary: cand.summary,
+    descriptionRaw: cand.descriptionRaw,
+    tagsJson: cand.tagsJson,
+  });
+  if (rule.match) {
+    meta = attachDiscoveryScopesToMetadata(meta, ["publishing_ai"]);
+    meta.scopeSignals = rule.signals;
+  }
+  return meta as Prisma.InputJsonValue;
+}
+
 async function findGithubCandidate(db: PrismaClient, payload: GithubCandidatePayload) {
   const byKey = await db.discoveryCandidate.findUnique({
     where: { normalizedKey: payload.normalizedKey },
@@ -76,9 +109,14 @@ export async function upsertGithubDiscoveryCandidate(
     runId: string;
     payload: GithubCandidatePayload;
     mode: UpsertGithubCandidateMode;
+    relevanceMeta?: {
+      confidence: number;
+      reasons: string[];
+      highConfidenceCandidate?: boolean;
+    };
   },
 ): Promise<{ created: boolean }> {
-  const { sourceId, sourceKey, runId, payload, mode } = args;
+  const { sourceId, sourceKey, runId, payload, mode, relevanceMeta } = args;
   const existing = await findGithubCandidate(db, payload);
 
   const tagList = tagsFromJson(payload.tagsJson);
@@ -104,6 +142,7 @@ export async function upsertGithubDiscoveryCandidate(
   };
 
   if (!existing) {
+    const sourceScopes = await sourceScopesForCandidate(db, sourceId);
     const referenceSources = inferReferenceSourcesFromCandidate({
       externalUrl: payload.externalUrl,
       website: payload.website,
@@ -145,7 +184,19 @@ export async function upsertGithubDiscoveryCandidate(
         categoriesJson: payload.categoriesJson as Prisma.InputJsonValue,
         tagsJson: payload.tagsJson as Prisma.InputJsonValue,
         referenceSources: referenceSources as unknown as Prisma.InputJsonValue,
-        metadataJson: mode === "trending" ? { firstSeenVia: "trending" } : { firstSeenVia: "github" },
+        metadataJson: metadataWithDiscoveryScopes(
+          mode === "trending" ? { firstSeenVia: "trending" } : { firstSeenVia: "github" },
+          sourceScopes,
+          payload,
+          relevanceMeta
+            ? {
+                confidence: relevanceMeta.confidence,
+                confidenceReasons: relevanceMeta.reasons,
+                highConfidenceCandidate: relevanceMeta.highConfidenceCandidate ?? false,
+                sourceKey,
+              }
+            : undefined,
+        ),
         rawPayloadJson: payload.rawPayloadJson as Prisma.InputJsonValue,
         enrichmentStatus: "OK",
         ...baseScores,

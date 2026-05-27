@@ -9,6 +9,7 @@ import {
 import { computeDiscoveryCandidateQualitySignals } from "@/lib/discovery/candidate-quality-signals";
 import { buildDiscoveryFusionSummary } from "@/lib/discovery/review-priority";
 import { fetchDiscoveryReviewSpotlights } from "@/lib/discovery/discovery-review-spotlights";
+import { isHighConfidenceCandidate } from "@/lib/discovery/auto-convert-publishing-signals";
 import { DiscoveryAdvancedFilters } from "./discovery-advanced-filters";
 import type { CandidateListRow } from "./discovery-candidates-table";
 import { DiscoveryCandidatesTable } from "./discovery-candidates-table";
@@ -127,6 +128,7 @@ export default async function AdminDiscoveryListPage({
       multiSource: fusion.multiSource,
       productHuntFused: fusion.productHuntFused,
       contributingLabels: fusion.contributingLabels,
+      highConfidenceCandidate: isHighConfidenceCandidate(row.metadataJson),
     };
   });
 
@@ -179,7 +181,7 @@ export default async function AdminDiscoveryListPage({
             href="/admin/discovery/sources"
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
           >
-            来源与运行状态
+            Source Network · 信息源
           </Link>
           <Link
             href="/admin/discovery/signals"

@@ -11,6 +11,7 @@ import {
   type ReferenceSourceItem,
 } from "@/lib/discovery/reference-sources";
 import { normalizePrimaryCategoryToSlug } from "@/lib/projects/project-categories";
+import { parseScopesFromConfigJson, attachDiscoveryScopesToMetadata } from "@/lib/discovery/scope-from-config";
 
 type SignalSeedInput = {
   signalType?: string;
@@ -198,7 +199,9 @@ export async function upsertDiscoverySignalFromSeed(args: {
   sourceId: string;
   sourceType: DiscoverySourceType;
   sourceName: string;
+  sourceKey?: string;
   seed: SignalSeedInput;
+  metadataJson?: Record<string, unknown> | null;
 }): Promise<{ created: boolean; id: string } | null> {
   const title = (args.seed.title ?? "").trim();
   const summary = (args.seed.summary ?? "").trim() || null;
@@ -221,6 +224,11 @@ export async function upsertDiscoverySignalFromSeed(args: {
   const guessedWebsiteUrl =
     pickBestWebsiteUrl(allUrls.filter((url) => !url.includes("github.com"))) ?? normalizeUrl(signalUrl);
 
+  const metadataPayload =
+    args.metadataJson && typeof args.metadataJson === "object"
+      ? (args.metadataJson as Prisma.InputJsonValue)
+      : undefined;
+
   const upserted = await prisma.discoverySignal.upsert({
     where: { url: signalUrl },
     update: {
@@ -235,6 +243,7 @@ export async function upsertDiscoverySignalFromSeed(args: {
       guessedProjectName: guessProjectName(title),
       guessedWebsiteUrl,
       guessedGithubUrl,
+      ...(metadataPayload !== undefined ? { metadataJson: metadataPayload } : {}),
     },
     create: {
       sourceType: args.sourceType,
@@ -250,6 +259,7 @@ export async function upsertDiscoverySignalFromSeed(args: {
       guessedWebsiteUrl,
       guessedGithubUrl,
       status: "PENDING",
+      ...(metadataPayload !== undefined ? { metadataJson: metadataPayload } : {}),
     },
     select: { id: true, createdAt: true, updatedAt: true },
   });
@@ -292,7 +302,7 @@ export async function convertDiscoverySignalToCandidateWithOverrides(
 ): Promise<{ candidateId: string }> {
   const signal = await prisma.discoverySignal.findUnique({
     where: { id },
-    include: { source: { select: { key: true } } },
+    include: { source: { select: { key: true, configJson: true } } },
   });
   if (!signal) {
     throw new Error("线索不存在");
@@ -334,6 +344,20 @@ export async function convertDiscoverySignalToCandidateWithOverrides(
   const websiteFinal = overrides.website?.trim() || signal.guessedWebsiteUrl?.trim() || null;
   const repoUrlFinal = overrides.repoUrl?.trim() || signal.guessedGithubUrl?.trim() || null;
 
+  const sourceScopes = parseScopesFromConfigJson(signal.source.configJson);
+  const metadataBase = attachDiscoveryScopesToMetadata(
+    {
+      fromSignal: true,
+      signalId: signal.id,
+      signalType: signal.signalType,
+      aiAssisted: Boolean(overrides.aiInsightRaw),
+      aiSuggestedCategory: suggestedCategorySlug,
+      aiSimpleSummaryCandidate: overrides.simpleSummaryCandidate?.trim() || null,
+      aiInsightRaw: overrides.aiInsightRaw ?? null,
+    },
+    sourceScopes,
+  );
+
   const candidate = await prisma.discoveryCandidate.create({
     data: {
       sourceId: signal.sourceId,
@@ -355,15 +379,7 @@ export async function convertDiscoverySignalToCandidateWithOverrides(
           }
         : {}),
       referenceSources: normalizeReferenceSources(signal.referenceSources) as unknown as Prisma.InputJsonValue,
-      metadataJson: {
-        fromSignal: true,
-        signalId: signal.id,
-        signalType: signal.signalType,
-        aiAssisted: Boolean(overrides.aiInsightRaw),
-        aiSuggestedCategory: suggestedCategorySlug,
-        aiSimpleSummaryCandidate: overrides.simpleSummaryCandidate?.trim() || null,
-        aiInsightRaw: overrides.aiInsightRaw ?? null,
-      } as Prisma.InputJsonValue,
+      metadataJson: metadataBase as Prisma.InputJsonValue,
       rawPayloadJson: {
         signalTitle: signal.title,
         signalSummary: signal.summary,

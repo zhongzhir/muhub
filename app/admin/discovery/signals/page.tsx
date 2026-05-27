@@ -55,6 +55,7 @@ function buildSignalsHref(input: {
   q: string;
   priority: PriorityFilter;
   multiSourceOnly: boolean;
+  sourceId?: string;
 }): string {
   const params = new URLSearchParams();
   if (input.status !== "ALL") {
@@ -68,6 +69,9 @@ function buildSignalsHref(input: {
   }
   if (input.multiSourceOnly) {
     params.set("multiSource", "true");
+  }
+  if (input.sourceId) {
+    params.set("sourceId", input.sourceId);
   }
   return `/admin/discovery/signals${params.toString() ? `?${params.toString()}` : ""}`;
 }
@@ -95,9 +99,11 @@ export default async function AdminDiscoverySignalsPage({
       ? priorityRaw
       : "ALL";
   const multiSourceOnly = multiSourceRaw === "true";
+  const sourceId = typeof sp.sourceId === "string" ? sp.sourceId.trim() : "";
 
   const where: Prisma.DiscoverySignalWhereInput = {
     ...(status !== "ALL" ? { status } : {}),
+    ...(sourceId ? { sourceId } : {}),
     ...(q
       ? {
           OR: [
@@ -174,6 +180,7 @@ export default async function AdminDiscoverySignalsPage({
               q,
               priority,
               multiSourceOnly,
+              sourceId: sourceId || undefined,
             });
             const active = status === tab.value;
             return (
@@ -199,6 +206,7 @@ export default async function AdminDiscoverySignalsPage({
               q,
               priority: tab.value,
               multiSourceOnly,
+              sourceId: sourceId || undefined,
             });
             const active = priority === tab.value;
             return (

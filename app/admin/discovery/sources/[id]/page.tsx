@@ -2,7 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { mergeAdminCandidateListUrl } from "@/lib/discovery/admin-candidate-list-url";
+import { fetchSourceYieldStats } from "@/lib/discovery/source-network/source-yield";
+import {
+  parseSourceKind,
+  parseSourceOwner,
+  sourceUrlFromConfig,
+} from "@/lib/discovery/source-network/source-kinds";
+import { parseScopesFromConfigJson } from "@/lib/discovery/scope-from-config";
 import { RunDiscoverySourceButton } from "../../run-discovery-source-button";
+import { DiscoverySourceForm } from "../source-form";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +34,16 @@ export default async function AdminDiscoverySourceDetailPage({
     notFound();
   }
 
+  const yieldStats = (await fetchSourceYieldStats(prisma, [source.id])).get(source.id);
   const configStr = JSON.stringify(source.configJson ?? null, null, 2);
+  const cfg = source.configJson as Record<string, unknown> | null;
+  const topics = Array.isArray(cfg?.topics) ? (cfg!.topics as string[]).join(", ") : "";
 
   return (
     <div className="space-y-8">
       <p className="text-sm text-zinc-500">
         <Link href="/admin/discovery/sources" className="underline">
-          ← 来源列表
+          ← 来源网络
         </Link>
       </p>
 
@@ -40,10 +51,27 @@ export default async function AdminDiscoverySourceDetailPage({
         <h1 className="text-2xl font-semibold tracking-tight">{source.name}</h1>
         <p className="mt-1 font-mono text-sm text-zinc-500">{source.key}</p>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          {source.type}
-          {source.subtype ? ` · ${source.subtype}` : ""} · 状态 {source.status}
+          {parseSourceKind(source.configJson)} · {parseSourceOwner(source.configJson)} ·{" "}
+          {parseScopesFromConfigJson(source.configJson).join(", ")} · 状态 {source.status}
         </p>
       </header>
+
+      <section className="grid gap-3 sm:grid-cols-4">
+        <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+          <div className="text-xs text-zinc-500">累计 Signals</div>
+          <div className="text-xl font-semibold">{yieldStats?.signalCount ?? 0}</div>
+        </div>
+        <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+          <div className="text-xs text-zinc-500">累计 Candidates</div>
+          <div className="text-xl font-semibold">{yieldStats?.candidateCount ?? 0}</div>
+        </div>
+        <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800 sm:col-span-2">
+          <div className="text-xs text-zinc-500">最近错误</div>
+          <div className="text-xs text-amber-800 dark:text-amber-200">
+            {source.lastErrorMessage ?? yieldStats?.lastRun?.errorMessage ?? "—"}
+          </div>
+        </div>
+      </section>
 
       <div className="flex flex-wrap gap-3 text-sm">
         <RunDiscoverySourceButton sourceKey={source.key} label="手动运行此来源" />
@@ -56,7 +84,30 @@ export default async function AdminDiscoverySourceDetailPage({
         >
           筛选候选池
         </Link>
+        <Link
+          href={`/admin/discovery/signals?sourceId=${source.id}`}
+          className="rounded border border-zinc-300 px-3 py-1.5 text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
+        >
+          查看线索
+        </Link>
       </div>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">编辑来源</h2>
+        <DiscoverySourceForm
+          mode="edit"
+          sourceId={source.id}
+          initial={{
+            name: source.name,
+            url: sourceUrlFromConfig(source.configJson) ?? "",
+            sourceKind: parseSourceKind(source.configJson),
+            status: source.status,
+            sourceOwner: parseSourceOwner(source.configJson),
+            notes: source.notes,
+            topics,
+          }}
+        />
+      </section>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">configJson</h2>
@@ -73,10 +124,8 @@ export default async function AdminDiscoverySourceDetailPage({
           <table className="min-w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900">
               <tr>
-                <th className="px-3 py-2">id</th>
                 <th className="px-3 py-2">状态</th>
                 <th className="px-3 py-2">开始</th>
-                <th className="px-3 py-2">结束</th>
                 <th className="px-3 py-2">f/p/+</th>
                 <th className="px-3 py-2">错误</th>
               </tr>
@@ -84,19 +133,12 @@ export default async function AdminDiscoverySourceDetailPage({
             <tbody>
               {source.runs.map((r) => (
                 <tr key={r.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                  <td className="max-w-[100px] truncate px-3 py-2 font-mono text-[10px] text-zinc-500">
-                    {r.id}
-                  </td>
                   <td className="px-3 py-2 text-xs">{r.status}</td>
                   <td className="px-3 py-2 text-xs text-zinc-600">
                     {r.startedAt.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}
                   </td>
-                  <td className="px-3 py-2 text-xs text-zinc-600">
-                    {r.finishedAt?.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }) ?? "—"}
-                  </td>
                   <td className="px-3 py-2 text-[10px] tabular-nums text-zinc-600">
-                    {r.fetchedCount}/{r.parsedCount}/+{r.newCandidateCount}/~
-                    {r.updatedCandidateCount}
+                    {r.fetchedCount}/{r.parsedCount}/+{r.newCandidateCount}
                   </td>
                   <td className="max-w-[240px] truncate px-3 py-2 text-[10px] text-amber-800 dark:text-amber-200">
                     {r.errorMessage ?? "—"}
