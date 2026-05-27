@@ -34,6 +34,15 @@ export async function createDiscoverySourceAction(
     ? topicsRaw.split(/[,，\n]/).map((t) => t.trim()).filter(Boolean)
     : undefined;
 
+  const splitField = (name: string) =>
+    String(formData.get(name) ?? "")
+      .split(/[,，\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  const maxDepthRaw = String(formData.get("maxDepth") ?? "").trim();
+  const maxPagesRaw = String(formData.get("maxPages") ?? "").trim();
+
   if (!name || !url) {
     return { ok: false, error: "名称与 URL 必填" };
   }
@@ -47,6 +56,15 @@ export async function createDiscoverySourceAction(
     sourceOwner,
     scopes: ["publishing_ai"],
     topics,
+    ...(sourceKind === "WEBSITE_SCAN"
+      ? {
+          allowedDomains: splitField("allowedDomains"),
+          includeKeywords: splitField("includeKeywords"),
+          excludePatterns: splitField("excludePatterns"),
+          maxDepth: maxDepthRaw ? Number(maxDepthRaw) : undefined,
+          maxPages: maxPagesRaw ? Number(maxPagesRaw) : undefined,
+        }
+      : {}),
   };
 
   try {

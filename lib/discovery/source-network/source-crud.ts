@@ -20,6 +20,13 @@ export type CreateDiscoverySourceInput = {
   notes?: string | null;
   /** GITHUB_TOPIC 专用 */
   topics?: string[];
+  /** WEBSITE_SCAN 专用 */
+  startUrls?: string[];
+  allowedDomains?: string[];
+  maxDepth?: number;
+  maxPages?: number;
+  includeKeywords?: string[];
+  excludePatterns?: string[];
 };
 
 function mapKindToPrismaType(kind: SourceKind): DiscoverySourceType {
@@ -30,6 +37,9 @@ function mapKindToPrismaType(kind: SourceKind): DiscoverySourceType {
     return "NEWS";
   }
   if (kind === "WEBSITE") {
+    return "INSTITUTION";
+  }
+  if (kind === "WEBSITE_SCAN") {
     return "INSTITUTION";
   }
   if (kind === "WECHAT") {
@@ -59,6 +69,30 @@ export function buildConfigJsonFromInput(input: CreateDiscoverySourceInput): Rec
     base.sort = "updated";
   } else if (input.sourceKind === "WEBSITE") {
     base.mode = "website_list";
+  } else if (input.sourceKind === "WEBSITE_SCAN") {
+    base.mode = "website_scan";
+    const starts = input.startUrls?.length ? input.startUrls : [input.url.trim()];
+    base.startUrls = starts;
+    base.url = starts[0] ?? input.url.trim();
+    base.allowedDomains = input.allowedDomains?.length
+      ? input.allowedDomains
+      : starts
+          .map((u) => {
+            try {
+              return new URL(u).hostname;
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean);
+    base.maxDepth = input.maxDepth ?? 2;
+    base.maxPages = input.maxPages ?? 50;
+    base.includeKeywords = input.includeKeywords?.length
+      ? input.includeKeywords
+      : ["AI", "人工智能", "出版"];
+    base.excludePatterns = input.excludePatterns?.length
+      ? input.excludePatterns
+      : ["login", "search", "comment"];
   }
 
   return base;

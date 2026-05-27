@@ -1103,7 +1103,18 @@ pnpm tsx scripts/acceptance-entity-discovery-e1.ts
 2. 根据误报调整 `extract-from-signal.ts` 规则
 3. 再设计 `EntityCandidate` + evidence 聚合与 Resolution job
 
+### 13.8 WEBSITE_SCAN 与 Entity E1 联动（2026-05-28）
+
+**WEBSITE_SCAN**（`configJson.mode = "website_scan"`）是受控 BFS 站点扫描，产出 **DiscoverySignal**（非 Candidate）。
+
+- 模块：`lib/discovery/website-scan/`
+- 入口：`run-discovery-source.ts`（mode 检测优先于 type 分支）
+- Signal `metadataJson` 含：pageUrl、snippet、matchedKeywords、depth、parentUrl、confidence、scanMode
+- 下游：现有 `extract-entity-hints.ts` / E1 Admin；**不做 E2**
+
+测试来源：`publishing-website-scan-dpresearch`（数字出版研究）。
+
 ---
 
-*文档更新：E1 已实施；E2+ 仍按原 Phase 规划推进。*
+*文档更新：E1 已实施；WEBSITE_SCAN MVP 已接入 Signal 层；E2+ 仍按原 Phase 规划推进。*
 

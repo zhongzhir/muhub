@@ -124,7 +124,8 @@ MUHUB Discovery 不是「人工维护项目库」，而是：**维护高质量 S
 
 | 命令 | 用途 |
 |------|------|
-| `pnpm discovery:daily` 或 `pnpm tsx scripts/run-daily-discovery.ts` | Discovery 日工作流 |
+| `pnpm tsx scripts/seed-website-scan-dpresearch.ts` | 种子：数字出版研究 WEBSITE_SCAN 来源 |
+| `pnpm tsx scripts/run-publishing-discovery.ts publishing-website-scan-dpresearch` | 单独跑站点扫描 |
 | `pnpm tsx scripts/run-publishing-discovery.ts` | 跑 publishing_ai 来源 + auto-convert |
 | `pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50` | 批量抽取 EntityHint（需 ENTITY_* 或 `--force`） |
 | `pnpm prisma migrate deploy` | 应用 DB migration |
@@ -177,8 +178,48 @@ pnpm tsx scripts/extract-entity-hints.ts --dry-run --limit 10 --force
 |-------------|----------|----------|
 | GITHUB / PRODUCTHUNT | 直写 **Candidate** | `/admin/discovery` 审核 |
 | RSS / NEWS (publishing_ai) | **Signal**（可 auto-convert Candidate） | 先 `/signals`；名单类抽 Entity |
+| **WEBSITE_SCAN** | **Signal**（关键词匹配页/微信外链） | 见 §7.1；再抽 Entity Hint |
 | INSTITUTION 名单页 | Candidate 或 Signal（视 scope/adapter） | 中文权威名单优先 Entity 路径 |
 | 手动 mobile capture | Candidate | `/admin/discovery/mobile` |
+
+### 7.1 WEBSITE_SCAN（受控站点扫描 MVP）
+
+**不是全站爬虫**。通过 `configJson.mode = "website_scan"` 启用 BFS 受控扫描，产出 **DiscoverySignal**（不写 Candidate）。
+
+**配置示例**：
+
+```json
+{
+  "mode": "website_scan",
+  "startUrls": ["http://dpresearch.bjzzcb.com/"],
+  "allowedDomains": ["dpresearch.bjzzcb.com", "mp.weixin.qq.com"],
+  "maxDepth": 2,
+  "maxPages": 50,
+  "includeKeywords": ["AI", "人工智能", "数字出版", "智能出版"],
+  "excludePatterns": ["login", "search", "comment"],
+  "scopes": ["publishing_ai"]
+}
+```
+
+**规则摘要**：
+
+- 仅 `allowedDomains`；最多 `maxDepth` / `maxPages`
+- 页面需命中 `includeKeywords` 才写入 Signal
+- 排除附件（pdf/图片/视频等）与 `excludePatterns`
+- `mp.weixin.qq.com`：保存链接 URL + 锚文本，不强求抓正文
+
+**Admin**：来源类型选 `WEBSITE_SCAN`；详情页显示 fetched/matched/newSignals。
+
+**种子脚本**：
+
+```bash
+pnpm tsx scripts/seed-website-scan-dpresearch.ts
+pnpm tsx scripts/run-publishing-discovery.ts publishing-website-scan-dpresearch
+```
+
+**后续**：Signal → `extract-entity-hints.ts`（E1，非 E2）。
+
+**后续演进（暂未做）**：sitemap.xml / 站内 RSS 自动发现起始 URL。
 
 ---
 

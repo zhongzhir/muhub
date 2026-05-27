@@ -9,6 +9,7 @@ import {
   sourceUrlFromConfig,
 } from "@/lib/discovery/source-network/source-kinds";
 import { parseScopesFromConfigJson } from "@/lib/discovery/scope-from-config";
+import { parseWebsiteScanConfig } from "@/lib/discovery/website-scan/parse-config";
 import { RunDiscoverySourceButton } from "../../run-discovery-source-button";
 import { DiscoverySourceForm } from "../source-form";
 
@@ -38,6 +39,33 @@ export default async function AdminDiscoverySourceDetailPage({
   const configStr = JSON.stringify(source.configJson ?? null, null, 2);
   const cfg = source.configJson as Record<string, unknown> | null;
   const topics = Array.isArray(cfg?.topics) ? (cfg!.topics as string[]).join(", ") : "";
+  const scanConfig = parseWebsiteScanConfig(source.configJson, source.key);
+  const lastRun = source.runs[0];
+  const isWebsiteScan = scanConfig !== null;
+
+  type WebsiteScanSummary = {
+    fetchedPages?: number;
+    matchedPages?: number;
+    newSignals?: number;
+    updatedSignals?: number;
+    errors?: number;
+  };
+  let scanSummary: WebsiteScanSummary | null = null;
+  if (isWebsiteScan && lastRun?.logJson && Array.isArray(lastRun.logJson)) {
+    const summaryLine = (lastRun.logJson as string[]).find((l) =>
+      l.includes("website_scan summary"),
+    );
+    if (summaryLine) {
+      const jsonPart = summaryLine.split("website_scan summary ").at(1);
+      if (jsonPart) {
+        try {
+          scanSummary = JSON.parse(jsonPart) as WebsiteScanSummary;
+        } catch {
+          scanSummary = null;
+        }
+      }
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -62,16 +90,50 @@ export default async function AdminDiscoverySourceDetailPage({
           <div className="text-xl font-semibold">{yieldStats?.signalCount ?? 0}</div>
         </div>
         <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
-          <div className="text-xs text-zinc-500">累计 Candidates</div>
-          <div className="text-xl font-semibold">{yieldStats?.candidateCount ?? 0}</div>
-        </div>
-        <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800 sm:col-span-2">
-          <div className="text-xs text-zinc-500">最近错误</div>
-          <div className="text-xs text-amber-800 dark:text-amber-200">
-            {source.lastErrorMessage ?? yieldStats?.lastRun?.errorMessage ?? "—"}
+          <div className="text-xs text-zinc-500">
+            {isWebsiteScan ? "最近扫描匹配页" : "累计 Candidates"}
+          </div>
+          <div className="text-xl font-semibold">
+            {isWebsiteScan ? (scanSummary?.matchedPages ?? lastRun?.parsedCount ?? 0) : (yieldStats?.candidateCount ?? 0)}
           </div>
         </div>
+        {isWebsiteScan ? (
+          <>
+            <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+              <div className="text-xs text-zinc-500">最近抓取页数</div>
+              <div className="text-xl font-semibold">
+                {scanSummary?.fetchedPages ?? lastRun?.fetchedCount ?? 0}
+              </div>
+            </div>
+            <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+              <div className="text-xs text-zinc-500">最近新 Signal</div>
+              <div className="text-xl font-semibold">
+                {scanSummary?.newSignals ?? lastRun?.newCandidateCount ?? 0}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800 sm:col-span-2">
+            <div className="text-xs text-zinc-500">最近错误</div>
+            <div className="text-xs text-amber-800 dark:text-amber-200">
+              {source.lastErrorMessage ?? yieldStats?.lastRun?.errorMessage ?? "—"}
+            </div>
+          </div>
+        )}
+
       </section>
+
+      {isWebsiteScan ? (
+        <p className="text-xs text-zinc-500">
+          WEBSITE_SCAN：fetched=抓取 HTML 页数；matched=命中关键词并写入 Signal；+new=新 Signal。扫描错误见下方运行日志。
+        </p>
+      ) : null}
+
+      {isWebsiteScan && (source.lastErrorMessage || (scanSummary?.errors ?? 0) > 0) ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          最近扫描错误：{source.lastErrorMessage ?? `${scanSummary?.errors ?? 0} 条（见运行日志）`}
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-3 text-sm">
         <RunDiscoverySourceButton sourceKey={source.key} label="手动运行此来源" />
@@ -105,6 +167,11 @@ export default async function AdminDiscoverySourceDetailPage({
             sourceOwner: parseSourceOwner(source.configJson),
             notes: source.notes,
             topics,
+            allowedDomains: scanConfig?.allowedDomains.join(", "),
+            maxDepth: scanConfig ? String(scanConfig.maxDepth) : undefined,
+            maxPages: scanConfig ? String(scanConfig.maxPages) : undefined,
+            includeKeywords: scanConfig?.includeKeywords.join(", "),
+            excludePatterns: scanConfig?.excludePatterns.join(", "),
           }}
         />
       </section>
@@ -127,7 +194,7 @@ export default async function AdminDiscoverySourceDetailPage({
                 <th className="px-3 py-2">状态</th>
                 <th className="px-3 py-2">开始</th>
                 <th className="px-3 py-2">f/p/+</th>
-                <th className="px-3 py-2">错误</th>
+                <th className="px-3 py-2">{isWebsiteScan ? "说明" : "错误"}</th>
               </tr>
             </thead>
             <tbody>
@@ -141,7 +208,9 @@ export default async function AdminDiscoverySourceDetailPage({
                     {r.fetchedCount}/{r.parsedCount}/+{r.newCandidateCount}
                   </td>
                   <td className="max-w-[240px] truncate px-3 py-2 text-[10px] text-amber-800 dark:text-amber-200">
-                    {r.errorMessage ?? "—"}
+                    {isWebsiteScan
+                      ? `抓取/匹配/新Signal ${r.fetchedCount}/${r.parsedCount}/+${r.newCandidateCount}`
+                      : (r.errorMessage ?? "—")}
                   </td>
                 </tr>
               ))}

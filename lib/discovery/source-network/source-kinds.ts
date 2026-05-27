@@ -6,6 +6,7 @@ export const SOURCE_KINDS = [
   "RSS",
   "GITHUB_TOPIC",
   "WEBSITE",
+  "WEBSITE_SCAN",
   "WECHAT",
   "OTHER",
 ] as const;
@@ -30,6 +31,9 @@ export function parseSourceKind(configJson: unknown): SourceKind {
   }
   if (raw === "WEBSITE" || cfg.mode === "website_list") {
     return "WEBSITE";
+  }
+  if (raw === "WEBSITE_SCAN" || cfg.mode === "website_scan") {
+    return "WEBSITE_SCAN";
   }
   if (raw === "WECHAT") {
     return "WECHAT";

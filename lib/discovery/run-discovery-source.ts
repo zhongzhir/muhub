@@ -20,6 +20,8 @@ import { runRssDiscoveryForSource } from "@/lib/discovery/rss/run-rss-discovery-
 import { parseScopesFromConfigJson } from "@/lib/discovery/scope-from-config";
 import { inferPublishingAiScopeByRules } from "@/lib/discovery/infer-discovery-scopes";
 import { assessGithubPublishingRelevance } from "@/lib/discovery/github/github-publishing-relevance-filter";
+import { parseWebsiteScanConfig } from "@/lib/discovery/website-scan/parse-config";
+import { runWebsiteScanForSource } from "@/lib/discovery/website-scan/run-website-scan-for-source";
 
 export type RunDiscoverySourceSummary = {
   runId: string;
@@ -158,6 +160,62 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
   }
 
   try {
+    const websiteScanConfig = parseWebsiteScanConfig(source.configJson, source.key);
+    if (websiteScanConfig) {
+      logs.push(`[${key}] mode=website_scan`);
+      const scanResult = await runWebsiteScanForSource({
+        source,
+        config: websiteScanConfig,
+        logs,
+      });
+      fetchedCount = scanResult.fetchedPages;
+      parsedCount = scanResult.matchedPages;
+      newCandidateCount = scanResult.newSignals;
+      updatedCandidateCount = scanResult.updatedSignals;
+
+      const status =
+        scanResult.errors.length > 0 && scanResult.matchedPages === 0 && scanResult.fetchedPages === 0
+          ? "FAILED"
+          : scanResult.errors.length > 0
+            ? "PARTIAL"
+            : "SUCCESS";
+
+      const errorMessage =
+        scanResult.errors.length > 0 ? scanResult.errors.slice(0, 5).join("; ") : null;
+
+      await finalizeDiscoveryRun({
+        runId: run.id,
+        sourceId: source.id,
+        status,
+        logs: [
+          ...logs,
+          `[${key}] website_scan summary ${JSON.stringify({
+            fetchedPages: scanResult.fetchedPages,
+            matchedPages: scanResult.matchedPages,
+            newSignals: scanResult.newSignals,
+            updatedSignals: scanResult.updatedSignals,
+            errors: scanResult.errors.length,
+          })}`,
+        ],
+        fetchedCount,
+        parsedCount,
+        newCandidateCount,
+        updatedCandidateCount,
+        errorMessage,
+      });
+
+      return {
+        runId: run.id,
+        ok: status !== "FAILED",
+        logs,
+        error: status === "FAILED" ? errorMessage ?? "website_scan failed" : undefined,
+        fetchedCount,
+        parsedCount,
+        newCandidateCount,
+        updatedCandidateCount,
+      };
+    }
+
     if (source.type === "NEWS" || source.type === "SOCIAL" || source.type === "BLOG") {
       const config = (source.configJson ?? {}) as {
         mode?: string;
