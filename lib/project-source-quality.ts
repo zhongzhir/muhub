@@ -356,6 +356,22 @@ export function sourceQualityDefaultsForCreate(input: {
   return assessProjectSourceQuality(input);
 }
 
+/** Prisma ProjectSource 可持久化字段（不含运行时评分 sourceCandidateScore） */
+export function pickProjectSourceQualityFields(
+  quality: ProjectSourceQuality,
+): Pick<
+  ProjectSourceQuality,
+  "trustLevel" | "ownershipLevel" | "entityAccuracy" | "visibility" | "verificationStatus"
+> {
+  return {
+    trustLevel: quality.trustLevel,
+    ownershipLevel: quality.ownershipLevel,
+    entityAccuracy: quality.entityAccuracy,
+    visibility: quality.visibility,
+    verificationStatus: quality.verificationStatus,
+  };
+}
+
 export async function countPublicProjectSources(projectId: string): Promise<number> {
   const { prisma } = await import("@/lib/prisma");
   return prisma.projectSource.count({

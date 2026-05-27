@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { allocateUniqueProjectSlug } from "@/lib/project-allocate-slug";
 import { normalizeGithubRepoUrl } from "@/lib/discovery/normalize-url";
 import { inferRepoSourceKind } from "@/lib/project-sources";
-import { sourceQualityDefaultsForCreate } from "@/lib/project-source-quality";
+import { sourceQualityDefaultsForCreate, pickProjectSourceQualityFields } from "@/lib/project-source-quality";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
 import {
   classifyProjectUrl,
@@ -332,12 +332,14 @@ async function ensureCuratedListProjectSource(
       content: curated.content,
       summary: curated.summary,
       isPrimary: false,
-      ...sourceQualityDefaultsForCreate({
-        url: curated.url,
-        kind: "WEBSITE",
-        label: "curated_repository",
-        origin: "curated",
-      }),
+      ...pickProjectSourceQualityFields(
+        sourceQualityDefaultsForCreate({
+          url: curated.url,
+          kind: "WEBSITE",
+          label: "curated_repository",
+          origin: "curated",
+        }),
+      ),
     },
   });
 }
