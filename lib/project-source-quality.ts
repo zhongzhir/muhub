@@ -262,7 +262,22 @@ export function assessProjectSourceQuality(input: {
     sourceCandidateScore: score,
   };
 
-  if (blacklisted || !exact || score < MIN_PUBLIC_SOURCE_SCORE) {
+  if (blacklisted || !exact) {
+    return weakBase;
+  }
+
+  if (input.origin === "manual") {
+    return {
+      trustLevel: input.isPrimary ? "official" : "verified",
+      ownershipLevel: "official",
+      entityAccuracy: "exact",
+      visibility: "public",
+      verificationStatus: "verified",
+      sourceCandidateScore: score,
+    };
+  }
+
+  if (score < MIN_PUBLIC_SOURCE_SCORE) {
     return weakBase;
   }
 

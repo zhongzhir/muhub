@@ -13,6 +13,7 @@ import { parseProjectSourceRowsJson } from "@/app/dashboard/projects/new/prefill
 import { isProjectCategory } from "@/lib/projects/project-categories";
 import { parseProjectTags } from "@/lib/projects/project-tags";
 import { parseProjectSourceUrl } from "@/lib/project-source-url";
+import { sourceQualityDefaultsForCreate } from "@/lib/project-source-quality";
 
 export type CreateProjectFormState = {
   ok: boolean;
@@ -301,6 +302,15 @@ export async function createProject(
     dedupedSources.push(row);
   }
 
+  let projectWebsiteHost: string | null = null;
+  if (websiteUrl) {
+    try {
+      projectWebsiteHost = new URL(websiteUrl).hostname.replace(/^www\./i, "").toLowerCase();
+    } catch {
+      projectWebsiteHost = null;
+    }
+  }
+
   try {
     await prisma.project.create({
       data: {
@@ -327,7 +337,21 @@ export async function createProject(
         sources:
           dedupedSources.length > 0
             ? {
-                create: dedupedSources,
+                create: dedupedSources.map((row) => ({
+                  kind: row.kind,
+                  url: row.url,
+                  isPrimary: row.isPrimary,
+                  label: row.label ?? undefined,
+                  ...sourceQualityDefaultsForCreate({
+                    url: row.url,
+                    kind: row.kind,
+                    label: row.label ?? null,
+                    isPrimary: row.isPrimary,
+                    origin: "manual",
+                    projectWebsiteHost,
+                    projectName: name,
+                  }),
+                })),
               }
             : undefined,
       },
