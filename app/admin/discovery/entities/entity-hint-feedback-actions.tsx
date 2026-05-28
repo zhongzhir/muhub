@@ -14,30 +14,27 @@ const ACTION_STYLES: Record<EntityHintFeedbackAction, string> = {
     "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
 };
 
-export function EntityHintFeedbackPanel({
+export function EntityHintFeedbackActions({
   hintId,
   hintName,
+  compact = false,
 }: {
   hintId: string;
   hintName?: string;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [modalAction, setModalAction] = useState<EntityHintFeedbackAction | null>(null);
 
   return (
-    <section className="rounded-xl border border-sky-200 bg-sky-50/40 p-4 dark:border-sky-900 dark:bg-sky-950/20">
-      <h2 className="text-sm font-semibold text-sky-900 dark:text-sky-100">专家反馈（E1.6）</h2>
-      <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-        点击 action 打开反馈面板：支持快速提交或展开高级字段（tags / reason / notes）。
-      </p>
-
-      <div className="mt-3 flex flex-wrap gap-2">
+    <>
+      <div className={`flex flex-wrap gap-1 ${compact ? "" : "gap-2"}`}>
         {(["ACCEPT", "REJECT", "UNSURE"] as const).map((action) => (
           <button
             key={action}
             type="button"
             onClick={() => setModalAction(action)}
-            className={`rounded border px-3 py-1.5 text-xs font-medium ${ACTION_STYLES[action]}`}
+            className={`rounded border px-2 py-0.5 text-xs font-medium ${ACTION_STYLES[action]}`}
           >
             {action}
           </button>
@@ -53,6 +50,6 @@ export function EntityHintFeedbackPanel({
         onClose={() => setModalAction(null)}
         onSuccess={() => router.refresh()}
       />
-    </section>
+    </>
   );
 }

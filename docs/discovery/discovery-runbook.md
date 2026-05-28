@@ -183,13 +183,13 @@ pnpm tsx scripts/extract-entity-hints.ts --dry-run --limit 10 --force
 
 **目标**：沉淀「为什么接受 / 拒绝」的结构化语料，供未来 prompt、ranking、fine-tuning 使用。**本阶段不训练模型、不做 E2。**
 
-**开启**（需同时开 Entity Discovery）：
+**开启**：
 
 ```bash
-ENTITY_DISCOVERY_ENABLED=true
-ENTITY_HINT_EXTRACTION_ENABLED=true
 ENTITY_FEEDBACK_ENABLED=true
 ```
+
+（可与 Entity 抽取开关独立；关闭后仅隐藏 Admin 反馈 UI，导出脚本仍可用。）
 
 **Admin 操作**（`/admin/discovery/entities/[id]`）：
 

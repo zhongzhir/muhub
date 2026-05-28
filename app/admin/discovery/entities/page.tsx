@@ -1,9 +1,15 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { DISCOVERY_SCOPES } from "@/lib/discovery/discovery-scopes";
-import { ENTITY_HINT_STATUSES, ENTITY_TYPES } from "@/lib/discovery/entity/types";
+import { isEntityFeedbackEnabled } from "@/lib/discovery/discovery-feature-flags";
 import { parseAiJudgeEvidence } from "@/lib/discovery/entity/ai-entity-judge";
+import {
+  buildEntityHintListHref,
+  buildEntityHintWhereInput,
+  parseEntityHintListFilters,
+} from "@/lib/discovery/entity/entity-hint-list-filters";
+import { ENTITY_HINT_STATUSES, ENTITY_TYPES } from "@/lib/discovery/entity/types";
+import { DISCOVERY_SCOPES } from "@/lib/discovery/discovery-scopes";
+import { EntityHintFeedbackActions } from "./entity-hint-feedback-actions";
 import { EntityHintStatusButtons } from "./entity-hint-status-buttons";
 import { DiscoveryHubNav } from "../discovery-hub-nav";
 
@@ -24,28 +30,6 @@ function statusBadgeClass(status: string): string {
   return "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200";
 }
 
-function buildHref(input: {
-  status: string;
-  entityType: string;
-  scope: string;
-  q: string;
-}): string {
-  const params = new URLSearchParams();
-  if (input.status !== "ALL") {
-    params.set("status", input.status);
-  }
-  if (input.entityType !== "ALL") {
-    params.set("entityType", input.entityType);
-  }
-  if (input.scope !== "ALL") {
-    params.set("scope", input.scope);
-  }
-  if (input.q) {
-    params.set("q", input.q);
-  }
-  return `/admin/discovery/entities${params.toString() ? `?${params.toString()}` : ""}`;
-}
-
 function formatScopes(scopes: unknown): string {
   if (!Array.isArray(scopes)) {
     return "—";
@@ -60,36 +44,10 @@ export default async function AdminDiscoveryEntitiesPage({
   searchParams: Promise<SearchParams>;
 }) {
   const sp = await searchParams;
-  const statusRaw = typeof sp.status === "string" ? sp.status.toUpperCase() : "ALL";
-  const entityTypeRaw = typeof sp.entityType === "string" ? sp.entityType.toUpperCase() : "ALL";
-  const scopeRaw = typeof sp.scope === "string" ? sp.scope : "ALL";
-  const q = typeof sp.q === "string" ? sp.q.trim() : "";
-
-  const status =
-    statusRaw === "PENDING" ||
-    statusRaw === "ACCEPTED" ||
-    statusRaw === "REJECTED" ||
-    statusRaw === "MERGED_LATER"
-      ? statusRaw
-      : "ALL";
-  const entityType = (ENTITY_TYPES as readonly string[]).includes(entityTypeRaw)
-    ? entityTypeRaw
-    : "ALL";
-  const scope = (DISCOVERY_SCOPES as readonly string[]).includes(scopeRaw) ? scopeRaw : "ALL";
-
-  const where: Prisma.EntityHintWhereInput = {
-    ...(status !== "ALL" ? { status } : {}),
-    ...(entityType !== "ALL" ? { entityType } : {}),
-    ...(q
-      ? {
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { sourceTitle: { contains: q, mode: "insensitive" } },
-            { reason: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-  };
+  const filters = parseEntityHintListFilters(sp);
+  const { status, entityType, scope, q } = filters;
+  const where = buildEntityHintWhereInput(filters);
+  const feedbackEnabled = isEntityFeedbackEnabled();
 
   const rows = await prisma.entityHint.findMany({
     where,
@@ -99,37 +57,47 @@ export default async function AdminDiscoveryEntitiesPage({
       sourceSignal: {
         select: { id: true, sourceName: true, signalType: true },
       },
+      _count: {
+        select: { feedbacks: true },
+      },
+      feedbacks: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: {
+          action: true,
+          isHighValue: true,
+          shouldTrackLongTerm: true,
+        },
+      },
     },
   });
 
-  const filteredRows =
-    scope === "ALL"
-      ? rows
-      : rows.filter((row) => {
-          if (!Array.isArray(row.discoveryScopes)) {
-            return false;
-          }
-          return (row.discoveryScopes as unknown[]).includes(scope);
-        });
-
-  const [total, pending] = await Promise.all([
-    prisma.entityHint.count(),
-    prisma.entityHint.count({ where: { status: "PENDING" } }),
+  const [filteredTotal, pendingInFilter] = await Promise.all([
+    prisma.entityHint.count({ where }),
+    prisma.entityHint.count({ where: { ...where, status: "PENDING" } }),
   ]);
+
+  const filterSummary =
+    status !== "ALL" || entityType !== "ALL" || scope !== "ALL" || q
+      ? "当前筛选下"
+      : "全库";
 
   return (
     <div className="space-y-6">
       <DiscoveryHubNav current="entities" />
 
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">实体线索 · Entity Hint (E1 / E1.5)</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">实体线索 · Entity Hint (E1 / E1.5 / E1.6)</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           从 Signal 抽取的机构、实验室、项目名等<strong>不完整实体线索</strong>。WEBSITE_SCAN 默认走
-          AI Entity Judge（E1.5）。总计 {total} 条，待审 {pending} 条。
+          AI Entity Judge（E1.5）。
+          {filterSummary}共 {filteredTotal} 条，待审 {pendingInFilter} 条（status=PENDING）。
         </p>
         <p className="mt-1 text-xs text-zinc-500">
-          Entity E2（合并、验证、晋升 Project）<strong>暂缓</strong>。抽取需开启{" "}
-          <code className="text-[11px]">ENTITY_*</code> 环境变量或 Signal 详情页手动触发。
+          Entity E2（合并、验证、晋升 Project）<strong>暂缓</strong>。
+          {feedbackEnabled
+            ? " E1.6 反馈已开启：列表操作会打开结构化 feedback 面板。"
+            : " 开启 ENTITY_FEEDBACK_ENABLED 后可使用结构化 feedback。"}
         </p>
       </header>
 
@@ -138,7 +106,7 @@ export default async function AdminDiscoveryEntitiesPage({
         {(["ALL", ...ENTITY_HINT_STATUSES] as const).map((value) => (
           <Link
             key={value}
-            href={buildHref({ status: value, entityType, scope, q })}
+            href={buildEntityHintListHref({ ...filters, status: value })}
             className={`rounded-full border px-2.5 py-0.5 ${
               status === value
                 ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
@@ -155,7 +123,7 @@ export default async function AdminDiscoveryEntitiesPage({
         {(["ALL", ...ENTITY_TYPES] as const).map((value) => (
           <Link
             key={value}
-            href={buildHref({ status, entityType: value, scope, q })}
+            href={buildEntityHintListHref({ ...filters, entityType: value })}
             className={`rounded-full border px-2.5 py-0.5 ${
               entityType === value
                 ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
@@ -172,7 +140,7 @@ export default async function AdminDiscoveryEntitiesPage({
         {(["ALL", ...DISCOVERY_SCOPES] as const).map((value) => (
           <Link
             key={value}
-            href={buildHref({ status, entityType, scope: value, q })}
+            href={buildEntityHintListHref({ ...filters, scope: value })}
             className={`rounded-full border px-2.5 py-0.5 ${
               scope === value
                 ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
@@ -212,6 +180,12 @@ export default async function AdminDiscoveryEntitiesPage({
               <th className="px-3 py-2">Relevance</th>
               <th className="px-3 py-2">Judge</th>
               <th className="px-3 py-2">状态</th>
+              {feedbackEnabled ? (
+                <>
+                  <th className="px-3 py-2">Feedback</th>
+                  <th className="px-3 py-2">标记</th>
+                </>
+              ) : null}
               <th className="px-3 py-2">Scope</th>
               <th className="px-3 py-2">来源</th>
               <th className="px-3 py-2">Reason</th>
@@ -220,9 +194,12 @@ export default async function AdminDiscoveryEntitiesPage({
             </tr>
           </thead>
           <tbody>
-            {filteredRows.length === 0 ? (
+            {rows.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-3 py-8 text-center text-zinc-500">
+                <td
+                  colSpan={feedbackEnabled ? 13 : 11}
+                  className="px-3 py-8 text-center text-zinc-500"
+                >
                   暂无 Entity Hint。可运行{" "}
                   <code className="text-xs">
                     pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50
@@ -230,70 +207,113 @@ export default async function AdminDiscoveryEntitiesPage({
                 </td>
               </tr>
             ) : (
-              filteredRows.map((row) => {
+              rows.map((row) => {
                 const aiEv = parseAiJudgeEvidence(row.evidenceJson);
+                const feedbackCount = row._count.feedbacks;
+                const hasHighValue = row.feedbacks.some((f) => f.isHighValue === true);
+                const hasLongTerm = row.feedbacks.some((f) => f.shouldTrackLongTerm === true);
+
                 return (
-                <tr
-                  key={row.id}
-                  className="border-t border-zinc-100 dark:border-zinc-800/80"
-                >
-                  <td className="px-3 py-2">
-                    <Link
-                      href={`/admin/discovery/entities/${row.id}`}
-                      className="font-medium underline-offset-2 hover:underline"
-                    >
-                      {row.name}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">{row.entityType}</td>
-                  <td className="px-3 py-2">
-                    {typeof row.confidence === "number" ? row.confidence.toFixed(2) : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {aiEv.publishingAiRelevance != null
-                      ? aiEv.publishingAiRelevance.toFixed(2)
-                      : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {aiEv.isAiJudge ? (
-                      <span className="rounded bg-violet-100 px-1.5 py-0.5 text-violet-800 dark:bg-violet-950 dark:text-violet-200">
-                        AI Judge
-                      </span>
-                    ) : (
-                      "规则"
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadgeClass(row.status)}`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-xs">{formatScopes(row.discoveryScopes)}</td>
-                  <td className="px-3 py-2 text-xs">
-                    {row.sourceSignal ? (
+                  <tr
+                    key={row.id}
+                    className="border-t border-zinc-100 dark:border-zinc-800/80"
+                  >
+                    <td className="px-3 py-2">
                       <Link
-                        href={`/admin/discovery/signals/${row.sourceSignal.id}`}
-                        className="underline"
+                        href={`/admin/discovery/entities/${row.id}`}
+                        className="font-medium underline-offset-2 hover:underline"
                       >
-                        {row.sourceSignal.sourceName}
+                        {row.name}
                       </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="max-w-[220px] truncate px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400">
-                    {row.reason ?? "—"}
-                  </td>
-                  <td className="px-3 py-2 text-xs text-zinc-500">
-                    {row.createdAt.toISOString().slice(0, 10)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <EntityHintStatusButtons hintId={row.id} currentStatus={row.status} />
-                  </td>
-                </tr>
-              );
+                    </td>
+                    <td className="px-3 py-2">{row.entityType}</td>
+                    <td className="px-3 py-2">
+                      {typeof row.confidence === "number" ? row.confidence.toFixed(2) : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      {aiEv.publishingAiRelevance != null
+                        ? aiEv.publishingAiRelevance.toFixed(2)
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      {aiEv.isAiJudge ? (
+                        <span className="rounded bg-violet-100 px-1.5 py-0.5 text-violet-800 dark:bg-violet-950 dark:text-violet-200">
+                          AI Judge
+                        </span>
+                      ) : (
+                        "规则"
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadgeClass(row.status)}`}
+                      >
+                        {row.status}
+                      </span>
+                    </td>
+                    {feedbackEnabled ? (
+                      <>
+                        <td className="px-3 py-2 text-xs">
+                          {feedbackCount > 0 ? (
+                            <Link
+                              href={`/admin/discovery/entities/${row.id}#feedback-history`}
+                              className="underline"
+                            >
+                              {feedbackCount} 条
+                            </Link>
+                          ) : (
+                            <span className="text-zinc-400">无</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          <div className="flex flex-wrap gap-1">
+                            {hasHighValue ? (
+                              <span className="rounded bg-violet-100 px-1.5 py-0.5 text-violet-800 dark:bg-violet-950 dark:text-violet-200">
+                                高价值
+                              </span>
+                            ) : null}
+                            {hasLongTerm ? (
+                              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                                长期
+                              </span>
+                            ) : null}
+                            {!hasHighValue && !hasLongTerm ? "—" : null}
+                          </div>
+                        </td>
+                      </>
+                    ) : null}
+                    <td className="px-3 py-2 text-xs">{formatScopes(row.discoveryScopes)}</td>
+                    <td className="px-3 py-2 text-xs">
+                      {row.sourceSignal ? (
+                        <Link
+                          href={`/admin/discovery/signals/${row.sourceSignal.id}`}
+                          className="underline"
+                        >
+                          {row.sourceSignal.sourceName}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="max-w-[220px] truncate px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400">
+                      {row.reason ?? "—"}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-zinc-500">
+                      {row.createdAt.toISOString().slice(0, 10)}
+                    </td>
+                    <td className="px-3 py-2">
+                      {feedbackEnabled ? (
+                        <EntityHintFeedbackActions
+                          hintId={row.id}
+                          hintName={row.name}
+                          compact
+                        />
+                      ) : (
+                        <EntityHintStatusButtons hintId={row.id} currentStatus={row.status} />
+                      )}
+                    </td>
+                  </tr>
+                );
               })
             )}
           </tbody>

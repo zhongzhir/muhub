@@ -73,7 +73,7 @@ export default async function AdminDiscoveryEntityDetailPage({
       </header>
 
       {feedbackEnabled ? (
-        <EntityHintFeedbackPanel hintId={row.id} />
+        <EntityHintFeedbackPanel hintId={row.id} hintName={row.name} />
       ) : (
         <EntityHintStatusButtons hintId={row.id} currentStatus={row.status} />
       )}
