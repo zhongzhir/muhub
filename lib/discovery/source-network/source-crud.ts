@@ -200,6 +200,14 @@ export async function updateDiscoverySourceRecord(
     url?: string;
     scopes?: DiscoveryScope[];
     sourceOwner?: SourceOwner;
+    /** WEBSITE_SCAN 专用；仅当 configJson.mode=website_scan 时合并 */
+    websiteScan?: {
+      allowedDomains?: string[];
+      maxDepth?: number;
+      maxPages?: number;
+      includeKeywords?: string[];
+      excludePatterns?: string[];
+    };
   },
 ): Promise<void> {
   const existing = await prisma.discoverySource.findUnique({ where: { id } });
@@ -212,14 +220,46 @@ export async function updateDiscoverySourceRecord(
       ? { ...(existing.configJson as Record<string, unknown>) }
       : {};
 
+  const isWebsiteScan =
+    prev.mode === "website_scan" || parseSourceKind(prev) === "WEBSITE_SCAN";
+
   if (patch.url?.trim()) {
-    prev.url = patch.url.trim();
+    const url = patch.url.trim();
+    prev.url = url;
+    if (isWebsiteScan) {
+      const existingStarts = Array.isArray(prev.startUrls)
+        ? (prev.startUrls as unknown[]).filter(
+            (u): u is string => typeof u === "string" && u.trim().length > 0,
+          )
+        : [];
+      prev.startUrls = existingStarts.length > 0 ? [url, ...existingStarts.slice(1)] : [url];
+    }
   }
   if (patch.scopes?.length) {
     prev.scopes = mergeDiscoveryScopes(patch.scopes);
   }
   if (patch.sourceOwner) {
     prev.sourceOwner = patch.sourceOwner;
+  }
+
+  if (isWebsiteScan && patch.websiteScan) {
+    const ws = patch.websiteScan;
+    if (ws.allowedDomains !== undefined) {
+      prev.allowedDomains = ws.allowedDomains;
+    }
+    if (ws.maxDepth !== undefined && Number.isFinite(ws.maxDepth)) {
+      prev.maxDepth = Math.min(5, Math.max(0, Math.floor(ws.maxDepth)));
+    }
+    if (ws.maxPages !== undefined && Number.isFinite(ws.maxPages)) {
+      prev.maxPages = Math.min(200, Math.max(1, Math.floor(ws.maxPages)));
+    }
+    if (ws.includeKeywords !== undefined) {
+      prev.includeKeywords = ws.includeKeywords;
+    }
+    if (ws.excludePatterns !== undefined) {
+      prev.excludePatterns = ws.excludePatterns;
+    }
+    console.info("[source:update:website_scan]", JSON.stringify(prev));
   }
 
   await prisma.discoverySource.update({
