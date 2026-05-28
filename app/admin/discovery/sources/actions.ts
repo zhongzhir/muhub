@@ -9,6 +9,7 @@ import {
   updateDiscoverySourceRecord,
   type CreateDiscoverySourceInput,
 } from "@/lib/discovery/source-network/source-crud";
+import { deactivateDiscoverySource } from "@/lib/discovery/source-network/source-lifecycle";
 import { parseSourceKind, type SourceKind, type SourceOwner } from "@/lib/discovery/source-network/source-kinds";
 import { runDiscoverySourceByKey } from "@/lib/discovery/run-discovery-source";
 import { prisma } from "@/lib/prisma";
@@ -158,6 +159,28 @@ export async function copyDiscoverySourceAsWebsiteScanAction(
     revalidatePath(`/admin/discovery/sources/${sourceId}`);
     revalidatePath(`/admin/discovery/sources/${row.id}`);
     return { ok: true, id: row.id, key: row.key };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function deactivateDiscoverySourceAction(
+  sourceId: string,
+): Promise<
+  | { ok: true; action: "archived" | "deleted"; sourceKey: string }
+  | { ok: false; error: string }
+> {
+  try {
+    await requireMuHubAdmin();
+  } catch (e) {
+    return { ok: false, error: e instanceof AdminAuthError ? e.message : "无权限" };
+  }
+
+  try {
+    const result = await deactivateDiscoverySource(sourceId.trim());
+    revalidatePath("/admin/discovery/sources");
+    revalidatePath(`/admin/discovery/sources/${sourceId}`);
+    return { ok: true, action: result.action, sourceKey: result.sourceKey };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }

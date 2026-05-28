@@ -13,6 +13,8 @@ import { parseWebsiteScanConfig } from "@/lib/discovery/website-scan/parse-confi
 import { RunDiscoverySourceButton } from "../../run-discovery-source-button";
 import { DiscoverySourceForm } from "../source-form";
 import { CopyAsWebsiteScanButton } from "../copy-as-website-scan-button";
+import { DeactivateSourceButton } from "../deactivate-source-button";
+import { isDiscoverySourceRunnable } from "@/lib/discovery/source-network/source-lifecycle";
 
 export const dynamic = "force-dynamic";
 
@@ -145,7 +147,16 @@ export default async function AdminDiscoverySourceDetailPage({
       ) : null}
 
       <div className="flex flex-wrap gap-3 text-sm">
-        <RunDiscoverySourceButton sourceKey={source.key} label="手动运行此来源" />
+        <RunDiscoverySourceButton
+          sourceKey={source.key}
+          label="手动运行此来源"
+          runnable={isDiscoverySourceRunnable(source.status)}
+          blockedReason={
+            isDiscoverySourceRunnable(source.status)
+              ? undefined
+              : `来源 status=${source.status}，已停用或不可运行`
+          }
+        />
         {isLegacyWebsite ? <CopyAsWebsiteScanButton sourceId={source.id} /> : null}
         <Link
           className="rounded border border-zinc-300 px-3 py-1.5 text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
@@ -163,6 +174,20 @@ export default async function AdminDiscoverySourceDetailPage({
           查看线索
         </Link>
       </div>
+
+      <section className="rounded-xl border border-rose-200 bg-rose-50/40 p-4 dark:border-rose-900 dark:bg-rose-950/20">
+        <h2 className="text-sm font-semibold text-rose-900 dark:text-rose-100">停用 / 归档</h2>
+        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+          用于处理重复录入的信息源。不会删除历史 Signal、Candidate、Entity Hint 或运行日志，仅停止后续抓取。
+        </p>
+        <div className="mt-3">
+          <DeactivateSourceButton
+            sourceId={source.id}
+            sourceName={source.name}
+            status={source.status}
+          />
+        </div>
+      </section>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">编辑来源</h2>

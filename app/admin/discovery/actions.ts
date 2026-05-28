@@ -91,6 +91,7 @@ export async function runDiscoverySourceAction(sourceKey: string): Promise<RunDi
   }
   const result = await runDiscoverySourceByKey(key);
   revalidatePath("/admin/discovery");
+  revalidatePath("/admin/discovery/sources");
   if (!result.ok) {
     return { ok: false, error: result.error ?? "运行失败" };
   }

@@ -126,6 +126,7 @@ enum DiscoverySourceStatus {
   TESTING
   PAUSED
   DISABLED
+  ARCHIVED
 }
 
 /** Discovery V3：来源平台类型（写入 DiscoverySource.type） */

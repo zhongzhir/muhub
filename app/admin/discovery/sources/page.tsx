@@ -4,6 +4,10 @@ import { ensureDiscoveryDefaultSources } from "@/lib/discovery/seed-default-sour
 import { mergeAdminCandidateListUrl } from "@/lib/discovery/admin-candidate-list-url";
 import { fetchSourceYieldStats, sourceMatchesScopeFilter } from "@/lib/discovery/source-network/source-yield";
 import {
+  isDiscoverySourceHiddenByDefault,
+  isDiscoverySourceRunnable,
+} from "@/lib/discovery/source-network/source-lifecycle";
+import {
   parseSourceKind,
   parseSourceOwner,
   sourceUrlFromConfig,
@@ -24,14 +28,18 @@ export default async function AdminDiscoverySourcesPage({
   await ensureDiscoveryDefaultSources();
   const sp = await searchParams;
   const scopeFilter = typeof sp.scope === "string" ? sp.scope : "publishing_ai";
+  const showInactive = sp.showInactive === "1" || sp.showInactive === "true";
 
   const allSources = await prisma.discoverySource.findMany({
     orderBy: { key: "asc" },
   });
 
-  const sources = allSources.filter((s) =>
-    scopeFilter === "all" ? true : sourceMatchesScopeFilter(s.configJson, scopeFilter),
-  );
+  const sources = allSources.filter((s) => {
+    if (!showInactive && isDiscoverySourceHiddenByDefault(s.status)) {
+      return false;
+    }
+    return scopeFilter === "all" ? true : sourceMatchesScopeFilter(s.configJson, scopeFilter);
+  });
 
   const yieldMap = await fetchSourceYieldStats(
     prisma,
@@ -69,23 +77,40 @@ export default async function AdminDiscoverySourcesPage({
         </Link>
       </header>
 
-      <div className="flex flex-wrap gap-2 text-sm">
-        {[
-          { label: "publishing_ai", value: "publishing_ai" },
-          { label: "全部", value: "all" },
-        ].map((tab) => (
-          <Link
-            key={tab.value}
-            href={`/admin/discovery/sources?scope=${tab.value}`}
-            className={`rounded-full px-3 py-1 ${
-              scopeFilter === tab.value
-                ? "bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200"
-                : "border border-zinc-300 dark:border-zinc-700"
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "publishing_ai", value: "publishing_ai" },
+            { label: "全部", value: "all" },
+          ].map((tab) => (
+            <Link
+              key={tab.value}
+              href={`/admin/discovery/sources?scope=${tab.value}${showInactive ? "&showInactive=1" : ""}`}
+              className={`rounded-full px-3 py-1 ${
+                scopeFilter === tab.value
+                  ? "bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200"
+                  : "border border-zinc-300 dark:border-zinc-700"
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </div>
+        <Link
+          href={`/admin/discovery/sources?scope=${scopeFilter}${showInactive ? "" : "&showInactive=1"}`}
+          className={`rounded-full border px-3 py-1 text-xs ${
+            showInactive
+              ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
+              : "border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
+          }`}
+        >
+          {showInactive ? "隐藏已停用" : "显示已停用"}
+        </Link>
+        {!showInactive ? (
+          <span className="text-xs text-zinc-500">
+            默认隐藏 DISABLED / ARCHIVED 来源
+          </span>
+        ) : null}
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
@@ -101,7 +126,16 @@ export default async function AdminDiscoverySourcesPage({
             </tr>
           </thead>
           <tbody>
-            {sources.map((s) => {
+            {sources.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-8 text-center text-sm text-zinc-500">
+                  {showInactive
+                    ? "暂无来源。"
+                    : "暂无可见来源。重复或已停用来源可点「显示已停用」查看。"}
+                </td>
+              </tr>
+            ) : (
+            sources.map((s) => {
               const yieldStats = yieldMap.get(s.id);
               const run = yieldStats?.lastRun;
               const kind = parseSourceKind(s.configJson);
@@ -130,7 +164,17 @@ export default async function AdminDiscoverySourcesPage({
                     <div className="text-[10px] text-zinc-500">{owner}</div>
                     <div className="text-[10px] text-zinc-400">{scopes.join(", ")}</div>
                   </td>
-                  <td className="px-3 py-2 text-xs">{s.status}</td>
+                  <td className="px-3 py-2 text-xs">
+                    <span
+                      className={
+                        s.status === "ARCHIVED" || s.status === "DISABLED"
+                          ? "text-rose-700 dark:text-rose-300"
+                          : undefined
+                      }
+                    >
+                      {s.status}
+                    </span>
+                  </td>
                   <td className="px-3 py-2 text-[10px] tabular-nums text-zinc-600">
                     <div>Signals {yieldStats?.signalCount ?? 0}</div>
                     <div>Candidates {yieldStats?.candidateCount ?? 0}</div>
@@ -154,7 +198,16 @@ export default async function AdminDiscoverySourcesPage({
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-col gap-2">
-                      <RunDiscoverySourceButton sourceKey={s.key} label="运行" />
+                      <RunDiscoverySourceButton
+                        sourceKey={s.key}
+                        label="运行"
+                        runnable={isDiscoverySourceRunnable(s.status)}
+                        blockedReason={
+                          isDiscoverySourceRunnable(s.status)
+                            ? undefined
+                            : `status=${s.status}，不可运行`
+                        }
+                      />
                       <Link
                         className="text-xs text-blue-600 underline dark:text-blue-400"
                         href={mergeAdminCandidateListUrl(new URLSearchParams(), {
@@ -174,7 +227,8 @@ export default async function AdminDiscoverySourcesPage({
                   </td>
                 </tr>
               );
-            })}
+            })
+            )}
           </tbody>
         </table>
       </div>

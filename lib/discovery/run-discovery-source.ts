@@ -22,6 +22,7 @@ import { inferPublishingAiScopeByRules } from "@/lib/discovery/infer-discovery-s
 import { assessGithubPublishingRelevance } from "@/lib/discovery/github/github-publishing-relevance-filter";
 import { parseWebsiteScanConfig } from "@/lib/discovery/website-scan/parse-config";
 import { runWebsiteScanForSource } from "@/lib/discovery/website-scan/run-website-scan-for-source";
+import { isDiscoverySourceRunnable } from "@/lib/discovery/source-network/source-lifecycle";
 
 export type RunDiscoverySourceSummary = {
   runId: string;
@@ -119,6 +120,11 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
     return { runId: "", ...empty(), error: `Unknown discovery source: ${key}` };
   }
 
+  if (!isDiscoverySourceRunnable(source.status)) {
+    const msg = `Source ${key} 不可运行（status=${source.status}）。请先启用或更换来源。`;
+    return { runId: "", ...empty(), error: msg };
+  }
+
   const run = await prisma.discoveryRun.create({
     data: {
       sourceId: source.id,
@@ -132,32 +138,6 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
   let parsedCount = 0;
   let newCandidateCount = 0;
   let updatedCandidateCount = 0;
-
-  if (source.status !== "ACTIVE" && source.status !== "TESTING") {
-    const msg = `Source ${key} is not runnable (status=${source.status})`;
-    logs.push(`[${key}] ${msg}`);
-    await finalizeDiscoveryRun({
-      runId: run.id,
-      sourceId: source.id,
-      status: "FAILED",
-      logs,
-      fetchedCount: 0,
-      parsedCount: 0,
-      newCandidateCount: 0,
-      updatedCandidateCount: 0,
-      errorMessage: msg,
-    });
-    return {
-      runId: run.id,
-      ok: false,
-      logs,
-      error: msg,
-      fetchedCount: 0,
-      parsedCount: 0,
-      newCandidateCount: 0,
-      updatedCandidateCount: 0,
-    };
-  }
 
   try {
     const websiteScanConfig = parseWebsiteScanConfig(source.configJson, source.key);

@@ -281,6 +281,29 @@ pnpm tsx scripts/run-publishing-discovery.ts publishing-website-scan-dpresearch
 
 ---
 
+## 7.2 重复信息源处理（停用 / 归档）
+
+同一 URL 或同一站点可能被重复录入 2～3 次，会增加 WEBSITE_SCAN / RSS 负担。
+
+**原则**：优先**停用 / 归档**，不硬删历史产出。
+
+| 操作 | 入口 | 行为 |
+|------|------|------|
+| 停用 / 归档 | `/admin/discovery/sources/[id]` →「删除 / 归档来源」 | 二次确认后执行 |
+| 有历史（Run / Signal / Candidate / EntityHint） | — | `status → ARCHIVED`，保留全部历史 |
+| 完全无产出 | — | 物理删除来源记录（仅空来源） |
+| 列表默认 | `/admin/discovery/sources` | 隐藏 `DISABLED` / `ARCHIVED` |
+| 查看已停用 | 列表页「显示已停用」 | 可见归档项，便于核对 |
+
+**重复来源建议流程**：
+
+1. 对比 Yield（Signals / Candidates / 最近 Run）
+2. 保留一条 **ACTIVE** 或 **TESTING** 的主来源
+3. 对其余重复项执行「删除 / 归档来源」
+4. `run-publishing-discovery` 与 Admin「运行」均**不会**执行 `ARCHIVED` / `DISABLED` / `PAUSED` 来源（仅 `ACTIVE` / `TESTING` 可跑）
+
+---
+
 ## 8. 暂不进入 Entity E2 的原因
 
 依据 [架构审视 §7](../architecture/muhub-architecture-review-2026-05.md)：
@@ -308,6 +331,7 @@ pnpm tsx scripts/run-publishing-discovery.ts publishing-website-scan-dpresearch
 | Entity 抽取无反应 | `ENTITY_*` flags | 开 flag 或 Signal 页手动抽取 / 脚本 `--force` |
 | 候选重复过多 | 同一 Signal 又 convert 又 extract | 以 Signal 为准；reject 重复 Candidate |
 | publishing 无候选 | pipeline flag、Source scope | `run-publishing-discovery.ts`；查 sources 页 yield |
+| 重复 Source 扫描负担大 | 同一站点多条 ACTIVE | 归档重复项，只留一条 ACTIVE/TESTING |
 | 误开 Entity 影响主站 | — | 关 `ENTITY_DISCOVERY_ENABLED`；Candidate 路径不受影响 |
 
 ---
