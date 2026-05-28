@@ -20,6 +20,10 @@ import { mergeDiscoveryScopes, type DiscoveryScope } from "@/lib/discovery/disco
 export type ExtractHintsForSignalOptions = {
   dryRun?: boolean;
   useAi?: boolean;
+  useAiJudge?: boolean;
+  noAiJudge?: boolean;
+  minConfidence?: number;
+  minRelevance?: number;
   force?: boolean;
 };
 
@@ -27,6 +31,9 @@ export type ExtractHintsForSignalResult = PersistEntityHintsResult & {
   signalId: string;
   hintDrafts: ExtractedEntityHintDraft[];
   skippedReason?: string;
+  skippedLowQuality?: number;
+  skippedNavigation?: number;
+  skippedGeneric?: number;
 };
 
 function resolveScopes(
@@ -93,10 +100,16 @@ export async function extractAndPersistHintsForSignal(
     guessedGithubUrl: signal.guessedGithubUrl,
     discoveryScopes,
     sourceAuthorityTier,
+    metadataJson: signal.metadataJson,
     useAi: options?.useAi ?? true,
+    useAiJudge: options?.useAiJudge,
+    noAiJudge: options?.noAiJudge,
+    minConfidence: options?.minConfidence,
+    minRelevance: options?.minRelevance,
   });
 
   if (extraction.hints.length === 0) {
+    const skipStats = extraction.skipStats;
     return {
       signalId,
       extracted: 0,
@@ -105,6 +118,9 @@ export async function extractAndPersistHintsForSignal(
       errors: [],
       hintDrafts: [],
       skippedReason: extraction.skippedReason ?? "no_entities_detected",
+      skippedLowQuality: skipStats?.skippedLowQuality ?? 0,
+      skippedNavigation: skipStats?.skippedNavigation ?? 0,
+      skippedGeneric: skipStats?.skippedGeneric ?? 0,
     };
   }
 
@@ -131,6 +147,10 @@ export async function extractAndPersistHintsForSignal(
     signalId,
     ...persist,
     hintDrafts: extraction.hints,
+    skippedReason: extraction.skippedReason,
+    skippedLowQuality: extraction.skipStats?.skippedLowQuality ?? 0,
+    skippedNavigation: extraction.skipStats?.skippedNavigation ?? 0,
+    skippedGeneric: extraction.skipStats?.skippedGeneric ?? 0,
   };
 }
 
@@ -208,6 +228,10 @@ export type BatchExtractEntityHintsOptions = {
   limit?: number;
   dryRun?: boolean;
   useAi?: boolean;
+  useAiJudge?: boolean;
+  noAiJudge?: boolean;
+  minConfidence?: number;
+  minRelevance?: number;
   signalId?: string;
   force?: boolean;
 };
@@ -217,7 +241,12 @@ export type BatchExtractEntityHintsResult = {
   extracted: number;
   skipped: number;
   duplicate: number;
+  skippedLowQuality: number;
+  skippedNavigation: number;
+  skippedGeneric: number;
+  skippedReasons: string[];
   errors: string[];
+  error: number;
 };
 
 export async function batchExtractEntityHints(
@@ -229,6 +258,10 @@ export async function batchExtractEntityHints(
     const one = await extractAndPersistHintsForSignal(options.signalId, {
       dryRun: options.dryRun,
       useAi: options.useAi,
+      useAiJudge: options.useAiJudge,
+      noAiJudge: options.noAiJudge,
+      minConfidence: options.minConfidence,
+      minRelevance: options.minRelevance,
       force: options.force,
     });
     return {
@@ -236,7 +269,12 @@ export async function batchExtractEntityHints(
       extracted: one.extracted,
       skipped: one.skipped,
       duplicate: one.duplicate,
+      skippedLowQuality: one.skippedLowQuality ?? 0,
+      skippedNavigation: one.skippedNavigation ?? 0,
+      skippedGeneric: one.skippedGeneric ?? 0,
+      skippedReasons: one.skippedReason ? [one.skippedReason] : [],
       errors: one.errors,
+      error: one.errors.length,
     };
   }
 
@@ -262,17 +300,31 @@ export async function batchExtractEntityHints(
   let extracted = 0;
   let skipped = 0;
   let duplicate = 0;
+  let skippedLowQuality = 0;
+  let skippedNavigation = 0;
+  let skippedGeneric = 0;
+  const skippedReasons: string[] = [];
   const errors: string[] = [];
 
   for (const signal of toProcess) {
     const result = await extractAndPersistHintsForSignal(signal.id, {
       dryRun: options?.dryRun,
       useAi: options?.useAi,
+      useAiJudge: options?.useAiJudge,
+      noAiJudge: options?.noAiJudge,
+      minConfidence: options?.minConfidence,
+      minRelevance: options?.minRelevance,
       force: options?.force,
     });
     extracted += result.extracted;
     skipped += result.skipped;
     duplicate += result.duplicate;
+    skippedLowQuality += result.skippedLowQuality ?? 0;
+    skippedNavigation += result.skippedNavigation ?? 0;
+    skippedGeneric += result.skippedGeneric ?? 0;
+    if (result.skippedReason) {
+      skippedReasons.push(result.skippedReason);
+    }
     errors.push(...result.errors);
   }
 
@@ -281,6 +333,11 @@ export async function batchExtractEntityHints(
     extracted,
     skipped,
     duplicate,
+    skippedLowQuality,
+    skippedNavigation,
+    skippedGeneric,
+    skippedReasons: [...new Set(skippedReasons)].slice(0, 20),
     errors,
+    error: errors.length,
   };
 }

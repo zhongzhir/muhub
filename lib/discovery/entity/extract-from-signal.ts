@@ -6,6 +6,16 @@ import {
   type SourceAuthorityTier,
 } from "@/lib/discovery/entity/types";
 import { normalizeEntityName } from "@/lib/discovery/entity/normalize-name";
+import {
+  filterEntityHintDrafts,
+  GENERIC_BLACKLIST,
+  NAVIGATION_BLACKLIST,
+  type HintQualitySkipStats,
+} from "@/lib/discovery/entity/hint-quality-filter";
+import {
+  aiJudgedEntitiesToHintDrafts,
+  runAiEntityJudge,
+} from "@/lib/discovery/entity/ai-entity-judge";
 
 export type SignalExtractionInput = {
   signalId: string;
@@ -21,30 +31,18 @@ export type SignalExtractionInput = {
   guessedGithubUrl?: string | null;
   discoveryScopes: string[];
   sourceAuthorityTier?: SourceAuthorityTier;
+  metadataJson?: unknown;
   useAi?: boolean;
+  /** 显式启用 AI Entity Judge（WEBSITE_SCAN 默认启用） */
+  useAiJudge?: boolean;
+  noAiJudge?: boolean;
+  minConfidence?: number;
+  minRelevance?: number;
 };
 
-const NOISE_NAMES = new Set([
-  "关于",
-  "通知",
-  "公告",
-  "名单",
-  "公示",
-  "试点",
-  "单位",
-  "有关",
-  "开展",
-  "工作",
-  "发布",
-  "新闻",
-  "报道",
-  "行业",
-  "中国",
-  "国家",
-  "全国",
-  "北京",
-  "上海",
-]);
+const NOISE_NAMES = GENERIC_BLACKLIST;
+
+const WEBSITE_SCAN_MIN_CONFIDENCE = 0.75;
 
 const LAB_SUFFIX =
   /([\u4e00-\u9fa5A-Za-z0-9·（）()]{2,40}(?:人工智能|AI|智能|数字出版|出版)?(?:实验室|研究中心|研究院|研究基地))/g;
@@ -55,24 +53,36 @@ const COMPANY_SUFFIX =
 const EVENT_SUFFIX =
   /([\u4e00-\u9fa5A-Za-z0-9·（）()]{2,50}(?:论坛|峰会|大会|研讨会|年会|博览会|展会|会议))/g;
 
+function isWebsiteScanSignal(input: SignalExtractionInput): boolean {
+  return input.signalType === "WEBSITE_SCAN";
+}
+
 function combinedText(input: SignalExtractionInput): string {
+  if (isWebsiteScanSignal(input)) {
+    return [input.title, input.summary]
+      .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+      .join("\n");
+  }
   return [input.title, input.summary, input.rawText]
     .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
     .join("\n");
 }
 
-function isValidEntityName(name: string): boolean {
+function isValidEntityName(name: string, options?: { isWebsiteScan?: boolean }): boolean {
   const trimmed = name.trim();
   if (trimmed.length < 2 || trimmed.length > 80) {
     return false;
   }
-  if (NOISE_NAMES.has(trimmed)) {
+  if (NOISE_NAMES.has(trimmed) || NAVIGATION_BLACKLIST.has(trimmed)) {
     return false;
   }
   if (/^https?:\/\//i.test(trimmed)) {
     return false;
   }
   if (/^\d+$/.test(trimmed)) {
+    return false;
+  }
+  if (options?.isWebsiteScan && trimmed.length <= 4 && !/(公司|集团|实验室|大学|出版社)/.test(trimmed)) {
     return false;
   }
   return true;
@@ -86,12 +96,13 @@ function pushUnique(
   out: ExtractedEntityHintDraft[],
   seen: Set<string>,
   draft: ExtractedEntityHintDraft,
+  options?: { isWebsiteScan?: boolean },
 ): void {
   const key = `${normalizeEntityName(draft.name)}:${draft.entityType}`;
   if (seen.has(key)) {
     return;
   }
-  if (!isValidEntityName(draft.name)) {
+  if (!isValidEntityName(draft.name, options)) {
     return;
   }
   seen.add(key);
@@ -163,6 +174,13 @@ function extractLaunchProducts(text: string, tier: SourceAuthorityTier): Extract
   return out;
 }
 
+function normalizeOrgExtract(raw: string): string {
+  const m = raw.match(
+    /([\u4e00-\u9fa5A-Za-z0-9·（）()]{2,30}(?:有限公司|有限责任公司|股份有限公司|科技公司|技术公司|集团|出版社|报刊社|期刊社|实验室|研究中心|研究院|研究基地|协会|学会|联合会|委员会|局|署|司|大学|学院))$/,
+  );
+  return m?.[1]?.trim() ?? raw.trim();
+}
+
 function extractByRegex(
   text: string,
   re: RegExp,
@@ -176,9 +194,12 @@ function extractByRegex(
   const regex = new RegExp(re.source, re.flags);
   let m: RegExpExecArray | null;
   while ((m = regex.exec(text)) !== null) {
-    const name = m[1]?.trim();
+    let name = m[1]?.trim();
     if (!name) {
       continue;
+    }
+    if (entityType === "ORGANIZATION" || entityType === "COMPANY" || entityType === "LAB") {
+      name = normalizeOrgExtract(name);
     }
     out.push({
       name,
@@ -198,42 +219,58 @@ function extractByRegex(
 function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] {
   const text = combinedText(input);
   const tier = input.sourceAuthorityTier ?? "unknown";
+  const isScan = isWebsiteScanSignal(input);
+  const scanOpts = { isWebsiteScan: isScan };
   const out: ExtractedEntityHintDraft[] = [];
   const seen = new Set<string>();
 
-  if (input.guessedProjectName?.trim()) {
-    pushUnique(out, seen, {
-      name: input.guessedProjectName.trim(),
-      entityType: "PROJECT",
-      confidence: clampConfidence(0.68, tier),
-      reason: "Signal 已猜测项目名称",
-      evidenceJson: { extractionMethod: "signal_field", ruleId: "guessedProjectName" },
-    });
+  if (input.guessedProjectName?.trim() && !isScan) {
+    pushUnique(
+      out,
+      seen,
+      {
+        name: input.guessedProjectName.trim(),
+        entityType: "PROJECT",
+        confidence: clampConfidence(0.68, tier),
+        reason: "Signal 已猜测项目名称",
+        evidenceJson: { extractionMethod: "signal_field", ruleId: "guessedProjectName" },
+      },
+      scanOpts,
+    );
   }
 
-  if (input.guessedGithubUrl?.trim()) {
+  if (input.guessedGithubUrl?.trim() && !isScan) {
     const repoMatch = input.guessedGithubUrl.match(/github\.com\/[^/]+\/([^/?#]+)/i);
     if (repoMatch?.[1]) {
-      pushUnique(out, seen, {
-        name: repoMatch[1],
-        entityType: "PROJECT",
-        confidence: clampConfidence(0.55, tier),
-        reason: "Signal 关联 GitHub 仓库名",
-        evidenceJson: { extractionMethod: "signal_field", ruleId: "guessedGithubUrl" },
-      });
+      pushUnique(
+        out,
+        seen,
+        {
+          name: repoMatch[1],
+          entityType: "PROJECT",
+          confidence: clampConfidence(0.55, tier),
+          reason: "Signal 关联 GitHub 仓库名",
+          evidenceJson: { extractionMethod: "signal_field", ruleId: "guessedGithubUrl" },
+        },
+        scanOpts,
+      );
     }
   }
+
+  const labBase = isScan ? 0.78 : 0.72;
+  const orgBase = isScan ? 0.78 : 0.7;
+  const companyBase = isScan ? 0.76 : 0.65;
 
   for (const draft of extractByRegex(
     text,
     LAB_SUFFIX,
     "LAB",
     "lab_suffix",
-    0.72,
+    labBase,
     tier,
     "实验室/研究中心名称模式",
   )) {
-    pushUnique(out, seen, draft);
+    pushUnique(out, seen, draft, scanOpts);
   }
 
   for (const draft of extractByRegex(
@@ -241,11 +278,11 @@ function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] 
     ORG_SUFFIX,
     "ORGANIZATION",
     "org_suffix",
-    0.7,
+    orgBase,
     tier,
     "机构/协会/出版社名称模式",
   )) {
-    pushUnique(out, seen, draft);
+    pushUnique(out, seen, draft, scanOpts);
   }
 
   for (const draft of extractByRegex(
@@ -253,47 +290,59 @@ function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] 
     COMPANY_SUFFIX,
     "COMPANY",
     "company_suffix",
-    0.65,
+    companyBase,
     tier,
     "公司名称模式",
   )) {
-    pushUnique(out, seen, draft);
+    pushUnique(out, seen, draft, scanOpts);
   }
 
-  for (const draft of extractByRegex(
-    text,
-    EVENT_SUFFIX,
-    "EVENT",
-    "event_suffix",
-    0.6,
-    tier,
-    "会议/论坛名称模式",
-  )) {
-    pushUnique(out, seen, draft);
-  }
+  if (!isScan) {
+    for (const draft of extractByRegex(
+      text,
+      EVENT_SUFFIX,
+      "EVENT",
+      "event_suffix",
+      0.6,
+      tier,
+      "会议/论坛名称模式",
+    )) {
+      pushUnique(out, seen, draft, scanOpts);
+    }
 
-  for (const name of extractQuotedNames(text)) {
-    pushUnique(out, seen, {
-      name,
-      entityType: inferTypeFromName(name),
-      confidence: clampConfidence(0.58, tier),
-      reason: "引号/书名号中的实体名称",
-      evidenceJson: { extractionMethod: "rule", ruleId: "quoted_name" },
-    });
-  }
+    for (const name of extractQuotedNames(text)) {
+      pushUnique(
+        out,
+        seen,
+        {
+          name,
+          entityType: inferTypeFromName(name),
+          confidence: clampConfidence(0.58, tier),
+          reason: "引号/书名号中的实体名称",
+          evidenceJson: { extractionMethod: "rule", ruleId: "quoted_name" },
+        },
+        scanOpts,
+      );
+    }
 
-  for (const name of extractListNames(text)) {
-    pushUnique(out, seen, {
-      name,
-      entityType: inferTypeFromName(name),
-      confidence: clampConfidence(0.66, tier),
-      reason: "名单/公告列表项",
-      evidenceJson: { extractionMethod: "rule", ruleId: "list_item" },
-    });
-  }
+    for (const name of extractListNames(text)) {
+      pushUnique(
+        out,
+        seen,
+        {
+          name,
+          entityType: inferTypeFromName(name),
+          confidence: clampConfidence(0.66, tier),
+          reason: "名单/公告列表项",
+          evidenceJson: { extractionMethod: "rule", ruleId: "list_item" },
+        },
+        scanOpts,
+      );
+    }
 
-  for (const draft of extractLaunchProducts(text, tier)) {
-    pushUnique(out, seen, draft);
+    for (const draft of extractLaunchProducts(text, tier)) {
+      pushUnique(out, seen, draft, scanOpts);
+    }
   }
 
   for (const draft of out) {
@@ -334,6 +383,9 @@ function inferTypeFromName(name: string): string {
 }
 
 async function extractWithAi(input: SignalExtractionInput): Promise<ExtractedEntityHintDraft[]> {
+  if (isWebsiteScanSignal(input)) {
+    return [];
+  }
   try {
     const { generateText } = await import("@/lib/ai/generate-text");
     const { getResolvedAiConfig } = await import("@/lib/ai/ai-config");
@@ -414,7 +466,7 @@ ${text}
           },
         };
       })
-      .filter((d) => isValidEntityName(d.name));
+      .filter((d) => isValidEntityName(d.name, { isWebsiteScan: isWebsiteScanSignal(input) }));
   } catch {
     return [];
   }
@@ -423,6 +475,72 @@ ${text}
 export async function extractEntityHintsFromSignal(
   input: SignalExtractionInput,
 ): Promise<EntityHintExtractionResult> {
+  const isScan = isWebsiteScanSignal(input);
+  const judgeEnabled =
+    input.useAi !== false &&
+    !input.noAiJudge &&
+    (isScan || input.useAiJudge === true);
+
+  if (judgeEnabled) {
+    const judgeResult = await runAiEntityJudge({
+      title: input.title,
+      summary: input.summary,
+      url: input.url,
+      signalType: input.signalType,
+      sourceType: input.sourceType,
+      sourceName: input.sourceName,
+      discoveryScopes: input.discoveryScopes,
+      sourceAuthorityTier: input.sourceAuthorityTier,
+      metadataJson: input.metadataJson,
+      minConfidence: input.minConfidence,
+      minRelevance: input.minRelevance,
+    });
+
+    if (!judgeResult.failed) {
+      const drafts = aiJudgedEntitiesToHintDrafts({
+        entities: judgeResult.entities,
+        input: {
+          title: input.title,
+          summary: input.summary,
+          url: input.url,
+          signalType: input.signalType,
+          sourceType: input.sourceType,
+          sourceName: input.sourceName,
+          discoveryScopes: input.discoveryScopes,
+          sourceAuthorityTier: input.sourceAuthorityTier,
+          metadataJson: input.metadataJson,
+        },
+        model: judgeResult.model,
+      });
+
+      const filtered = filterEntityHintDrafts(drafts, {
+        isWebsiteScan: isScan,
+        minConfidence: input.minConfidence ?? WEBSITE_SCAN_MIN_CONFIDENCE,
+      });
+
+      const skipStats: HintQualitySkipStats = filtered.stats;
+
+      if (filtered.accepted.length === 0) {
+        return {
+          hints: [],
+          skippedReason:
+            judgeResult.skippedReason ||
+            (skipStats.skippedNavigation + skipStats.skippedGeneric + skipStats.skippedLowQuality > 0
+              ? "quality_filtered_after_ai_judge"
+              : "ai_judge_no_entities"),
+          skipStats,
+        };
+      }
+
+      return {
+        hints: filtered.accepted,
+        skippedReason: judgeResult.skippedReason,
+        skipStats,
+      };
+    }
+    // 技术失败 → 回退规则抽取
+  }
+
   const ruleHints = extractRules(input);
   const aiHints = input.useAi ? await extractWithAi(input) : [];
   const seen = new Set(ruleHints.map((h) => `${normalizeEntityName(h.name)}:${h.entityType}`));
@@ -434,14 +552,24 @@ export async function extractEntityHintsFromSignal(
     seen.add(key);
     return true;
   });
-  const hints = [...ruleHints, ...extraAiHints];
+  const rawHints = [...ruleHints, ...extraAiHints];
 
-  if (hints.length === 0) {
+  const filtered = filterEntityHintDrafts(rawHints, {
+    isWebsiteScan: isScan,
+    minConfidence: isScan ? WEBSITE_SCAN_MIN_CONFIDENCE : 0,
+  });
+
+  const skipStats: HintQualitySkipStats = filtered.stats;
+
+  if (filtered.accepted.length === 0) {
     return {
       hints: [],
-      skippedReason: "no_entities_detected",
+      skippedReason: skipStats.skippedNavigation + skipStats.skippedGeneric + skipStats.skippedLowQuality > 0
+        ? "quality_filtered"
+        : "no_entities_detected",
+      skipStats,
     };
   }
 
-  return { hints };
+  return { hints: filtered.accepted, skipStats };
 }

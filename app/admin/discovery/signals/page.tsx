@@ -2,6 +2,11 @@ import Link from "next/link";
 import type { DiscoverySignalStatus, Prisma } from "@prisma/client";
 import { getDiscoverySignalPriority } from "@/lib/discovery/signal-priority";
 import { getDiscoverySignalSourceStats } from "@/lib/discovery/signal-source-stats";
+import {
+  isWebsiteScanSignal,
+  parseWebsiteScanSignalMetadata,
+  truncateSnippet,
+} from "@/lib/discovery/website-scan/signal-metadata";
 import { prisma } from "@/lib/prisma";
 import { DiscoveryHubNav } from "../discovery-hub-nav";
 
@@ -41,22 +46,13 @@ function statusBadgeClass(status: DiscoverySignalStatus): string {
   return "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-200";
 }
 
-function priorityBadgeClass(priority: "HIGH" | "MEDIUM" | "LOW"): string {
-  if (priority === "HIGH") {
-    return "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200";
-  }
-  if (priority === "MEDIUM") {
-    return "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200";
-  }
-  return "border-zinc-300 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300";
-}
-
 function buildSignalsHref(input: {
   status: "ALL" | DiscoverySignalStatus;
   q: string;
   priority: PriorityFilter;
   multiSourceOnly: boolean;
   sourceId?: string;
+  sourceKey?: string;
 }): string {
   const params = new URLSearchParams();
   if (input.status !== "ALL") {
@@ -73,6 +69,9 @@ function buildSignalsHref(input: {
   }
   if (input.sourceId) {
     params.set("sourceId", input.sourceId);
+  }
+  if (input.sourceKey) {
+    params.set("sourceKey", input.sourceKey);
   }
   return `/admin/discovery/signals${params.toString() ? `?${params.toString()}` : ""}`;
 }
@@ -100,7 +99,31 @@ export default async function AdminDiscoverySignalsPage({
       ? priorityRaw
       : "ALL";
   const multiSourceOnly = multiSourceRaw === "true";
-  const sourceId = typeof sp.sourceId === "string" ? sp.sourceId.trim() : "";
+  const sourceIdRaw = typeof sp.sourceId === "string" ? sp.sourceId.trim() : "";
+  const sourceKeyRaw = typeof sp.sourceKey === "string" ? sp.sourceKey.trim() : "";
+
+  let sourceId = sourceIdRaw;
+  let sourceKey = sourceKeyRaw;
+  let filterSource: { id: string; key: string; name: string } | null = null;
+
+  if (sourceKey && !sourceId) {
+    const byKey = await prisma.discoverySource.findUnique({
+      where: { key: sourceKey },
+      select: { id: true, key: true, name: true },
+    });
+    if (byKey) {
+      sourceId = byKey.id;
+      filterSource = byKey;
+    }
+  } else if (sourceId) {
+    filterSource = await prisma.discoverySource.findUnique({
+      where: { id: sourceId },
+      select: { id: true, key: true, name: true },
+    });
+    if (filterSource && !sourceKey) {
+      sourceKey = filterSource.key;
+    }
+  }
 
   const where: Prisma.DiscoverySignalWhereInput = {
     ...(status !== "ALL" ? { status } : {}),
@@ -123,6 +146,8 @@ export default async function AdminDiscoverySignalsPage({
     select: {
       id: true,
       title: true,
+      signalType: true,
+      metadataJson: true,
       sourceType: true,
       sourceName: true,
       url: true,
@@ -137,6 +162,14 @@ export default async function AdminDiscoverySignalsPage({
   });
   const rows = fetchedRows
     .map((row) => {
+      const scanMeta = isWebsiteScanSignal(row.signalType, row.metadataJson)
+        ? parseWebsiteScanSignalMetadata(row.metadataJson, {
+            signalType: row.signalType,
+            url: row.url,
+            title: row.title,
+            summary: row.summary,
+          })
+        : null;
       const sourceStats = getDiscoverySignalSourceStats(row.referenceSources);
       const priorityResult = getDiscoverySignalPriority({
         sourceType: row.sourceType,
@@ -147,7 +180,7 @@ export default async function AdminDiscoverySignalsPage({
         guessedGithubUrl: row.guessedGithubUrl,
         referenceSources: row.referenceSources,
       });
-      return { ...row, sourceStats, priorityResult };
+      return { ...row, scanMeta, sourceStats, priorityResult };
     })
     .filter((row) => {
       if (priority !== "ALL" && row.priorityResult.priority !== priority) {
@@ -173,6 +206,27 @@ export default async function AdminDiscoverySignalsPage({
           同一 URL 可能同时存在 Signal、Candidate、EntityHint — 以 Signal 为来源真相，详见 runbook。
         </p>
       </header>
+
+      {filterSource ? (
+        <div className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-100">
+          当前按来源筛选：
+          <span className="ml-2 font-medium">{filterSource.name}</span>
+          <span className="ml-2 font-mono text-xs">{filterSource.key}</span>
+          <Link
+            href={buildSignalsHref({ status, q, priority, multiSourceOnly })}
+            className="ml-3 text-xs underline"
+          >
+            清除来源筛选
+          </Link>
+          <Link
+            href={`/admin/discovery/sources/${filterSource.id}`}
+            className="ml-3 text-xs underline"
+          >
+            返回来源详情
+          </Link>
+        </div>
+      ) : null}
+
       <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-zinc-500">状态筛选</span>
@@ -183,6 +237,7 @@ export default async function AdminDiscoverySignalsPage({
               priority,
               multiSourceOnly,
               sourceId: sourceId || undefined,
+              sourceKey: sourceKey || undefined,
             });
             const active = status === tab.value;
             return (
@@ -209,6 +264,7 @@ export default async function AdminDiscoverySignalsPage({
               priority: tab.value,
               multiSourceOnly,
               sourceId: sourceId || undefined,
+              sourceKey: sourceKey || undefined,
             });
             const active = priority === tab.value;
             return (
@@ -235,6 +291,8 @@ export default async function AdminDiscoverySignalsPage({
               q,
               priority,
               multiSourceOnly: nextMulti,
+              sourceId: sourceId || undefined,
+              sourceKey: sourceKey || undefined,
             });
             const active = multiSourceOnly === nextMulti;
             return (
@@ -258,11 +316,18 @@ export default async function AdminDiscoverySignalsPage({
           <span className="ml-3">优先级：{priority}</span>
           <span className="ml-3">来源：{multiSourceOnly ? "多来源优先" : "全部来源"}</span>
           <span className="ml-3">关键词：{q || "（无）"}</span>
+          {filterSource ? (
+            <span className="ml-3">
+              来源：{filterSource.name} ({filterSource.key})
+            </span>
+          ) : null}
         </div>
         <form method="get" className="flex max-w-lg gap-2">
           {status !== "ALL" ? <input type="hidden" name="status" value={status} /> : null}
           {priority !== "ALL" ? <input type="hidden" name="priority" value={priority} /> : null}
           {multiSourceOnly ? <input type="hidden" name="multiSource" value="true" /> : null}
+          {sourceId ? <input type="hidden" name="sourceId" value={sourceId} /> : null}
+          {sourceKey ? <input type="hidden" name="sourceKey" value={sourceKey} /> : null}
           <input
             type="search"
             name="q"
@@ -284,25 +349,31 @@ export default async function AdminDiscoverySignalsPage({
           <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900">
             <tr>
               <th className="px-3 py-2">标题</th>
-              <th className="px-3 py-2">来源类型</th>
-              <th className="px-3 py-2">来源名称</th>
+              <th className="px-3 py-2">来源</th>
               <th className="px-3 py-2">URL</th>
-              <th className="px-3 py-2">推断项目名</th>
+              <th className="px-3 py-2">命中关键词</th>
+              <th className="px-3 py-2">摘要</th>
               <th className="px-3 py-2">状态</th>
-              <th className="px-3 py-2">优先级</th>
-              <th className="px-3 py-2">来源数</th>
+              <th className="px-3 py-2">类型</th>
               <th className="px-3 py-2">创建时间</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
                   暂无线索数据。
                 </td>
               </tr>
             ) : (
               rows.map((row) => {
+                const pageUrl = row.scanMeta?.pageUrl || row.url;
+                const keywords = row.scanMeta?.matchedKeywords?.length
+                  ? row.scanMeta.matchedKeywords.join(", ")
+                  : "—";
+                const snippet = row.scanMeta?.snippet
+                  ? truncateSnippet(row.scanMeta.snippet, 100)
+                  : truncateSnippet(row.summary ?? "", 100) || "—";
                 return (
                   <tr key={row.id} className="border-t border-zinc-100 dark:border-zinc-800/80">
                     <td className="px-3 py-2">
@@ -310,30 +381,39 @@ export default async function AdminDiscoverySignalsPage({
                         href={`/admin/discovery/signals/${row.id}`}
                         className="font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-zinc-100"
                       >
-                        {row.title}
+                        {row.scanMeta?.title || row.title}
                       </Link>
+                      {row.signalType === "WEBSITE_SCAN" ? (
+                        <span className="ml-2 rounded bg-teal-100 px-1.5 py-0.5 text-[10px] text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+                          SCAN
+                        </span>
+                      ) : null}
                     </td>
-                    <td className="px-3 py-2">{row.sourceType}</td>
-                    <td className="px-3 py-2">{row.sourceName}</td>
-                    <td className="max-w-[280px] truncate px-3 py-2">
-                      <a href={row.url} target="_blank" rel="noreferrer" className="text-blue-600 underline dark:text-blue-400">
-                        {row.url}
+                    <td className="px-3 py-2 text-xs">{row.sourceName}</td>
+                    <td className="max-w-[220px] truncate px-3 py-2 text-xs">
+                      <a
+                        href={pageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 underline dark:text-blue-400"
+                      >
+                        {pageUrl}
                       </a>
                     </td>
-                    <td className="px-3 py-2">{row.guessedProjectName || "—"}</td>
+                    <td className="max-w-[140px] truncate px-3 py-2 text-xs text-teal-800 dark:text-teal-200">
+                      {keywords}
+                    </td>
+                    <td className="max-w-[240px] truncate px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400">
+                      {snippet}
+                    </td>
                     <td className="px-3 py-2">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadgeClass(row.status)}`}>
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadgeClass(row.status)}`}
+                      >
                         {row.status}
                       </span>
                     </td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${priorityBadgeClass(row.priorityResult.priority)}`}>
-                        {row.priorityResult.priority}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300">
-                      {row.sourceStats.total} 来源
-                    </td>
+                    <td className="px-3 py-2 text-xs text-zinc-500">{row.signalType}</td>
                     <td className="px-3 py-2 text-xs text-zinc-500">
                       {row.createdAt.toISOString().replace("T", " ").slice(0, 19)}
                     </td>

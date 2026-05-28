@@ -54,3 +54,11 @@ export function isEntityHintExtractionEnabled(): boolean {
   }
   return envFlag("ENTITY_HINT_EXTRACTION_ENABLED", false);
 }
+
+/** Entity Discovery E1.6：EntityHint 结构化反馈 UI */
+export function isEntityFeedbackEnabled(): boolean {
+  if (!isEntityDiscoveryEnabled()) {
+    return false;
+  }
+  return envFlag("ENTITY_FEEDBACK_ENABLED", false);
+}

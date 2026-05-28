@@ -157,7 +157,7 @@ export default async function AdminDiscoverySourceDetailPage({
           筛选候选池
         </Link>
         <Link
-          href={`/admin/discovery/signals?sourceId=${source.id}`}
+          href={`/admin/discovery/signals?sourceId=${source.id}&sourceKey=${encodeURIComponent(source.key)}`}
           className="rounded border border-zinc-300 px-3 py-1.5 text-zinc-800 dark:border-zinc-600 dark:text-zinc-200"
         >
           查看线索

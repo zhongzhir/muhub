@@ -460,6 +460,30 @@ model EntityHint {
   @@index([status, createdAt(sort: Desc)])
   @@index([sourceSignalId])
   @@index([normalizedName])
+  feedbacks            EntityHintFeedback[]
+}
+
+/** Entity Discovery E1.6：人工结构化反馈（Industry Cognition Layer 语料） */
+model EntityHintFeedback {
+  id                   String     @id @default(cuid())
+  createdAt            DateTime   @default(now())
+
+  entityHintId         String
+  entityHint           EntityHint   @relation(fields: [entityHintId], references: [id], onDelete: Cascade)
+
+  /** ACCEPT | REJECT | UNSURE */
+  action               String
+  /** system | expert | founder | operator */
+  reviewer             String     @default("operator")
+  feedbackReason       String?    @db.Text
+  feedbackTags         Json?
+  confidenceAdjustment Float?
+  isHighValue          Boolean?
+  shouldTrackLongTerm  Boolean?
+  notes                String?    @db.Text
+
+  @@index([entityHintId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
 }
 
 /** Discovery V2：候选 Enrichment 任务（审计；不落原始 HTML） */

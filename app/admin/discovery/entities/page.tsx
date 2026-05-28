@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { DISCOVERY_SCOPES } from "@/lib/discovery/discovery-scopes";
 import { ENTITY_HINT_STATUSES, ENTITY_TYPES } from "@/lib/discovery/entity/types";
+import { parseAiJudgeEvidence } from "@/lib/discovery/entity/ai-entity-judge";
 import { EntityHintStatusButtons } from "./entity-hint-status-buttons";
 import { DiscoveryHubNav } from "../discovery-hub-nav";
 
@@ -121,10 +122,10 @@ export default async function AdminDiscoveryEntitiesPage({
       <DiscoveryHubNav current="entities" />
 
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">实体线索 · Entity Hint (E1)</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">实体线索 · Entity Hint (E1 / E1.5)</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          从 Signal 抽取的机构、实验室、项目名等<strong>不完整实体线索</strong>。不要求 website/repo；人工
-          ACCEPT/REJECT 即可。总计 {total} 条，待审 {pending} 条。
+          从 Signal 抽取的机构、实验室、项目名等<strong>不完整实体线索</strong>。WEBSITE_SCAN 默认走
+          AI Entity Judge（E1.5）。总计 {total} 条，待审 {pending} 条。
         </p>
         <p className="mt-1 text-xs text-zinc-500">
           Entity E2（合并、验证、晋升 Project）<strong>暂缓</strong>。抽取需开启{" "}
@@ -208,6 +209,8 @@ export default async function AdminDiscoveryEntitiesPage({
               <th className="px-3 py-2">名称</th>
               <th className="px-3 py-2">类型</th>
               <th className="px-3 py-2">置信度</th>
+              <th className="px-3 py-2">Relevance</th>
+              <th className="px-3 py-2">Judge</th>
               <th className="px-3 py-2">状态</th>
               <th className="px-3 py-2">Scope</th>
               <th className="px-3 py-2">来源</th>
@@ -219,7 +222,7 @@ export default async function AdminDiscoveryEntitiesPage({
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-zinc-500">
+                <td colSpan={11} className="px-3 py-8 text-center text-zinc-500">
                   暂无 Entity Hint。可运行{" "}
                   <code className="text-xs">
                     pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50
@@ -227,7 +230,9 @@ export default async function AdminDiscoveryEntitiesPage({
                 </td>
               </tr>
             ) : (
-              filteredRows.map((row) => (
+              filteredRows.map((row) => {
+                const aiEv = parseAiJudgeEvidence(row.evidenceJson);
+                return (
                 <tr
                   key={row.id}
                   className="border-t border-zinc-100 dark:border-zinc-800/80"
@@ -243,6 +248,20 @@ export default async function AdminDiscoveryEntitiesPage({
                   <td className="px-3 py-2">{row.entityType}</td>
                   <td className="px-3 py-2">
                     {typeof row.confidence === "number" ? row.confidence.toFixed(2) : "—"}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {aiEv.publishingAiRelevance != null
+                      ? aiEv.publishingAiRelevance.toFixed(2)
+                      : "—"}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {aiEv.isAiJudge ? (
+                      <span className="rounded bg-violet-100 px-1.5 py-0.5 text-violet-800 dark:bg-violet-950 dark:text-violet-200">
+                        AI Judge
+                      </span>
+                    ) : (
+                      "规则"
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <span
@@ -274,7 +293,8 @@ export default async function AdminDiscoveryEntitiesPage({
                     <EntityHintStatusButtons hintId={row.id} currentStatus={row.status} />
                   </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>

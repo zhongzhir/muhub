@@ -1,12 +1,15 @@
 #!/usr/bin/env tsx
 /**
- * Entity Discovery E1 — 批量从 DiscoverySignal 抽取 EntityHint
+ * Entity Discovery E1 / E1.5 — 批量从 DiscoverySignal 抽取 EntityHint
  *
  * 用法：
  *   pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50
+ *   pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50 --force --ai-judge
  *   pnpm tsx scripts/extract-entity-hints.ts --dry-run --limit 10
  *   pnpm tsx scripts/extract-entity-hints.ts --signal-id <id>
  *   pnpm tsx scripts/extract-entity-hints.ts --no-ai
+ *   pnpm tsx scripts/extract-entity-hints.ts --no-ai-judge
+ *   pnpm tsx scripts/extract-entity-hints.ts --min-confidence 0.75 --min-relevance 0.60
  *
  * 需设置：
  *   ENTITY_DISCOVERY_ENABLED=true
@@ -24,6 +27,10 @@ function parseArgs(argv: string[]): {
   limit: number;
   dryRun: boolean;
   useAi: boolean;
+  useAiJudge?: boolean;
+  noAiJudge: boolean;
+  minConfidence: number;
+  minRelevance: number;
   signalId?: string;
   force: boolean;
 } {
@@ -31,6 +38,10 @@ function parseArgs(argv: string[]): {
   let limit = 50;
   let dryRun = false;
   let useAi = true;
+  let useAiJudge: boolean | undefined;
+  let noAiJudge = false;
+  let minConfidence = 0.75;
+  let minRelevance = 0.6;
   let signalId: string | undefined;
   let force = false;
 
@@ -48,10 +59,20 @@ function parseArgs(argv: string[]): {
     } else if (arg === "--limit" && argv[i + 1]) {
       limit = Math.max(1, Number(argv[i + 1]) || 50);
       i += 1;
+    } else if (arg === "--min-confidence" && argv[i + 1]) {
+      minConfidence = Number(argv[i + 1]) || 0.75;
+      i += 1;
+    } else if (arg === "--min-relevance" && argv[i + 1]) {
+      minRelevance = Number(argv[i + 1]) || 0.6;
+      i += 1;
     } else if (arg === "--dry-run") {
       dryRun = true;
     } else if (arg === "--no-ai") {
       useAi = false;
+    } else if (arg === "--ai-judge") {
+      useAiJudge = true;
+    } else if (arg === "--no-ai-judge") {
+      noAiJudge = true;
     } else if (arg === "--signal-id" && argv[i + 1]) {
       signalId = argv[i + 1]!.trim();
       i += 1;
@@ -60,7 +81,18 @@ function parseArgs(argv: string[]): {
     }
   }
 
-  return { scope, limit, dryRun, useAi, signalId, force };
+  return {
+    scope,
+    limit,
+    dryRun,
+    useAi,
+    useAiJudge,
+    noAiJudge,
+    minConfidence,
+    minRelevance,
+    signalId,
+    force,
+  };
 }
 
 async function main(): Promise<void> {
@@ -80,6 +112,10 @@ async function main(): Promise<void> {
     limit: args.limit,
     dryRun: args.dryRun,
     useAi: args.useAi,
+    useAiJudge: args.useAiJudge ?? "(auto for WEBSITE_SCAN)",
+    noAiJudge: args.noAiJudge,
+    minConfidence: args.minConfidence,
+    minRelevance: args.minRelevance,
     signalId: args.signalId ?? null,
     force: args.force,
   });
@@ -89,6 +125,10 @@ async function main(): Promise<void> {
     limit: args.limit,
     dryRun: args.dryRun,
     useAi: args.useAi,
+    useAiJudge: args.useAiJudge,
+    noAiJudge: args.noAiJudge,
+    minConfidence: args.minConfidence,
+    minRelevance: args.minRelevance,
     signalId: args.signalId,
     force: args.force,
   });
@@ -99,8 +139,18 @@ async function main(): Promise<void> {
   if (!args.dryRun) {
     const total = await prisma.entityHint.count();
     const pending = await prisma.entityHint.count({ where: { status: "PENDING" } });
+    const hints = await prisma.entityHint.findMany({
+      select: { evidenceJson: true },
+    });
+    const aiJudgeCount = hints.filter(
+      (h) =>
+        h.evidenceJson &&
+        typeof h.evidenceJson === "object" &&
+        !Array.isArray(h.evidenceJson) &&
+        (h.evidenceJson as Record<string, unknown>).judge === "ai_entity_judge",
+    ).length;
     console.log("\n--- EntityHint totals ---");
-    console.log({ total, pending });
+    console.log({ total, pending, aiJudgeCount });
   }
 }
 

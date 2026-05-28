@@ -160,8 +160,17 @@ ENTITY_HINT_EXTRACTION_ENABLED=true
 # 批量（publishing_ai）
 pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50
 
-# 仅规则、不调用 LLM
+# E1.5 AI Entity Judge（WEBSITE_SCAN 默认；显式开启）
+pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50 --force --ai-judge
+
+# 关闭 AI Judge（仅规则）
+pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50 --no-ai-judge
+
+# 完全关闭 AI
 pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50 --no-ai
+
+# 自定义阈值
+pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50 --min-confidence 0.75 --min-relevance 0.60
 
 # 单条 Signal
 pnpm tsx scripts/extract-entity-hints.ts --signal-id <id> --force
@@ -169,6 +178,55 @@ pnpm tsx scripts/extract-entity-hints.ts --signal-id <id> --force
 # 预览不写库
 pnpm tsx scripts/extract-entity-hints.ts --dry-run --limit 10 --force
 ```
+
+### 6.5 Entity Hint 反馈审核（E1.6）
+
+**目标**：沉淀「为什么接受 / 拒绝」的结构化语料，供未来 prompt、ranking、fine-tuning 使用。**本阶段不训练模型、不做 E2。**
+
+**开启**（需同时开 Entity Discovery）：
+
+```bash
+ENTITY_DISCOVERY_ENABLED=true
+ENTITY_HINT_EXTRACTION_ENABLED=true
+ENTITY_FEEDBACK_ENABLED=true
+```
+
+**Admin 操作**（`/admin/discovery/entities/[id]`）：
+
+1. 阅读 Signal 标题、snippet、AI Judge 理由（若有）
+2. 点击 **ACCEPT** / **REJECT** / **UNSURE**（可一键提交）
+3. 可选展开：**feedbackTags**、简短理由、notes、「高价值实体」「长期跟踪」
+4. 下方 **反馈历史** 查看谁、何时、打了什么 tag
+
+**什么算高质量实体（建议 ACCEPT + tags）**：
+
+| 特征 | 建议 tag | 说明 |
+|------|----------|------|
+| 真实公司 / 机构 | `real_company` | 可识别、可跟踪的具体组织 |
+| 真实实验室 / 研究团队 | `real_lab` | 有明确归属的 R&D 单元 |
+| 出版 × AI 交叉 | `publishing_ai` | 与 scope 直接相关 |
+| 高信号来源 | `high_signal` | 权威源、信息密度高 |
+
+**什么是噪声（建议 REJECT + tags）**：
+
+| 类型 | 建议 tag | 说明 |
+|------|----------|------|
+| 导航 / 菜单 / 页脚链接文字 | `navigation_noise` | 非内容实体 |
+| 泛概念词 | `generic_concept` | 「人工智能」「数字化转型」等 |
+| 低质量 / 重复 | `low_quality` / `duplicate` | 无跟踪价值或已存在 |
+
+**UNSURE**：边界案例、信息不足；不自动改 Hint 状态，仅记录判断。
+
+**导出 Feedback Dataset**：
+
+```bash
+pnpm tsx scripts/export-entity-feedback-dataset.ts
+pnpm tsx scripts/export-entity-feedback-dataset.ts --out data/entity-feedback.jsonl --limit 500
+```
+
+JSONL 每行字段：`signalTitle`、`snippet`、`entityName`、`entityType`、`action`、`feedbackTags`、`notes`、`sourceType`、`sourceAuthority`、`scope`。
+
+**AI Judge 联动**：Judge prompt 会注入少量最近 ACCEPT/REJECT/UNSURE 样例（无 embedding）；随反馈积累，系统逐渐对齐专家判断。
 
 ---
 

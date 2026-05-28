@@ -1114,7 +1114,36 @@ pnpm tsx scripts/acceptance-entity-discovery-e1.ts
 
 测试来源：`publishing-website-scan-dpresearch`（数字出版研究）。
 
+### 13.9 AI Entity Judge（E1.5，2026-05-28）
+
+在 E1 规则抽取与 E2 Resolution 之间增加 **AI Entity Judge**，提高单位 Signal 的实体识别质量。
+
+- 模块：`lib/discovery/entity/ai-entity-judge.ts`
+- 调用：`lib/ai/generate-text.ts`（OpenAI 兼容 Chat Completions）
+- **WEBSITE_SCAN 默认启用**；RSS 暂保留 E1 规则 + 旧版 AI 抽取
+- 技术失败时回退规则抽取；AI 明确拒绝时不回退
+- 阈值：`confidence >= 0.75`、`publishingAiRelevance >= 0.60`、`shouldCreateHint=true`
+- `evidenceJson.judge = "ai_entity_judge"` 写入 AI 理由与 evidence
+- **不做** EntityCandidate / merge / Project Promotion
+
+脚本：
+
+```bash
+pnpm tsx scripts/extract-entity-hints.ts --scope publishing_ai --limit 50 --force --ai-judge
+```
+
+### 13.10 Feedback Learning MVP（E1.6，2026-05-28）
+
+建立 **结构化人工反馈数据层**（Industry Cognition Layer 语料），不训练模型、不做 E2。
+
+- 表：`EntityHintFeedback`（action、reviewer、feedbackTags、notes、isHighValue、shouldTrackLongTerm）
+- CRUD：`lib/discovery/entity/feedback-crud.ts`
+- Admin：`/admin/discovery/entities/[id]` — ACCEPT / REJECT / UNSURE + 反馈历史
+- 导出：`scripts/export-entity-feedback-dataset.ts` → JSONL
+- Judge 联动：`feedback-examples-for-judge.ts` 注入少量最近反馈样例到 prompt
+- Feature flag：`ENTITY_FEEDBACK_ENABLED`（关闭仅隐藏 UI）
+
 ---
 
-*文档更新：E1 已实施；WEBSITE_SCAN MVP 已接入 Signal 层；E2+ 仍按原 Phase 规划推进。*
+*文档更新：E1 已实施；E1.5 AI Entity Judge 已接入；E1.6 Feedback Learning MVP 已接入；WEBSITE_SCAN MVP 已接入 Signal 层；E2+ 仍按原 Phase 规划推进。*
 

@@ -41,6 +41,16 @@ export type EntityHintEvidence = {
   context?: string;
   aiModel?: string;
   skippedReason?: string;
+  /** E1.5 AI Entity Judge */
+  judge?: "ai_entity_judge";
+  sourceText?: string;
+  matchedKeywords?: string[];
+  publishingAiRelevance?: number;
+  aiReason?: string;
+  aiEvidence?: string;
+  model?: string;
+  createdBy?: string;
+  pageUrl?: string;
 };
 
 export type ExtractedEntityHintDraft = {
@@ -55,6 +65,11 @@ export type ExtractedEntityHintDraft = {
 export type EntityHintExtractionResult = {
   hints: ExtractedEntityHintDraft[];
   skippedReason?: string;
+  skipStats?: {
+    skippedNavigation: number;
+    skippedGeneric: number;
+    skippedLowQuality: number;
+  };
 };
 
 export type PersistEntityHintsResult = {

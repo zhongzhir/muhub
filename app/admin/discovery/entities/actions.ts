@@ -2,10 +2,62 @@
 
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { submitEntityHintFeedback } from "@/lib/discovery/entity/feedback-crud";
+import {
+  isEntityHintFeedbackAction,
+  parseFeedbackTags,
+  type EntityHintFeedbackAction,
+  type EntityHintFeedbackTag,
+} from "@/lib/discovery/entity/feedback-types";
 import { isEntityHintStatus } from "@/lib/discovery/entity/types";
 import { prisma } from "@/lib/prisma";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type SubmitEntityHintFeedbackPayload = {
+  hintId: string;
+  action: EntityHintFeedbackAction;
+  feedbackTags?: EntityHintFeedbackTag[];
+  feedbackReason?: string;
+  notes?: string;
+  isHighValue?: boolean;
+  shouldTrackLongTerm?: boolean;
+};
+
+export async function submitEntityHintFeedbackAction(
+  payload: SubmitEntityHintFeedbackPayload,
+): Promise<ActionResult & { feedbackId?: string }> {
+  try {
+    await requireMuHubAdmin();
+    if (!isEntityHintFeedbackAction(payload.action)) {
+      return { ok: false, error: `Invalid action: ${payload.action}` };
+    }
+
+    const tags = payload.feedbackTags?.length
+      ? parseFeedbackTags(payload.feedbackTags)
+      : [];
+
+    const { id } = await submitEntityHintFeedback({
+      entityHintId: payload.hintId,
+      action: payload.action,
+      reviewer: "operator",
+      feedbackReason: payload.feedbackReason,
+      feedbackTags: tags,
+      isHighValue: payload.isHighValue ?? null,
+      shouldTrackLongTerm: payload.shouldTrackLongTerm ?? null,
+      notes: payload.notes,
+    });
+
+    revalidatePath("/admin/discovery/entities");
+    revalidatePath(`/admin/discovery/entities/${payload.hintId}`);
+    return { ok: true, feedbackId: id };
+  } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return { ok: false, error: error.message };
+    }
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
 
 export async function updateEntityHintStatusAction(
   hintId: string,
