@@ -37,7 +37,20 @@ export async function POST(req: Request) {
     : [];
   const intent = body.intent;
   if (!ids.length) {
-    return Response.json({ ok: false, error: "请选择至少一个项目。" }, { status: 400 });
+    return Response.json({
+      ok: false,
+      error: "未选择项目",
+      processed: 0,
+      publishedCount: 0,
+      blockedCount: 0,
+      skippedCount: 0,
+      counts: {
+        processed: 0,
+        published: 0,
+        blocked: 0,
+        skipped: 0,
+      },
+    }, { status: 400 });
   }
   if (intent !== "publish" && intent !== "hide" && intent !== "archive") {
     return Response.json({ ok: false, error: "不支持的批量操作。" }, { status: 400 });
@@ -74,6 +87,16 @@ export async function POST(req: Request) {
     const partial_ai: BulkPublishItemResult[] = [];
 
     for (const row of rows) {
+      const itemBase = { id: row.id, name: row.name, slug: row.slug };
+
+      if (row.status !== "DRAFT") {
+        skipped.push({
+          ...itemBase,
+          reason: row.status === "PUBLISHED" ? "项目已发布，不参与批量发布" : `项目状态为 ${row.status}，仅 DRAFT 可批量发布`,
+        });
+        continue;
+      }
+
       const readiness = evaluateProjectPublishReadiness({
         id: row.id,
         name: row.name,
@@ -91,8 +114,6 @@ export async function POST(req: Request) {
         githubUrl: row.githubUrl,
         sources: row.sources,
       });
-
-      const itemBase = { id: row.id, name: row.name, slug: row.slug };
 
       if (readiness.outcome === "skipped") {
         skipped.push({
@@ -171,11 +192,34 @@ export async function POST(req: Request) {
       }
     }
 
-    const totalHandled = published.length + partial_ai.length + skipped.length + blocked.length;
+    const missingIds = ids.filter((id) => !rows.some((row) => row.id === id));
+    for (const id of missingIds) {
+      skipped.push({
+        id,
+        name: id,
+        slug: id,
+        reason: "项目不存在或已删除",
+      });
+    }
+
+    const publishedCount = published.length + partial_ai.length;
+    const blockedCount = blocked.length;
+    const skippedCount = skipped.length;
+    const processed = publishedCount + blockedCount + skippedCount;
     return Response.json({
       ok: true,
       intent,
-      count: totalHandled,
+      count: processed,
+      processed,
+      publishedCount,
+      blockedCount,
+      skippedCount,
+      counts: {
+        processed,
+        published: publishedCount,
+        blocked: blockedCount,
+        skipped: skippedCount,
+      },
       published,
       skipped,
       blocked,

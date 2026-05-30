@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ProjectAiPublishQuality } from "@/lib/project-publishing";
 
@@ -55,10 +55,21 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
 
-  const allOnPage = useMemo(() => rows.length > 0 && selected.size === rows.length, [rows.length, selected.size]);
+  const rowIds = useMemo(() => new Set(rows.map((row) => row.id)), [rows]);
+  const selectedIds = useMemo(() => Array.from(selected).filter((id) => rowIds.has(id)), [rowIds, selected]);
+  const selectedCount = selectedIds.length;
+  const hasSelection = selectedCount > 0;
+  const allOnPage = rows.length > 0 && selectedCount === rows.length;
+
+  useEffect(() => {
+    setSelected((current) => {
+      const next = new Set(Array.from(current).filter((id) => rowIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [rowIds]);
 
   async function runBulk(intent: "publish" | "hide" | "archive") {
-    if (selected.size === 0) {
+    if (!selectedIds.length) {
       setMessage("请先选择项目。");
       return;
     }
@@ -69,12 +80,22 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: Array.from(selected), intent }),
+        body: JSON.stringify({ ids: selectedIds, intent }),
       });
       const json = (await res.json()) as {
         ok?: boolean;
         error?: string;
         count?: number;
+        processed?: number;
+        publishedCount?: number;
+        blockedCount?: number;
+        skippedCount?: number;
+        counts?: {
+          processed: number;
+          published: number;
+          blocked: number;
+          skipped: number;
+        };
         message?: string;
         published?: Array<{ name: string }>;
         skipped?: Array<{ name: string; reason?: string }>;
@@ -86,15 +107,17 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
         return;
       }
       if (intent === "publish") {
+        const counts = json.counts;
         const parts = [
-          json.published?.length ? `发布 ${json.published.length}` : null,
-          json.partial_ai?.length ? `partial_ai ${json.partial_ai.length}` : null,
-          json.skipped?.length ? `跳过 ${json.skipped.length}` : null,
-          json.blocked?.length ? `阻止 ${json.blocked.length}` : null,
+          typeof counts?.processed === "number" ? `处理 ${counts.processed}` : typeof json.processed === "number" ? `处理 ${json.processed}` : null,
+          typeof counts?.published === "number" ? `发布 ${counts.published}` : typeof json.publishedCount === "number" ? `发布 ${json.publishedCount}` : null,
+          typeof counts?.skipped === "number" ? `跳过 ${counts.skipped}` : typeof json.skippedCount === "number" ? `跳过 ${json.skippedCount}` : null,
+          typeof counts?.blocked === "number" ? `阻止 ${counts.blocked}` : typeof json.blockedCount === "number" ? `阻止 ${json.blockedCount}` : null,
         ].filter(Boolean);
+        const blockedReason = json.blocked?.find((item) => item.reason)?.reason;
         setMessage(
           parts.length
-            ? `批量发布完成：${parts.join("，")}。${json.message ? ` ${json.message}` : ""}`
+            ? `批量发布完成：${parts.join("，")}。${blockedReason ? ` 阻止原因：${blockedReason}` : ""}${json.message ? ` ${json.message}` : ""}`
             : json.message ?? "批量发布完成。",
         );
       } else {
@@ -112,14 +135,14 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
   return (
     <div className="min-w-0 max-w-full space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900/40">
-        <span className="text-zinc-600 dark:text-zinc-400">已选 {selected.size} 项</span>
-        <button type="button" disabled={pending} onClick={() => runBulk("publish")} className="rounded bg-emerald-700 px-2 py-1 text-xs text-white disabled:opacity-60">
+        <span className="text-zinc-600 dark:text-zinc-400">已选 {selectedCount} 项</span>
+        <button type="button" disabled={pending || !hasSelection} onClick={() => runBulk("publish")} className="rounded bg-emerald-700 px-2 py-1 text-xs text-white disabled:cursor-not-allowed disabled:opacity-60">
           {pending ? "处理中..." : "批量发布"}
         </button>
-        <button type="button" disabled={pending} onClick={() => runBulk("hide")} className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 disabled:opacity-60 dark:border-zinc-600 dark:text-zinc-300">
+        <button type="button" disabled={pending || !hasSelection} onClick={() => runBulk("hide")} className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-600 dark:text-zinc-300">
           {pending ? "处理中..." : "批量隐藏"}
         </button>
-        <button type="button" disabled={pending} onClick={() => runBulk("archive")} className="rounded border border-red-300 px-2 py-1 text-xs text-red-700 disabled:opacity-60 dark:border-red-800 dark:text-red-300">
+        <button type="button" disabled={pending || !hasSelection} onClick={() => runBulk("archive")} className="rounded border border-red-300 px-2 py-1 text-xs text-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-800 dark:text-red-300">
           {pending ? "处理中..." : "批量归档"}
         </button>
         {message ? <span className="text-xs text-zinc-500">{message}</span> : null}
@@ -134,6 +157,7 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
                   <input
                     type="checkbox"
                     checked={allOnPage}
+                    disabled={rows.length === 0}
                     onChange={() => {
                       if (allOnPage) {
                         setSelected(new Set());
