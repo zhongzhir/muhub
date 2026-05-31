@@ -133,4 +133,22 @@ assert.equal(missingKnowledge.outcome, "blocked");
 assert.equal(missingKnowledge.knowledgeDiagnostics?.hasAiInsight, false);
 assert.equal(missingKnowledge.knowledgeDiagnostics?.hasAiSourceSnapshot, true);
 
+const legacyFallback = resolveProjectInformation({
+  name: "Legacy Project",
+  slug: "legacy-project",
+  tagline: "Legacy English tagline",
+  description: "Legacy description",
+  primaryCategory: "productivity",
+  tags: ["legacy"],
+  aiInsight: null,
+  aiInsightStatus: null,
+  aiKnowledgeJson: null,
+  aiCardSummary: null,
+  sources: [],
+});
+assert.equal(legacyFallback.tagline, "Legacy English tagline");
+assert.equal(legacyFallback.provenance.tagline, "legacy");
+assert.equal(legacyFallback.primaryCategory, "productivity");
+assert.deepEqual(legacyFallback.tags, ["legacy"]);
+
 console.log("project information phase1 verification passed");

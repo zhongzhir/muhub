@@ -14,6 +14,7 @@ import { isProjectCategory } from "@/lib/projects/project-categories";
 import { normalizeProjectSearchQuery } from "@/lib/projects/project-search";
 import { parseSingleProjectTag } from "@/lib/projects/project-tags";
 import { PROJECT_PLAZA_FILTER } from "@/lib/project-active-filter";
+import { resolveProjectInformation } from "@/lib/project-information-resolver";
 import { prisma } from "@/lib/prisma";
 
 export type PlazaSortMode = "new" | "updated" | "published" | "github" | "recommended";
@@ -69,36 +70,57 @@ type PlazaDbRow = {
   isFeatured: boolean;
   primaryCategory: string | null;
   tags: string[];
+  aiInsight: unknown;
+  aiInsightStatus: string | null;
+  aiKnowledgeJson: unknown;
+  aiSourceSnapshot: unknown;
+  aiCardSummary: string | null;
+  officialInfo: {
+    summary: string | null;
+    fullDescription: string | null;
+    useCases: unknown;
+    whoFor: unknown;
+    website: string | null;
+  } | null;
   isAiRelated: boolean | null;
   isChineseTool: boolean | null;
-  sources: { kind: ProjectSourceKind }[];
+  sources: {
+    kind: ProjectSourceKind;
+    url: string;
+    label: string | null;
+    title: string | null;
+    summary: string | null;
+    isPrimary: boolean;
+    visibility: string;
+  }[];
   externalLinks: { platform: string }[];
   _count: { socialAccounts: number };
   githubSnapshots: { stars: number }[];
 };
 
 function mapPlazaRow(r: PlazaDbRow): ProjectListItem {
+  const resolved = resolveProjectInformation(r);
   const kindSet = new Set<ProjectSourceKind>();
   for (const s of r.sources) {
     kindSet.add(s.kind);
   }
   const stars = r.githubSnapshots[0]?.stars;
   return {
-    slug: r.slug,
-    name: r.name,
-    tagline: r.tagline,
+    slug: resolved.slug || r.slug,
+    name: resolved.name || r.name,
+    tagline: resolved.tagline,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
     status: r.status,
-    githubUrl: r.githubUrl,
-    websiteUrl: r.websiteUrl,
+    githubUrl: resolved.githubUrl,
+    websiteUrl: resolved.websiteUrl,
     socialCount: r._count.socialAccounts,
     sourceKinds: [...kindSet],
     sourceType: r.sourceType,
     claimStatus: r.claimStatus,
     isFeatured: r.isFeatured,
-    primaryCategory: r.primaryCategory,
-    plazaTags: [...r.tags].slice(0, 3),
+    primaryCategory: resolved.primaryCategory,
+    plazaTags: resolved.tags.slice(0, 3),
     isAiRelated: r.isAiRelated,
     isChineseTool: r.isChineseTool,
     githubStars: stars !== undefined ? stars : null,
@@ -212,9 +234,33 @@ const plazaSelect = {
   isFeatured: true,
   primaryCategory: true,
   tags: true,
+  aiInsight: true,
+  aiInsightStatus: true,
+  aiKnowledgeJson: true,
+  aiSourceSnapshot: true,
+  aiCardSummary: true,
+  officialInfo: {
+    select: {
+      summary: true,
+      fullDescription: true,
+      useCases: true,
+      whoFor: true,
+      website: true,
+    },
+  },
   isAiRelated: true,
   isChineseTool: true,
-  sources: { select: { kind: true } },
+  sources: {
+    select: {
+      kind: true,
+      url: true,
+      label: true,
+      title: true,
+      summary: true,
+      isPrimary: true,
+      visibility: true,
+    },
+  },
   externalLinks: { select: { platform: true } },
   _count: { select: { socialAccounts: true } },
   githubSnapshots: { orderBy: { fetchedAt: "desc" as const }, take: 1, select: { stars: true } },
