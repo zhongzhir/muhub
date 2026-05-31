@@ -1,16 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
-import {
-  buildProjectInsightSourceSnapshot,
-  computeProjectCompleteness,
-  computeProjectSourceLevel,
-  generateProjectAIInsight,
-  saveProjectAIInsight,
-  type ProjectAISignals,
-} from "@/lib/project-ai-insight";
-import { generatePublishingAnalysis } from "@/lib/ai/project-ai";
+import { generateAndSaveProjectAiInsight } from "@/lib/project-ai-insight-service";
 import { prisma } from "@/lib/prisma";
-import { syncProjectPublishQualityFields } from "@/lib/project-publishing";
 
 export const dynamic = "force-dynamic";
 
@@ -87,74 +78,10 @@ export async function POST(
     return Response.json({ ok: false, error: "项目不存在或已删除。" }, { status: 404 });
   }
 
-  await prisma.project.update({
-    where: { id: existing.id },
-    data: { aiInsightStatus: "pending", aiInsightError: null },
-  });
-
   try {
-    const snapshot = await buildProjectInsightSourceSnapshot(existing.id);
-    if (!snapshot) {
-      return Response.json({ ok: false, error: "项目不存在或已删除。" }, { status: 404 });
-    }
-    const completeness = computeProjectCompleteness(snapshot);
-    const sourceLevel = computeProjectSourceLevel(snapshot);
-    // 主 insight 与出版分析并行生成（publishing analysis 失败不阻断主流程）
-    const [generated, publishingResult] = await Promise.all([
-      generateProjectAIInsight(snapshot, completeness),
-      generatePublishingAnalysis({
-        name: snapshot.base.name,
-        tagline: snapshot.base.tagline,
-        description: snapshot.base.description,
-        tags: snapshot.base.tags,
-        primaryCategory: snapshot.base.categories?.[0] ?? null,
-        evidenceContext: snapshot.evidenceContext?.promptText ?? null,
-      }).catch((err) => {
-        console.warn("[AI][PublishingAnalysis] failed, skipping", err);
-        return null;
-      }),
-    ]);
-
-    // 将出版分析结果合并到 insight（均为可选字段，不影响主结构）
-    if (publishingResult) {
-      generated.insight.publishingSceneTags = publishingResult.publishingSceneTags;
-      generated.insight.publishingAnalysis = publishingResult.publishingAnalysis;
-      generated.insight.publishingRelevance = publishingResult.publishingRelevance;
-    }
-
-    const signals: ProjectAISignals = {
-      github: {
-        ...snapshot.github.facts,
-        isActive: snapshot.github.facts?.isActive,
-        hasReleases: snapshot.github.facts?.hasReleases,
-        readmeLength: snapshot.github.facts?.readmeLength,
-      },
-      website: snapshot.website.facts,
-      socials: snapshot.socials.accounts,
-      docs: {
-        hasDocs: snapshot.website.hasDocs,
-        hasDemo: snapshot.website.hasDemo,
-        hasPricing: snapshot.website.hasPricing,
-        hasContact: snapshot.website.hasContact,
-      },
-      media: {
-        mentions: snapshot.base.recentActivities
-          .slice(0, 6)
-          .map((item) => item.title)
-          .filter(Boolean),
-      },
-    };
-    const updated = await saveProjectAIInsight(existing.id, {
-      insight: generated.insight,
-      completeness,
-      signals,
-      suggestedTags: generated.suggestedTags,
-      suggestedCategories: generated.suggestedCategories,
-      knowledge: generated.knowledge,
-      sourceSnapshot: snapshot,
-      sourceLevel,
+    const generated = await generateAndSaveProjectAiInsight(existing.id, {
+      reason: "admin_edit_ai_insight",
     });
-    await syncProjectPublishQualityFields(existing.id);
     revalidatePath(`/admin/projects/${existing.id}/edit`);
     revalidatePath(`/projects/${existing.slug}`);
     return Response.json({
@@ -162,27 +89,16 @@ export async function POST(
       projectId: existing.id,
       status: "success",
       insight: generated.insight,
-      completeness,
-      signals,
+      completeness: generated.completeness,
+      signals: generated.signals,
       suggestedTags: generated.suggestedTags,
       suggestedCategories: generated.suggestedCategories,
-      sourceSnapshot: snapshot,
-      sourceLevel,
-      updatedAt: updated.aiInsightUpdatedAt?.toISOString() ?? new Date().toISOString(),
+      sourceSnapshot: generated.sourceSnapshot,
+      sourceLevel: generated.sourceLevel,
+      updatedAt: generated.updatedAt.toISOString(),
     });
   } catch (error) {
-    const raw = error instanceof Error ? error.message : "AI 认知卡生成失败，请稍后重试。";
-    const message =
-      raw === "Missing DEEPSEEK_API_KEY" || raw === "Missing AI_API_KEY"
-        ? "AI 服务未配置，请检查服务器环境变量"
-        : raw;
-    await prisma.project.update({
-      where: { id: existing.id },
-      data: {
-        aiInsightStatus: "failed",
-        aiInsightError: message.slice(0, 300),
-      },
-    });
+    const message = error instanceof Error ? error.message : "AI 认知卡生成失败，请稍后重试。";
     return Response.json({ ok: false, error: message }, { status: 500 });
   }
 }

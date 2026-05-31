@@ -42,6 +42,7 @@ export type ProjectPublishReadinessInput = {
   aiInsight?: unknown;
   aiContentStatus: string | null;
   aiKnowledgeJson: unknown;
+  aiSourceSnapshot?: unknown;
   aiStatus?: string | null;
   tagline: string | null;
   description: string | null;
@@ -62,6 +63,7 @@ export type ProjectPublishReadiness = {
   warnings: string[];
   notice?: string;
   primaryCategory: string;
+  knowledgeDiagnostics?: ResolvedProjectInformation["knowledgeDiagnostics"];
 };
 
 export type BulkPublishItemResult = {
@@ -70,6 +72,7 @@ export type BulkPublishItemResult = {
   slug: string;
   issues?: string[];
   warnings?: string[];
+  diagnostics?: ProjectPublishReadiness["knowledgeDiagnostics"];
   reason?: string;
   notice?: string;
 };
@@ -172,7 +175,19 @@ export function evaluateProjectPublishReadiness(
   }
 
   if (!resolved.hasUsableKnowledge) {
-    issues.push("缺少 AI 结构化分析 / 认知卡内容");
+    const diag = resolved.knowledgeDiagnostics;
+    issues.push(
+      [
+        "缺少 AI 结构化分析 / 认知卡内容",
+        `aiInsightStatus=${diag.aiInsightStatus ?? "null"}`,
+        `hasAiInsight=${diag.hasAiInsight}`,
+        `hasAiInsightCoreFields=${diag.hasAiInsightCoreFields}`,
+        `hasAiKnowledgeJson=${diag.hasAiKnowledgeJson}`,
+        `hasAiCardSummary=${diag.hasAiCardSummary}`,
+        `hasAiSourceSnapshot=${diag.hasAiSourceSnapshot}`,
+        `resolver.hasUsableKnowledge=${diag.hasUsableKnowledge}`,
+      ].join("；"),
+    );
   }
 
   if (issues.length > 0) {
@@ -183,6 +198,7 @@ export function evaluateProjectPublishReadiness(
       issues,
       warnings,
       primaryCategory,
+      knowledgeDiagnostics: resolved.knowledgeDiagnostics,
     };
   }
 
@@ -198,6 +214,7 @@ export function evaluateProjectPublishReadiness(
       warnings,
       notice: PARTIAL_AI_PUBLISH_NOTICE,
       primaryCategory,
+      knowledgeDiagnostics: resolved.knowledgeDiagnostics,
     };
   }
 
@@ -208,6 +225,7 @@ export function evaluateProjectPublishReadiness(
     issues: [],
     warnings,
     primaryCategory,
+    knowledgeDiagnostics: resolved.knowledgeDiagnostics,
   };
 }
 
@@ -218,6 +236,7 @@ export async function syncProjectPublishQualityFields(projectId: string): Promis
       aiInsightStatus: true,
       aiContentStatus: true,
       aiKnowledgeJson: true,
+      aiSourceSnapshot: true,
       aiStatus: true,
     },
   });
@@ -362,6 +381,7 @@ export async function publishProjectAfterAiEnrichment(
       aiInsightStatus: true,
       aiContentStatus: true,
       aiKnowledgeJson: true,
+      aiSourceSnapshot: true,
       aiStatus: true,
       officialInfo: {
         select: {
@@ -400,6 +420,7 @@ export async function publishProjectAfterAiEnrichment(
     aiInsight: row.aiInsight,
     aiContentStatus: row.aiContentStatus,
     aiKnowledgeJson: row.aiKnowledgeJson,
+    aiSourceSnapshot: row.aiSourceSnapshot,
     aiStatus: row.aiStatus,
     tagline: row.tagline,
     description: row.description,

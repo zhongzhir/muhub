@@ -41,6 +41,7 @@ export type ProjectInformationResolverInput = {
   aiInsight?: unknown;
   aiInsightStatus?: string | null;
   aiKnowledgeJson?: unknown;
+  aiSourceSnapshot?: unknown;
   sources?: SourceInput[] | null;
   officialInfo?: OfficialInfoInput | null;
 };
@@ -66,6 +67,16 @@ export type ResolvedProjectInformation = {
   githubUrl: string | null;
   sourceList: ResolvedProjectSourceItem[];
   hasUsableKnowledge: boolean;
+  knowledgeDiagnostics: {
+    aiInsightStatus: string | null;
+    hasAiInsight: boolean;
+    hasAiInsightCoreFields: boolean;
+    aiInsightKeys: string[];
+    hasAiKnowledgeJson: boolean;
+    hasAiCardSummary: boolean;
+    hasAiSourceSnapshot: boolean;
+    hasUsableKnowledge: boolean;
+  };
   provenance: Record<
     "name" | "slug" | "tagline" | "description" | "primaryCategory" | "tags" | "websiteUrl" | "githubUrl",
     "official" | "knowledge" | "source" | "legacy" | "system" | "empty"
@@ -111,10 +122,23 @@ function firstText(
   return { value: null, source: "empty" };
 }
 
-function insightObject(aiInsight: unknown): Record<string, unknown> {
-  return aiInsight && typeof aiInsight === "object" && !Array.isArray(aiInsight)
-    ? (aiInsight as Record<string, unknown>)
+function asObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
     : {};
+}
+
+function insightObject(aiInsight: unknown): Record<string, unknown> {
+  if (typeof aiInsight === "string" && aiInsight.trim()) {
+    try {
+      return insightObject(JSON.parse(aiInsight));
+    } catch {
+      return {};
+    }
+  }
+  const obj = asObject(aiInsight);
+  const nested = asObject(obj.insight);
+  return Object.keys(nested).length ? nested : obj;
 }
 
 function insightDescription(aiInsight: unknown): string | null {
@@ -151,6 +175,21 @@ function hasUsefulObjectContent(value: unknown): boolean {
     }
     return Boolean(item);
   });
+}
+
+function hasUsableInsightCoreFields(aiInsight: unknown): boolean {
+  const insight = insightObject(aiInsight);
+  if (cleanText(insight.summary, 500) || cleanText(insight.whatItIs, 1000)) {
+    return true;
+  }
+  return [
+    insight.whoFor,
+    insight.useCases,
+    insight.highlights,
+    insight.valueSignals,
+    insight.sourceNotes,
+    asObject(insight.activity).signals,
+  ].some((value) => asStringArray(value, 8).length > 0);
 }
 
 function hasValidKnowledge(knowledge: ProjectKnowledge | null): boolean {
@@ -250,11 +289,22 @@ export function resolveProjectInformation(input: ProjectInformationResolverInput
     { value: input.githubUrl, source: "legacy" },
   ]);
 
-  const hasUsableKnowledge =
-    input.aiInsightStatus === "success" ||
-    hasUsefulObjectContent(input.aiInsight) ||
-    hasValidKnowledge(knowledge) ||
-    Boolean(cleanText(input.aiCardSummary, 500));
+  const hasAiInsight = hasUsefulObjectContent(input.aiInsight);
+  const hasAiInsightCoreFields = hasUsableInsightCoreFields(input.aiInsight);
+  const hasAiKnowledgeJson = hasValidKnowledge(knowledge);
+  const hasAiCardSummary = Boolean(cleanText(input.aiCardSummary, 500));
+  const hasAiSourceSnapshot = hasUsefulObjectContent(input.aiSourceSnapshot);
+  const hasUsableKnowledge = hasAiInsightCoreFields || hasAiKnowledgeJson || hasAiCardSummary;
+  const knowledgeDiagnostics = {
+    aiInsightStatus: input.aiInsightStatus ?? null,
+    hasAiInsight,
+    hasAiInsightCoreFields,
+    aiInsightKeys: Object.keys(aiInsight).slice(0, 20),
+    hasAiKnowledgeJson,
+    hasAiCardSummary,
+    hasAiSourceSnapshot,
+    hasUsableKnowledge,
+  };
 
   if (!hasUsableKnowledge) {
     warnings.push("缺少可用 AI 结构化分析 / AI 认知卡内容");
@@ -277,6 +327,7 @@ export function resolveProjectInformation(input: ProjectInformationResolverInput
     githubUrl: github.value,
     sourceList: sources,
     hasUsableKnowledge,
+    knowledgeDiagnostics,
     provenance: {
       name: name.source,
       slug: slug.source,

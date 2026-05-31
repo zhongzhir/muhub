@@ -91,4 +91,46 @@ assert.equal(knowledgeFirst.provenance.description, "knowledge");
 assert.equal(knowledgeFirst.provenance.primaryCategory, "knowledge");
 assert.equal(knowledgeFirst.primaryCategory, "ai_agent");
 
+const aiInsightWithoutKnowledge = evaluateProjectPublishReadiness({
+  ...baseDraft,
+  id: "project_4",
+  slug: "ai-insight-without-knowledge",
+  aiInsightStatus: "failed",
+  aiKnowledgeJson: null,
+  aiCardSummary: null,
+  aiInsight: {
+    summary: "AI insight exists even though status is stale",
+  },
+});
+assert.notEqual(aiInsightWithoutKnowledge.outcome, "blocked");
+assert.ok(aiInsightWithoutKnowledge.warnings.some((warning) => warning.includes("success")));
+
+const nestedInsight = resolveProjectInformation({
+  ...baseDraft,
+  aiInsightStatus: null,
+  aiKnowledgeJson: null,
+  aiCardSummary: null,
+  aiInsight: {
+    insight: {
+      whatItIs: "Nested insight payload from an older response shape",
+    },
+  },
+});
+assert.equal(nestedInsight.hasUsableKnowledge, true);
+assert.equal(nestedInsight.knowledgeDiagnostics.hasAiInsightCoreFields, true);
+
+const missingKnowledge = evaluateProjectPublishReadiness({
+  ...baseDraft,
+  id: "project_5",
+  slug: "missing-ai-insight",
+  aiInsightStatus: "pending",
+  aiInsight: null,
+  aiKnowledgeJson: null,
+  aiCardSummary: null,
+  aiSourceSnapshot: { base: { name: "only source snapshot" } },
+});
+assert.equal(missingKnowledge.outcome, "blocked");
+assert.equal(missingKnowledge.knowledgeDiagnostics?.hasAiInsight, false);
+assert.equal(missingKnowledge.knowledgeDiagnostics?.hasAiSourceSnapshot, true);
+
 console.log("project information phase1 verification passed");
