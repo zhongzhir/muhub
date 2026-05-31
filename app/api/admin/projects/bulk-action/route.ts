@@ -79,8 +79,25 @@ export async function POST(req: Request) {
       websiteUrl: true,
       githubUrl: true,
       sourceType: true,
+      officialInfo: {
+        select: {
+          summary: true,
+          fullDescription: true,
+          useCases: true,
+          whoFor: true,
+          website: true,
+        },
+      },
       sources: {
-        select: { kind: true, url: true, label: true },
+        select: {
+          kind: true,
+          url: true,
+          label: true,
+          title: true,
+          summary: true,
+          isPrimary: true,
+          visibility: true,
+        },
       },
     },
   });
@@ -122,6 +139,7 @@ export async function POST(req: Request) {
         websiteUrl: row.websiteUrl,
         githubUrl: row.githubUrl,
         sources: row.sources,
+        officialInfo: row.officialInfo,
       });
 
       if (readiness.warnings.length > 0) {
@@ -141,6 +159,12 @@ export async function POST(req: Request) {
       }
 
       if (readiness.outcome === "blocked") {
+        if (readiness.issues.includes("缺少 AI 结构化分析 / 认知卡内容")) {
+          scheduleEnrichProjectAfterImport(row.id, {
+            source: row.sourceType === "discovery-json-queue" ? "github_queue" : "manual",
+            skipPublish: true,
+          });
+        }
         if (readiness.issues.includes("缺少 AI 结构化分析/认知卡内容")) {
           scheduleEnrichProjectAfterImport(row.id, {
             source: row.sourceType === "discovery-json-queue" ? "github_queue" : "manual",

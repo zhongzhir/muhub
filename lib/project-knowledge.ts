@@ -513,21 +513,11 @@ export async function saveProjectKnowledge(
     description: context?.description,
     useCases: context?.useCases,
   });
-  const categories = categoriesJsonFromKnowledge(finalized);
-  const tags = knowledgeTagsForProject(finalized, context);
-  const primarySlug = (KNOWLEDGE_CATEGORIES as readonly string[]).includes(
-    finalized.primaryCategory,
-  )
-    ? knowledgeCategoryToProjectSlug(finalized.primaryCategory as KnowledgeCategory)
-    : normalizeCategorySlug(finalized.primaryCategory, "other");
 
   await prisma.project.update({
     where: { id: projectId },
     data: {
       aiKnowledgeJson: finalized as unknown as Prisma.InputJsonValue,
-      primaryCategory: primarySlug,
-      categoriesJson: categories as unknown as Prisma.InputJsonValue,
-      tags,
     },
   });
 }

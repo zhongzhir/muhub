@@ -45,6 +45,7 @@ const projectInclude = {
   githubSnapshots: { orderBy: { fetchedAt: "desc" as const }, take: 1 },
   weeklySummaries: { orderBy: { createdAt: "desc" as const }, take: 1 },
   externalLinks: true,
+  officialInfo: true,
 };
 
 async function loadPublishedFromDb(slug: string) {

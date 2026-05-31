@@ -2,6 +2,7 @@ import type {
   GithubRepoSnapshot,
   Project,
   ProjectExternalLink,
+  ProjectOfficialInfo,
   ProjectSocialAccount,
   ProjectSource,
   ProjectUpdate,
@@ -11,6 +12,7 @@ import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
 import { normalizeReferenceSources } from "@/lib/discovery/reference-sources";
 import type { ProjectPageView } from "@/lib/demo-project";
 import { parseProjectKnowledgeFromRow } from "@/lib/project-knowledge";
+import { resolveProjectInformation } from "@/lib/project-information-resolver";
 import { parseRepoUrl } from "@/lib/repo-platform";
 
 export type ProjectWithRelations = Project & {
@@ -20,9 +22,11 @@ export type ProjectWithRelations = Project & {
   githubSnapshots: GithubRepoSnapshot[];
   weeklySummaries: ProjectWeeklySummary[];
   externalLinks: ProjectExternalLink[];
+  officialInfo?: ProjectOfficialInfo | null;
 };
 
 export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView {
+  const resolved = resolveProjectInformation(row);
   const snap = row.githubSnapshots[0];
   const inferredPlatform =
     snap?.repoPlatform === "github" || snap?.repoPlatform === "gitee"
@@ -82,15 +86,18 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
     }));
 
   return {
-    slug: row.slug,
-    name: row.name,
+    slug: resolved.slug || row.slug,
+    name: resolved.name || row.name,
     logoUrl: row.logoUrl ?? undefined,
-    tagline: row.tagline ?? undefined,
-    simpleSummary: row.simpleSummary ?? undefined,
-    description: row.description ?? "",
-    tags: row.tags?.length ? [...row.tags] : [],
-    categories: stringArrayFromJson(row.categoriesJson),
-    primaryCategory: row.primaryCategory ?? undefined,
+    tagline: resolved.tagline ?? undefined,
+    simpleSummary: row.simpleSummary ?? resolved.description ?? undefined,
+    description: resolved.description ?? "",
+    tags: resolved.tags,
+    categories: (() => {
+      const categories = stringArrayFromJson(row.categoriesJson);
+      return categories.length ? categories : resolved.primaryCategory ? [resolved.primaryCategory] : [];
+    })(),
+    primaryCategory: resolved.primaryCategory ?? undefined,
     aiKnowledge: parseProjectKnowledgeFromRow(row.aiKnowledgeJson) ?? undefined,
     isAiRelated: row.isAiRelated ?? undefined,
     isChineseTool: row.isChineseTool ?? undefined,
@@ -111,8 +118,8 @@ export function mapProjectRowToView(row: ProjectWithRelations): ProjectPageView 
           createdAt: latestWeekly.createdAt,
         }
       : null,
-    websiteUrl: row.websiteUrl ?? undefined,
-    githubUrl: row.githubUrl ?? undefined,
+    websiteUrl: resolved.websiteUrl ?? undefined,
+    githubUrl: resolved.githubUrl ?? undefined,
     githubSnapshot,
     socials: row.socialAccounts.map((s) => ({
       platform: s.platform,

@@ -30,6 +30,7 @@ import {
   type ProjectKnowledge,
 } from "@/lib/project-knowledge";
 import { publishProjectAfterAiEnrichment, syncProjectPublishQualityFields } from "@/lib/project-publishing";
+import { resolveProjectInformation } from "@/lib/project-information-resolver";
 import { resolveProjectGithubUrl } from "@/lib/project-evidence-context";
 import { normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
@@ -161,10 +162,17 @@ async function applyRequiredProjectFields(input: {
       description: true,
       simpleSummary: true,
       primaryCategory: true,
+      categoriesJson: true,
       tags: true,
       websiteUrl: true,
       githubUrl: true,
       aiCardSummary: true,
+      officialInfo: {
+        select: {
+          summary: true,
+          fullDescription: true,
+        },
+      },
     },
   });
   if (!existing) {
@@ -181,26 +189,24 @@ async function applyRequiredProjectFields(input: {
   });
 
   const insight = input.insight;
-  const tagline =
+  const suggestedTagline =
     (insight.summary?.trim()
       ? normalizeChineseExpression(insight.summary.trim()).slice(0, 200)
       : null) ||
     (insight.whatItIs?.trim()
       ? normalizeChineseExpression(insight.whatItIs.trim()).slice(0, 200)
       : null) ||
-    existing.tagline?.trim() ||
-    existing.description?.trim()?.slice(0, 200) ||
     existing.name;
 
-  const description =
+  const suggestedDescription =
     buildDescriptionFromInsight(insight) ||
-    existing.description?.trim() ||
-    tagline;
+    suggestedTagline;
 
-  const simpleSummary =
-    buildLongDescriptionFromContent(insight, input.content) ||
-    existing.simpleSummary?.trim() ||
-    description;
+  const suggestedSimpleSummary =
+    (insight.summary?.trim()
+      ? normalizeChineseExpression(insight.summary.trim()).slice(0, 1000)
+      : null) ||
+    suggestedDescription;
 
   let tags = knowledgeTagsForProject(input.knowledge, {
     projectName: existing.name,
@@ -224,19 +230,34 @@ async function applyRequiredProjectFields(input: {
     : input.knowledge.primaryCategory?.trim() || "other";
   const categories = categoriesJsonFromKnowledge(input.knowledge);
 
+  const existingCategories = Array.isArray(existing.categoriesJson)
+    ? existing.categoriesJson.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+    : [];
+  const updateData: Prisma.ProjectUpdateInput = {
+    aiKnowledgeJson: input.knowledge as unknown as Prisma.InputJsonValue,
+  };
+  if (!existing.tagline?.trim() && !existing.officialInfo?.summary?.trim()) {
+    updateData.tagline = suggestedTagline;
+  }
+  if (!existing.description?.trim() && !existing.officialInfo?.fullDescription?.trim()) {
+    updateData.description = suggestedDescription;
+  }
+  if (!existing.simpleSummary?.trim()) {
+    updateData.simpleSummary = suggestedSimpleSummary;
+  }
+  if (!existing.primaryCategory?.trim()) {
+    updateData.primaryCategory = primaryCategory;
+  }
+  if (!existing.tags.length) {
+    updateData.tags = tags;
+  }
+  if (!existingCategories.length && categories.length) {
+    updateData.categoriesJson = categories as unknown as Prisma.InputJsonValue;
+  }
+
   await prisma.project.update({
     where: { id: input.projectId },
-    data: {
-      tagline,
-      description,
-      simpleSummary,
-      primaryCategory,
-      tags,
-      ...(categories.length
-        ? { categoriesJson: categories as unknown as Prisma.InputJsonValue }
-        : {}),
-      aiKnowledgeJson: input.knowledge as unknown as Prisma.InputJsonValue,
-    },
+    data: updateData,
   });
 }
 
@@ -249,8 +270,35 @@ async function validateAppliedFields(projectId: string): Promise<string | null> 
       simpleSummary: true,
       primaryCategory: true,
       tags: true,
+      name: true,
+      slug: true,
+      websiteUrl: true,
+      githubUrl: true,
+      aiCardSummary: true,
+      aiInsight: true,
+      aiKnowledgeJson: true,
       aiInsightStatus: true,
       aiContentStatus: true,
+      officialInfo: {
+        select: {
+          summary: true,
+          fullDescription: true,
+          useCases: true,
+          whoFor: true,
+          website: true,
+        },
+      },
+      sources: {
+        select: {
+          kind: true,
+          url: true,
+          label: true,
+          title: true,
+          summary: true,
+          isPrimary: true,
+          visibility: true,
+        },
+      },
     },
   });
   if (!row) {
@@ -259,7 +307,8 @@ async function validateAppliedFields(projectId: string): Promise<string | null> 
   if (row.aiInsightStatus !== "success") {
     return "AI 认知卡未成功生成";
   }
-  if (!row.tagline?.trim() && !row.description?.trim()) {
+  const resolved = resolveProjectInformation(row);
+  if (!resolved.tagline?.trim() && !resolved.description?.trim()) {
     return "至少需要一句话简介或项目简介";
   }
   return null;
