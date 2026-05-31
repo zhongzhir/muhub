@@ -159,6 +159,7 @@ export async function saveAdminProject(
   let parsed: ParsedAdminProjectInput;
   try {
     parsed = parseAdminProjectInput(formData);
+    parsed.slug = existing.slug;
     logActionStep("parsed", {
       projectId,
       intent,

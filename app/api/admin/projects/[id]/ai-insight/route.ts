@@ -10,6 +10,7 @@ import {
 } from "@/lib/project-ai-insight";
 import { generatePublishingAnalysis } from "@/lib/ai/project-ai";
 import { prisma } from "@/lib/prisma";
+import { syncProjectPublishQualityFields } from "@/lib/project-publishing";
 
 export const dynamic = "force-dynamic";
 
@@ -153,6 +154,7 @@ export async function POST(
       sourceSnapshot: snapshot,
       sourceLevel,
     });
+    await syncProjectPublishQualityFields(existing.id);
     revalidatePath(`/admin/projects/${existing.id}/edit`);
     revalidatePath(`/projects/${existing.slug}`);
     return Response.json({

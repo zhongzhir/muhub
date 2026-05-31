@@ -4,6 +4,7 @@ import { stringArrayFromJson } from "@/lib/discovery/sync-discovery-to-project";
 import { prisma } from "@/lib/prisma";
 import { formatProjectTagsInput, parseProjectTags } from "@/lib/projects/project-tags";
 import { normalizePrimaryCategoryToSlug } from "@/lib/projects/project-categories";
+import { isValidProjectSlug } from "@/lib/project-slug";
 import {
   completenessInputFromParts,
   computeProjectCompleteness,
@@ -95,6 +96,7 @@ export type AdminProjectEditInitial = {
 
 export type ParsedAdminProjectInput = {
   name: string;
+  slug?: string | null;
   tagline: string | null;
   description: string | null;
   simpleSummary?: string | null;
@@ -232,16 +234,11 @@ export function validateProjectForPublish(
   if (!input.name.trim()) {
     blockingErrors.push("项目名称未填写");
   }
+  if (input.slug != null && !isValidProjectSlug(input.slug)) {
+    blockingErrors.push("项目 slug 不合法");
+  }
   if (!input.tagline?.trim() && !input.description?.trim()) {
     blockingErrors.push("至少补充一句话简介或项目详情");
-  }
-  if (
-    !input.websiteUrl &&
-    !input.githubUrl &&
-    input.externalLinks.length === 0 &&
-    publishableProjectSources.length === 0
-  ) {
-    blockingErrors.push("至少补充一个公开来源链接");
   }
 
   const completeness = computeProjectCompleteness(

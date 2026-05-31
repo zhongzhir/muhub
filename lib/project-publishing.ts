@@ -2,6 +2,7 @@ import { validateProjectForPublish, type ParsedAdminProjectInput } from "@/lib/a
 import type { ProjectEvidenceSnapshot } from "@/lib/project-evidence-snapshot";
 import { writeProjectActionLog } from "@/lib/project-action-log";
 import { prisma } from "@/lib/prisma";
+import { isValidProjectSlug } from "@/lib/project-slug";
 import type { Prisma } from "@prisma/client";
 
 export type PublishProjectResult = {
@@ -30,14 +31,17 @@ export type ProjectPublishReadinessInput = {
   name: string;
   slug: string;
   status: string;
+  visibilityStatus?: string | null;
   publishedAt: Date | null;
   aiInsightStatus: string | null;
+  aiInsight?: unknown;
   aiContentStatus: string | null;
   aiKnowledgeJson: unknown;
   aiStatus?: string | null;
   tagline: string | null;
   description: string | null;
   primaryCategory: string | null;
+  aiCardSummary?: string | null;
   websiteUrl?: string | null;
   githubUrl?: string | null;
   sources?: Array<{ kind: string; url?: string | null; label?: string | null }>;
@@ -49,6 +53,7 @@ export type ProjectPublishReadiness = {
   publishQuality: ProjectAiPublishQuality;
   needsEnhancement: boolean;
   issues: string[];
+  warnings: string[];
   notice?: string;
   primaryCategory: string;
 };
@@ -58,6 +63,7 @@ export type BulkPublishItemResult = {
   name: string;
   slug: string;
   issues?: string[];
+  warnings?: string[];
   reason?: string;
   notice?: string;
 };
@@ -78,11 +84,11 @@ export function resolveProjectAiPublishQuality(input: {
   aiKnowledgeJson?: unknown | null;
   aiStatus?: string | null;
 }): ProjectAiPublishQuality {
-  if (input.aiInsightStatus === "failed" || input.aiContentStatus === "failed" || input.aiStatus === "failed") {
-    return "failed";
-  }
-  if (input.aiInsightStatus === "success" && input.aiContentStatus === "success") {
+  if (input.aiInsightStatus === "success") {
     return hasValidProjectKnowledgeJson(input.aiKnowledgeJson) ? "full_ai" : "partial_ai";
+  }
+  if (input.aiInsightStatus === "failed") {
+    return "failed";
   }
   if (input.aiStatus === "done_partial") {
     return "partial_ai";
@@ -98,14 +104,10 @@ export function projectNeedsAiEnhancement(input: {
   aiContentStatus?: string | null;
   aiKnowledgeJson?: unknown;
 }): boolean {
-  return (
-    input.aiInsightStatus === "success" &&
-    input.aiContentStatus === "success" &&
-    !hasValidProjectKnowledgeJson(input.aiKnowledgeJson)
-  );
+  return input.aiInsightStatus === "success" && !hasValidProjectKnowledgeJson(input.aiKnowledgeJson);
 }
 
-function hasProjectSourceUrl(input: ProjectPublishReadinessInput): boolean {
+function hasPublishSourceHint(input: ProjectPublishReadinessInput): boolean {
   if (input.websiteUrl?.trim() || input.githubUrl?.trim()) {
     return true;
   }
@@ -116,32 +118,55 @@ function hasProjectSourceUrl(input: ProjectPublishReadinessInput): boolean {
   });
 }
 
-function evaluateReachabilityForPublish(input: ProjectPublishReadinessInput): string | null {
-  if (input.evidenceSnapshot) {
-    const guard = evaluatePublishGuard({
-      evidenceSnapshot: input.evidenceSnapshot,
-      sources: input.sources ?? [],
-    });
-    if (
-      !guard.canAutoPublish &&
-      (guard.reason?.includes("不可达") ||
-        guard.reason?.includes("证据不足") ||
-        guard.reason === "官网与 GitHub 均不可达或证据不足")
-    ) {
-      return guard.reason ?? "官网与 GitHub 均不可达或证据不足";
+function hasTextValue(value: unknown): boolean {
+  return typeof value === "string" && Boolean(value.trim());
+}
+
+function hasUsefulObjectContent(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  return Object.values(value as Record<string, unknown>).some((item) => {
+    if (typeof item === "string") {
+      return Boolean(item.trim());
     }
-    return null;
+    if (Array.isArray(item)) {
+      return item.some((entry) => (typeof entry === "string" ? Boolean(entry.trim()) : Boolean(entry)));
+    }
+    return Boolean(item);
+  });
+}
+
+function hasUsableAiInsight(input: ProjectPublishReadinessInput): boolean {
+  return (
+    input.aiInsightStatus === "success" ||
+    hasUsefulObjectContent(input.aiInsight) ||
+    hasValidProjectKnowledgeJson(input.aiKnowledgeJson) ||
+    hasTextValue(input.aiCardSummary)
+  );
+}
+
+function publishWarnings(input: ProjectPublishReadinessInput): string[] {
+  const warnings: string[] = [];
+  if (input.aiInsightStatus !== "success" && hasUsableAiInsight(input)) {
+    warnings.push("AI 认知卡内容存在，但状态未同步为 success");
   }
-  if (!hasProjectSourceUrl(input)) {
-    return "官网与 GitHub 均不可达或证据不足";
+  if (input.aiContentStatus === "failed") {
+    warnings.push("AI 增强版内容生成失败，已作为质量提示处理");
+  } else if (input.aiContentStatus !== "success") {
+    warnings.push("AI 增强版内容未生成，已作为质量提示处理");
   }
-  return null;
+  if (!hasPublishSourceHint(input)) {
+    warnings.push("未检测到官网、GitHub 或来源链接，建议后续补充");
+  }
+  return warnings;
 }
 
 export function evaluateProjectPublishReadiness(
   input: ProjectPublishReadinessInput,
 ): ProjectPublishReadiness {
   const issues: string[] = [];
+  const warnings = publishWarnings(input);
   const primaryCategory = input.primaryCategory?.trim() || "other";
 
   if (input.status === "PUBLISHED") {
@@ -150,32 +175,31 @@ export function evaluateProjectPublishReadiness(
       publishQuality: resolveProjectAiPublishQuality(input),
       needsEnhancement: projectNeedsAiEnhancement(input),
       issues: ["项目已发布"],
+      warnings,
       primaryCategory,
     };
   }
 
-  if (input.aiInsightStatus === "failed") {
-    issues.push("AI 认知卡生成失败");
-  } else if (input.aiInsightStatus !== "success") {
-    issues.push("AI 认知卡未成功生成");
+  if (input.status === "ARCHIVED") {
+    issues.push("项目已归档，不能发布");
+  } else if (input.status !== "DRAFT" && input.status !== "READY") {
+    issues.push(`项目状态为 ${input.status}，不能发布`);
   }
 
-  if (input.aiContentStatus === "failed") {
-    issues.push("AI 增强版内容生成失败");
-  } else if (input.aiContentStatus !== "success") {
-    issues.push("AI 增强版内容未成功生成");
+  if (!input.name.trim()) {
+    issues.push("缺少项目名称");
   }
 
-  if (!input.tagline?.trim()) {
-    issues.push("缺少一句话简介");
-  }
-  if (!input.description?.trim()) {
-    issues.push("缺少项目简介");
+  if (!isValidProjectSlug(input.slug)) {
+    issues.push("项目 slug 不合法");
   }
 
-  const reachabilityIssue = evaluateReachabilityForPublish(input);
-  if (reachabilityIssue) {
-    issues.push(reachabilityIssue);
+  if (!input.tagline?.trim() && !input.description?.trim()) {
+    issues.push("至少需要一句话简介或项目简介");
+  }
+
+  if (!hasUsableAiInsight(input)) {
+    issues.push("缺少 AI 结构化分析/认知卡内容");
   }
 
   if (issues.length > 0) {
@@ -184,16 +208,12 @@ export function evaluateProjectPublishReadiness(
       publishQuality: resolveProjectAiPublishQuality(input),
       needsEnhancement: projectNeedsAiEnhancement(input),
       issues,
+      warnings,
       primaryCategory,
     };
   }
 
-  const publishQuality = resolveProjectAiPublishQuality({
-    aiInsightStatus: input.aiInsightStatus,
-    aiContentStatus: input.aiContentStatus,
-    aiKnowledgeJson: input.aiKnowledgeJson,
-    aiStatus: input.aiStatus,
-  });
+  const publishQuality = hasValidProjectKnowledgeJson(input.aiKnowledgeJson) ? "full_ai" : "partial_ai";
   const needsEnhancement = publishQuality === "partial_ai";
 
   if (publishQuality === "partial_ai") {
@@ -202,6 +222,7 @@ export function evaluateProjectPublishReadiness(
       publishQuality,
       needsEnhancement,
       issues: [],
+      warnings,
       notice: PARTIAL_AI_PUBLISH_NOTICE,
       primaryCategory,
     };
@@ -212,6 +233,7 @@ export function evaluateProjectPublishReadiness(
     publishQuality: "full_ai",
     needsEnhancement: false,
     issues: [],
+    warnings,
     primaryCategory,
   };
 }
@@ -258,8 +280,11 @@ export function buildPublishProjectUpdateData(input: {
     isPublic: true,
     publishedAt: input.publishedAt ?? now,
     primaryCategory: input.primaryCategory,
-    aiStatus: input.readiness.publishQuality === "partial_ai" ? "done_partial" : "done",
-    aiUpdatedAt: now,
+    ...(input.readiness.publishQuality === "partial_ai"
+      ? { aiStatus: "done_partial", aiUpdatedAt: now }
+      : input.readiness.publishQuality === "full_ai"
+        ? { aiStatus: "done", aiUpdatedAt: now }
+        : {}),
     aiError: input.readiness.needsEnhancement ? PARTIAL_AI_PUBLISH_NOTICE : null,
   };
 }
@@ -362,6 +387,8 @@ export async function publishProjectAfterAiEnrichment(
       aiCardSummary: true,
       publishedAt: true,
       status: true,
+      visibilityStatus: true,
+      aiInsight: true,
       aiInsightStatus: true,
       aiContentStatus: true,
       aiKnowledgeJson: true,
@@ -383,14 +410,17 @@ export async function publishProjectAfterAiEnrichment(
     name: row.name,
     slug: row.slug,
     status: row.status,
+    visibilityStatus: row.visibilityStatus,
     publishedAt: row.publishedAt,
     aiInsightStatus: row.aiInsightStatus,
+    aiInsight: row.aiInsight,
     aiContentStatus: row.aiContentStatus,
     aiKnowledgeJson: row.aiKnowledgeJson,
     aiStatus: row.aiStatus,
     tagline: row.tagline,
     description: row.description,
     primaryCategory: row.primaryCategory,
+    aiCardSummary: row.aiCardSummary,
     websiteUrl: row.websiteUrl,
     githubUrl: row.githubUrl,
     sources: row.sources,
@@ -410,21 +440,9 @@ export async function publishProjectAfterAiEnrichment(
     return { ok: true, needsReview: false, publishQuality: readiness.publishQuality };
   }
 
-  const guard = evaluatePublishGuard({
-    evidenceSnapshot: options?.evidenceSnapshot ?? null,
-    sources: row.sources,
-  });
-  if (options?.evidenceSnapshot && !guard.canAutoPublish && guard.needsReview) {
-    return {
-      ok: false,
-      needsReview: guard.needsReview,
-      guardReason: guard.reason,
-      error: guard.reason ?? "未满足自动发布条件",
-    };
-  }
-
   const parsed: ParsedAdminProjectInput = {
     name: row.name,
+    slug: row.slug,
     tagline: row.tagline,
     description: row.description,
     simpleSummary: row.simpleSummary,

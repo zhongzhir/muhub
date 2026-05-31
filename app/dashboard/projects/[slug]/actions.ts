@@ -69,6 +69,7 @@ export async function publishProject(
   const validation = validateProjectForPublish(
     {
       name: loaded.row.name,
+      slug: loaded.row.slug,
       tagline: loaded.row.tagline,
       description: loaded.row.description,
       primaryCategory: loaded.row.primaryCategory,

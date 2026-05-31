@@ -44,11 +44,13 @@ export async function POST(req: Request) {
       publishedCount: 0,
       blockedCount: 0,
       skippedCount: 0,
+      warningCount: 0,
       counts: {
         processed: 0,
         published: 0,
         blocked: 0,
         skipped: 0,
+        warnings: 0,
       },
     }, { status: 400 });
   }
@@ -63,7 +65,9 @@ export async function POST(req: Request) {
       name: true,
       slug: true,
       status: true,
+      visibilityStatus: true,
       publishedAt: true,
+      aiInsight: true,
       aiInsightStatus: true,
       aiContentStatus: true,
       aiKnowledgeJson: true,
@@ -71,6 +75,7 @@ export async function POST(req: Request) {
       tagline: true,
       description: true,
       primaryCategory: true,
+      aiCardSummary: true,
       websiteUrl: true,
       githubUrl: true,
       sourceType: true,
@@ -85,6 +90,7 @@ export async function POST(req: Request) {
     const skipped: BulkPublishItemResult[] = [];
     const blocked: BulkPublishItemResult[] = [];
     const partial_ai: BulkPublishItemResult[] = [];
+    const warnings: BulkPublishItemResult[] = [];
 
     for (const row of rows) {
       const itemBase = { id: row.id, name: row.name, slug: row.slug };
@@ -102,7 +108,9 @@ export async function POST(req: Request) {
         name: row.name,
         slug: row.slug,
         status: row.status,
+        visibilityStatus: row.visibilityStatus,
         publishedAt: row.publishedAt,
+        aiInsight: row.aiInsight,
         aiInsightStatus: row.aiInsightStatus,
         aiContentStatus: row.aiContentStatus,
         aiKnowledgeJson: row.aiKnowledgeJson,
@@ -110,10 +118,19 @@ export async function POST(req: Request) {
         tagline: row.tagline,
         description: row.description,
         primaryCategory: row.primaryCategory,
+        aiCardSummary: row.aiCardSummary,
         websiteUrl: row.websiteUrl,
         githubUrl: row.githubUrl,
         sources: row.sources,
       });
+
+      if (readiness.warnings.length > 0) {
+        warnings.push({
+          ...itemBase,
+          warnings: readiness.warnings,
+          reason: readiness.warnings.join("；"),
+        });
+      }
 
       if (readiness.outcome === "skipped") {
         skipped.push({
@@ -124,7 +141,7 @@ export async function POST(req: Request) {
       }
 
       if (readiness.outcome === "blocked") {
-        if (row.aiInsightStatus !== "success" || row.aiContentStatus !== "success") {
+        if (readiness.issues.includes("缺少 AI 结构化分析/认知卡内容")) {
           scheduleEnrichProjectAfterImport(row.id, {
             source: row.sourceType === "discovery-json-queue" ? "github_queue" : "manual",
             skipPublish: true,
@@ -146,6 +163,11 @@ export async function POST(req: Request) {
         if (repoUrl) {
           const githubRefresh = await refreshProjectGithubFacts(row.id);
           if (!githubRefresh.ok) {
+            warnings.push({
+              ...itemBase,
+              warnings: ["GitHub facts 刷新失败，已跳过增强刷新"],
+              reason: githubRefresh.lastFetchError ?? "GitHub facts 刷新失败",
+            });
             console.warn("[bulk-action] github facts refresh failed before publish", {
               projectId: row.id,
               slug: row.slug,
@@ -205,6 +227,7 @@ export async function POST(req: Request) {
     const publishedCount = published.length + partial_ai.length;
     const blockedCount = blocked.length;
     const skippedCount = skipped.length;
+    const warningCount = warnings.length;
     const processed = publishedCount + blockedCount + skippedCount;
     return Response.json({
       ok: true,
@@ -214,15 +237,18 @@ export async function POST(req: Request) {
       publishedCount,
       blockedCount,
       skippedCount,
+      warningCount,
       counts: {
         processed,
         published: publishedCount,
         blocked: blockedCount,
         skipped: skippedCount,
+        warnings: warningCount,
       },
       published,
       skipped,
       blocked,
+      warnings,
       partial_ai,
       message:
         partial_ai.length > 0

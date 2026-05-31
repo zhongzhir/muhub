@@ -30,6 +30,7 @@ import {
   type ProjectKnowledge,
 } from "@/lib/project-knowledge";
 import { publishProjectAfterAiEnrichment, syncProjectPublishQualityFields } from "@/lib/project-publishing";
+import { resolveProjectGithubUrl } from "@/lib/project-evidence-context";
 import { normalizeSuggestedTags } from "@/lib/tag-normalization";
 import { normalizeChineseExpression, normalizeChineseList } from "@/lib/zh-normalization";
 import { prisma } from "@/lib/prisma";
@@ -258,23 +259,8 @@ async function validateAppliedFields(projectId: string): Promise<string | null> 
   if (row.aiInsightStatus !== "success") {
     return "AI 认知卡未成功生成";
   }
-  if (row.aiContentStatus !== "success") {
-    return "AI 增强版内容未成功生成";
-  }
-  if (!row.tagline?.trim()) {
-    return "缺少一句话简介";
-  }
-  if (!row.description?.trim()) {
-    return "缺少项目简介";
-  }
-  if (!row.simpleSummary?.trim()) {
-    return "缺少详细介绍";
-  }
-  if (!row.primaryCategory?.trim()) {
-    return "缺少分类";
-  }
-  if (!row.tags?.length) {
-    return "缺少标签";
+  if (!row.tagline?.trim() && !row.description?.trim()) {
+    return "至少需要一句话简介或项目简介";
   }
   return null;
 }
@@ -339,7 +325,15 @@ export async function generatePostImportProjectAi(
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
-    select: { id: true, slug: true, name: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      githubUrl: true,
+      sources: {
+        select: { kind: true, url: true, label: true },
+      },
+    },
   });
   if (!project) {
     return failResult("evidence", "项目不存在或已删除", base);
@@ -398,12 +392,14 @@ export async function generatePostImportProjectAi(
     });
   }
 
-  const githubRefresh = await refreshProjectGithubFacts(projectId);
-  if (!githubRefresh.ok) {
-    console.warn("[post-import-project-ai] github facts refresh failed (non-blocking)", {
-      projectId,
-      lastFetchError: githubRefresh.lastFetchError,
-    });
+  if (resolveProjectGithubUrl({ githubUrl: project.githubUrl, sources: project.sources })) {
+    const githubRefresh = await refreshProjectGithubFacts(projectId);
+    if (!githubRefresh.ok) {
+      console.warn("[post-import-project-ai] github facts refresh failed (non-blocking)", {
+        projectId,
+        lastFetchError: githubRefresh.lastFetchError,
+      });
+    }
   }
 
   try {
@@ -499,11 +495,11 @@ export async function generatePostImportProjectAi(
       where: { id: projectId },
       data: { aiContentStatus: "failed", aiContentError: message },
     });
-    console.error("[post-import-project-ai] ai_content failed", { projectId, error });
-    return failResult("ai_content", error, {
-      ...base,
-      aiContentStatus: "failed",
-      contentError: message,
+    base.aiContentStatus = "failed";
+    base.contentError = message;
+    console.warn("[post-import-project-ai] ai_content failed (non-blocking)", {
+      projectId,
+      error,
     });
   }
 

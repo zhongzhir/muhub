@@ -90,16 +90,19 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
         publishedCount?: number;
         blockedCount?: number;
         skippedCount?: number;
+        warningCount?: number;
         counts?: {
           processed: number;
           published: number;
           blocked: number;
           skipped: number;
+          warnings?: number;
         };
         message?: string;
         published?: Array<{ name: string }>;
         skipped?: Array<{ name: string; reason?: string }>;
         blocked?: Array<{ name: string; reason?: string }>;
+        warnings?: Array<{ name: string; reason?: string; warnings?: string[] }>;
         partial_ai?: Array<{ name: string; notice?: string }>;
       };
       if (!res.ok || !json.ok) {
@@ -113,11 +116,13 @@ export function ProjectsAdminTable({ rows }: { rows: ProjectRow[] }) {
           typeof counts?.published === "number" ? `发布 ${counts.published}` : typeof json.publishedCount === "number" ? `发布 ${json.publishedCount}` : null,
           typeof counts?.skipped === "number" ? `跳过 ${counts.skipped}` : typeof json.skippedCount === "number" ? `跳过 ${json.skippedCount}` : null,
           typeof counts?.blocked === "number" ? `阻止 ${counts.blocked}` : typeof json.blockedCount === "number" ? `阻止 ${json.blockedCount}` : null,
+          typeof counts?.warnings === "number" ? `警告 ${counts.warnings}` : typeof json.warningCount === "number" ? `警告 ${json.warningCount}` : null,
         ].filter(Boolean);
         const blockedReason = json.blocked?.find((item) => item.reason)?.reason;
+        const warningReason = json.warnings?.find((item) => item.reason)?.reason;
         setMessage(
           parts.length
-            ? `批量发布完成：${parts.join("，")}。${blockedReason ? ` 阻止原因：${blockedReason}` : ""}${json.message ? ` ${json.message}` : ""}`
+            ? `批量发布完成：${parts.join("，")}。${blockedReason ? ` 阻止原因：${blockedReason}` : ""}${warningReason ? ` 警告：${warningReason}` : ""}${json.message ? ` ${json.message}` : ""}`
             : json.message ?? "批量发布完成。",
         );
       } else {
