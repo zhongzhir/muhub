@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import {
+  appendDiscoveryFeedbackRecord,
+  type DiscoveryFeedbackDecision,
+  type DiscoveryFeedbackReasonTag,
+} from "@/lib/discovery/feedback-capture";
 import { submitEntityHintFeedback } from "@/lib/discovery/entity/feedback-crud";
 import {
   isEntityHintFeedbackAction,
@@ -20,9 +25,51 @@ export type SubmitEntityHintFeedbackPayload = {
   feedbackTags?: EntityHintFeedbackTag[];
   feedbackReason?: string;
   notes?: string;
+  finalEntityType?: string;
+  finalPrimarySource?: string;
   isHighValue?: boolean;
   shouldTrackLongTerm?: boolean;
 };
+
+function mapActionToDiscoveryDecision(action: EntityHintFeedbackAction): DiscoveryFeedbackDecision {
+  if (action === "UNSURE") {
+    return "NEEDS_REVIEW";
+  }
+  if (action === "NEEDS_REVIEW") {
+    return "NEEDS_REVIEW";
+  }
+  return action;
+}
+
+function mapReasonTags(tags: EntityHintFeedbackTag[]): DiscoveryFeedbackReasonTag[] {
+  const allowed = new Set([
+    "official_source_exists",
+    "github_exists",
+    "huggingface_exists",
+    "website_exists",
+    "multi_source_verified",
+    "high_project_value",
+    "high_industry_attention",
+    "concept_only",
+    "method_only",
+    "no_official_source",
+    "ambiguous_name",
+    "duplicate_project",
+    "insufficient_information",
+    "ai_misidentified",
+    "found_more_trusted_source",
+    "official_source",
+    "github_source",
+    "huggingface_source",
+    "website_source",
+    "other",
+  ]);
+  const mapped = tags.filter((tag): tag is DiscoveryFeedbackReasonTag => allowed.has(tag));
+  if (mapped.length > 0) {
+    return mapped;
+  }
+  return tags.length > 0 ? ["other"] : [];
+}
 
 export async function submitEntityHintFeedbackAction(
   payload: SubmitEntityHintFeedbackPayload,
@@ -37,6 +84,22 @@ export async function submitEntityHintFeedbackAction(
       ? parseFeedbackTags(payload.feedbackTags)
       : [];
 
+    const hint = await prisma.entityHint.findUnique({
+      where: { id: payload.hintId },
+      select: {
+        id: true,
+        name: true,
+        entityType: true,
+        sourceUrl: true,
+        sourceTitle: true,
+        confidence: true,
+        sourceSignalId: true,
+      },
+    });
+    if (!hint) {
+      return { ok: false, error: "Entity Hint not found" };
+    }
+
     const { id } = await submitEntityHintFeedback({
       entityHintId: payload.hintId,
       action: payload.action,
@@ -46,6 +109,40 @@ export async function submitEntityHintFeedbackAction(
       isHighValue: payload.isHighValue ?? null,
       shouldTrackLongTerm: payload.shouldTrackLongTerm ?? null,
       notes: payload.notes,
+    });
+
+    await appendDiscoveryFeedbackRecord({
+      entityName: hint.name,
+      originalEntityType: hint.entityType,
+      finalEntityType:
+        payload.action === "RETYPE"
+          ? payload.finalEntityType ?? hint.entityType
+          : hint.entityType,
+      originalDecision: null,
+      finalDecision: mapActionToDiscoveryDecision(payload.action),
+      originalPrimarySource: hint.sourceUrl ?? null,
+      finalPrimarySource:
+        payload.action === "CHANGE_PRIMARY_SOURCE"
+          ? payload.finalPrimarySource ?? hint.sourceUrl ?? null
+          : hint.sourceUrl ?? null,
+      reasonTags: mapReasonTags(tags),
+      comment: payload.notes || payload.feedbackReason || null,
+      authenticityScore:
+        typeof hint.confidence === "number" ? Math.round(hint.confidence * 100) : null,
+      operator: "operator",
+      context: {
+        discoveryItemId: hint.sourceSignalId ?? hint.id,
+        source: "discovery_item",
+      },
+      evidence: hint.sourceUrl
+        ? [
+            {
+              url: hint.sourceUrl,
+              sourceLevel: "secondary",
+              evidenceRole: hint.sourceTitle ?? "source_signal",
+            },
+          ]
+        : undefined,
     });
 
     revalidatePath("/admin/discovery/entities");

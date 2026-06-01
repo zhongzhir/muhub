@@ -1,8 +1,10 @@
 import type { DiscoverySource } from "@prisma/client";
+import { extractAndPersistHintsForSignal } from "@/lib/discovery/entity/persist-hints";
 import { attachDiscoveryScopesToMetadata } from "@/lib/discovery/scope-from-config";
 import { upsertDiscoverySignalFromSeed } from "@/lib/discovery/signals";
 import {
   computeScanConfidence,
+  extractHtmlContent,
   extractHtmlLinks,
   extractHtmlSnippet,
   extractHtmlTitle,
@@ -41,7 +43,7 @@ async function persistScanPageAsSignal(args: {
   source: Pick<DiscoverySource, "id" | "key" | "name" | "type">;
   config: WebsiteScanConfig;
   page: WebsiteScanPageResult;
-}): Promise<{ created: boolean } | null> {
+}): Promise<{ created: boolean; id: string } | null> {
   const { source, config, page } = args;
 
   const metadataJson = attachDiscoveryScopesToMetadata(
@@ -71,7 +73,7 @@ async function persistScanPageAsSignal(args: {
       title: page.title,
       summary: page.snippet,
       url: page.pageUrl,
-      rawText: page.snippet,
+      rawText: page.content ?? page.snippet,
     },
     metadataJson,
   });
@@ -79,7 +81,21 @@ async function persistScanPageAsSignal(args: {
   if (!result) {
     return null;
   }
-  return { created: result.created };
+  return { created: result.created, id: result.id };
+}
+
+async function extractHintsForPersistedSignal(args: {
+  signalId: string;
+  stats: { extracted: number; duplicate: number; skipped: number; errors: number };
+}): Promise<void> {
+  const result = await extractAndPersistHintsForSignal(args.signalId, {
+    useAi: true,
+    force: true,
+  });
+  args.stats.extracted += result.extracted;
+  args.stats.duplicate += result.duplicate;
+  args.stats.skipped += result.skipped;
+  args.stats.errors += result.errors.length;
 }
 
 function pageFromLinkItem(
@@ -102,7 +118,7 @@ function pageFromLinkItem(
     depth: item.depth,
     parentUrl: item.parentUrl,
     confidence: computeScanConfidence(matched, item.depth),
-    reason: "微信外链：链接文本命中关键词，未抓正文",
+    reason: "wechat_link_title_matched_keywords",
     wechatLinkOnly: true,
   };
 }
@@ -116,6 +132,7 @@ function pageFromHtml(args: {
 }): WebsiteScanPageResult | null {
   const title = extractHtmlTitle(args.html);
   const snippet = extractHtmlSnippet(args.html);
+  const content = extractHtmlContent(args.html);
   const haystack = `${title} ${snippet} ${args.url}`;
   const matched = matchKeywords(haystack, args.config.includeKeywords);
   if (matched.length === 0) {
@@ -125,11 +142,12 @@ function pageFromHtml(args: {
     pageUrl: args.url,
     title: title || args.url,
     snippet,
+    content,
     matchedKeywords: matched,
     depth: args.depth,
     parentUrl: args.parentUrl,
     confidence: computeScanConfidence(matched, args.depth),
-    reason: `页面标题/摘要命中关键词：${matched.join("、")}`,
+    reason: `page_title_or_summary_matched_keywords: ${matched.join(", ")}`,
   };
 }
 
@@ -149,9 +167,10 @@ export async function runWebsiteScanForSource(args: {
     skippedPages: 0,
     errors: [],
   };
+  const entityStats = { extracted: 0, duplicate: 0, skipped: 0, errors: 0 };
 
   if (config.includeKeywords.length === 0) {
-    const msg = "includeKeywords 为空，跳过扫描";
+    const msg = "includeKeywords is empty; website scan skipped";
     logs.push(`[${key}] website_scan error: ${msg}`);
     result.errors.push(msg);
     return result;
@@ -205,6 +224,9 @@ export async function runWebsiteScanForSource(args: {
         } else if (up) {
           result.updatedSignals += 1;
         }
+        if (up) {
+          await extractHintsForPersistedSignal({ signalId: up.id, stats: entityStats });
+        }
       }
       continue;
     }
@@ -241,6 +263,9 @@ export async function runWebsiteScanForSource(args: {
         result.newSignals += 1;
       } else if (up) {
         result.updatedSignals += 1;
+      }
+      if (up) {
+        await extractHintsForPersistedSignal({ signalId: up.id, stats: entityStats });
       }
     }
 
@@ -289,6 +314,9 @@ export async function runWebsiteScanForSource(args: {
 
   logs.push(
     `[${key}] website_scan done fetched=${result.fetchedPages} matched=${result.matchedPages} newSignals=${result.newSignals} updated=${result.updatedSignals} errors=${result.errors.length}`,
+  );
+  logs.push(
+    `[${key}] entity_extraction done extracted=${entityStats.extracted} duplicate=${entityStats.duplicate} skippedSignals=${entityStats.skipped} errors=${entityStats.errors}`,
   );
 
   return result;

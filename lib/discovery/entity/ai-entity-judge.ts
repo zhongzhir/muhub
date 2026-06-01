@@ -1,22 +1,17 @@
-/**
- * Entity Discovery E1.5 — AI Entity Judge
- * 从 Signal 文本判断高价值实体，优先于规则抽取（WEBSITE_SCAN 默认启用）。
- */
-
 import { generateText } from "@/lib/ai/generate-text";
 import { getResolvedAiConfig } from "@/lib/ai/ai-config";
 import {
   GENERIC_BLACKLIST,
   NAVIGATION_BLACKLIST,
 } from "@/lib/discovery/entity/hint-quality-filter";
-import type { ExtractedEntityHintDraft, SourceAuthorityTier } from "@/lib/discovery/entity/types";
-import { authorityTierBoost } from "@/lib/discovery/entity/types";
-import { parseWebsiteScanSignalMetadata } from "@/lib/discovery/website-scan/signal-metadata";
 import { loadFeedbackExamplesForJudgePrompt } from "@/lib/discovery/entity/feedback-examples-for-judge";
+import { authorityTierBoost, type ExtractedEntityHintDraft, type SourceAuthorityTier } from "@/lib/discovery/entity/types";
+import { parseWebsiteScanSignalMetadata } from "@/lib/discovery/website-scan/signal-metadata";
 
 export type AiEntityJudgeInput = {
   title: string;
   summary?: string | null;
+  rawText?: string | null;
   url: string;
   signalType: string;
   sourceType: string;
@@ -39,18 +34,40 @@ export type AiJudgedEntity = {
 };
 
 export type AiEntityJudgeResult = {
-  /** 技术失败（API/解析）— 应回退规则抽取 */
   failed: boolean;
   error?: string;
   entities: AiJudgedEntity[];
-  /** AI 明确拒绝的候选（用于验收/调试） */
   rejected: AiJudgedEntity[];
   skippedReason?: string;
   model?: string;
 };
 
 const DEFAULT_MIN_CONFIDENCE = 0.75;
-const DEFAULT_MIN_RELEVANCE = 0.60;
+const DEFAULT_MIN_RELEVANCE = 0.6;
+
+const ALLOWED_ENTITY_TYPES = new Set([
+  "PROJECT",
+  "MODEL",
+  "DATASET",
+  "TOOL",
+  "ORGANIZATION",
+  "COMPANY",
+  "LAB",
+  "PLATFORM",
+  "EVENT",
+  "CONCEPT",
+  "METHOD",
+  "PERSON",
+  "UNKNOWN",
+]);
+
+function normalizeEntityType(raw: unknown): string {
+  const value = typeof raw === "string" ? raw.trim().toUpperCase() : "UNKNOWN";
+  if (value === "OTHER") {
+    return "UNKNOWN";
+  }
+  return ALLOWED_ENTITY_TYPES.has(value) ? value : "UNKNOWN";
+}
 
 function resolveThresholds(
   tier: SourceAuthorityTier,
@@ -102,8 +119,7 @@ function parseJudgeJson(raw: string): { entities: AiJudgedEntity[]; skippedReaso
     }
     entities.push({
       name,
-      entityType:
-        typeof row.entityType === "string" ? row.entityType.trim().toUpperCase() : "OTHER",
+      entityType: normalizeEntityType(row.entityType),
       confidence: typeof row.confidence === "number" ? row.confidence : 0,
       publishingAiRelevance:
         typeof row.publishingAiRelevance === "number" ? row.publishingAiRelevance : 0,
@@ -118,10 +134,7 @@ function parseJudgeJson(raw: string): { entities: AiJudgedEntity[]; skippedReaso
 
 function isHardBlockedName(name: string): boolean {
   const normalized = name.trim().replace(/\s+/g, "");
-  if (NAVIGATION_BLACKLIST.has(normalized) || GENERIC_BLACKLIST.has(normalized)) {
-    return true;
-  }
-  return false;
+  return NAVIGATION_BLACKLIST.has(normalized) || GENERIC_BLACKLIST.has(normalized);
 }
 
 function applyThresholds(
@@ -149,9 +162,7 @@ function applyThresholds(
     if (pass) {
       accepted.push({
         ...entity,
-        reason: thresholds.relaxed
-          ? `${entity.reason}（权威来源阈值略放宽）`
-          : entity.reason,
+        reason: thresholds.relaxed ? `${entity.reason} (relaxed_source_threshold)` : entity.reason,
       });
     } else {
       rejected.push(entity);
@@ -166,58 +177,54 @@ function buildJudgePrompt(
   scanMeta: ReturnType<typeof parseWebsiteScanSignalMetadata>,
   feedbackExamplesBlock: string,
 ): string {
-  const snippet = input.summary?.trim() || scanMeta?.snippet || "";
-  const matchedKeywords = scanMeta?.matchedKeywords?.join("、") || "（无）";
+  const text = (input.rawText?.trim() || input.summary?.trim() || scanMeta?.snippet || "").slice(
+    0,
+    12000,
+  );
   const pageUrl = scanMeta?.pageUrl || input.url;
-  const sourceKey = scanMeta?.sourceKey || "（未知）";
+  const matchedKeywords = scanMeta?.matchedKeywords?.join(", ") || "(none)";
+  const examplesSection = feedbackExamplesBlock ? `\n${feedbackExamplesBlock}\n` : "";
 
-  const examplesSection = feedbackExamplesBlock
-    ? `\n${feedbackExamplesBlock}\n`
-    : "";
+  return `你是 MUHUB Discovery Engine 的实体抽取器。请从网页 Signal 中抽取值得进入 Entity Queue、等待人工判断的实体。
 
-  return `你是出版与 AI 行业的实体识别裁判（Entity Judge）。从以下 Signal 中判断是否存在**值得进入 EntityHint 的高价值具体实体**。
+核心要求：
+- 不要把通用概念当项目。
+- 区分 project / model / dataset / tool / organization / concept / method / person / unknown。
+- 表格、名单、获奖项目列表要逐条抽取，不要只抽文章标题。
+- 如果只是方法名或概念名，标为 METHOD 或 CONCEPT，不要标为 PROJECT。
+- Website Scan 来源默认是 secondary evidence，不代表它就是项目主来源。
+- 只输出 JSON 对象，不要输出 Markdown。
 
-## 必须拒绝（shouldCreateHint=false）
-- 导航/功能入口：下载中心、投稿指南、期刊征订、编辑部、联系我们、关于我们、首页、更多、通知公告、新闻动态
-- 栏目名、网站模块名
-- 泛概念词：人工智能、数字出版、大模型、AIGC、智能出版、出版科技（单独作为实体名时）
-- **纯文章标题**（无论多长，若只是文章/报告/论文标题而非机构/产品/公司名，拒绝）
-- 无具体指代的抽象短语
+实体类型只能使用：
+PROJECT, MODEL, DATASET, TOOL, ORGANIZATION, COMPANY, LAB, PLATFORM, EVENT, CONCEPT, METHOD, PERSON, UNKNOWN
 
-## 可以接受
-- 具体机构/出版社/协会/局署
-- 具体公司/集团（含有限公司等）
-- 实验室/研究中心/研究院
-- 具名 AI/出版工具、平台、产品（有明确名称）
-- 具名会议/论坛（若文本中明确作为实体出现）
+Signal:
+- title: ${input.title}
+- url: ${pageUrl}
+- sourceName: ${input.sourceName}
+- sourceType: ${input.sourceType}
+- signalType: ${input.signalType}
+- matchedKeywords: ${matchedKeywords}
+- discoveryScopes: ${input.discoveryScopes.join(", ")}
 
-## Signal
-- 标题：${input.title}
-- 摘要/snippet：${snippet || "（无）"}
-- pageUrl：${pageUrl}
-- 命中关键词：${matchedKeywords}
-- sourceKey：${sourceKey}
-- 来源：${input.sourceName}（${input.sourceType}）
-- signalType：${input.signalType}
-- discoveryScopes：${input.discoveryScopes.join(", ")}
+正文:
+${text || "(empty)"}
 ${examplesSection}
-只返回 JSON 对象（不要 markdown）：
+返回格式：
 {
   "entities": [
     {
       "name": "实体名称",
-      "entityType": "PROJECT|COMPANY|ORGANIZATION|LAB|TOOL|PLATFORM|DATASET|EVENT|OTHER",
+      "entityType": "PROJECT",
       "confidence": 0.0,
       "publishingAiRelevance": 0.0,
       "shouldCreateHint": true,
-      "reason": "中文，为何是/不是实体",
-      "evidence": "原文片段"
+      "reason": "为什么值得进入 Entity Queue",
+      "evidence": "原文证据片段"
     }
   ],
-  "skippedReason": "若全部拒绝，说明原因；有接受项可省略或为空"
-}
-
-找不到任何合格实体时 entities=[] 并填写 skippedReason。不要输出用户可见评分文案。`;
+  "skippedReason": "如果没有合格实体，说明原因"
+}`;
 }
 
 export async function runAiEntityJudge(input: AiEntityJudgeInput): Promise<AiEntityJudgeResult> {
@@ -236,17 +243,17 @@ export async function runAiEntityJudge(input: AiEntityJudgeInput): Promise<AiEnt
     const feedbackExamples = await loadFeedbackExamplesForJudgePrompt(6);
     const prompt = buildJudgePrompt(input, scanMeta, feedbackExamples);
     const raw = await generateText(prompt, {
-      maxTokens: 1400,
+      maxTokens: 2200,
       temperature: 0.1,
       systemPrompt:
-        "你是 Entity Judge。只返回 JSON 对象，不要其他文字。严格区分具体实体与栏目/导航/文章标题/泛概念。",
+        "你是 Entity Judge。只返回 JSON 对象，不要输出其它文字。严格区分具体实体、方法、概念、文章标题和导航噪声。",
     });
 
     const parsed = parseJudgeJson(raw);
     if (!parsed) {
       return {
         failed: true,
-        error: "AI Judge JSON 解析失败",
+        error: "AI Judge JSON parse failed",
         entities: [],
         rejected: [],
       };
@@ -291,7 +298,10 @@ export function aiJudgedEntitiesToHintDrafts(args: {
   });
   const matchedKeywords = args.matchedKeywords ?? scanMeta?.matchedKeywords ?? [];
   const pageUrl = args.pageUrl ?? scanMeta?.pageUrl ?? args.input.url;
-  const sourceText = [args.input.title, args.input.summary].filter(Boolean).join("\n").slice(0, 500);
+  const sourceText = [args.input.title, args.input.summary, args.input.rawText]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 1000);
 
   return args.entities.map((entity) => ({
     name: entity.name,

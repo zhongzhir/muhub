@@ -13,6 +13,7 @@ export type EntityHintStatus = (typeof ENTITY_HINT_STATUSES)[number];
 
 export const ENTITY_TYPES = [
   "PROJECT",
+  "MODEL",
   "ORGANIZATION",
   "LAB",
   "TOOL",
@@ -20,6 +21,10 @@ export const ENTITY_TYPES = [
   "COMPANY",
   "DATASET",
   "EVENT",
+  "CONCEPT",
+  "METHOD",
+  "PERSON",
+  "UNKNOWN",
 ] as const;
 
 export type EntityType = (typeof ENTITY_TYPES)[number];

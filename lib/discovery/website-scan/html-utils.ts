@@ -18,6 +18,12 @@ export function extractHtmlSnippet(html: string, maxLen = 400): string {
   return text.slice(0, maxLen);
 }
 
+export function extractHtmlContent(html: string, maxLen = 20_000): string {
+  const bodyMatch = html.match(/<body[\s\S]*?>([\s\S]*?)<\/body>/i);
+  const text = stripHtmlTags(bodyMatch?.[1] ?? html);
+  return text.slice(0, maxLen);
+}
+
 export type ExtractedLink = {
   href: string;
   text: string;

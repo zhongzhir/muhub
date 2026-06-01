@@ -19,6 +19,7 @@ export type WebsiteScanPageResult = {
   pageUrl: string;
   title: string;
   snippet: string;
+  content?: string;
   matchedKeywords: string[];
   depth: number;
   parentUrl: string | null;

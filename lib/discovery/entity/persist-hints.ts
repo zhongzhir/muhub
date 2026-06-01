@@ -249,6 +249,119 @@ export type BatchExtractEntityHintsResult = {
   error: number;
 };
 
+export async function extractEntitiesFromSignal(
+  signalId: string,
+  options?: ExtractHintsForSignalOptions,
+): Promise<ExtractHintsForSignalResult> {
+  return extractAndPersistHintsForSignal(signalId, options);
+}
+
+export async function extractEntitiesFromSourceRun(
+  runId: string,
+  options?: Omit<BatchExtractEntityHintsOptions, "signalId">,
+): Promise<BatchExtractEntityHintsResult> {
+  const run = await prisma.discoveryRun.findUnique({
+    where: { id: runId },
+    select: {
+      sourceId: true,
+      startedAt: true,
+      finishedAt: true,
+      createdAt: true,
+    },
+  });
+
+  if (!run) {
+    return {
+      scanned: 0,
+      extracted: 0,
+      skipped: 0,
+      duplicate: 0,
+      skippedLowQuality: 0,
+      skippedNavigation: 0,
+      skippedGeneric: 0,
+      skippedReasons: [],
+      errors: [`SourceRun not found: ${runId}`],
+      error: 1,
+    };
+  }
+
+  const startedAt = run.startedAt ?? run.createdAt;
+  const finishedAt = run.finishedAt ?? new Date();
+  const limit = Math.min(500, Math.max(1, options?.limit ?? 100));
+  const signals = await prisma.discoverySignal.findMany({
+    where: {
+      sourceId: run.sourceId,
+      createdAt: {
+        gte: startedAt,
+        lte: finishedAt,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: { id: true },
+  });
+
+  return extractSignalsByIds(
+    signals.map((signal) => signal.id),
+    options,
+  );
+}
+
+export async function extractEntitiesFromRecentSignals(
+  options?: BatchExtractEntityHintsOptions,
+): Promise<BatchExtractEntityHintsResult> {
+  return batchExtractEntityHints(options);
+}
+
+async function extractSignalsByIds(
+  signalIds: string[],
+  options?: Omit<BatchExtractEntityHintsOptions, "signalId">,
+): Promise<BatchExtractEntityHintsResult> {
+  let extracted = 0;
+  let skipped = 0;
+  let duplicate = 0;
+  let skippedLowQuality = 0;
+  let skippedNavigation = 0;
+  let skippedGeneric = 0;
+  const skippedReasons: string[] = [];
+  const errors: string[] = [];
+
+  for (const signalId of signalIds) {
+    const result = await extractAndPersistHintsForSignal(signalId, {
+      dryRun: options?.dryRun,
+      useAi: options?.useAi,
+      useAiJudge: options?.useAiJudge,
+      noAiJudge: options?.noAiJudge,
+      minConfidence: options?.minConfidence,
+      minRelevance: options?.minRelevance,
+      force: options?.force,
+    });
+    extracted += result.extracted;
+    skipped += result.skipped;
+    duplicate += result.duplicate;
+    skippedLowQuality += result.skippedLowQuality ?? 0;
+    skippedNavigation += result.skippedNavigation ?? 0;
+    skippedGeneric += result.skippedGeneric ?? 0;
+    if (result.skippedReason) {
+      skippedReasons.push(result.skippedReason);
+    }
+    errors.push(...result.errors);
+  }
+
+  return {
+    scanned: signalIds.length,
+    extracted,
+    skipped,
+    duplicate,
+    skippedLowQuality,
+    skippedNavigation,
+    skippedGeneric,
+    skippedReasons: [...new Set(skippedReasons)].slice(0, 20),
+    errors,
+    error: errors.length,
+  };
+}
+
 export async function batchExtractEntityHints(
   options?: BatchExtractEntityHintsOptions,
 ): Promise<BatchExtractEntityHintsResult> {

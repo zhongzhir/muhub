@@ -124,6 +124,14 @@ export function classifyLowQualityHint(
     return "generic";
   }
 
+  if (
+    options?.isWebsiteScan &&
+    draft.evidenceJson?.ruleId === "award_project_row" &&
+    draft.entityType === "PROJECT"
+  ) {
+    return null;
+  }
+
   if (options?.isWebsiteScan && name.length > 20 && !STRONG_ENTITY_SUFFIX.test(name)) {
     return "generic";
   }

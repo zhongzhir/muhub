@@ -58,11 +58,6 @@ function isWebsiteScanSignal(input: SignalExtractionInput): boolean {
 }
 
 function combinedText(input: SignalExtractionInput): string {
-  if (isWebsiteScanSignal(input)) {
-    return [input.title, input.summary]
-      .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
-      .join("\n");
-  }
   return [input.title, input.summary, input.rawText]
     .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
     .join("\n");
@@ -143,6 +138,39 @@ function extractListNames(text: string): string[] {
     }
   }
   return names;
+}
+
+function extractAwardProjectRows(
+  text: string,
+  tier: SourceAuthorityTier,
+): ExtractedEntityHintDraft[] {
+  const out: ExtractedEntityHintDraft[] = [];
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const match =
+      /^\d{1,3}[\s.、)）]+(.+?)(?:\s{2,}|\t|\||｜|$)/.exec(trimmed) ??
+      /^项目[:：]\s*(.+?)(?:\s{2,}|\t|\||｜|$)/.exec(trimmed);
+    const name = match?.[1]?.trim();
+    if (!name || name.length < 4 || name.length > 80) {
+      continue;
+    }
+    if (!/(项目|平台|系统|中心|云|库|应用|服务|软件|工程|建设|基座|大数据|AI|智能)/i.test(name)) {
+      continue;
+    }
+    out.push({
+      name,
+      entityType: inferTypeFromName(name),
+      confidence: clampConfidence(0.82, tier),
+      reason: "award_or_table_project_row",
+      sourceTextSnippet: trimmed.slice(0, 200),
+      evidenceJson: {
+        extractionMethod: "rule",
+        ruleId: "award_project_row",
+      },
+    });
+  }
+  return out;
 }
 
 function extractLaunchProducts(text: string, tier: SourceAuthorityTier): ExtractedEntityHintDraft[] {
@@ -297,6 +325,10 @@ function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] 
     pushUnique(out, seen, draft, scanOpts);
   }
 
+  for (const draft of extractAwardProjectRows(text, tier)) {
+    pushUnique(out, seen, draft, scanOpts);
+  }
+
   if (!isScan) {
     for (const draft of extractByRegex(
       text,
@@ -358,6 +390,21 @@ function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] 
 }
 
 function inferTypeFromName(name: string): string {
+  if (/(数据集|数据资源|语料|语料库|benchmark|dataset)/i.test(name)) {
+    return "DATASET";
+  }
+  if (/(方法|机制|框架|范式)$/.test(name)) {
+    return "METHOD";
+  }
+  if (/(概念|理论)$/.test(name)) {
+    return "CONCEPT";
+  }
+  if (/(模型|大模型|model)/i.test(name)) {
+    return "MODEL";
+  }
+  if (/(平台|系统|项目|工程|建设|应用|服务|软件|中心|云|库)/.test(name)) {
+    return "PROJECT";
+  }
   if (/(实验室|研究中心|研究院)/.test(name)) {
     return "LAB";
   }
@@ -485,6 +532,7 @@ export async function extractEntityHintsFromSignal(
     const judgeResult = await runAiEntityJudge({
       title: input.title,
       summary: input.summary,
+      rawText: input.rawText,
       url: input.url,
       signalType: input.signalType,
       sourceType: input.sourceType,
@@ -502,6 +550,7 @@ export async function extractEntityHintsFromSignal(
         input: {
           title: input.title,
           summary: input.summary,
+          rawText: input.rawText,
           url: input.url,
           signalType: input.signalType,
           sourceType: input.sourceType,
