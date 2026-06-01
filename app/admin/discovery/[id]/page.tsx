@@ -506,7 +506,17 @@ export default async function AdminDiscoveryDetailPage({
         <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
           <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">操作</h2>
           <div className="mt-4">
-            <CandidateDetailActions candidateId={row.id} canMutate={canMutate} />
+            <CandidateDetailActions
+              candidateId={row.id}
+              canMutate={canMutate}
+              entityName={row.title}
+              originalEntityType={row.suggestedType ?? row.externalType ?? null}
+              originalDecision={`${row.reviewStatus}/${row.importStatus}`}
+              originalPrimarySource={row.repoUrl ?? row.website ?? row.externalUrl ?? null}
+              authenticityScore={
+                typeof row.reviewPriorityScore === "number" ? row.reviewPriorityScore : row.score
+              }
+            />
           </div>
         </section>
 

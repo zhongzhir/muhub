@@ -7,12 +7,87 @@ import {
   mergeDiscoveryCandidateToProject,
   rejectDiscoveryCandidate,
 } from "@/lib/discovery/import-candidate";
+import {
+  appendDiscoveryFeedbackRecord,
+  type DiscoveryFeedbackDecision,
+  type DiscoveryFeedbackReasonTag,
+} from "@/lib/discovery/feedback-capture";
 import { runDiscoverySourceByKey } from "@/lib/discovery/run-discovery-source";
 import { recomputeDiscoveryReviewPriorityBatch } from "@/lib/discovery/persist-review-priority";
 
 export type DiscoveryAdminMutationResult =
   | { ok: true; slug?: string; projectId?: string }
   | { ok: false; error: string };
+
+export type SubmitDiscoveryFeedbackPayload = {
+  candidateId?: string;
+  entityName: string;
+  originalEntityType?: string | null;
+  finalEntityType?: string | null;
+  originalDecision?: string | null;
+  finalDecision: DiscoveryFeedbackDecision;
+  originalPrimarySource?: string | null;
+  finalPrimarySource?: string | null;
+  reasonTags?: DiscoveryFeedbackReasonTag[];
+  comment?: string | null;
+  authenticityScore?: number | null;
+  targetProjectId?: string | null;
+  source?: "discovery_candidate" | "discovery_item" | "project_import_review";
+};
+
+export async function submitDiscoveryFeedbackAction(
+  payload: SubmitDiscoveryFeedbackPayload,
+): Promise<{ ok: true; feedbackId: string } | { ok: false; error: string }> {
+  try {
+    const { userId } = await requireMuHubAdmin();
+    const record = await appendDiscoveryFeedbackRecord({
+      entityName: payload.entityName,
+      originalEntityType: payload.originalEntityType ?? null,
+      finalEntityType: payload.finalEntityType ?? payload.originalEntityType ?? null,
+      originalDecision: payload.originalDecision ?? null,
+      finalDecision: payload.finalDecision,
+      originalPrimarySource: payload.originalPrimarySource ?? null,
+      finalPrimarySource: payload.finalPrimarySource ?? payload.originalPrimarySource ?? null,
+      reasonTags: payload.reasonTags ?? [],
+      comment: payload.comment ?? null,
+      authenticityScore: payload.authenticityScore ?? null,
+      operator: userId,
+      context: {
+        discoveryCandidateId: payload.candidateId ?? null,
+        targetProjectId: payload.targetProjectId ?? null,
+        source: payload.source ?? "discovery_candidate",
+      },
+      evidence: [
+        ...(payload.originalPrimarySource
+          ? [
+              {
+                url: payload.originalPrimarySource,
+                evidenceRole: "original_primary_source",
+              },
+            ]
+          : []),
+        ...(payload.finalPrimarySource && payload.finalPrimarySource !== payload.originalPrimarySource
+          ? [
+              {
+                url: payload.finalPrimarySource,
+                evidenceRole: "final_primary_source",
+              },
+            ]
+          : []),
+      ],
+    });
+    revalidatePath("/admin/discovery/feedback");
+    if (payload.candidateId) {
+      revalidatePath(`/admin/discovery/${payload.candidateId}`);
+    }
+    return { ok: true, feedbackId: record.id };
+  } catch (e) {
+    if (e instanceof AdminAuthError) {
+      return { ok: false, error: e.message };
+    }
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
 
 export async function approveDiscoveryCandidateAction(
   candidateId: string,

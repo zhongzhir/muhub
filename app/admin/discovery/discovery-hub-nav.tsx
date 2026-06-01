@@ -5,6 +5,7 @@ export type DiscoveryHubSection =
   | "signals"
   | "entities"
   | "candidates"
+  | "feedback"
   | "daily"
   | "tasks";
 
@@ -20,25 +21,31 @@ const PRIMARY_FLOW: NavItem[] = [
     id: "sources",
     href: "/admin/discovery/sources",
     label: "1. 信息源",
-    hint: "Source Network — 维护 RSS/名单/官网等来源",
+    hint: "维护 RSS、名单、官网等来源",
   },
   {
     id: "signals",
     href: "/admin/discovery/signals",
     label: "2. 线索池",
-    hint: "Signal — RSS/新闻/公告等原始条目",
+    hint: "原始 Signal：RSS、新闻、公告等条目",
   },
   {
     id: "entities",
     href: "/admin/discovery/entities",
     label: "3. 实体线索",
-    hint: "Entity Hint (E1) — 从 Signal 抽取机构/实验室/项目名",
+    hint: "从 Signal 抽取机构、实验室、项目、模型、数据集等实体",
   },
   {
     id: "candidates",
     href: "/admin/discovery",
     label: "4. 候选项目",
-    hint: "Candidate — 审核后导入正式 Project",
+    hint: "审核后导入正式 Project",
+  },
+  {
+    id: "feedback",
+    href: "/admin/discovery/feedback",
+    label: "5. 判断反馈",
+    hint: "Learning Loop V1：查看人工判断样本与统计",
   },
 ];
 
@@ -72,10 +79,8 @@ export function DiscoveryHubNav({ current }: { current: DiscoveryHubSection }) {
             Discovery 运营导航
           </h2>
           <p className="mt-1 max-w-3xl text-xs text-zinc-600 dark:text-zinc-400">
-            出版 AI（publishing_ai）推荐路径：维护信息源 → 查看 Signal →（可选）抽取 Entity
-            Hint → 审核 Candidate → 导入 Project。运营文档见{" "}
-            <code className="text-[11px]">docs/discovery/discovery-runbook.md</code>
-            。Entity E2 暂缓，当前 E1 仅作线索池。
+            推荐路径：维护信息源 → 查看 Signal → 抽取 Entity Hint → 审核 Candidate →
+            导入 Project → 记录判断反馈。
           </p>
         </div>
         <Link
@@ -115,7 +120,7 @@ export function DiscoveryHubNav({ current }: { current: DiscoveryHubSection }) {
           href="/admin/discovery/items"
           className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
         >
-          JSON 队列（遗留）
+          JSON 队列
         </Link>
         <Link
           href="/admin/discovery/mobile"
