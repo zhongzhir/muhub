@@ -173,6 +173,47 @@ function extractAwardProjectRows(
   return out;
 }
 
+function extractKnownPublishingOrganizations(
+  text: string,
+  tier: SourceAuthorityTier,
+): ExtractedEntityHintDraft[] {
+  const known = [
+    "Pearson",
+    "Cengage",
+    "McGraw-Hill",
+    "Amazon",
+    "Apple",
+    "Elsevier",
+    "Springer",
+    "Springer Nature",
+    "Wiley",
+    "Taylor & Francis",
+    "SAGE",
+    "Oxford University Press",
+    "Cambridge University Press",
+  ];
+  const out: ExtractedEntityHintDraft[] = [];
+  for (const name of known) {
+    const index = text.toLowerCase().indexOf(name.toLowerCase());
+    if (index < 0) {
+      continue;
+    }
+    const context = text.slice(Math.max(0, index - 180), index + name.length + 220);
+    out.push({
+      name,
+      entityType: name === "Amazon" || name === "Apple" ? "PLATFORM" : "ORGANIZATION",
+      confidence: clampConfidence(0.8, tier),
+      reason: "known_publishing_organization_mentioned",
+      sourceTextSnippet: context.slice(0, 240),
+      evidenceJson: {
+        extractionMethod: "rule",
+        ruleId: "known_publishing_organization",
+      },
+    });
+  }
+  return out;
+}
+
 function extractLaunchProducts(text: string, tier: SourceAuthorityTier): ExtractedEntityHintDraft[] {
   const out: ExtractedEntityHintDraft[] = [];
   const patterns = [
@@ -326,6 +367,10 @@ function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] 
   }
 
   for (const draft of extractAwardProjectRows(text, tier)) {
+    pushUnique(out, seen, draft, scanOpts);
+  }
+
+  for (const draft of extractKnownPublishingOrganizations(text, tier)) {
     pushUnique(out, seen, draft, scanOpts);
   }
 

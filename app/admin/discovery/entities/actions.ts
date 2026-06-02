@@ -71,6 +71,52 @@ function mapReasonTags(tags: EntityHintFeedbackTag[]): DiscoveryFeedbackReasonTa
   return tags.length > 0 ? ["other"] : [];
 }
 
+async function appendEntityHintDiscoveryFeedback(args: {
+  hint: {
+    id: string;
+    name: string;
+    entityType: string;
+    sourceUrl: string | null;
+    sourceTitle: string | null;
+    confidence: number | null;
+    sourceSignalId: string | null;
+  };
+  finalDecision: DiscoveryFeedbackDecision;
+  finalEntityType?: string | null;
+  finalPrimarySource?: string | null;
+  reasonTags?: DiscoveryFeedbackReasonTag[];
+  comment?: string | null;
+  operator?: string | null;
+}): Promise<void> {
+  await appendDiscoveryFeedbackRecord({
+    entityName: args.hint.name,
+    originalEntityType: args.hint.entityType,
+    finalEntityType: args.finalEntityType ?? args.hint.entityType,
+    originalDecision: null,
+    finalDecision: args.finalDecision,
+    originalPrimarySource: args.hint.sourceUrl ?? null,
+    finalPrimarySource: args.finalPrimarySource ?? args.hint.sourceUrl ?? null,
+    reasonTags: args.reasonTags ?? [],
+    comment: args.comment ?? null,
+    authenticityScore:
+      typeof args.hint.confidence === "number" ? Math.round(args.hint.confidence * 100) : null,
+    operator: args.operator ?? "operator",
+    context: {
+      discoveryItemId: args.hint.sourceSignalId ?? args.hint.id,
+      source: "discovery_item",
+    },
+    evidence: args.hint.sourceUrl
+      ? [
+          {
+            url: args.hint.sourceUrl,
+            sourceLevel: "secondary",
+            evidenceRole: args.hint.sourceTitle ?? "source_signal",
+          },
+        ]
+      : undefined,
+  });
+}
+
 export async function submitEntityHintFeedbackAction(
   payload: SubmitEntityHintFeedbackPayload,
 ): Promise<ActionResult & { feedbackId?: string }> {
@@ -111,42 +157,25 @@ export async function submitEntityHintFeedbackAction(
       notes: payload.notes,
     });
 
-    await appendDiscoveryFeedbackRecord({
-      entityName: hint.name,
-      originalEntityType: hint.entityType,
+    await appendEntityHintDiscoveryFeedback({
+      hint,
+      finalDecision: mapActionToDiscoveryDecision(payload.action),
       finalEntityType:
         payload.action === "RETYPE"
           ? payload.finalEntityType ?? hint.entityType
           : hint.entityType,
-      originalDecision: null,
-      finalDecision: mapActionToDiscoveryDecision(payload.action),
-      originalPrimarySource: hint.sourceUrl ?? null,
       finalPrimarySource:
         payload.action === "CHANGE_PRIMARY_SOURCE"
           ? payload.finalPrimarySource ?? hint.sourceUrl ?? null
           : hint.sourceUrl ?? null,
       reasonTags: mapReasonTags(tags),
       comment: payload.notes || payload.feedbackReason || null,
-      authenticityScore:
-        typeof hint.confidence === "number" ? Math.round(hint.confidence * 100) : null,
       operator: "operator",
-      context: {
-        discoveryItemId: hint.sourceSignalId ?? hint.id,
-        source: "discovery_item",
-      },
-      evidence: hint.sourceUrl
-        ? [
-            {
-              url: hint.sourceUrl,
-              sourceLevel: "secondary",
-              evidenceRole: hint.sourceTitle ?? "source_signal",
-            },
-          ]
-        : undefined,
     });
 
     revalidatePath("/admin/discovery/entities");
     revalidatePath(`/admin/discovery/entities/${payload.hintId}`);
+    revalidatePath("/admin/discovery/feedback");
     return { ok: true, feedbackId: id };
   } catch (error) {
     if (error instanceof AdminAuthError) {
@@ -167,6 +196,22 @@ export async function updateEntityHintStatusAction(
       return { ok: false, error: `Invalid status: ${status}` };
     }
 
+    const hint = await prisma.entityHint.findUnique({
+      where: { id: hintId },
+      select: {
+        id: true,
+        name: true,
+        entityType: true,
+        sourceUrl: true,
+        sourceTitle: true,
+        confidence: true,
+        sourceSignalId: true,
+      },
+    });
+    if (!hint) {
+      return { ok: false, error: "Entity Hint not found" };
+    }
+
     await prisma.entityHint.update({
       where: { id: hintId },
       data: {
@@ -175,8 +220,19 @@ export async function updateEntityHintStatusAction(
       },
     });
 
+    const finalDecision: DiscoveryFeedbackDecision =
+      status === "ACCEPTED" ? "ACCEPT" : status === "REJECTED" ? "REJECT" : "MERGE";
+
+    await appendEntityHintDiscoveryFeedback({
+      hint,
+      finalDecision,
+      comment: reason?.trim() || `Entity status changed to ${status}`,
+      operator: "operator",
+    });
+
     revalidatePath("/admin/discovery/entities");
     revalidatePath(`/admin/discovery/entities/${hintId}`);
+    revalidatePath("/admin/discovery/feedback");
     return { ok: true };
   } catch (error) {
     if (error instanceof AdminAuthError) {
@@ -187,7 +243,19 @@ export async function updateEntityHintStatusAction(
 }
 
 export async function extractEntityHintsForSignalAction(signalId: string): Promise<
-  | { ok: true; extracted: number; skipped: number; duplicate: number }
+  | {
+      ok: true;
+      extracted: number;
+      skipped: number;
+      duplicate: number;
+      skippedReason?: string;
+      skippedLowQuality?: number;
+      skippedNavigation?: number;
+      skippedGeneric?: number;
+      textSource?: string;
+      textLength?: number;
+      errors?: string[];
+    }
   | { ok: false; error: string }
 > {
   try {
@@ -206,6 +274,13 @@ export async function extractEntityHintsForSignalAction(signalId: string): Promi
       extracted: result.extracted,
       skipped: result.skipped,
       duplicate: result.duplicate,
+      skippedReason: result.skippedReason,
+      skippedLowQuality: result.skippedLowQuality,
+      skippedNavigation: result.skippedNavigation,
+      skippedGeneric: result.skippedGeneric,
+      textSource: result.textSource,
+      textLength: result.textLength,
+      errors: result.errors,
     };
   } catch (error) {
     if (error instanceof AdminAuthError) {

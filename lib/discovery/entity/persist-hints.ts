@@ -16,6 +16,10 @@ import {
   parseScopesFromConfigJson,
 } from "@/lib/discovery/scope-from-config";
 import { mergeDiscoveryScopes, type DiscoveryScope } from "@/lib/discovery/discovery-scopes";
+import {
+  extractHtmlContent,
+  fetchScanPageHtml,
+} from "@/lib/discovery/website-scan/html-utils";
 
 export type ExtractHintsForSignalOptions = {
   dryRun?: boolean;
@@ -34,7 +38,12 @@ export type ExtractHintsForSignalResult = PersistEntityHintsResult & {
   skippedLowQuality?: number;
   skippedNavigation?: number;
   skippedGeneric?: number;
+  textSource?: "stored" | "refetched";
+  textLength?: number;
 };
+
+const MIN_STORED_TEXT_LENGTH_FOR_EXTRACTION = 2_000;
+const MAX_REFETCHED_TEXT_LENGTH_FOR_EXTRACTION = 30_000;
 
 function resolveScopes(
   signalMetadata: unknown,
@@ -48,6 +57,69 @@ function resolveScopes(
     return [];
   }
   return merged;
+}
+
+function metadataPageUrl(metadataJson: unknown): string | null {
+  if (!metadataJson || typeof metadataJson !== "object" || Array.isArray(metadataJson)) {
+    return null;
+  }
+  const raw = (metadataJson as Record<string, unknown>).pageUrl;
+  return typeof raw === "string" && /^https?:\/\//i.test(raw) ? raw : null;
+}
+
+async function resolveSignalTextForExtraction(signal: {
+  id: string;
+  url: string;
+  signalType: string;
+  title: string;
+  summary: string | null;
+  rawText: string | null;
+  metadataJson: unknown;
+}): Promise<{ rawText: string | null; textSource: "stored" | "refetched"; textLength: number }> {
+  const storedText = [signal.title, signal.summary, signal.rawText]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .join("\n");
+
+  if (
+    signal.signalType !== "WEBSITE_SCAN" ||
+    storedText.length >= MIN_STORED_TEXT_LENGTH_FOR_EXTRACTION
+  ) {
+    return {
+      rawText: signal.rawText,
+      textSource: "stored",
+      textLength: storedText.length,
+    };
+  }
+
+  const pageUrl = metadataPageUrl(signal.metadataJson) ?? signal.url;
+  const fetched = await fetchScanPageHtml(pageUrl);
+  if (!fetched.ok) {
+    return {
+      rawText: signal.rawText,
+      textSource: "stored",
+      textLength: storedText.length,
+    };
+  }
+
+  const content = extractHtmlContent(fetched.html, MAX_REFETCHED_TEXT_LENGTH_FOR_EXTRACTION);
+  if (content.length <= (signal.rawText?.length ?? 0)) {
+    return {
+      rawText: signal.rawText,
+      textSource: "stored",
+      textLength: storedText.length,
+    };
+  }
+
+  await prisma.discoverySignal.update({
+    where: { id: signal.id },
+    data: { rawText: content },
+  });
+
+  return {
+    rawText: content,
+    textSource: "refetched",
+    textLength: [signal.title, signal.summary, content].filter(Boolean).join("\n").length,
+  };
 }
 
 export async function extractAndPersistHintsForSignal(
@@ -85,12 +157,13 @@ export async function extractAndPersistHintsForSignal(
 
   const discoveryScopes = resolveScopes(signal.metadataJson, signal.source.configJson);
   const sourceAuthorityTier = parseSourceAuthorityTier(signal.source.configJson);
+  const resolvedText = await resolveSignalTextForExtraction(signal);
 
   const extraction = await extractEntityHintsFromSignal({
     signalId: signal.id,
     title: signal.title,
     summary: signal.summary,
-    rawText: signal.rawText,
+    rawText: resolvedText.rawText,
     url: signal.url,
     signalType: signal.signalType,
     sourceType: signal.sourceType,
@@ -121,6 +194,8 @@ export async function extractAndPersistHintsForSignal(
       skippedLowQuality: skipStats?.skippedLowQuality ?? 0,
       skippedNavigation: skipStats?.skippedNavigation ?? 0,
       skippedGeneric: skipStats?.skippedGeneric ?? 0,
+      textSource: resolvedText.textSource,
+      textLength: resolvedText.textLength,
     };
   }
 
@@ -132,6 +207,8 @@ export async function extractAndPersistHintsForSignal(
       duplicate: 0,
       errors: [],
       hintDrafts: extraction.hints,
+      textSource: resolvedText.textSource,
+      textLength: resolvedText.textLength,
     };
   }
 
@@ -151,6 +228,8 @@ export async function extractAndPersistHintsForSignal(
     skippedLowQuality: extraction.skipStats?.skippedLowQuality ?? 0,
     skippedNavigation: extraction.skipStats?.skippedNavigation ?? 0,
     skippedGeneric: extraction.skipStats?.skippedGeneric ?? 0,
+    textSource: resolvedText.textSource,
+    textLength: resolvedText.textLength,
   };
 }
 

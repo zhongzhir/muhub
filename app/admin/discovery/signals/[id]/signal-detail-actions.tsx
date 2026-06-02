@@ -40,7 +40,7 @@ export function SignalDetailActions(props: {
               }
             })
           }
-          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 hover:bg-emerald-800"
+          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50"
         >
           转为候选项目
         </button>
@@ -52,9 +52,15 @@ export function SignalDetailActions(props: {
               setMessage(null);
               const r = await extractEntityHintsForSignalAction(signalId);
               if (r.ok) {
-                setMessage(
-                  `Entity Hint 抽取完成：新增 ${r.extracted}，跳过 ${r.skipped}，重复 ${r.duplicate}。`,
-                );
+                const details = [
+                  `新增 ${r.extracted}`,
+                  `跳过 ${r.skipped}`,
+                  `重复 ${r.duplicate}`,
+                  r.textSource ? `文本 ${r.textSource}` : null,
+                  typeof r.textLength === "number" ? `长度 ${r.textLength}` : null,
+                  r.skippedReason ? `原因：${r.skippedReason}` : null,
+                ].filter(Boolean);
+                setMessage(`Entity Hint 抽取完成：${details.join("，")}`);
                 router.refresh();
                 return;
               }
