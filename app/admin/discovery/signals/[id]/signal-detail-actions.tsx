@@ -53,11 +53,11 @@ export function SignalDetailActions(props: {
               const r = await extractEntityHintsForSignalAction(signalId);
               if (r.ok) {
                 const details = [
-                  `新增 ${r.extracted}`,
-                  `跳过 ${r.skipped}`,
-                  `重复 ${r.duplicate}`,
-                  r.textSource ? `文本 ${r.textSource}` : null,
-                  typeof r.textLength === "number" ? `长度 ${r.textLength}` : null,
+                  `新增 Entity：${r.extracted}`,
+                  `已存在重复：${r.duplicate}`,
+                  `跳过：${r.skipped}`,
+                  r.textSource ? `正文来源：${r.textSource}` : null,
+                  typeof r.textLength === "number" ? `正文长度：${r.textLength}` : null,
                   r.skippedReason ? `原因：${r.skippedReason}` : null,
                 ].filter(Boolean);
                 setMessage(`Entity Hint 抽取完成：${details.join("，")}`);

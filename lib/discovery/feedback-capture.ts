@@ -47,13 +47,21 @@ export type DiscoveryFeedbackReasonTag = (typeof DISCOVERY_FEEDBACK_REASON_TAGS)
 export type DiscoveryFeedbackRecord = {
   id: string;
   timestamp: string;
+  entityHintId?: string | null;
   entityName: string;
   originalEntityType: string | null;
   finalEntityType: string | null;
+  originalStatus?: string | null;
+  finalStatus?: string | null;
   originalDecision: string | null;
   finalDecision: DiscoveryFeedbackDecision;
   originalPrimarySource: string | null;
   finalPrimarySource: string | null;
+  sourceUrl?: string | null;
+  sourceTitle?: string | null;
+  sourceLevel?: string | null;
+  isHumanDecision?: boolean;
+  decisionSource?: "entity_queue" | "discovery_candidate" | "project_import_review" | "system_rule";
   reasonTags: DiscoveryFeedbackReasonTag[];
   comment: string | null;
   authenticityScore: number | null;
@@ -126,13 +134,21 @@ export function createDiscoveryFeedbackRecord(
   return {
     id: cleanString(input.id) ?? randomUUID(),
     timestamp: cleanString(input.timestamp) ?? new Date().toISOString(),
+    entityHintId: cleanString(input.entityHintId),
     entityName,
     originalEntityType: cleanString(input.originalEntityType),
     finalEntityType: cleanString(input.finalEntityType),
+    originalStatus: cleanString(input.originalStatus),
+    finalStatus: cleanString(input.finalStatus),
     originalDecision: cleanString(input.originalDecision),
     finalDecision: input.finalDecision,
     originalPrimarySource: cleanString(input.originalPrimarySource),
     finalPrimarySource: cleanString(input.finalPrimarySource),
+    sourceUrl: cleanString(input.sourceUrl),
+    sourceTitle: cleanString(input.sourceTitle),
+    sourceLevel: cleanString(input.sourceLevel),
+    isHumanDecision: input.isHumanDecision === false ? false : input.isHumanDecision === true ? true : undefined,
+    decisionSource: input.decisionSource,
     reasonTags: normalizeReasonTags(input.reasonTags),
     comment: cleanString(input.comment),
     authenticityScore: cleanScore(input.authenticityScore),
@@ -199,6 +215,25 @@ export async function readDiscoveryFeedbackRecords(limit = 100): Promise<Discove
   return rows
     .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
     .slice(0, Math.max(1, limit));
+}
+
+export function isVerificationFeedbackRecord(record: DiscoveryFeedbackRecord): boolean {
+  return (
+    record.operator === "operator-verification" ||
+    record.comment?.startsWith("verification_") ||
+    record.comment?.toLowerCase().includes("verification") ||
+    record.operator === "admin-data-fix"
+  );
+}
+
+export function isHumanFeedbackRecord(record: DiscoveryFeedbackRecord): boolean {
+  if (record.isHumanDecision === true) {
+    return true;
+  }
+  if (record.isHumanDecision === false || record.decisionSource === "system_rule") {
+    return false;
+  }
+  return record.context?.source === "discovery_item" && !isVerificationFeedbackRecord(record);
 }
 
 export function summarizeDiscoveryFeedback(records: DiscoveryFeedbackRecord[]) {

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import {
+  isHumanFeedbackRecord,
+  isVerificationFeedbackRecord,
   readDiscoveryFeedbackRecords,
   summarizeDiscoveryFeedback,
   type DiscoveryFeedbackRecord,
@@ -8,12 +10,14 @@ import { DiscoveryHubNav } from "../discovery-hub-nav";
 
 export const dynamic = "force-dynamic";
 
+type SearchParams = Record<string, string | string[] | undefined>;
+
 const DECISION_LABELS: Record<string, string> = {
   ACCEPT: "接受",
   REJECT: "拒绝",
   RETYPE: "修改类型",
   CHANGE_PRIMARY_SOURCE: "修改来源",
-  MERGE: "合并",
+  MERGE: "待合并",
   NEEDS_REVIEW: "待观察",
 };
 
@@ -40,10 +44,32 @@ const REASON_LABELS: Record<string, string> = {
   other: "其它",
 };
 
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 function limitFromSearchParams(value: string | string[] | undefined): number {
-  const raw = Array.isArray(value) ? value[0] : value;
-  const parsed = Number(raw);
+  const parsed = Number(firstParam(value));
   return parsed === 1000 ? 1000 : 100;
+}
+
+function scopeFromSearchParams(value: string | string[] | undefined): "human" | "system" | "all" {
+  const raw = firstParam(value);
+  return raw === "system" || raw === "all" ? raw : "human";
+}
+
+function buildHref(input: { scope: "human" | "system" | "all"; limit: number; includeTest: boolean }) {
+  const params = new URLSearchParams();
+  if (input.scope !== "human") {
+    params.set("scope", input.scope);
+  }
+  if (input.limit === 1000) {
+    params.set("limit", "1000");
+  }
+  if (input.includeTest) {
+    params.set("includeTest", "1");
+  }
+  return `/admin/discovery/feedback${params.toString() ? `?${params.toString()}` : ""}`;
 }
 
 function formatTime(iso: string): string {
@@ -65,6 +91,35 @@ function decisionClass(decision: string): string {
     return "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-200";
   }
   return "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200";
+}
+
+function recordSourceLabel(row: DiscoveryFeedbackRecord): string {
+  if (isVerificationFeedbackRecord(row)) {
+    return "测试/维护";
+  }
+  if (row.isHumanDecision === false || row.decisionSource === "system_rule") {
+    return "系统规则";
+  }
+  return "人工判断";
+}
+
+function filterRecords(
+  records: DiscoveryFeedbackRecord[],
+  scope: "human" | "system" | "all",
+  includeTest: boolean,
+): DiscoveryFeedbackRecord[] {
+  return records.filter((record) => {
+    if (!includeTest && isVerificationFeedbackRecord(record)) {
+      return false;
+    }
+    if (scope === "human") {
+      return isHumanFeedbackRecord(record);
+    }
+    if (scope === "system") {
+      return record.isHumanDecision === false || record.decisionSource === "system_rule";
+    }
+    return true;
+  });
 }
 
 function StatList({ title, rows }: { title: string; rows: Array<{ label: string; count: number }> }) {
@@ -107,25 +162,24 @@ function FeedbackRow({ row }: { row: DiscoveryFeedbackRecord }) {
           )}
         </div>
         <div className="mt-1 text-xs text-zinc-500">
-          {row.originalEntityType ?? "-"} → {row.finalEntityType ?? "-"}
+          {row.originalEntityType ?? "-"} {"->"} {row.finalEntityType ?? "-"}
+        </div>
+        <div className="mt-1 text-xs text-zinc-400">
+          {row.originalStatus ?? "-"} {"->"} {row.finalStatus ?? "-"}
         </div>
       </td>
       <td className="px-3 py-3">
         <span className={`rounded-full border px-2 py-0.5 text-xs ${decisionClass(row.finalDecision)}`}>
           {DECISION_LABELS[row.finalDecision] ?? row.finalDecision}
         </span>
-        <div className="mt-2 text-xs text-zinc-500">
-          {row.originalDecision ?? "-"}
-        </div>
+        <div className="mt-2 text-xs text-zinc-500">{recordSourceLabel(row)}</div>
+        {row.entityHintId ? <div className="mt-1 text-xs text-zinc-400">{row.entityHintId}</div> : null}
       </td>
       <td className="px-3 py-3 text-xs text-zinc-600 dark:text-zinc-400">
         {row.reasonTags.length ? (
           <div className="flex max-w-md flex-wrap gap-1">
             {row.reasonTags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-zinc-200 px-2 py-0.5 dark:border-zinc-700"
-              >
+              <span key={tag} className="rounded-full border border-zinc-200 px-2 py-0.5 dark:border-zinc-700">
                 {REASON_LABELS[tag] ?? tag}
               </span>
             ))}
@@ -137,13 +191,9 @@ function FeedbackRow({ row }: { row: DiscoveryFeedbackRecord }) {
       </td>
       <td className="px-3 py-3 text-xs text-zinc-600 dark:text-zinc-400">
         <div className="max-w-xs break-all">
-          {row.originalPrimarySource ?? "-"}
-          {row.finalPrimarySource && row.finalPrimarySource !== row.originalPrimarySource ? (
-            <>
-              <br />
-              <span className="text-zinc-400">→</span> {row.finalPrimarySource}
-            </>
-          ) : null}
+          {row.sourceTitle ? <div className="mb-1 text-zinc-500">{row.sourceTitle}</div> : null}
+          {row.originalPrimarySource ?? row.sourceUrl ?? "-"}
+          {row.sourceLevel ? <div className="mt-1 text-zinc-400">sourceLevel={row.sourceLevel}</div> : null}
         </div>
       </td>
       <td className="px-3 py-3 text-xs text-zinc-500">{row.operator ?? "-"}</td>
@@ -154,11 +204,14 @@ function FeedbackRow({ row }: { row: DiscoveryFeedbackRecord }) {
 export default async function AdminDiscoveryFeedbackPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<SearchParams>;
 }) {
   const sp = await searchParams;
   const limit = limitFromSearchParams(sp.limit);
-  const records = await readDiscoveryFeedbackRecords(limit);
+  const scope = scopeFromSearchParams(sp.scope);
+  const includeTest = firstParam(sp.includeTest) === "1";
+  const allRecords = await readDiscoveryFeedbackRecords(limit * 5);
+  const records = filterRecords(allRecords, scope, includeTest).slice(0, limit);
   const summary = summarizeDiscoveryFeedback(records);
 
   return (
@@ -169,31 +222,45 @@ export default async function AdminDiscoveryFeedbackPage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Discovery Feedback Viewer</h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            查看人工判断样本。Phase 1 读取 data/entity-feedback-dataset.jsonl，不依赖数据库。
+            默认只展示人工判断，并隐藏 verification / admin-data-fix 样本。
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {(["human", "system", "all"] as const).map((value) => (
+            <Link
+              key={value}
+              href={buildHref({ scope: value, limit, includeTest })}
+              className={`rounded-lg border px-3 py-1.5 text-sm ${
+                scope === value ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300"
+              }`}
+            >
+              {value === "human" ? "仅人工" : value === "system" ? "系统规则" : "全部"}
+            </Link>
+          ))}
+          {[100, 1000].map((value) => (
+            <Link
+              key={value}
+              href={buildHref({ scope, limit: value, includeTest })}
+              className={`rounded-lg border px-3 py-1.5 text-sm ${
+                limit === value ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300"
+              }`}
+            >
+              最近 {value}
+            </Link>
+          ))}
           <Link
-            href="/admin/discovery/feedback?limit=100"
+            href={buildHref({ scope, limit, includeTest: !includeTest })}
             className={`rounded-lg border px-3 py-1.5 text-sm ${
-              limit === 100 ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300"
+              includeTest ? "border-amber-700 bg-amber-50 text-amber-800" : "border-zinc-300"
             }`}
           >
-            最近100条
-          </Link>
-          <Link
-            href="/admin/discovery/feedback?limit=1000"
-            className={`rounded-lg border px-3 py-1.5 text-sm ${
-              limit === 1000 ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300"
-            }`}
-          >
-            最近1000条
+            {includeTest ? "已包含测试" : "包含测试记录"}
           </Link>
         </div>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {["ACCEPT", "REJECT", "RETYPE", "CHANGE_PRIMARY_SOURCE"].map((decision) => (
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {["ACCEPT", "REJECT", "RETYPE", "CHANGE_PRIMARY_SOURCE", "MERGE"].map((decision) => (
           <div
             key={decision}
             className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40"
@@ -215,7 +282,9 @@ export default async function AdminDiscoveryFeedbackPage({
       <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
         <div className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
           <h2 className="text-sm font-semibold">反馈样本</h2>
-          <p className="mt-1 text-xs text-zinc-500">共显示 {records.length} 条</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            当前显示 {records.length} 条，筛选：{scope}，测试记录：{includeTest ? "包含" : "隐藏"}
+          </p>
         </div>
         {records.length === 0 ? (
           <p className="p-4 text-sm text-zinc-500">暂无反馈样本。</p>
@@ -228,7 +297,7 @@ export default async function AdminDiscoveryFeedbackPage({
                   <th className="px-3 py-2 font-medium">实体</th>
                   <th className="px-3 py-2 font-medium">决策</th>
                   <th className="px-3 py-2 font-medium">原因</th>
-                  <th className="px-3 py-2 font-medium">主来源</th>
+                  <th className="px-3 py-2 font-medium">来源</th>
                   <th className="px-3 py-2 font-medium">操作者</th>
                 </tr>
               </thead>

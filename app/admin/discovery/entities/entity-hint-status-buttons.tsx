@@ -21,7 +21,7 @@ export function EntityHintStatusButtons({
         setMessage(result.error);
         return;
       }
-      setMessage("已记录反馈");
+      setMessage("已记录判断");
     });
   }
 

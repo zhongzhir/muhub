@@ -3,11 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
 import {
-  appendDiscoveryFeedbackRecord,
   type DiscoveryFeedbackDecision,
   type DiscoveryFeedbackReasonTag,
 } from "@/lib/discovery/feedback-capture";
-import { submitEntityHintFeedback } from "@/lib/discovery/entity/feedback-crud";
+import { recordEntityHumanDecision } from "@/lib/discovery/entity/human-decision";
 import {
   isEntityHintFeedbackAction,
   parseFeedbackTags,
@@ -15,7 +14,6 @@ import {
   type EntityHintFeedbackTag,
 } from "@/lib/discovery/entity/feedback-types";
 import { isEntityHintStatus } from "@/lib/discovery/entity/types";
-import { prisma } from "@/lib/prisma";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -71,52 +69,6 @@ function mapReasonTags(tags: EntityHintFeedbackTag[]): DiscoveryFeedbackReasonTa
   return tags.length > 0 ? ["other"] : [];
 }
 
-async function appendEntityHintDiscoveryFeedback(args: {
-  hint: {
-    id: string;
-    name: string;
-    entityType: string;
-    sourceUrl: string | null;
-    sourceTitle: string | null;
-    confidence: number | null;
-    sourceSignalId: string | null;
-  };
-  finalDecision: DiscoveryFeedbackDecision;
-  finalEntityType?: string | null;
-  finalPrimarySource?: string | null;
-  reasonTags?: DiscoveryFeedbackReasonTag[];
-  comment?: string | null;
-  operator?: string | null;
-}): Promise<void> {
-  await appendDiscoveryFeedbackRecord({
-    entityName: args.hint.name,
-    originalEntityType: args.hint.entityType,
-    finalEntityType: args.finalEntityType ?? args.hint.entityType,
-    originalDecision: null,
-    finalDecision: args.finalDecision,
-    originalPrimarySource: args.hint.sourceUrl ?? null,
-    finalPrimarySource: args.finalPrimarySource ?? args.hint.sourceUrl ?? null,
-    reasonTags: args.reasonTags ?? [],
-    comment: args.comment ?? null,
-    authenticityScore:
-      typeof args.hint.confidence === "number" ? Math.round(args.hint.confidence * 100) : null,
-    operator: args.operator ?? "operator",
-    context: {
-      discoveryItemId: args.hint.sourceSignalId ?? args.hint.id,
-      source: "discovery_item",
-    },
-    evidence: args.hint.sourceUrl
-      ? [
-          {
-            url: args.hint.sourceUrl,
-            sourceLevel: "secondary",
-            evidenceRole: args.hint.sourceTitle ?? "source_signal",
-          },
-        ]
-      : undefined,
-  });
-}
-
 export async function submitEntityHintFeedbackAction(
   payload: SubmitEntityHintFeedbackPayload,
 ): Promise<ActionResult & { feedbackId?: string }> {
@@ -130,53 +82,24 @@ export async function submitEntityHintFeedbackAction(
       ? parseFeedbackTags(payload.feedbackTags)
       : [];
 
-    const hint = await prisma.entityHint.findUnique({
-      where: { id: payload.hintId },
-      select: {
-        id: true,
-        name: true,
-        entityType: true,
-        sourceUrl: true,
-        sourceTitle: true,
-        confidence: true,
-        sourceSignalId: true,
-      },
-    });
-    if (!hint) {
-      return { ok: false, error: "Entity Hint not found" };
-    }
-
-    const { id } = await submitEntityHintFeedback({
+    const result = await recordEntityHumanDecision({
       entityHintId: payload.hintId,
-      action: payload.action,
+      decision: mapActionToDiscoveryDecision(payload.action),
       reviewer: "operator",
-      feedbackReason: payload.feedbackReason,
-      feedbackTags: tags,
-      isHighValue: payload.isHighValue ?? null,
-      shouldTrackLongTerm: payload.shouldTrackLongTerm ?? null,
-      notes: payload.notes,
-    });
-
-    await appendEntityHintDiscoveryFeedback({
-      hint,
-      finalDecision: mapActionToDiscoveryDecision(payload.action),
-      finalEntityType:
-        payload.action === "RETYPE"
-          ? payload.finalEntityType ?? hint.entityType
-          : hint.entityType,
-      finalPrimarySource:
-        payload.action === "CHANGE_PRIMARY_SOURCE"
-          ? payload.finalPrimarySource ?? hint.sourceUrl ?? null
-          : hint.sourceUrl ?? null,
       reasonTags: mapReasonTags(tags),
       comment: payload.notes || payload.feedbackReason || null,
+      finalEntityType: payload.action === "RETYPE" ? payload.finalEntityType ?? null : null,
+      finalPrimarySource:
+        payload.action === "CHANGE_PRIMARY_SOURCE" ? payload.finalPrimarySource ?? null : null,
       operator: "operator",
+      isHighValue: payload.isHighValue ?? null,
+      shouldTrackLongTerm: payload.shouldTrackLongTerm ?? null,
     });
 
     revalidatePath("/admin/discovery/entities");
     revalidatePath(`/admin/discovery/entities/${payload.hintId}`);
     revalidatePath("/admin/discovery/feedback");
-    return { ok: true, feedbackId: id };
+    return { ok: true, feedbackId: result.feedbackId };
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return { ok: false, error: error.message };
@@ -196,36 +119,19 @@ export async function updateEntityHintStatusAction(
       return { ok: false, error: `Invalid status: ${status}` };
     }
 
-    const hint = await prisma.entityHint.findUnique({
-      where: { id: hintId },
-      select: {
-        id: true,
-        name: true,
-        entityType: true,
-        sourceUrl: true,
-        sourceTitle: true,
-        confidence: true,
-        sourceSignalId: true,
-      },
-    });
-    if (!hint) {
-      return { ok: false, error: "Entity Hint not found" };
-    }
-
-    await prisma.entityHint.update({
-      where: { id: hintId },
-      data: {
-        status,
-        ...(reason?.trim() ? { reason: reason.trim() } : {}),
-      },
-    });
-
     const finalDecision: DiscoveryFeedbackDecision =
-      status === "ACCEPTED" ? "ACCEPT" : status === "REJECTED" ? "REJECT" : "MERGE";
+      status === "ACCEPTED"
+        ? "ACCEPT"
+        : status === "REJECTED"
+          ? "REJECT"
+          : status === "PENDING"
+            ? "NEEDS_REVIEW"
+            : "MERGE";
 
-    await appendEntityHintDiscoveryFeedback({
-      hint,
-      finalDecision,
+    await recordEntityHumanDecision({
+      entityHintId: hintId,
+      decision: finalDecision,
+      finalStatus: status,
       comment: reason?.trim() || `Entity status changed to ${status}`,
       operator: "operator",
     });
