@@ -1,5 +1,10 @@
 import type { Prisma } from "@prisma/client";
-import { appendDiscoveryFeedbackRecord, type DiscoveryFeedbackDecision, type DiscoveryFeedbackReasonTag } from "@/lib/discovery/feedback-capture";
+import {
+  createDiscoveryFeedbackRecord,
+  persistDiscoveryFeedbackRecord,
+  type DiscoveryFeedbackDecision,
+  type DiscoveryFeedbackReasonTag,
+} from "@/lib/discovery/feedback-capture";
 import { prisma } from "@/lib/prisma";
 
 export type EntityHumanDecisionInput = {
@@ -68,7 +73,7 @@ export async function recordEntityHumanDecision(
   const finalPrimarySource = input.finalPrimarySource?.trim() || hint.sourceUrl || null;
   const sourceLevel = sourceLevelFromEvidence(hint.evidenceJson) ?? "secondary";
 
-  const datasetRecord = await appendDiscoveryFeedbackRecord({
+  const discoveryFeedbackRecord = createDiscoveryFeedbackRecord({
     entityHintId: hint.id,
     entityName: hint.name,
     originalEntityType: hint.entityType,
@@ -128,8 +133,10 @@ export async function recordEntityHumanDecision(
       },
     });
 
+    await persistDiscoveryFeedbackRecord(discoveryFeedbackRecord, tx);
+
     return row;
   });
 
-  return { feedbackId: feedback.id, datasetRecordId: datasetRecord.id };
+  return { feedbackId: feedback.id, datasetRecordId: discoveryFeedbackRecord.id };
 }

@@ -48,6 +48,10 @@ export async function submitDiscoveryFeedbackAction(
       finalDecision: payload.finalDecision,
       originalPrimarySource: payload.originalPrimarySource ?? null,
       finalPrimarySource: payload.finalPrimarySource ?? payload.originalPrimarySource ?? null,
+      sourceUrl: payload.finalPrimarySource ?? payload.originalPrimarySource ?? null,
+      isHumanDecision: true,
+      decisionSource:
+        payload.source === "project_import_review" ? "project_import_review" : "discovery_candidate",
       reasonTags: payload.reasonTags ?? [],
       comment: payload.comment ?? null,
       authenticityScore: payload.authenticityScore ?? null,

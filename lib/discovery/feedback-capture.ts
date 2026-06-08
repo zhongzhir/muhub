@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
-import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export const DISCOVERY_FEEDBACK_DATASET_PATH = path.join(
   process.cwd(),
@@ -179,42 +180,219 @@ export async function appendDiscoveryFeedbackRecord(
   input: SubmitDiscoveryFeedbackInput,
 ): Promise<DiscoveryFeedbackRecord> {
   const record = createDiscoveryFeedbackRecord(input);
-  await mkdir(path.dirname(DISCOVERY_FEEDBACK_DATASET_PATH), { recursive: true });
-  await writeFile(
-    DISCOVERY_FEEDBACK_DATASET_PATH,
-    `${JSON.stringify(record)}\n`,
-    { encoding: "utf8", flag: "a" },
-  );
+  await persistDiscoveryFeedbackRecord(record);
   return record;
 }
 
+type DiscoveryFeedbackDbRow = {
+  id: string;
+  createdAt: Date;
+  entityHintId: string | null;
+  entityName: string;
+  originalEntityType: string | null;
+  finalEntityType: string | null;
+  originalStatus: string | null;
+  finalStatus: string | null;
+  decision: string;
+  reasonTags: Prisma.JsonValue | null;
+  comment: string | null;
+  operator: string | null;
+  sourceUrl: string | null;
+  sourceTitle: string | null;
+  isHumanDecision: boolean;
+  decisionSource: string | null;
+  authenticityScore: number | null;
+  metadata: Prisma.JsonValue | null;
+};
+
+function jsonParam(value: unknown): Prisma.Sql {
+  return Prisma.sql`${JSON.stringify(value ?? null)}::jsonb`;
+}
+
+function metadataForRecord(record: DiscoveryFeedbackRecord): Record<string, unknown> {
+  return {
+    timestamp: record.timestamp,
+    originalDecision: record.originalDecision,
+    originalPrimarySource: record.originalPrimarySource,
+    finalPrimarySource: record.finalPrimarySource,
+    sourceLevel: record.sourceLevel,
+    context: record.context ?? null,
+    evidence: record.evidence ?? null,
+  };
+}
+
+export async function persistDiscoveryFeedbackRecord(
+  record: DiscoveryFeedbackRecord,
+  db: Prisma.TransactionClient | typeof prisma = prisma,
+): Promise<void> {
+  const createdAt = new Date(record.timestamp);
+  const safeCreatedAt = Number.isNaN(createdAt.getTime()) ? new Date() : createdAt;
+  await db.$executeRaw`
+    INSERT INTO "DiscoveryFeedback" (
+      "id",
+      "createdAt",
+      "entityHintId",
+      "entityName",
+      "originalEntityType",
+      "finalEntityType",
+      "originalStatus",
+      "finalStatus",
+      "decision",
+      "reasonTags",
+      "comment",
+      "operator",
+      "sourceUrl",
+      "sourceTitle",
+      "isHumanDecision",
+      "decisionSource",
+      "authenticityScore",
+      "metadata"
+    )
+    VALUES (
+      ${record.id},
+      ${safeCreatedAt},
+      ${record.entityHintId ?? null},
+      ${record.entityName},
+      ${record.originalEntityType},
+      ${record.finalEntityType},
+      ${record.originalStatus ?? null},
+      ${record.finalStatus ?? null},
+      ${record.finalDecision},
+      ${jsonParam(record.reasonTags)},
+      ${record.comment},
+      ${record.operator},
+      ${record.sourceUrl ?? null},
+      ${record.sourceTitle ?? null},
+      ${record.isHumanDecision === false ? false : true},
+      ${record.decisionSource ?? null},
+      ${record.authenticityScore},
+      ${jsonParam(metadataForRecord(record))}
+    )
+    ON CONFLICT ("id") DO NOTHING
+  `;
+}
+
+function metadataObject(value: Prisma.JsonValue | null): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return value as Record<string, unknown>;
+}
+
+function stringFromMetadata(metadata: Record<string, unknown>, key: string): string | null {
+  const value = metadata[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function contextFromMetadata(value: unknown): DiscoveryFeedbackRecord["context"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const raw = value as Record<string, unknown>;
+  const source = raw.source;
+  return {
+    discoveryCandidateId: cleanString(raw.discoveryCandidateId),
+    discoveryItemId: cleanString(raw.discoveryItemId),
+    targetProjectId: cleanString(raw.targetProjectId),
+    source:
+      source === "discovery_candidate" ||
+      source === "discovery_item" ||
+      source === "project_import_review"
+        ? source
+        : undefined,
+  };
+}
+
+function evidenceFromMetadata(value: unknown): DiscoveryFeedbackRecord["evidence"] {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return null;
+      }
+      const raw = item as Record<string, unknown>;
+      const url = cleanString(raw.url);
+      return url
+        ? {
+            url,
+            sourceLevel: cleanString(raw.sourceLevel),
+            evidenceRole: cleanString(raw.evidenceRole),
+          }
+        : null;
+    })
+    .filter((item): item is { url: string; sourceLevel: string | null; evidenceRole: string | null } =>
+      Boolean(item),
+    );
+}
+
+function discoveryFeedbackRowToRecord(row: DiscoveryFeedbackDbRow): DiscoveryFeedbackRecord {
+  const metadata = metadataObject(row.metadata);
+  const decisionSource = row.decisionSource;
+  return {
+    id: row.id,
+    timestamp: row.createdAt.toISOString(),
+    entityHintId: row.entityHintId,
+    entityName: row.entityName,
+    originalEntityType: row.originalEntityType,
+    finalEntityType: row.finalEntityType,
+    originalStatus: row.originalStatus,
+    finalStatus: row.finalStatus,
+    originalDecision: stringFromMetadata(metadata, "originalDecision"),
+    finalDecision: isDecision(row.decision) ? row.decision : "NEEDS_REVIEW",
+    originalPrimarySource: stringFromMetadata(metadata, "originalPrimarySource"),
+    finalPrimarySource: stringFromMetadata(metadata, "finalPrimarySource"),
+    sourceUrl: row.sourceUrl,
+    sourceTitle: row.sourceTitle,
+    sourceLevel: stringFromMetadata(metadata, "sourceLevel"),
+    isHumanDecision: row.isHumanDecision,
+    decisionSource:
+      decisionSource === "entity_queue" ||
+      decisionSource === "discovery_candidate" ||
+      decisionSource === "project_import_review" ||
+      decisionSource === "system_rule"
+        ? decisionSource
+        : undefined,
+    reasonTags: normalizeReasonTags(row.reasonTags),
+    comment: row.comment,
+    authenticityScore: row.authenticityScore,
+    operator: row.operator,
+    context: contextFromMetadata(metadata.context),
+    evidence: evidenceFromMetadata(metadata.evidence),
+  };
+}
+
 export async function readDiscoveryFeedbackRecords(limit = 100): Promise<DiscoveryFeedbackRecord[]> {
-  let text = "";
   try {
-    text = await readFile(DISCOVERY_FEEDBACK_DATASET_PATH, "utf8");
+    const rows = await prisma.$queryRaw<DiscoveryFeedbackDbRow[]>`
+      SELECT
+        "id",
+        "createdAt",
+        "entityHintId",
+        "entityName",
+        "originalEntityType",
+        "finalEntityType",
+        "originalStatus",
+        "finalStatus",
+        "decision",
+        "reasonTags",
+        "comment",
+        "operator",
+        "sourceUrl",
+        "sourceTitle",
+        "isHumanDecision",
+        "decisionSource",
+        "authenticityScore",
+        "metadata"
+      FROM "DiscoveryFeedback"
+      ORDER BY "createdAt" DESC
+      LIMIT ${Math.max(1, limit)}
+    `;
+    return rows.map(discoveryFeedbackRowToRecord);
   } catch {
     return [];
   }
-
-  const rows: DiscoveryFeedbackRecord[] = [];
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      continue;
-    }
-    try {
-      const parsed = JSON.parse(trimmed) as DiscoveryFeedbackRecord;
-      if (parsed && typeof parsed === "object" && typeof parsed.id === "string") {
-        rows.push(parsed);
-      }
-    } catch {
-      // Ignore malformed legacy rows so the viewer stays usable.
-    }
-  }
-
-  return rows
-    .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
-    .slice(0, Math.max(1, limit));
 }
 
 export function isVerificationFeedbackRecord(record: DiscoveryFeedbackRecord): boolean {
@@ -233,7 +411,14 @@ export function isHumanFeedbackRecord(record: DiscoveryFeedbackRecord): boolean 
   if (record.isHumanDecision === false || record.decisionSource === "system_rule") {
     return false;
   }
-  return record.context?.source === "discovery_item" && !isVerificationFeedbackRecord(record);
+  return (
+    (record.context?.source === "discovery_item" ||
+      record.context?.source === "discovery_candidate" ||
+      record.decisionSource === "entity_queue" ||
+      record.decisionSource === "discovery_candidate" ||
+      record.decisionSource === "project_import_review") &&
+    !isVerificationFeedbackRecord(record)
+  );
 }
 
 export function summarizeDiscoveryFeedback(records: DiscoveryFeedbackRecord[]) {

@@ -256,6 +256,12 @@ export default async function AdminDiscoveryFeedbackPage({
           >
             {includeTest ? "已包含测试" : "包含测试记录"}
           </Link>
+          <Link
+            href={`/admin/discovery/feedback/export?limit=${limit}`}
+            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm"
+          >
+            Export JSONL
+          </Link>
         </div>
       </header>
 

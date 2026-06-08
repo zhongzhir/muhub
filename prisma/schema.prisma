@@ -462,6 +462,7 @@ model EntityHint {
   @@index([sourceSignalId])
   @@index([normalizedName])
   feedbacks            EntityHintFeedback[]
+  discoveryFeedbacks   DiscoveryFeedback[]
 }
 
 /** Entity Discovery E1.6：人工结构化反馈（Industry Cognition Layer 语料） */
@@ -485,6 +486,35 @@ model EntityHintFeedback {
 
   @@index([entityHintId, createdAt(sort: Desc)])
   @@index([action, createdAt(sort: Desc)])
+}
+
+model DiscoveryFeedback {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+
+  entityHintId       String?
+  entityHint         EntityHint? @relation(fields: [entityHintId], references: [id], onDelete: SetNull)
+
+  entityName         String
+  originalEntityType String?
+  finalEntityType    String?
+  originalStatus     String?
+  finalStatus        String?
+  decision           String
+  reasonTags         Json?
+  comment            String?  @db.Text
+  operator           String?
+  sourceUrl          String?
+  sourceTitle        String?
+  isHumanDecision    Boolean  @default(true)
+  decisionSource     String?
+  authenticityScore  Int?
+  metadata           Json?
+
+  @@index([entityHintId, createdAt(sort: Desc)])
+  @@index([decision, createdAt(sort: Desc)])
+  @@index([isHumanDecision, createdAt(sort: Desc)])
+  @@index([decisionSource, createdAt(sort: Desc)])
 }
 
 /** Discovery V2：候选 Enrichment 任务（审计；不落原始 HTML） */

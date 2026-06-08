@@ -11,7 +11,7 @@
 import { createWriteStream } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { loadFeedbackDatasetRows } from "@/lib/discovery/entity/feedback-crud";
+import { readDiscoveryFeedbackRecords } from "@/lib/discovery/feedback-capture";
 import { prisma } from "@/lib/prisma";
 
 function parseArgs(argv: string[]): { out: string; limit: number } {
@@ -34,25 +34,13 @@ function parseArgs(argv: string[]): { out: string; limit: number } {
 
 async function main(): Promise<void> {
   const { out, limit } = parseArgs(process.argv.slice(2));
-  const rows = await loadFeedbackDatasetRows(limit);
+  const rows = await readDiscoveryFeedbackRecords(limit);
 
   await mkdir(path.dirname(out), { recursive: true });
 
   const stream = createWriteStream(out, { encoding: "utf8" });
   for (const row of rows) {
-    const line = JSON.stringify({
-      signalTitle: row.signalTitle,
-      snippet: row.snippet,
-      entityName: row.entityName,
-      entityType: row.entityType,
-      action: row.action,
-      feedbackTags: row.feedbackTags,
-      notes: row.notes ?? row.feedbackReason ?? "",
-      sourceType: row.sourceType,
-      sourceAuthority: row.sourceAuthority,
-      scope: row.scope,
-    });
-    stream.write(`${line}\n`);
+    stream.write(`${JSON.stringify(row)}\n`);
   }
 
   await new Promise<void>((resolve, reject) => {
@@ -60,7 +48,7 @@ async function main(): Promise<void> {
     stream.on("error", reject);
   });
 
-  const total = await prisma.entityHintFeedback.count();
+  const total = rows.length;
   console.log(
     JSON.stringify(
       {
