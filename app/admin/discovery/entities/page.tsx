@@ -45,7 +45,7 @@ export default async function AdminDiscoveryEntitiesPage({
 }) {
   const sp = await searchParams;
   const filters = parseEntityHintListFilters(sp);
-  const { status, entityType, scope, q } = filters;
+  const { status, entityType, scope, q, sourceKey, sourceName } = filters;
   const where = buildEntityHintWhereInput(filters);
   const feedbackEnabled = isEntityFeedbackEnabled();
 
@@ -55,7 +55,7 @@ export default async function AdminDiscoveryEntitiesPage({
     take: 100,
     include: {
       sourceSignal: {
-        select: { id: true, sourceName: true, signalType: true },
+        select: { id: true, sourceName: true, signalType: true, source: { select: { key: true } } },
       },
       _count: {
         select: { feedbacks: true },
@@ -72,13 +72,15 @@ export default async function AdminDiscoveryEntitiesPage({
     },
   });
 
-  const [filteredTotal, pendingInFilter] = await Promise.all([
+  const [filteredTotal, pendingInFilter, acceptedInFilter, rejectedInFilter] = await Promise.all([
     prisma.entityHint.count({ where }),
     prisma.entityHint.count({ where: { ...where, status: "PENDING" } }),
+    prisma.entityHint.count({ where: { ...where, status: "ACCEPTED" } }),
+    prisma.entityHint.count({ where: { ...where, status: "REJECTED" } }),
   ]);
 
   const filterSummary =
-    status !== "ALL" || entityType !== "ALL" || scope !== "ALL" || q
+    status !== "ALL" || entityType !== "ALL" || scope !== "ALL" || q || sourceKey || sourceName
       ? "当前筛选下"
       : "全库";
 
@@ -99,6 +101,11 @@ export default async function AdminDiscoveryEntitiesPage({
             ? " E1.6 反馈已开启：列表操作会打开结构化 feedback 面板。"
             : " 开启 ENTITY_FEEDBACK_ENABLED 后可使用结构化 feedback。"}
         </p>
+        {sourceKey || sourceName ? (
+          <p className="mt-1 text-xs text-zinc-500">
+            sourceKey: {sourceKey || "ALL"} / sourceName: {sourceName || "ALL"} / total {filteredTotal} / PENDING {pendingInFilter} / ACCEPTED {acceptedInFilter} / REJECTED {rejectedInFilter}
+          </p>
+        ) : null}
       </header>
 
       <section className="flex flex-wrap gap-2 text-sm">
@@ -156,6 +163,8 @@ export default async function AdminDiscoveryEntitiesPage({
         {status !== "ALL" ? <input type="hidden" name="status" value={status} /> : null}
         {entityType !== "ALL" ? <input type="hidden" name="entityType" value={entityType} /> : null}
         {scope !== "ALL" ? <input type="hidden" name="scope" value={scope} /> : null}
+        {sourceKey ? <input type="hidden" name="sourceKey" value={sourceKey} /> : null}
+        {sourceName ? <input type="hidden" name="sourceName" value={sourceName} /> : null}
         <input
           name="q"
           defaultValue={q}
@@ -167,6 +176,31 @@ export default async function AdminDiscoveryEntitiesPage({
           className="rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
         >
           搜索
+        </button>
+      </form>
+
+      <form method="get" className="flex flex-wrap items-center gap-2">
+        {status !== "ALL" ? <input type="hidden" name="status" value={status} /> : null}
+        {entityType !== "ALL" ? <input type="hidden" name="entityType" value={entityType} /> : null}
+        {scope !== "ALL" ? <input type="hidden" name="scope" value={scope} /> : null}
+        {q ? <input type="hidden" name="q" value={q} /> : null}
+        <input
+          name="sourceKey"
+          defaultValue={sourceKey}
+          placeholder="sourceKey，例如 publishing-publishing-perspectives"
+          className="min-w-[300px] rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        />
+        <input
+          name="sourceName"
+          defaultValue={sourceName}
+          placeholder="sourceName"
+          className="min-w-[180px] rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        />
+        <button
+          type="submit"
+          className="rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
+        >
+          Filter Source
         </button>
       </form>
 
@@ -243,6 +277,11 @@ export default async function AdminDiscoveryEntitiesPage({
                       ) : (
                         "规则"
                       )}
+                      {row.sourceSignal?.source?.key ? (
+                        <div className="mt-1 font-mono text-[11px] text-zinc-400">
+                          {row.sourceSignal.source.key}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-3 py-2">
                       <span

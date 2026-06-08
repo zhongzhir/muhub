@@ -7,6 +7,8 @@ export type EntityHintListFilters = {
   entityType: "ALL" | (typeof ENTITY_TYPES)[number];
   scope: "ALL" | (typeof DISCOVERY_SCOPES)[number];
   q: string;
+  sourceKey: string;
+  sourceName: string;
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -16,6 +18,8 @@ export function parseEntityHintListFilters(sp: SearchParams): EntityHintListFilt
   const entityTypeRaw = typeof sp.entityType === "string" ? sp.entityType.toUpperCase() : "ALL";
   const scopeRaw = typeof sp.scope === "string" ? sp.scope : "ALL";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const sourceKey = typeof sp.sourceKey === "string" ? sp.sourceKey.trim() : "";
+  const sourceName = typeof sp.sourceName === "string" ? sp.sourceName.trim() : "";
 
   const status =
     statusRaw === "PENDING" ||
@@ -31,12 +35,29 @@ export function parseEntityHintListFilters(sp: SearchParams): EntityHintListFilt
     ? (scopeRaw as EntityHintListFilters["scope"])
     : "ALL";
 
-  return { status, entityType, scope, q };
+  return { status, entityType, scope, q, sourceKey, sourceName };
 }
 
 export function buildEntityHintWhereInput(
   filters: EntityHintListFilters,
 ): Prisma.EntityHintWhereInput {
+  const sourceSignalWhere: Prisma.DiscoverySignalWhereInput = {
+    ...(filters.sourceKey
+      ? {
+          source: {
+            key: filters.sourceKey,
+          },
+        }
+      : {}),
+    ...(filters.sourceName
+      ? {
+          sourceName: {
+            contains: filters.sourceName,
+            mode: "insensitive",
+          },
+        }
+      : {}),
+  };
   const where: Prisma.EntityHintWhereInput = {
     ...(filters.status !== "ALL" ? { status: filters.status } : {}),
     ...(filters.entityType !== "ALL" ? { entityType: filters.entityType } : {}),
@@ -54,6 +75,11 @@ export function buildEntityHintWhereInput(
             { sourceTitle: { contains: filters.q, mode: "insensitive" } },
             { reason: { contains: filters.q, mode: "insensitive" } },
           ],
+        }
+      : {}),
+    ...(filters.sourceKey || filters.sourceName
+      ? {
+          sourceSignal: sourceSignalWhere,
         }
       : {}),
   };
@@ -74,6 +100,12 @@ export function buildEntityHintListHref(input: EntityHintListFilters): string {
   }
   if (input.q) {
     params.set("q", input.q);
+  }
+  if (input.sourceKey) {
+    params.set("sourceKey", input.sourceKey);
+  }
+  if (input.sourceName) {
+    params.set("sourceName", input.sourceName);
   }
   return `/admin/discovery/entities${params.toString() ? `?${params.toString()}` : ""}`;
 }

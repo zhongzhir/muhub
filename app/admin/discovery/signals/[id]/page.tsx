@@ -13,6 +13,26 @@ import { SignalAiInsightPanel } from "./signal-ai-insight-panel";
 
 export const dynamic = "force-dynamic";
 
+function metadataObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function entityExtractionStatus(value: unknown): Record<string, unknown> {
+  return metadataObject(metadataObject(value).entityExtraction);
+}
+
+function displayMeta(value: unknown): string {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (typeof value === "string" && value.trim()) {
+    return value;
+  }
+  return "-";
+}
+
 export default async function AdminDiscoverySignalDetailPage({
   params,
 }: {
@@ -40,6 +60,7 @@ export default async function AdminDiscoverySignalDetailPage({
       convertedCandidateId: true,
       createdAt: true,
       updatedAt: true,
+      _count: { select: { entityHints: true } },
     },
   });
   if (!row) {
@@ -67,6 +88,7 @@ export default async function AdminDiscoverySignalDetailPage({
     : null;
   const pageUrl = scanMeta?.pageUrl || row.url;
   const metadataStr = JSON.stringify(row.metadataJson ?? null, null, 2);
+  const extraction = entityExtractionStatus(row.metadataJson);
 
   return (
     <div className="space-y-6">
@@ -236,6 +258,43 @@ export default async function AdminDiscoverySignalDetailPage({
       <section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">操作</h2>
         <div className="mt-3">
+          <div className="mb-4 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-700">
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Entity Extraction</h3>
+            <dl className="mt-2 grid gap-2 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs text-zinc-500">status</dt>
+                <dd>{displayMeta(extraction.status)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">entity count</dt>
+                <dd>{row._count.entityHints}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">duplicate</dt>
+                <dd>{displayMeta(extraction.duplicate)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">skipped</dt>
+                <dd>{displayMeta(extraction.skipped)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">reason</dt>
+                <dd>{displayMeta(extraction.reason)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">text source</dt>
+                <dd>{displayMeta(extraction.textSource)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">text length</dt>
+                <dd>{displayMeta(extraction.textLength)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">source run</dt>
+                <dd className="font-mono text-xs">{displayMeta(extraction.sourceRunId)}</dd>
+              </div>
+            </dl>
+          </div>
           <SignalDetailActions signalId={row.id} status={row.status} />
         </div>
       </section>

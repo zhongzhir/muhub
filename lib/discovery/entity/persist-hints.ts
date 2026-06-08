@@ -29,6 +29,8 @@ export type ExtractHintsForSignalOptions = {
   minConfidence?: number;
   minRelevance?: number;
   force?: boolean;
+  sourceRunId?: string;
+  reason?: string;
 };
 
 export type ExtractHintsForSignalResult = PersistEntityHintsResult & {
@@ -126,7 +128,8 @@ export async function extractAndPersistHintsForSignal(
   signalId: string,
   options?: ExtractHintsForSignalOptions,
 ): Promise<ExtractHintsForSignalResult> {
-  if (!options?.force && !isEntityHintExtractionEnabled()) {
+  const isConfiguredRssAutoExtraction = options?.reason === "rss_auto_entity_extraction";
+  if (!options?.force && !isConfiguredRssAutoExtraction && !isEntityHintExtractionEnabled()) {
     return {
       signalId,
       extracted: 0,
@@ -218,6 +221,8 @@ export async function extractAndPersistHintsForSignal(
     sourceTitle: signal.title,
     discoveryScopes,
     drafts: extraction.hints,
+    sourceRunId: options?.sourceRunId,
+    extractionReason: options?.reason,
   });
 
   return {
@@ -239,6 +244,8 @@ export async function persistEntityHintDrafts(input: {
   sourceTitle: string;
   discoveryScopes: string[];
   drafts: ExtractedEntityHintDraft[];
+  sourceRunId?: string;
+  extractionReason?: string;
 }): Promise<PersistEntityHintsResult> {
   let extracted = 0;
   let duplicate = 0;
@@ -276,7 +283,11 @@ export async function persistEntityHintDrafts(input: {
           sourceUrl: input.sourceUrl,
           sourceTitle: input.sourceTitle,
           sourceTextSnippet: draft.sourceTextSnippet ?? null,
-          evidenceJson: draft.evidenceJson as unknown as Prisma.InputJsonValue,
+          evidenceJson: {
+            ...draft.evidenceJson,
+            sourceRunId: input.sourceRunId ?? null,
+            extractionReason: input.extractionReason ?? null,
+          } as unknown as Prisma.InputJsonValue,
           confidence: draft.confidence,
           status: "PENDING",
           reason: draft.reason,

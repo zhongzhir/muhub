@@ -219,7 +219,7 @@ export async function runDiscoverySourceByKey(key: string): Promise<RunDiscovery
       }
 
       if (config.mode === "rss" && config.url?.trim()) {
-        const rss = await runRssDiscoveryForSource({ source, logs });
+        const rss = await runRssDiscoveryForSource({ source, logs, runId: run.id });
         fetchedCount = rss.fetchedCount;
         parsedCount = rss.parsedCount;
         newCandidateCount = rss.newCandidateCount;
