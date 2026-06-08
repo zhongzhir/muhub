@@ -40,6 +40,13 @@ export type SourceAuthorityTier =
 export type EntityHintEvidence = {
   extractionMethod: "rule" | "ai" | "signal_field";
   ruleId?: string;
+  sourceLevel?: string;
+  extractionReason?: string;
+  qualityReason?: string;
+  primarySourceCandidate?: string | null;
+  authenticityHint?: string;
+  shouldPromoteToCandidateSuggestion?: boolean;
+  candidateSuggestionReason?: string;
   sourceAuthorityTier?: SourceAuthorityTier;
   signalType?: string;
   sourceType?: string;

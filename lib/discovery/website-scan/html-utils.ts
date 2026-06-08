@@ -20,8 +20,21 @@ export function extractHtmlSnippet(html: string, maxLen = 400): string {
 
 export function extractHtmlContent(html: string, maxLen = 20_000): string {
   const bodyMatch = html.match(/<body[\s\S]*?>([\s\S]*?)<\/body>/i);
-  const text = stripHtmlTags(bodyMatch?.[1] ?? html);
-  return text.slice(0, maxLen);
+  const body = bodyMatch?.[1] ?? html;
+  const enriched = body
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<img\b[^>]*\balt\s*=\s*["']([^"']{2,200})["'][^>]*>/gi, "\nImage: $1\n")
+    .replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, "\nCaption: $1\n")
+    .replace(/<\/(?:h1|h2|h3|h4|h5|h6|p|li|tr|th|td|caption|blockquote|article|section)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, "$2 ($1)")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return enriched.slice(0, maxLen);
 }
 
 export type ExtractedLink = {

@@ -95,6 +95,13 @@ const BAD_NAME_PREFIX =
 
 const BAD_NAME_PHRASE = /(?:重点介绍|竞争格局|发展趋势|未来趋势|本文|据介绍|概述|摘要|关键词)/;
 
+const SENTENCE_FRAGMENT_PATTERN =
+  /(?:\btherefore\b|\bbecause\b|\bdue to\b|\bcreated by\b|\bcan be\b|\ballows\b|\bthese\b|\ball of\b|\bthe development of\b|杩欎簺|鎵€鏈?|鍥犳|鐢变簬|姝ｅ湪|鍒涘缓浜?|鍙互|鍧囧彲|棰嗗煙鐨勫彂灞?)/i;
+const PROJECT_RESOURCE_PATTERN =
+  /(?:system|platform|tool|model|dataset|engine|framework|project|demo|sdk|api|绯荤粺|骞冲彴|宸ュ叿|妯″瀷|鏁版嵁闆?|寮曟搸|妗嗘灦|椤圭洰|Demo|SDK|API)/i;
+const GENERIC_ORGANIZATION_PATTERN =
+  /(?:publishing association|association|committee|survey company|university press|publisher|鍑虹増绀?|鍗忎細|澶у鍑虹増绀?|濮斿憳浼?|璋冩煡鍏徃)/i;
+
 export function classifyLowQualityHint(
   draft: ExtractedEntityHintDraft,
   options?: { isWebsiteScan?: boolean; minConfidence?: number },
@@ -121,6 +128,14 @@ export function classifyLowQualityHint(
   }
 
   if (BAD_NAME_PREFIX.test(name) || BAD_NAME_PHRASE.test(name)) {
+    return "generic";
+  }
+
+  if (
+    name.length > 42 &&
+    SENTENCE_FRAGMENT_PATTERN.test(name) &&
+    !PROJECT_RESOURCE_PATTERN.test(name)
+  ) {
     return "generic";
   }
 
@@ -214,9 +229,73 @@ export function filterEntityHintDrafts(
       evidenceJson: {
         ...draft.evidenceJson,
         ...(options?.isWebsiteScan ? { context: "website_scan_filtered" } : {}),
+        extractionReason: draft.reason,
+        qualityReason: qualityReasonForAcceptedHint(draft),
+        primarySourceCandidate: primarySourceCandidateForHint(draft),
+        authenticityHint: authenticityHintForHint(draft),
+        shouldPromoteToCandidateSuggestion: shouldSuggestCandidate(draft),
+        candidateSuggestionReason: candidateSuggestionReason(draft),
       },
     });
   }
 
   return { accepted, skipped, stats };
+}
+
+function shouldSuggestCandidate(draft: ExtractedEntityHintDraft): boolean {
+  if (draft.entityType === "CONCEPT" || draft.entityType === "METHOD" || draft.entityType === "EVENT") {
+    return false;
+  }
+  if (GENERIC_ORGANIZATION_PATTERN.test(draft.name) && draft.entityType === "ORGANIZATION") {
+    return false;
+  }
+  if (PROJECT_RESOURCE_PATTERN.test(draft.name)) {
+    return true;
+  }
+  return ["PROJECT", "MODEL", "DATASET", "TOOL", "PLATFORM"].includes(draft.entityType);
+}
+
+function candidateSuggestionReason(draft: ExtractedEntityHintDraft): string {
+  if (!shouldSuggestCandidate(draft)) {
+    if (GENERIC_ORGANIZATION_PATTERN.test(draft.name)) {
+      return "generic_organization";
+    }
+    if (draft.entityType === "CONCEPT") {
+      return "concept_only";
+    }
+    if (draft.entityType === "METHOD") {
+      return "method_only";
+    }
+    return "source_insufficient";
+  }
+  if (PROJECT_RESOURCE_PATTERN.test(draft.name)) {
+    return "project_like_resource";
+  }
+  return "entity_type_candidate";
+}
+
+function primarySourceCandidateForHint(draft: ExtractedEntityHintDraft): string | null {
+  const evidence = draft.evidenceJson as Record<string, unknown>;
+  const raw = evidence.primarySourceCandidate;
+  return typeof raw === "string" && raw.trim() ? raw.trim() : null;
+}
+
+function authenticityHintForHint(draft: ExtractedEntityHintDraft): string {
+  if (draft.confidence >= 0.8) {
+    return "high_confidence_extraction";
+  }
+  if (draft.confidence >= 0.6) {
+    return "medium_confidence_extraction";
+  }
+  return "low_confidence_extraction";
+}
+
+function qualityReasonForAcceptedHint(draft: ExtractedEntityHintDraft): string {
+  if (GENERIC_ORGANIZATION_PATTERN.test(draft.name) && draft.entityType === "ORGANIZATION") {
+    return "generic_organization_retained";
+  }
+  if (PROJECT_RESOURCE_PATTERN.test(draft.name)) {
+    return "project_like_resource";
+  }
+  return "passed_quality_filter_v2";
 }

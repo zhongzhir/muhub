@@ -273,6 +273,12 @@ export async function persistEntityHintDrafts(input: {
         continue;
       }
 
+      const evidence = draft.evidenceJson as Record<string, unknown>;
+      const primarySourceCandidate =
+        typeof evidence.primarySourceCandidate === "string" && evidence.primarySourceCandidate.trim()
+          ? evidence.primarySourceCandidate.trim()
+          : null;
+
       await prisma.entityHint.create({
         data: {
           name: draft.name.trim(),
@@ -280,11 +286,12 @@ export async function persistEntityHintDrafts(input: {
           entityType: draft.entityType,
           discoveryScopes: input.discoveryScopes as unknown as Prisma.InputJsonValue,
           sourceSignalId: input.signalId,
-          sourceUrl: input.sourceUrl,
+          sourceUrl: primarySourceCandidate ?? input.sourceUrl,
           sourceTitle: input.sourceTitle,
           sourceTextSnippet: draft.sourceTextSnippet ?? null,
           evidenceJson: {
             ...draft.evidenceJson,
+            originalSignalUrl: input.sourceUrl,
             sourceRunId: input.sourceRunId ?? null,
             extractionReason: input.extractionReason ?? null,
           } as unknown as Prisma.InputJsonValue,

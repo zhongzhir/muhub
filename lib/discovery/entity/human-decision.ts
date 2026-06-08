@@ -13,6 +13,13 @@ export type EntityHumanDecisionInput = {
   finalStatus?: string | null;
   finalEntityType?: string | null;
   finalPrimarySource?: string | null;
+  mergeTarget?: string | null;
+  primarySourceOverride?: {
+    url?: string | null;
+    sourceLevel?: string | null;
+    reason?: string | null;
+  } | null;
+  expertComment?: string | null;
   reasonTags?: DiscoveryFeedbackReasonTag[];
   comment?: string | null;
   operator?: string | null;
@@ -70,7 +77,11 @@ export async function recordEntityHumanDecision(
 
   const finalStatus = input.finalStatus ?? decisionToStatus(input.decision) ?? hint.status;
   const finalEntityType = input.finalEntityType?.trim() || hint.entityType;
-  const finalPrimarySource = input.finalPrimarySource?.trim() || hint.sourceUrl || null;
+  const finalPrimarySource =
+    input.primarySourceOverride?.url?.trim() ||
+    input.finalPrimarySource?.trim() ||
+    hint.sourceUrl ||
+    null;
   const sourceLevel = sourceLevelFromEvidence(hint.evidenceJson) ?? "secondary";
 
   const discoveryFeedbackRecord = createDiscoveryFeedbackRecord({
@@ -84,6 +95,9 @@ export async function recordEntityHumanDecision(
     finalDecision: input.decision,
     originalPrimarySource: hint.sourceUrl ?? null,
     finalPrimarySource,
+    mergeTarget: input.mergeTarget ?? null,
+    primarySourceOverride: input.primarySourceOverride ?? null,
+    expertComment: input.expertComment ?? input.comment ?? null,
     sourceUrl: hint.sourceUrl ?? null,
     sourceTitle: hint.sourceTitle ?? null,
     sourceLevel,
@@ -119,7 +133,7 @@ export async function recordEntityHumanDecision(
         feedbackTags: (input.reasonTags ?? []) as unknown as Prisma.InputJsonValue,
         isHighValue: input.isHighValue ?? null,
         shouldTrackLongTerm: input.shouldTrackLongTerm ?? null,
-        notes: input.comment?.trim() || null,
+        notes: input.expertComment?.trim() || input.comment?.trim() || null,
       },
       select: { id: true },
     });

@@ -4,6 +4,7 @@ export const ENTITY_HINT_FEEDBACK_ACTIONS = [
   "UNSURE",
   "RETYPE",
   "CHANGE_PRIMARY_SOURCE",
+  "MERGE",
   "NEEDS_REVIEW",
 ] as const;
 export type EntityHintFeedbackAction = (typeof ENTITY_HINT_FEEDBACK_ACTIONS)[number];
@@ -16,7 +17,42 @@ export const ENTITY_HINT_FEEDBACK_REVIEWERS = [
 ] as const;
 export type EntityHintFeedbackReviewer = (typeof ENTITY_HINT_FEEDBACK_REVIEWERS)[number];
 
+export const EXPERT_FEEDBACK_V2_TAGS = [
+  "has_primary_source",
+  "github_verified",
+  "huggingface_verified",
+  "official_website",
+  "official_docs",
+  "multiple_sources",
+  "project_like_resource",
+  "high_industry_relevance",
+  "publishing_ai_relevant",
+  "generic_organization",
+  "sentence_fragment",
+  "article_topic_only",
+  "no_primary_source",
+  "irrelevant",
+  "project_to_dataset",
+  "project_to_model",
+  "organization_to_project",
+  "concept_to_tool",
+  "type_boundary_corrected",
+  "source_should_be_primary",
+  "article_is_secondary",
+  "found_github",
+  "found_huggingface",
+  "found_official_site",
+  "found_docs",
+  "source_cross_verified",
+  "same_entity",
+  "alias",
+  "parent_child_resource",
+  "duplicate_source",
+  "same_organization",
+] as const;
+
 export const ENTITY_HINT_FEEDBACK_TAGS = [
+  ...EXPERT_FEEDBACK_V2_TAGS,
   "official_source_exists",
   "github_exists",
   "huggingface_exists",
@@ -82,7 +118,42 @@ export function hintStatusForFeedbackAction(action: EntityHintFeedbackAction): s
   return null;
 }
 
+const EXPERT_FEEDBACK_V2_TAG_LABELS: Record<(typeof EXPERT_FEEDBACK_V2_TAGS)[number], string> = {
+  has_primary_source: "has primary source",
+  github_verified: "GitHub verified",
+  huggingface_verified: "HuggingFace verified",
+  official_website: "official website",
+  official_docs: "official docs",
+  multiple_sources: "multiple sources",
+  project_like_resource: "project-like resource",
+  high_industry_relevance: "high industry relevance",
+  publishing_ai_relevant: "publishing AI relevant",
+  generic_organization: "generic organization",
+  sentence_fragment: "sentence fragment",
+  article_topic_only: "article topic only",
+  no_primary_source: "no primary source",
+  irrelevant: "irrelevant",
+  project_to_dataset: "project to dataset",
+  project_to_model: "project to model",
+  organization_to_project: "organization to project",
+  concept_to_tool: "concept to tool",
+  type_boundary_corrected: "type boundary corrected",
+  source_should_be_primary: "source should be primary",
+  article_is_secondary: "article is secondary",
+  found_github: "found GitHub",
+  found_huggingface: "found HuggingFace",
+  found_official_site: "found official site",
+  found_docs: "found docs",
+  source_cross_verified: "source cross verified",
+  same_entity: "same entity",
+  alias: "alias",
+  parent_child_resource: "parent-child resource",
+  duplicate_source: "duplicate source",
+  same_organization: "same organization",
+};
+
 export const FEEDBACK_TAG_LABELS: Record<EntityHintFeedbackTag, string> = {
+  ...EXPERT_FEEDBACK_V2_TAG_LABELS,
   official_source_exists: "官方来源存在",
   github_exists: "GitHub存在",
   huggingface_exists: "HuggingFace存在",

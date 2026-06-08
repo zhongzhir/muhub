@@ -11,12 +11,13 @@ import {
 import { ENTITY_TYPES } from "@/lib/discovery/entity/types";
 
 const ACTION_LABELS: Record<EntityHintFeedbackAction, string> = {
-  ACCEPT: "接受导入",
-  REJECT: "拒绝导入",
-  RETYPE: "修改实体类型",
-  CHANGE_PRIMARY_SOURCE: "修改主来源",
-  NEEDS_REVIEW: "待观察",
-  UNSURE: "不确定",
+  ACCEPT: "Accept",
+  REJECT: "Reject",
+  RETYPE: "Retype",
+  CHANGE_PRIMARY_SOURCE: "Change primary source",
+  MERGE: "Merge",
+  NEEDS_REVIEW: "Needs review",
+  UNSURE: "Unsure",
 };
 
 export type EntityHintFeedbackModalProps = {
@@ -39,10 +40,12 @@ export function EntityHintFeedbackModal({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<EntityHintFeedbackTag[]>([]);
-  const [notes, setNotes] = useState("");
-  const [feedbackReason, setFeedbackReason] = useState("");
   const [finalEntityType, setFinalEntityType] = useState("");
   const [finalPrimarySource, setFinalPrimarySource] = useState("");
+  const [primarySourceLevel, setPrimarySourceLevel] = useState("");
+  const [primarySourceReason, setPrimarySourceReason] = useState("");
+  const [mergeTarget, setMergeTarget] = useState("");
+  const [expertComment, setExpertComment] = useState("");
   const [isHighValue, setIsHighValue] = useState(false);
   const [shouldTrackLongTerm, setShouldTrackLongTerm] = useState(false);
 
@@ -66,14 +69,18 @@ export function EntityHintFeedbackModal({
         hintId,
         action,
         feedbackTags: selectedTags,
-        feedbackReason: feedbackReason.trim() || undefined,
-        notes: notes.trim() || undefined,
-        finalEntityType:
-          action === "RETYPE" && finalEntityType.trim() ? finalEntityType.trim() : undefined,
-        finalPrimarySource:
-          action === "CHANGE_PRIMARY_SOURCE" && finalPrimarySource.trim()
-            ? finalPrimarySource.trim()
-            : undefined,
+        notes: expertComment.trim() || undefined,
+        expertComment: expertComment.trim() || undefined,
+        finalEntityType: finalEntityType.trim() || undefined,
+        finalPrimarySource: finalPrimarySource.trim() || undefined,
+        mergeTarget: mergeTarget.trim() || undefined,
+        primarySourceOverride: finalPrimarySource.trim()
+          ? {
+              url: finalPrimarySource.trim(),
+              sourceLevel: primarySourceLevel.trim() || undefined,
+              reason: primarySourceReason.trim() || undefined,
+            }
+          : undefined,
         isHighValue: isHighValue || undefined,
         shouldTrackLongTerm: shouldTrackLongTerm || undefined,
       });
@@ -93,11 +100,11 @@ export function EntityHintFeedbackModal({
       aria-modal="true"
       aria-labelledby="entity-feedback-modal-title"
     >
-      <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-4 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="max-h-[92vh] w-full max-w-2xl overflow-auto rounded-xl border border-zinc-200 bg-white p-4 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 id="entity-feedback-modal-title" className="text-sm font-semibold">
-              Discovery 判断：{ACTION_LABELS[action]}
+              Expert Feedback V2: {ACTION_LABELS[action]}
             </h2>
             {hintName ? <p className="mt-1 truncate text-xs text-zinc-500">{hintName}</p> : null}
           </div>
@@ -106,16 +113,16 @@ export function EntityHintFeedbackModal({
             onClick={onClose}
             disabled={pending}
             className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-            aria-label="关闭"
+            aria-label="Close"
           >
             x
           </button>
         </div>
 
-        <div className="mt-4 space-y-3 text-sm">
+        <div className="mt-4 space-y-4 text-sm">
           <div>
-            <p className="text-xs text-zinc-500">Reason Tags</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <p className="text-xs text-zinc-500">Reason tags</p>
+            <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-auto rounded border border-zinc-200 p-2 dark:border-zinc-700">
               {ENTITY_HINT_FEEDBACK_TAGS.map((tag) => {
                 const active = selectedTags.includes(tag);
                 return (
@@ -136,15 +143,15 @@ export function EntityHintFeedbackModal({
             </div>
           </div>
 
-          {action === "RETYPE" ? (
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs text-zinc-500">最终实体类型</span>
+              <span className="text-xs text-zinc-500">Final entity type</span>
               <select
                 value={finalEntityType}
                 onChange={(e) => setFinalEntityType(e.target.value)}
                 className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
               >
-                <option value="">请选择</option>
+                <option value="">Keep current</option>
                 {ENTITY_TYPES.map((type) => (
                   <option key={type} value={type}>
                     {type}
@@ -152,39 +159,65 @@ export function EntityHintFeedbackModal({
                 ))}
               </select>
             </label>
-          ) : null}
 
-          {action === "CHANGE_PRIMARY_SOURCE" ? (
             <label className="block">
-              <span className="text-xs text-zinc-500">新的主来源 URL</span>
+              <span className="text-xs text-zinc-500">Merge target</span>
+              <input
+                type="text"
+                value={mergeTarget}
+                onChange={(e) => setMergeTarget(e.target.value)}
+                placeholder="Existing Entity / Candidate / Project name"
+                className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-[1fr_150px]">
+            <label className="block">
+              <span className="text-xs text-zinc-500">Primary source override URL</span>
               <input
                 type="url"
                 value={finalPrimarySource}
                 onChange={(e) => setFinalPrimarySource(e.target.value)}
-                placeholder="https://github.com/... 或 https://huggingface.co/..."
+                placeholder="https://github.com/... or https://huggingface.co/..."
                 className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
               />
             </label>
-          ) : null}
+
+            <label className="block">
+              <span className="text-xs text-zinc-500">Source level</span>
+              <select
+                value={primarySourceLevel}
+                onChange={(e) => setPrimarySourceLevel(e.target.value)}
+                className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
+              >
+                <option value="">Unchanged</option>
+                <option value="primary">primary</option>
+                <option value="primary_candidate">primary_candidate</option>
+                <option value="secondary">secondary</option>
+                <option value="secondary_evidence">secondary_evidence</option>
+              </select>
+            </label>
+          </div>
 
           <label className="block">
-            <span className="text-xs text-zinc-500">判断说明（建议填写）</span>
+            <span className="text-xs text-zinc-500">Primary source reason</span>
             <input
               type="text"
-              value={feedbackReason}
-              onChange={(e) => setFeedbackReason(e.target.value)}
-              placeholder="请说明判断依据"
+              value={primarySourceReason}
+              onChange={(e) => setPrimarySourceReason(e.target.value)}
+              placeholder="Example: article is secondary, GitHub is the primary source"
               className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
             />
           </label>
 
           <label className="block">
-            <span className="text-xs text-zinc-500">补充备注</span>
+            <span className="text-xs text-zinc-500">Expert comment</span>
             <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="可为空"
+              value={expertComment}
+              onChange={(e) => setExpertComment(e.target.value)}
+              rows={4}
+              placeholder="Explain the judgment. Example: This is a publisher name, not a project. Keep it as organization but do not promote to candidate."
               className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
             />
           </label>
@@ -196,7 +229,7 @@ export function EntityHintFeedbackModal({
                 checked={isHighValue}
                 onChange={(e) => setIsHighValue(e.target.checked)}
               />
-              高价值实体
+              High value
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -204,7 +237,7 @@ export function EntityHintFeedbackModal({
                 checked={shouldTrackLongTerm}
                 onChange={(e) => setShouldTrackLongTerm(e.target.checked)}
               />
-              长期跟踪
+              Track long term
             </label>
           </div>
 
@@ -215,7 +248,7 @@ export function EntityHintFeedbackModal({
               onClick={submit}
               className="rounded border border-zinc-900 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
             >
-              {pending ? "提交中..." : "提交判断"}
+              {pending ? "Submitting..." : "Submit feedback"}
             </button>
             <button
               type="button"
@@ -223,7 +256,7 @@ export function EntityHintFeedbackModal({
               onClick={onClose}
               className="rounded border border-zinc-300 px-3 py-1.5 text-xs dark:border-zinc-600"
             >
-              取消
+              Cancel
             </button>
           </div>
         </div>

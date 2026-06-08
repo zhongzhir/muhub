@@ -21,6 +21,15 @@ export const DISCOVERY_FEEDBACK_DECISIONS = [
 export type DiscoveryFeedbackDecision = (typeof DISCOVERY_FEEDBACK_DECISIONS)[number];
 
 export const DISCOVERY_FEEDBACK_REASON_TAGS = [
+  "has_primary_source",
+  "github_verified",
+  "huggingface_verified",
+  "official_website",
+  "official_docs",
+  "multiple_sources",
+  "project_like_resource",
+  "high_industry_relevance",
+  "publishing_ai_relevant",
   "official_source_exists",
   "github_exists",
   "huggingface_exists",
@@ -35,6 +44,29 @@ export const DISCOVERY_FEEDBACK_REASON_TAGS = [
   "duplicate_project",
   "insufficient_information",
   "ai_misidentified",
+  "generic_organization",
+  "sentence_fragment",
+  "article_topic_only",
+  "no_primary_source",
+  "duplicate",
+  "irrelevant",
+  "project_to_dataset",
+  "project_to_model",
+  "organization_to_project",
+  "concept_to_tool",
+  "type_boundary_corrected",
+  "source_should_be_primary",
+  "article_is_secondary",
+  "found_github",
+  "found_huggingface",
+  "found_official_site",
+  "found_docs",
+  "source_cross_verified",
+  "same_entity",
+  "alias",
+  "parent_child_resource",
+  "duplicate_source",
+  "same_organization",
   "found_more_trusted_source",
   "official_source",
   "github_source",
@@ -58,6 +90,13 @@ export type DiscoveryFeedbackRecord = {
   finalDecision: DiscoveryFeedbackDecision;
   originalPrimarySource: string | null;
   finalPrimarySource: string | null;
+  mergeTarget?: string | null;
+  primarySourceOverride?: {
+    url?: string | null;
+    sourceLevel?: string | null;
+    reason?: string | null;
+  } | null;
+  expertComment?: string | null;
   sourceUrl?: string | null;
   sourceTitle?: string | null;
   sourceLevel?: string | null;
@@ -145,6 +184,15 @@ export function createDiscoveryFeedbackRecord(
     finalDecision: input.finalDecision,
     originalPrimarySource: cleanString(input.originalPrimarySource),
     finalPrimarySource: cleanString(input.finalPrimarySource),
+    mergeTarget: cleanString(input.mergeTarget),
+    primarySourceOverride: input.primarySourceOverride
+      ? {
+          url: cleanString(input.primarySourceOverride.url),
+          sourceLevel: cleanString(input.primarySourceOverride.sourceLevel),
+          reason: cleanString(input.primarySourceOverride.reason),
+        }
+      : undefined,
+    expertComment: cleanString(input.expertComment),
     sourceUrl: cleanString(input.sourceUrl),
     sourceTitle: cleanString(input.sourceTitle),
     sourceLevel: cleanString(input.sourceLevel),
@@ -215,6 +263,9 @@ function metadataForRecord(record: DiscoveryFeedbackRecord): Record<string, unkn
     originalDecision: record.originalDecision,
     originalPrimarySource: record.originalPrimarySource,
     finalPrimarySource: record.finalPrimarySource,
+    mergeTarget: record.mergeTarget ?? null,
+    primarySourceOverride: record.primarySourceOverride ?? null,
+    expertComment: record.expertComment ?? null,
     sourceLevel: record.sourceLevel,
     context: record.context ?? null,
     evidence: record.evidence ?? null,
@@ -343,6 +394,14 @@ function discoveryFeedbackRowToRecord(row: DiscoveryFeedbackDbRow): DiscoveryFee
     finalDecision: isDecision(row.decision) ? row.decision : "NEEDS_REVIEW",
     originalPrimarySource: stringFromMetadata(metadata, "originalPrimarySource"),
     finalPrimarySource: stringFromMetadata(metadata, "finalPrimarySource"),
+    mergeTarget: stringFromMetadata(metadata, "mergeTarget"),
+    primarySourceOverride:
+      metadata.primarySourceOverride &&
+      typeof metadata.primarySourceOverride === "object" &&
+      !Array.isArray(metadata.primarySourceOverride)
+        ? (metadata.primarySourceOverride as DiscoveryFeedbackRecord["primarySourceOverride"])
+        : undefined,
+    expertComment: stringFromMetadata(metadata, "expertComment"),
     sourceUrl: row.sourceUrl,
     sourceTitle: row.sourceTitle,
     sourceLevel: stringFromMetadata(metadata, "sourceLevel"),

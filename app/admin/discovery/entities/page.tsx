@@ -38,6 +38,16 @@ function formatScopes(scopes: unknown): string {
   return items.length > 0 ? items.join(", ") : "—";
 }
 
+function evidenceObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function evidenceText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 export default async function AdminDiscoveryEntitiesPage({
   searchParams,
 }: {
@@ -243,6 +253,9 @@ export default async function AdminDiscoveryEntitiesPage({
             ) : (
               rows.map((row) => {
                 const aiEv = parseAiJudgeEvidence(row.evidenceJson);
+                const evidence = evidenceObject(row.evidenceJson);
+                const qualityReason = evidenceText(evidence.qualityReason);
+                const suggestion = evidence.shouldPromoteToCandidateSuggestion;
                 const feedbackCount = row._count.feedbacks;
                 const hasHighValue = row.feedbacks.some((f) => f.isHighValue === true);
                 const hasLongTerm = row.feedbacks.some((f) => f.shouldTrackLongTerm === true);
@@ -336,6 +349,14 @@ export default async function AdminDiscoveryEntitiesPage({
                     </td>
                     <td className="max-w-[220px] truncate px-3 py-2 text-xs text-zinc-600 dark:text-zinc-400">
                       {row.reason ?? "—"}
+                      {qualityReason ? (
+                        <div className="mt-1 text-zinc-400">quality={qualityReason}</div>
+                      ) : null}
+                      {typeof suggestion === "boolean" ? (
+                        <div className="mt-1 text-zinc-400">
+                          candidateSuggestion={suggestion ? "true" : "false"}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-3 py-2 text-xs text-zinc-500">
                       {row.createdAt.toISOString().slice(0, 10)}

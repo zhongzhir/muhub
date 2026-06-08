@@ -1,0 +1,484 @@
+{
+  "generatedAt": "2026-06-08T11:00:49.932Z",
+  "publishedProjectCount": 313,
+  "projectTypeDistribution": [
+    {
+      "label": "developer_tool",
+      "count": 67
+    },
+    {
+      "label": "publishing_media",
+      "count": 50
+    },
+    {
+      "label": "design_creative",
+      "count": 28
+    },
+    {
+      "label": "ai_agent",
+      "count": 20
+    },
+    {
+      "label": "other",
+      "count": 18
+    },
+    {
+      "label": "productivity",
+      "count": 18
+    },
+    {
+      "label": "content_media",
+      "count": 14
+    },
+    {
+      "label": "education_learning",
+      "count": 14
+    },
+    {
+      "label": "工具",
+      "count": 12
+    },
+    {
+      "label": "data_model",
+      "count": 9
+    },
+    {
+      "label": "finance_investment",
+      "count": 7
+    },
+    {
+      "label": "discovery-json-queue",
+      "count": 5
+    },
+    {
+      "label": "AI 视频生成",
+      "count": 4
+    },
+    {
+      "label": "enterprise_service",
+      "count": 3
+    },
+    {
+      "label": "生产力工具",
+      "count": 2
+    },
+    {
+      "label": "视频工具",
+      "count": 2
+    },
+    {
+      "label": "AI_WRITING",
+      "count": 2
+    },
+    {
+      "label": "ai-agents",
+      "count": 2
+    },
+    {
+      "label": "AI工具",
+      "count": 2
+    },
+    {
+      "label": "AI图像生成",
+      "count": 2
+    },
+    {
+      "label": "3D打印工具",
+      "count": 1
+    },
+    {
+      "label": "安全工具",
+      "count": 1
+    },
+    {
+      "label": "壁纸与图片",
+      "count": 1
+    },
+    {
+      "label": "创意工具",
+      "count": 1
+    },
+    {
+      "label": "开发工具",
+      "count": 1
+    },
+    {
+      "label": "灵性与命理",
+      "count": 1
+    },
+    {
+      "label": "浏览器扩展",
+      "count": 1
+    },
+    {
+      "label": "社交与通讯",
+      "count": 1
+    },
+    {
+      "label": "图像处理",
+      "count": 1
+    },
+    {
+      "label": "音频/音乐工具",
+      "count": 1
+    }
+  ],
+  "tagDistribution": [
+    {
+      "label": "开源",
+      "count": 56
+    },
+    {
+      "label": "开发者",
+      "count": 19
+    },
+    {
+      "label": "ai-agent",
+      "count": 19
+    },
+    {
+      "label": "出版流程管理",
+      "count": 15
+    },
+    {
+      "label": "写作辅助",
+      "count": 15
+    },
+    {
+      "label": "自动化",
+      "count": 15
+    },
+    {
+      "label": "ai",
+      "count": 15
+    },
+    {
+      "label": "编辑校对",
+      "count": 12
+    },
+    {
+      "label": "web",
+      "count": 12
+    },
+    {
+      "label": "在线工具",
+      "count": 10
+    },
+    {
+      "label": "智能体",
+      "count": 9
+    },
+    {
+      "label": "python",
+      "count": 9
+    },
+    {
+      "label": "rag",
+      "count": 9
+    },
+    {
+      "label": "内容审核",
+      "count": 8
+    },
+    {
+      "label": "claude",
+      "count": 8
+    },
+    {
+      "label": "llm",
+      "count": 8
+    },
+    {
+      "label": "开源工具",
+      "count": 7
+    },
+    {
+      "label": "AI",
+      "count": 7
+    },
+    {
+      "label": "免费工具",
+      "count": 6
+    },
+    {
+      "label": "内容创作",
+      "count": 6
+    },
+    {
+      "label": "视频生成",
+      "count": 6
+    },
+    {
+      "label": "选题策划",
+      "count": 6
+    },
+    {
+      "label": "AI视频生成",
+      "count": 6
+    },
+    {
+      "label": "claude-code",
+      "count": 6
+    },
+    {
+      "label": "LLM",
+      "count": 6
+    },
+    {
+      "label": "Python",
+      "count": 6
+    },
+    {
+      "label": "rust",
+      "count": 6
+    },
+    {
+      "label": "typescript",
+      "count": 6
+    },
+    {
+      "label": "大语言模型",
+      "count": 5
+    },
+    {
+      "label": "独立开发",
+      "count": 5
+    }
+  ],
+  "sourceKindDistribution": [
+    {
+      "label": "WEBSITE",
+      "count": 216
+    },
+    {
+      "label": "GITHUB",
+      "count": 194
+    },
+    {
+      "label": "WECHAT_ARTICLE",
+      "count": 47
+    },
+    {
+      "label": "DOCS",
+      "count": 29
+    },
+    {
+      "label": "BLOG",
+      "count": 18
+    },
+    {
+      "label": "OTHER",
+      "count": 14
+    },
+    {
+      "label": "TWITTER",
+      "count": 9
+    }
+  ],
+  "primarySourceDistribution": [
+    {
+      "label": "website",
+      "count": 188
+    },
+    {
+      "label": "github",
+      "count": 172
+    }
+  ],
+  "sourceCoverage": {
+    "github": {
+      "count": 367,
+      "ratio": 117.3
+    },
+    "website": {
+      "count": 715,
+      "ratio": 228.4
+    },
+    "huggingface": {
+      "count": 1,
+      "ratio": 0.3
+    },
+    "wechat": {
+      "count": 50,
+      "ratio": 16
+    },
+    "docs": {
+      "count": 28,
+      "ratio": 8.9
+    }
+  },
+  "namePattern": [
+    {
+      "label": "other",
+      "count": 155
+    },
+    {
+      "label": "single_product_token",
+      "count": 86
+    },
+    {
+      "label": "cjk_name",
+      "count": 42
+    },
+    {
+      "label": "title_case_phrase",
+      "count": 30
+    }
+  ],
+  "taglinePattern": [
+    {
+      "label": "cjk_name",
+      "count": 243
+    },
+    {
+      "label": "title_case_phrase",
+      "count": 45
+    },
+    {
+      "label": "other",
+      "count": 25
+    }
+  ],
+  "categoryPattern": [
+    {
+      "label": "developer_tool",
+      "count": 67
+    },
+    {
+      "label": "publishing_media",
+      "count": 50
+    },
+    {
+      "label": "design_creative",
+      "count": 28
+    },
+    {
+      "label": "ai_agent",
+      "count": 20
+    },
+    {
+      "label": "other",
+      "count": 18
+    },
+    {
+      "label": "productivity",
+      "count": 18
+    },
+    {
+      "label": "content_media",
+      "count": 14
+    },
+    {
+      "label": "education_learning",
+      "count": 14
+    },
+    {
+      "label": "工具",
+      "count": 12
+    },
+    {
+      "label": "data_model",
+      "count": 9
+    },
+    {
+      "label": "finance_investment",
+      "count": 7
+    },
+    {
+      "label": "AI 视频生成",
+      "count": 4
+    },
+    {
+      "label": "enterprise_service",
+      "count": 3
+    },
+    {
+      "label": "生产力工具",
+      "count": 2
+    },
+    {
+      "label": "视频工具",
+      "count": 2
+    },
+    {
+      "label": "AI_WRITING",
+      "count": 2
+    },
+    {
+      "label": "ai-agents",
+      "count": 2
+    },
+    {
+      "label": "AI工具",
+      "count": 2
+    },
+    {
+      "label": "AI图像生成",
+      "count": 2
+    },
+    {
+      "label": "3D打印工具",
+      "count": 1
+    },
+    {
+      "label": "安全工具",
+      "count": 1
+    },
+    {
+      "label": "壁纸与图片",
+      "count": 1
+    },
+    {
+      "label": "创意工具",
+      "count": 1
+    },
+    {
+      "label": "开发工具",
+      "count": 1
+    },
+    {
+      "label": "灵性与命理",
+      "count": 1
+    },
+    {
+      "label": "浏览器扩展",
+      "count": 1
+    },
+    {
+      "label": "社交与通讯",
+      "count": 1
+    },
+    {
+      "label": "图像处理",
+      "count": 1
+    },
+    {
+      "label": "音频/音乐工具",
+      "count": 1
+    },
+    {
+      "label": "在线工具",
+      "count": 1
+    }
+  ],
+  "fieldOriginNotes": {
+    "official": [
+      "websiteUrl",
+      "githubUrl",
+      "ProjectSource.url"
+    ],
+    "knowledge": [
+      "aiKnowledgeJson",
+      "aiStructuredProfileJson"
+    ],
+    "source": [
+      "referenceSources",
+      "ProjectSource.kind",
+      "ProjectSource.url"
+    ],
+    "legacy": [
+      "sourceType",
+      "aiSourceLevel"
+    ]
+  }
+}

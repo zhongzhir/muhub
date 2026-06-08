@@ -89,6 +89,7 @@ export default async function AdminDiscoverySignalDetailPage({
   const pageUrl = scanMeta?.pageUrl || row.url;
   const metadataStr = JSON.stringify(row.metadataJson ?? null, null, 2);
   const extraction = entityExtractionStatus(row.metadataJson);
+  const signalMeta = metadataObject(row.metadataJson);
 
   return (
     <div className="space-y-6">
@@ -292,6 +293,22 @@ export default async function AdminDiscoverySignalDetailPage({
               <div>
                 <dt className="text-xs text-zinc-500">source run</dt>
                 <dd className="font-mono text-xs">{displayMeta(extraction.sourceRunId)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">full text status</dt>
+                <dd>{displayMeta(signalMeta.fullTextStatus)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">full text source</dt>
+                <dd>{displayMeta(signalMeta.fullTextSource)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">raw text length</dt>
+                <dd>{displayMeta(signalMeta.rawTextLength)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-500">full text error</dt>
+                <dd>{displayMeta(signalMeta.fullTextError)}</dd>
               </div>
             </dl>
           </div>

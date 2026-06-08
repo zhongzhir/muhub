@@ -16,6 +16,7 @@ import {
   aiJudgedEntitiesToHintDrafts,
   runAiEntityJudge,
 } from "@/lib/discovery/entity/ai-entity-judge";
+import { classifyDiscoverySourceUrls } from "@/lib/discovery/source-link-classifier";
 
 export type SignalExtractionInput = {
   signalId: string;
@@ -61,6 +62,34 @@ function combinedText(input: SignalExtractionInput): string {
   return [input.title, input.summary, input.rawText]
     .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
     .join("\n");
+}
+
+function metadataSourceLinkUrls(metadataJson: unknown): string[] {
+  if (!metadataJson || typeof metadataJson !== "object" || Array.isArray(metadataJson)) {
+    return [];
+  }
+  const rawLinks = (metadataJson as Record<string, unknown>).sourceLinks;
+  if (!Array.isArray(rawLinks)) {
+    return [];
+  }
+  const urls: string[] = [];
+  for (const link of rawLinks) {
+    if (typeof link === "string") {
+      urls.push(link);
+    } else if (link && typeof link === "object" && !Array.isArray(link)) {
+      const rawUrl = (link as Record<string, unknown>).url;
+      if (typeof rawUrl === "string") {
+        urls.push(rawUrl);
+      }
+    }
+  }
+  return urls;
+}
+
+function bestPrimarySourceCandidate(input: SignalExtractionInput): string | null {
+  const links = classifyDiscoverySourceUrls([input.guessedGithubUrl ?? "", input.guessedWebsiteUrl ?? "", ...metadataSourceLinkUrls(input.metadataJson)]);
+  const primary = links.find((link) => link.sourceLevel === "primary_candidate");
+  return primary?.url ?? null;
 }
 
 function isValidEntityName(name: string, options?: { isWebsiteScan?: boolean }): boolean {
@@ -292,6 +321,7 @@ function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] 
   const scanOpts = { isWebsiteScan: isScan };
   const out: ExtractedEntityHintDraft[] = [];
   const seen = new Set<string>();
+  const primarySourceCandidate = bestPrimarySourceCandidate(input);
 
   if (input.guessedProjectName?.trim() && !isScan) {
     pushUnique(
@@ -425,6 +455,8 @@ function extractRules(input: SignalExtractionInput): ExtractedEntityHintDraft[] 
   for (const draft of out) {
     draft.evidenceJson = {
       ...draft.evidenceJson,
+      primarySourceCandidate,
+      sourceLevel: primarySourceCandidate ? "primary_candidate" : "secondary_evidence",
       sourceAuthorityTier: tier,
       signalType: input.signalType,
       sourceType: input.sourceType,
@@ -529,6 +561,7 @@ ${text}
 
     const cfg = getResolvedAiConfig();
     const tier = input.sourceAuthorityTier ?? "unknown";
+    const primarySourceCandidate = bestPrimarySourceCandidate(input);
 
     return parsed
       .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
@@ -552,6 +585,8 @@ ${text}
           evidenceJson: {
             extractionMethod: "ai" as const,
             aiModel: cfg.model,
+            primarySourceCandidate,
+            sourceLevel: primarySourceCandidate ? "primary_candidate" : "secondary_evidence",
             sourceAuthorityTier: tier,
             signalType: input.signalType,
             sourceType: input.sourceType,

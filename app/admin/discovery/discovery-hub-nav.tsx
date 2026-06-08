@@ -6,6 +6,7 @@ export type DiscoveryHubSection =
   | "entities"
   | "candidates"
   | "feedback"
+  | "learning"
   | "daily"
   | "tasks";
 
@@ -61,6 +62,12 @@ const SECONDARY: NavItem[] = [
     href: "/admin/discovery/tasks",
     label: "抓取任务",
     hint: "手动触发 Source Run",
+  },
+  {
+    id: "learning",
+    href: "/admin/discovery/learning",
+    label: "Learning",
+    hint: "Feedback analytics and learning suggestions",
   },
 ];
 

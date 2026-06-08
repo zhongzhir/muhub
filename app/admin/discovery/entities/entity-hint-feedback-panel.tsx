@@ -10,16 +10,18 @@ const ACTIONS: EntityHintFeedbackAction[] = [
   "REJECT",
   "RETYPE",
   "CHANGE_PRIMARY_SOURCE",
+  "MERGE",
   "NEEDS_REVIEW",
 ];
 
 const ACTION_LABELS: Record<EntityHintFeedbackAction, string> = {
-  ACCEPT: "接受",
-  REJECT: "拒绝",
-  RETYPE: "改类型",
-  CHANGE_PRIMARY_SOURCE: "改来源",
-  NEEDS_REVIEW: "待观察",
-  UNSURE: "不确定",
+  ACCEPT: "Accept",
+  REJECT: "Reject",
+  RETYPE: "Retype",
+  CHANGE_PRIMARY_SOURCE: "Source",
+  MERGE: "Merge",
+  NEEDS_REVIEW: "Review",
+  UNSURE: "Unsure",
 };
 
 const ACTION_STYLES: Record<EntityHintFeedbackAction, string> = {
@@ -31,6 +33,8 @@ const ACTION_STYLES: Record<EntityHintFeedbackAction, string> = {
     "border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-200",
   CHANGE_PRIMARY_SOURCE:
     "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200",
+  MERGE:
+    "border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200",
   NEEDS_REVIEW:
     "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
   UNSURE:
@@ -53,7 +57,7 @@ export function EntityHintFeedbackPanel({
         Discovery Feedback
       </h2>
       <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-        每次人工判断都会写入反馈数据集，用于后续 Learning Loop。
+        Every human decision is persisted as structured learning data.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">

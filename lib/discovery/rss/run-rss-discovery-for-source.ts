@@ -390,6 +390,12 @@ export async function runRssDiscoveryForSource(args: {
             summary: item.summary ?? undefined,
             sourceName: source.name,
           },
+          ...item.sourceLinks.map((link) => ({
+            type: "LINK",
+            url: link.url,
+            title: `${link.sourceKind}:${link.sourceLevel}`,
+            sourceName: source.name,
+          })),
         ],
       },
       metadataJson: {
@@ -399,6 +405,11 @@ export async function runRssDiscoveryForSource(args: {
         discoveryScopes: scopes,
         sourceKey: key,
         sourceUrl: feedUrl,
+        rawTextLength: item.rawTextLength,
+        fullTextStatus: item.fullTextStatus,
+        fullTextSource: item.fullTextSource,
+        fullTextError: item.fullTextError,
+        sourceLinks: item.sourceLinks,
         autoConvertEligible: confidence >= 0.72,
       },
     });

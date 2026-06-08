@@ -25,6 +25,13 @@ export type SubmitEntityHintFeedbackPayload = {
   notes?: string;
   finalEntityType?: string;
   finalPrimarySource?: string;
+  mergeTarget?: string;
+  primarySourceOverride?: {
+    url?: string;
+    sourceLevel?: string;
+    reason?: string;
+  };
+  expertComment?: string;
   isHighValue?: boolean;
   shouldTrackLongTerm?: boolean;
 };
@@ -55,6 +62,38 @@ function mapReasonTags(tags: EntityHintFeedbackTag[]): DiscoveryFeedbackReasonTa
     "duplicate_project",
     "insufficient_information",
     "ai_misidentified",
+    "generic_organization",
+    "sentence_fragment",
+    "article_topic_only",
+    "no_primary_source",
+    "duplicate",
+    "irrelevant",
+    "project_to_dataset",
+    "project_to_model",
+    "organization_to_project",
+    "concept_to_tool",
+    "type_boundary_corrected",
+    "source_should_be_primary",
+    "article_is_secondary",
+    "found_github",
+    "found_huggingface",
+    "found_official_site",
+    "found_docs",
+    "source_cross_verified",
+    "same_entity",
+    "alias",
+    "parent_child_resource",
+    "duplicate_source",
+    "same_organization",
+    "has_primary_source",
+    "github_verified",
+    "huggingface_verified",
+    "official_website",
+    "official_docs",
+    "multiple_sources",
+    "project_like_resource",
+    "high_industry_relevance",
+    "publishing_ai_relevant",
     "found_more_trusted_source",
     "official_source",
     "github_source",
@@ -88,9 +127,11 @@ export async function submitEntityHintFeedbackAction(
       reviewer: "operator",
       reasonTags: mapReasonTags(tags),
       comment: payload.notes || payload.feedbackReason || null,
-      finalEntityType: payload.action === "RETYPE" ? payload.finalEntityType ?? null : null,
-      finalPrimarySource:
-        payload.action === "CHANGE_PRIMARY_SOURCE" ? payload.finalPrimarySource ?? null : null,
+      finalEntityType: payload.finalEntityType ?? null,
+      finalPrimarySource: payload.finalPrimarySource ?? null,
+      mergeTarget: payload.mergeTarget ?? null,
+      primarySourceOverride: payload.primarySourceOverride ?? null,
+      expertComment: payload.expertComment ?? payload.notes ?? null,
       operator: "operator",
       isHighValue: payload.isHighValue ?? null,
       shouldTrackLongTerm: payload.shouldTrackLongTerm ?? null,
