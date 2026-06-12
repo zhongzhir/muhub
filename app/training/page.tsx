@@ -13,22 +13,22 @@ const entries = [
   {
     href: "/training/workspace",
     title: "我的工作台",
-    desc: "查看本组案例、阶段任务、小组成员和导师信息。",
+    desc: "查看本组案例、阶段任务、讨论纪要、成果记录与导师点评。",
   },
   {
     href: "/training/cases",
     title: "案例资料",
-    desc: "按班级和小组查看 6 个实践案例的基础资料。",
+    desc: "查看本次实践交流活动对应的 6 个案例基础资料。",
   },
   {
     href: "/training/register",
     title: "身份绑定",
-    desc: "使用主办方发放的邀请码绑定学员或导师身份。",
+    desc: "使用邀请码绑定学员或导师身份，进入对应班级与小组。",
   },
   {
     href: "/training/survey",
     title: "满意度调查",
-    desc: "活动结束后填写满意度反馈，供主办方复盘使用。",
+    desc: "活动结束后填写反馈意见，供主办方复盘改进。",
   },
 ];
 
@@ -42,10 +42,10 @@ export default function TrainingPage() {
         className="border-b border-zinc-200 dark:border-zinc-800"
         style={{ background: `linear-gradient(160deg, ${BRAND.navy} 0%, #243050 100%)` }}
       >
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-          <div className="max-w-3xl">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+          <div className="max-w-4xl">
             <div
-              className="mb-4 inline-flex rounded-full px-3 py-1 text-xs font-medium"
+              className="inline-flex rounded-full px-3 py-1 text-xs font-medium"
               style={{
                 background: "rgba(201,168,76,0.15)",
                 color: BRAND.gold,
@@ -54,69 +54,82 @@ export default function TrainingPage() {
             >
               2026 年 6 月 29 日至 7 月 3 日
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
+            <h1 className="mt-6 text-3xl font-semibold tracking-tight text-white sm:text-5xl">
               出版融合发展工程实践交流活动
             </h1>
-            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/70">
-              本工作台用于本期实践交流活动的小组学习、案例资料查看与阶段任务组织。平台按班级和小组隔离资料，优先保障活动期间稳定使用。
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/72 sm:text-lg">
+              本平台用于本期实践交流活动的小组学习、案例资料查阅、阶段任务记录、成果提交与活动反馈。
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/training/workspace"
-                className="rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: BRAND.gold }}
-              >
-                进入我的工作台
-              </Link>
-              <Link
-                href="/training/register"
-                className="rounded-lg border border-white/20 bg-white/10 px-6 py-2.5 text-sm font-medium text-white/85 transition-colors hover:bg-white/15"
-              >
-                绑定活动身份
-              </Link>
-            </div>
           </div>
         </div>
       </section>
 
-      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {entries.map((entry) => (
             <Link
               key={entry.href}
               href={entry.href}
-              className="rounded-xl border border-zinc-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+              className="group flex min-h-[176px] flex-col justify-between rounded-xl border border-zinc-200 bg-white p-5 transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80"
             >
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{entry.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{entry.desc}</p>
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{entry.title}</h2>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{entry.desc}</p>
+              </div>
+              <div className="mt-6 text-sm font-medium text-zinc-900 transition-colors group-hover:text-zinc-700 dark:text-zinc-100 dark:group-hover:text-zinc-200">
+                查看入口
+              </div>
             </Link>
           ))}
-        </div>
+        </section>
 
-        <section className="mt-10 rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">本期活动结构</h2>
-          <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-4">
-            <div>
-              <dt className="text-zinc-500">班级</dt>
-              <dd className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">3 个</dd>
+        <section className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <div className="max-w-xl">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">活动概览</h2>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+                本期实践交流活动以小组为基本学习单位，围绕案例研读、任务推进、成果研磨与复盘反馈组织现场学习过程。
+              </p>
             </div>
-            <div>
-              <dt className="text-zinc-500">学习小组</dt>
-              <dd className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">6 个</dd>
+            <dl className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <DataStat label="班级" value="3 个" />
+              <DataStat label="学习小组" value="6 个" />
+              <DataStat label="实践案例" value="6 个" />
+              <DataStat label="阶段任务" value="5 日任务" />
+            </dl>
+          </div>
+
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="max-w-xl">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                拓展学习：MUHUB 出版与传媒项目
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+                浏览 MUHUB 平台已收录的出版与传媒相关项目，作为案例分析、行业观察和 AI 辅助研究的补充材料。
+              </p>
             </div>
-            <div>
-              <dt className="text-zinc-500">实践案例</dt>
-              <dd className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">6 个</dd>
+            <div className="mt-6">
+              <Link
+                href="/projects?category=publishing_media"
+                className="inline-flex rounded-lg border border-zinc-900 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-900 hover:text-white dark:border-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-100 dark:hover:text-zinc-900"
+              >
+                查看出版与传媒项目
+              </Link>
             </div>
-            <div>
-              <dt className="text-zinc-500">阶段任务</dt>
-              <dd className="mt-1 font-semibold text-zinc-900 dark:text-zinc-50">5 日任务</dd>
-            </div>
-          </dl>
+          </div>
         </section>
       </main>
 
       <TrainingFooter />
+    </div>
+  );
+}
+
+function DataStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
+      <dd className="mt-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">{value}</dd>
     </div>
   );
 }
