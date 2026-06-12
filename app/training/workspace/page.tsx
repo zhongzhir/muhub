@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { FinalSubmissionForm } from "../_components/final-submission-form";
 import { GroupSwitcher } from "../_components/group-switcher";
 import { SceneTag, TrainingPageShell } from "../_components/training-chrome";
+import type { TrainingFileListItem } from "../_components/training-file-list";
 import { TrainingRecordList, type TrainingRecordListItem } from "../_components/training-record-list";
 import { TrainingTaskCard } from "../_components/training-task-card";
 import { requireTrainingLogin } from "../lib/auth";
@@ -33,6 +34,18 @@ function authorName(record: {
   const author = record.authorParticipant;
   if (!author) return "未知成员";
   return author.displayName || author.user.name || author.user.phone || author.user.email || roleLabel(author.role);
+}
+
+function fileUploaderName(file: {
+  uploaderParticipant: {
+    displayName: string | null;
+    role: string;
+    user: { name: string | null; email: string | null; phone: string | null };
+  } | null;
+}) {
+  const uploader = file.uploaderParticipant;
+  if (!uploader) return "未知成员";
+  return uploader.displayName || uploader.user.name || uploader.user.phone || uploader.user.email || roleLabel(uploader.role);
 }
 
 function roleLabel(role: string) {
@@ -82,6 +95,10 @@ export default async function TrainingWorkspacePage({
     selectedGroup && workspace
       ? workspace.records.filter((record) => record.groupId === selectedGroup.id)
       : [];
+  const selectedFiles =
+    selectedGroup && workspace
+      ? workspace.files.filter((file) => file.groupId === selectedGroup.id)
+      : [];
   const recordsForDisplay: TrainingRecordListItem[] = selectedRecords.map((record) => ({
     id: record.id,
     type: record.type,
@@ -95,6 +112,7 @@ export default async function TrainingWorkspacePage({
   const canWriteStudentRecords = currentRole === "student";
   const canWriteMentorReview = currentRole === "mentor";
   const canWriteFinalSubmission = currentRole === "student";
+  const canUploadFiles = currentRole === "student";
   const mentors =
     selectedGroup && workspace
       ? workspace.participants.filter((item) => item.role === "mentor" && item.classNo === selectedGroup.classNo)
@@ -145,7 +163,9 @@ export default async function TrainingWorkspacePage({
               </div>
               <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
                 <div className="font-semibold text-zinc-900 dark:text-zinc-50">当前记录</div>
-                <div className="mt-2 text-zinc-600 dark:text-zinc-300">{selectedRecords.length} 条</div>
+                <div className="mt-2 text-zinc-600 dark:text-zinc-300">
+                  {selectedRecords.length} 条记录，{selectedFiles.length} 个文件
+                </div>
               </div>
             </div>
           </section>
@@ -166,8 +186,20 @@ export default async function TrainingWorkspacePage({
                 records={recordsForDisplay.filter((record) =>
                   selectedRecords.some((raw) => raw.id === record.id && raw.taskId === task.id),
                 )}
+                files={selectedFiles
+                  .filter((file) => file.taskId === task.id)
+                  .map(
+                    (file): TrainingFileListItem => ({
+                      id: file.id,
+                      originalName: file.originalName,
+                      sizeBytes: file.sizeBytes,
+                      createdAt: formatTime(file.createdAt),
+                      uploaderName: fileUploaderName(file),
+                    }),
+                  )}
                 canWriteStudentRecords={canWriteStudentRecords}
                 canWriteMentorReview={canWriteMentorReview}
+                canUploadFiles={canUploadFiles}
               />
             ))}
           </section>

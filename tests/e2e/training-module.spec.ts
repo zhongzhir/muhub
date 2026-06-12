@@ -9,13 +9,20 @@ import {
   training2026Tasks,
 } from "@/app/training/lib/seed-data";
 import {
+  canDownloadTrainingFile,
   canCreateTrainingRecord,
+  canUploadTrainingFile,
   canUpdateTrainingRecord,
   canAccessTrainingCase,
   canAccessTrainingGroup,
   resolveTrainingAccessScope,
   type TrainingAccessParticipant,
 } from "@/app/training/lib/access";
+import {
+  assertAllowedTrainingUpload,
+  buildTrainingStorageKey,
+  sanitizeTrainingFileName,
+} from "@/app/training/lib/file-storage";
 import { loginAsE2EUser, skipWithoutE2EAuthGate } from "./helpers/auth";
 
 test.describe("training 2026 practice module", () => {
@@ -152,6 +159,64 @@ test.describe("training 2026 practice module", () => {
         requesterParticipantId: "m1",
       }),
     ).toBe(true);
+  });
+
+  test("file upload rules stay student-only while downloads follow group access", () => {
+    const student: TrainingAccessParticipant = {
+      role: "student",
+      classNo: 1,
+      groupNo: 1,
+    };
+    const otherStudent: TrainingAccessParticipant = {
+      role: "student",
+      classNo: 1,
+      groupNo: 2,
+    };
+    const mentor: TrainingAccessParticipant = {
+      role: "mentor",
+      classNo: 1,
+      groupNo: null,
+    };
+    const admin: TrainingAccessParticipant = {
+      role: "admin",
+      classNo: null,
+      groupNo: null,
+    };
+    const group = { classNo: 1, groupNo: 1 };
+
+    expect(canUploadTrainingFile(student, group)).toBe(true);
+    expect(canUploadTrainingFile(otherStudent, group)).toBe(false);
+    expect(canUploadTrainingFile(mentor, group)).toBe(false);
+    expect(canUploadTrainingFile(admin, group)).toBe(false);
+
+    expect(canDownloadTrainingFile(student, group)).toBe(true);
+    expect(canDownloadTrainingFile(otherStudent, group)).toBe(false);
+    expect(canDownloadTrainingFile(mentor, group)).toBe(true);
+    expect(canDownloadTrainingFile(admin, group)).toBe(true);
+  });
+
+  test("file storage helpers sanitize names and block unsafe uploads", () => {
+    expect(sanitizeTrainingFileName("..\\汇报 终稿.pptx")).toBe("汇报-终稿.pptx");
+    expect(sanitizeTrainingFileName("")).toBe("upload");
+
+    expect(
+      buildTrainingStorageKey(
+        {
+          eventSlug: "publishing-practice-2026-06",
+          classNo: 1,
+          groupNo: 2,
+        },
+        "file-1",
+        "成果.pptx",
+        new Date("2026-06-30T00:00:00.000Z"),
+      ),
+    ).toBe("publishing-practice-2026-06/c1-g2/20260630/file-1-成果.pptx");
+
+    expect(() => assertAllowedTrainingUpload({ name: "成果.pptx", size: 1024 })).not.toThrow();
+    expect(() => assertAllowedTrainingUpload({ name: "run.exe", size: 1024 })).toThrow("不支持的文件类型");
+    expect(() => assertAllowedTrainingUpload({ name: "too-large.pdf", size: 51 * 1024 * 1024 })).toThrow(
+      "文件不能超过 50MB",
+    );
   });
 });
 

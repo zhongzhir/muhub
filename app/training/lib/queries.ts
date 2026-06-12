@@ -124,31 +124,56 @@ export async function getTrainingWorkspace(participant: TrainingAccessParticipan
     return accessibleGroupKeys.has(`${item.classNo}-${item.groupNo}`);
   });
   const accessibleGroupIds = accessibleGroups.map((group) => group.id);
-  const records = accessibleGroupIds.length
-    ? await prisma.trainingRecord.findMany({
-        where: {
-          eventId: event.id,
-          groupId: { in: accessibleGroupIds },
-        },
-        include: {
-          authorParticipant: {
-            select: {
-              id: true,
-              role: true,
-              displayName: true,
-              user: {
-                select: {
-                  name: true,
-                  email: true,
-                  phone: true,
+  const [records, files] = accessibleGroupIds.length
+    ? await Promise.all([
+        prisma.trainingRecord.findMany({
+          where: {
+            eventId: event.id,
+            groupId: { in: accessibleGroupIds },
+          },
+          include: {
+            authorParticipant: {
+              select: {
+                id: true,
+                role: true,
+                displayName: true,
+                user: {
+                  select: {
+                    name: true,
+                    email: true,
+                    phone: true,
+                  },
                 },
               },
             },
           },
-        },
-        orderBy: { updatedAt: "desc" },
-      })
-    : [];
+          orderBy: { updatedAt: "desc" },
+        }),
+        prisma.trainingFile.findMany({
+          where: {
+            eventId: event.id,
+            groupId: { in: accessibleGroupIds },
+          },
+          include: {
+            uploaderParticipant: {
+              select: {
+                id: true,
+                role: true,
+                displayName: true,
+                user: {
+                  select: {
+                    name: true,
+                    email: true,
+                    phone: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+      ])
+    : [[], []];
 
   return {
     event,
@@ -157,5 +182,6 @@ export async function getTrainingWorkspace(participant: TrainingAccessParticipan
     tasks,
     participants: accessibleParticipants,
     records,
+    files,
   };
 }

@@ -65,5 +65,8 @@ data/site-content.json
 data/training-registrations.json
 data/training-homework.json
 
+# Training uploads: local private files served only through permission-checked APIs.
+storage/training/uploads/
+
 # discovery importer local cache
 .cache/

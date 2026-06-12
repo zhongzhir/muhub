@@ -83,6 +83,21 @@ export function canCreateTrainingRecord(
   return false;
 }
 
+export function canUploadTrainingFile(
+  participant: TrainingAccessParticipant | null | undefined,
+  target: TrainingAccessTarget,
+): boolean {
+  if (!participant || participant.role !== "student") return false;
+  return canAccessTrainingGroup(participant, target);
+}
+
+export function canDownloadTrainingFile(
+  participant: TrainingAccessParticipant | null | undefined,
+  target: TrainingAccessTarget,
+): boolean {
+  return canAccessTrainingGroup(participant, target);
+}
+
 export function canUpdateTrainingRecord(
   participant: TrainingAccessParticipant | null | undefined,
   target: TrainingAccessTarget,

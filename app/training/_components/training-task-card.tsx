@@ -1,4 +1,6 @@
+import { FileUploadPanel } from "./file-upload-panel";
 import { MentorReviewForm } from "./mentor-review-form";
+import { TrainingFileList, type TrainingFileListItem } from "./training-file-list";
 import { TrainingRecordForm } from "./training-record-form";
 import { TrainingRecordList, type TrainingRecordListItem } from "./training-record-list";
 
@@ -6,8 +8,10 @@ export function TrainingTaskCard({
   groupId,
   task,
   records,
+  files,
   canWriteStudentRecords,
   canWriteMentorReview,
+  canUploadFiles,
 }: {
   groupId: string;
   task: {
@@ -19,8 +23,10 @@ export function TrainingTaskCard({
     deliverables: string[];
   };
   records: TrainingRecordListItem[];
+  files: TrainingFileListItem[];
   canWriteStudentRecords: boolean;
   canWriteMentorReview: boolean;
+  canUploadFiles: boolean;
 }) {
   const discussionRecords = records.filter((record) => record.type === "discussion_note");
   const submissionRecords = records.filter((record) => record.type === "task_submission");
@@ -62,6 +68,23 @@ export function TrainingTaskCard({
 
         <TrainingRecordList title="导师点评" records={reviewRecords} />
         {canWriteMentorReview ? <MentorReviewForm groupId={groupId} taskId={task.id} /> : null}
+
+        <section className="rounded-lg border border-zinc-100 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950/20">
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">资料与成果文件</h4>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                本任务相关文件仅当前小组、负责导师和管理员可下载。
+              </p>
+            </div>
+          </div>
+          <TrainingFileList files={files} />
+          {canUploadFiles ? (
+            <div className="mt-3">
+              <FileUploadPanel groupId={groupId} taskId={task.id} />
+            </div>
+          ) : null}
+        </section>
       </div>
     </article>
   );

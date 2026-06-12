@@ -45,10 +45,23 @@ export default async function TrainingAdminPage() {
         _count: { _all: true },
       })
     : [];
+  const fileCounts = event
+    ? await prisma.trainingFile.groupBy({
+        by: ["groupId"],
+        where: { eventId: event.id },
+        _count: { _all: true },
+      })
+    : [];
 
   function countFor(groupId: string, type?: string) {
     return counts
       .filter((item) => item.groupId === groupId && (!type || item.type === type))
+      .reduce((sum, item) => sum + item._count._all, 0);
+  }
+
+  function fileCountFor(groupId: string) {
+    return fileCounts
+      .filter((item) => item.groupId === groupId)
       .reduce((sum, item) => sum + item._count._all, 0);
   }
 
@@ -68,6 +81,7 @@ export default async function TrainingAdminPage() {
                 <th className="px-4 py-3">阶段成果</th>
                 <th className="px-4 py-3">导师点评</th>
                 <th className="px-4 py-3">最终成果</th>
+                <th className="px-4 py-3">文件</th>
                 <th className="px-4 py-3">全部记录</th>
                 <th className="px-4 py-3">查看</th>
               </tr>
@@ -80,6 +94,7 @@ export default async function TrainingAdminPage() {
                   <td className="px-4 py-3">{countFor(group.id, "task_submission")}</td>
                   <td className="px-4 py-3">{countFor(group.id, "mentor_review")}</td>
                   <td className="px-4 py-3">{countFor(group.id, "final_submission")}</td>
+                  <td className="px-4 py-3">{fileCountFor(group.id)}</td>
                   <td className="px-4 py-3">{countFor(group.id)}</td>
                   <td className="px-4 py-3">
                     <Link
