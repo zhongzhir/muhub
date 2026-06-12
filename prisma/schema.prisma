@@ -235,6 +235,7 @@ model User {
   userNotifications UserNotification[]
   /** Discovery V2：审核记录的审核人 */
   discoveryCandidateReviews DiscoveryCandidate[] @relation("DiscoveryCandidateReviewer")
+  trainingParticipants TrainingParticipant[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1043,4 +1044,202 @@ model GithubRepoSnapshot {
   fetchedAt         DateTime  @default(now())
 
   @@index([projectId])
+}
+
+model TrainingEvent {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  startsAt  DateTime
+  endsAt    DateTime
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groups          TrainingGroup[]
+  cases           TrainingCase[]
+  participants    TrainingParticipant[]
+  invites         TrainingInvite[]
+  tasks           TrainingTask[]
+  records         TrainingRecord[]
+  files           TrainingFile[]
+  surveyResponses TrainingSurveyResponse[]
+}
+
+model TrainingGroup {
+  id        String        @id @default(cuid())
+  eventId   String
+  event     TrainingEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  classNo   Int
+  groupNo   Int
+  name      String
+  caseSlug  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  participants TrainingParticipant[]
+  records      TrainingRecord[]
+  files        TrainingFile[]
+
+  @@unique([eventId, classNo, groupNo])
+  @@index([eventId, classNo])
+}
+
+model TrainingCase {
+  id                    String        @id @default(cuid())
+  eventId               String
+  event                 TrainingEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  slug                  String
+  name                  String
+  organization          String
+  classNo               Int
+  groupNo               Int
+  track                 String
+  traits                String?
+  summary               String?       @db.Text
+  needAndUsers          String?       @db.Text
+  competitors           String?       @db.Text
+  technologyAdoption    String?       @db.Text
+  marketAndBenefits     String?       @db.Text
+  teamMechanism         String?       @db.Text
+  challenges            String?       @db.Text
+  touchpointExperience  String?       @db.Text
+  attachmentsJson       Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@unique([eventId, slug])
+  @@unique([eventId, classNo, groupNo])
+  @@index([eventId, classNo, groupNo])
+}
+
+model TrainingParticipant {
+  id           String         @id @default(cuid())
+  eventId      String
+  event        TrainingEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role         String
+  classNo      Int?
+  groupNo      Int?
+  groupId      String?
+  group        TrainingGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  inviteCode   String
+  displayName  String?
+  organization String?
+  phone        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  records         TrainingRecord[]
+  files           TrainingFile[]
+  surveyResponses TrainingSurveyResponse[]
+
+  @@unique([eventId, userId])
+  @@index([eventId, role])
+  @@index([eventId, classNo, groupNo])
+}
+
+model TrainingInvite {
+  id        String        @id @default(cuid())
+  eventId   String
+  event     TrainingEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  code      String        @unique
+  role      String
+  classNo   Int?
+  groupNo   Int?
+  maxUses   Int?
+  usedCount Int           @default(0)
+  isActive  Boolean       @default(true)
+  note      String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([eventId, role])
+}
+
+model TrainingTask {
+  id               String        @id @default(cuid())
+  eventId          String
+  event            TrainingEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  key              String
+  dayIndex         Int
+  title            String
+  description      String        @db.Text
+  activitiesJson   Json
+  deliverablesJson Json
+  promptPackJson   Json?
+  sortOrder        Int
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  records TrainingRecord[]
+  files   TrainingFile[]
+
+  @@unique([eventId, key])
+  @@index([eventId, sortOrder])
+}
+
+model TrainingRecord {
+  id                  String               @id @default(cuid())
+  eventId             String
+  event               TrainingEvent        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  groupId             String
+  group               TrainingGroup        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  taskId              String?
+  task                TrainingTask?        @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  authorParticipantId String?
+  authorParticipant   TrainingParticipant? @relation(fields: [authorParticipantId], references: [id], onDelete: SetNull)
+  type                String
+  title               String?
+  content             String?              @db.Text
+  contentJson         Json?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([eventId, groupId, taskId])
+  @@index([eventId, type])
+}
+
+model TrainingFile {
+  id                    String               @id @default(cuid())
+  eventId               String
+  event                 TrainingEvent        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  groupId               String
+  group                 TrainingGroup        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  taskId                String?
+  task                  TrainingTask?        @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  uploaderParticipantId String?
+  uploaderParticipant   TrainingParticipant? @relation(fields: [uploaderParticipantId], references: [id], onDelete: SetNull)
+  originalName          String
+  storageKey            String               @unique
+  mimeType              String?
+  sizeBytes             Int
+  kind                  String               @default("task_file")
+  createdAt             DateTime             @default(now())
+
+  @@index([eventId, groupId, taskId])
+  @@index([storageKey])
+}
+
+model TrainingSurveyResponse {
+  id                String               @id @default(cuid())
+  eventId           String
+  event             TrainingEvent        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participantId     String?
+  participant       TrainingParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+  name              String
+  classNo           Int
+  groupNo           Int
+  caseQualityScore  Int
+  mentorScore       Int
+  platformScore     Int
+  mostValuablePart  String               @db.Text
+  improvementPart   String               @db.Text
+  willingToContinue Boolean
+  muhubSuggestion   String?              @db.Text
+  createdAt         DateTime             @default(now())
+
+  @@index([eventId, classNo, groupNo])
+  @@index([participantId])
 }

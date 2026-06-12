@@ -1,118 +1,100 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
+import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { prisma } from "@/lib/prisma";
+
 import { TrainingPageShell } from "../_components/training-chrome";
-import { listHomework, listRegistrations } from "../lib/store";
+import { TRAINING_2026_EVENT_SLUG } from "../lib/current-event";
 
 export const metadata: Metadata = {
-  title: "内部管理 · 实训课数据查看",
-  description: "Training 报名与作业记录查看（内部使用）",
+  title: "Training 管理总览 | 出版融合发展工程实践交流活动",
+  description: "查看实践交流活动各小组记录数量。",
   robots: { index: false, follow: false },
 };
 
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString("zh-CN", { hour12: false });
-  } catch {
-    return iso;
-  }
-}
-
 export default async function TrainingAdminPage() {
-  const [registrations, homework] = await Promise.all([listRegistrations(), listHomework()]);
+  try {
+    await requireMuHubAdmin();
+  } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return (
+        <TrainingPageShell title="Training 管理总览" subtitle="仅限 MUHUB 管理员访问。">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+            {error.message}
+          </div>
+        </TrainingPageShell>
+      );
+    }
+    throw error;
+  }
+
+  const event = await prisma.trainingEvent.findUnique({
+    where: { slug: TRAINING_2026_EVENT_SLUG },
+  });
+  const groups = event
+    ? await prisma.trainingGroup.findMany({
+        where: { eventId: event.id },
+        orderBy: [{ classNo: "asc" }, { groupNo: "asc" }],
+      })
+    : [];
+  const counts = event
+    ? await prisma.trainingRecord.groupBy({
+        by: ["groupId", "type"],
+        where: { eventId: event.id },
+        _count: { _all: true },
+      })
+    : [];
+
+  function countFor(groupId: string, type?: string) {
+    return counts
+      .filter((item) => item.groupId === groupId && (!type || item.type === type))
+      .reduce((sum, item) => sum + item._count._all, 0);
+  }
 
   return (
-    <TrainingPageShell title="内部管理页面" subtitle="仅供华闻传媒研究院与 MUHUB 运营人员查看，请勿对外分享。">
-      <div className="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
-        <strong>⚠ 内部管理页面</strong> — V1 暂未启用权限控制，请勿在生产环境公开此链接。后续版本将接入鉴权。
-      </div>
-
-      <section className="mb-12">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            报名记录（{registrations.length}）
-          </h2>
+    <TrainingPageShell title="Training 管理总览" subtitle="只读查看各小组工作台记录数量。">
+      {!event ? (
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
+          活动数据尚未初始化。
         </div>
-        {registrations.length === 0 ? (
-          <p className="text-sm text-zinc-500">暂无报名记录</p>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900">
-                <tr>
-                  <th className="px-4 py-3">提交时间</th>
-                  <th className="px-4 py-3">姓名</th>
-                  <th className="px-4 py-3">单位</th>
-                  <th className="px-4 py-3">职务</th>
-                  <th className="px-4 py-3">手机</th>
-                  <th className="px-4 py-3">邮箱</th>
-                  <th className="px-4 py-3">期次</th>
-                  <th className="px-4 py-3">备注</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {registrations.map((row) => (
-                  <tr key={row.id} className="bg-white dark:bg-zinc-950">
-                    <td className="whitespace-nowrap px-4 py-3 text-zinc-500">{formatTime(row.submittedAt)}</td>
-                    <td className="px-4 py-3 font-medium">{row.name}</td>
-                    <td className="px-4 py-3">{row.organization}</td>
-                    <td className="px-4 py-3">{row.title}</td>
-                    <td className="px-4 py-3">{row.phone}</td>
-                    <td className="px-4 py-3">{row.email}</td>
-                    <td className="px-4 py-3">{row.session}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-zinc-500">{row.note || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            作业提交（{homework.length}）
-          </h2>
-        </div>
-        {homework.length === 0 ? (
-          <p className="text-sm text-zinc-500">暂无作业提交</p>
-        ) : (
-          <div className="space-y-4">
-            {homework.map((row) => (
-              <div
-                key={row.id}
-                className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                  <span>{formatTime(row.submittedAt)}</span>
-                  <span>·</span>
-                  <span>{row.session}</span>
-                </div>
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{row.homeworkTitle}</h3>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  {row.name} · {row.organization} · {row.phone}
-                </p>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                  {row.homeworkContent}
-                </p>
-                {row.attachmentUrl ? (
-                  <p className="mt-2 text-sm">
-                    附件：
-                    <a
-                      href={row.attachmentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-teal-600 underline underline-offset-2 dark:text-teal-400"
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-950">
+              <tr>
+                <th className="px-4 py-3">小组</th>
+                <th className="px-4 py-3">讨论纪要</th>
+                <th className="px-4 py-3">阶段成果</th>
+                <th className="px-4 py-3">导师点评</th>
+                <th className="px-4 py-3">最终成果</th>
+                <th className="px-4 py-3">全部记录</th>
+                <th className="px-4 py-3">查看</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {groups.map((group) => (
+                <tr key={group.id}>
+                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">{group.name}</td>
+                  <td className="px-4 py-3">{countFor(group.id, "discussion_note")}</td>
+                  <td className="px-4 py-3">{countFor(group.id, "task_submission")}</td>
+                  <td className="px-4 py-3">{countFor(group.id, "mentor_review")}</td>
+                  <td className="px-4 py-3">{countFor(group.id, "final_submission")}</td>
+                  <td className="px-4 py-3">{countFor(group.id)}</td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/training/workspace?groupId=${group.id}`}
+                      className="text-teal-700 underline underline-offset-2 dark:text-teal-300"
                     >
-                      {row.attachmentUrl}
-                    </a>
-                  </p>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+                      查看工作台
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </TrainingPageShell>
   );
 }

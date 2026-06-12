@@ -17,24 +17,24 @@ export function TrainingHeader() {
             className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"
             style={{ background: "rgba(201,168,76,0.25)", border: "1px solid #c9a84c" }}
           >
-            华
+            训
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">华闻传媒研究院</div>
-            <div className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-              数智出版与 AI 出版实训课系列
+            <div className="text-sm font-semibold text-white">出版融合发展工程实践交流活动</div>
+            <div className="text-xs" style={{ color: "rgba(255,255,255,0.58)" }}>
+              2026 年 6 月 29 日至 7 月 3 日
             </div>
           </div>
         </Link>
         <div className="hidden items-center gap-2 sm:flex">
-          <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
             技术支持
           </span>
           <span
             className="rounded border px-2 py-0.5 text-xs font-medium"
-            style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)" }}
+            style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.72)" }}
           >
-            MUHUB
+            MUHUB Training
           </span>
         </div>
       </div>
@@ -44,11 +44,10 @@ export function TrainingHeader() {
 
 export function TrainingNav() {
   const links = [
-    { href: "/training", label: "首页" },
-    { href: "/training/register", label: "报名" },
-    { href: "/training/homework", label: "作业提交" },
-    { href: "/training/cases", label: "案例学习包" },
-    { href: "/training/projects", label: "项目研究" },
+    { href: "/training", label: "活动首页" },
+    { href: "/training/cases", label: "案例资料" },
+    { href: "/training/workspace", label: "我的工作台" },
+    { href: "/training/register", label: "身份绑定" },
   ];
 
   return (
@@ -73,11 +72,11 @@ export function TrainingFooter() {
     <footer className="border-t border-zinc-200 py-8 dark:border-zinc-800">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-center gap-2 text-center text-xs text-zinc-400 sm:flex-row sm:justify-between">
-          <span>© 华闻传媒研究院</span>
+          <span>出版融合发展工程实践交流活动专项工作台</span>
           <span>
-            AI 工具库支持：
+            技术支持：
             <Link href="/" className="underline underline-offset-2 hover:text-zinc-600">
-              MUHUB 木哈布
+              MUHUB
             </Link>
           </span>
         </div>

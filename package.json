@@ -23,6 +23,7 @@
     "seed:pub-projects": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/seed-publishing-projects.ts",
     "seed:pub-projects-b2": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/seed-publishing-projects-batch2.ts",
     "seed:pub-projects-b3": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/seed-publishing-projects-batch3.ts",
+    "seed:training-2026": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/seed-training-2026-practice.ts",
     "fix:pub-visibility": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/fix-publishing-visibility.ts",
     "ai:update": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/run_ai_update.ts",
     "github:refresh": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/refresh-github-facts.ts",
