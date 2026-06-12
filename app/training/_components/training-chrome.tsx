@@ -47,6 +47,7 @@ export function TrainingNav() {
     { href: "/training", label: "活动首页" },
     { href: "/training/cases", label: "案例资料" },
     { href: "/training/workspace", label: "我的工作台" },
+    { href: "/training/survey", label: "满意度调查" },
     { href: "/training/register", label: "身份绑定" },
   ];
 

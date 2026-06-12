@@ -25,6 +25,11 @@ const entries = [
     title: "身份绑定",
     desc: "使用主办方发放的邀请码绑定学员或导师身份。",
   },
+  {
+    href: "/training/survey",
+    title: "满意度调查",
+    desc: "活动结束后填写满意度反馈，供主办方复盘使用。",
+  },
 ];
 
 export default function TrainingPage() {
@@ -75,7 +80,7 @@ export default function TrainingPage() {
       </section>
 
       <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {entries.map((entry) => (
             <Link
               key={entry.href}

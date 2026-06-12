@@ -2,10 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
-import { prisma } from "@/lib/prisma";
 
 import { TrainingPageShell } from "../_components/training-chrome";
-import { TRAINING_2026_EVENT_SLUG } from "../lib/current-event";
+import { getTrainingAdminOverview } from "../lib/queries";
 
 export const metadata: Metadata = {
   title: "Training 管理总览 | 出版融合发展工程实践交流活动",
@@ -29,29 +28,13 @@ export default async function TrainingAdminPage() {
     throw error;
   }
 
-  const event = await prisma.trainingEvent.findUnique({
-    where: { slug: TRAINING_2026_EVENT_SLUG },
-  });
-  const groups = event
-    ? await prisma.trainingGroup.findMany({
-        where: { eventId: event.id },
-        orderBy: [{ classNo: "asc" }, { groupNo: "asc" }],
-      })
-    : [];
-  const counts = event
-    ? await prisma.trainingRecord.groupBy({
-        by: ["groupId", "type"],
-        where: { eventId: event.id },
-        _count: { _all: true },
-      })
-    : [];
-  const fileCounts = event
-    ? await prisma.trainingFile.groupBy({
-        by: ["groupId"],
-        where: { eventId: event.id },
-        _count: { _all: true },
-      })
-    : [];
+  const overview = await getTrainingAdminOverview();
+  const event = overview?.event ?? null;
+  const groups = overview?.groups ?? [];
+  const cases = overview?.cases ?? [];
+  const counts = overview?.recordCounts ?? [];
+  const fileCounts = overview?.fileCounts ?? [];
+  const surveyCounts = overview?.surveyCounts ?? [];
 
   function countFor(groupId: string, type?: string) {
     return counts
@@ -65,6 +48,14 @@ export default async function TrainingAdminPage() {
       .reduce((sum, item) => sum + item._count._all, 0);
   }
 
+  function surveyCountFor(group: { classNo: number; groupNo: number }) {
+    return surveyCounts
+      .filter((item) => item.classNo === group.classNo && item.groupNo === group.groupNo)
+      .reduce((sum, item) => sum + item._count._all, 0);
+  }
+
+  const totalSurveyCount = surveyCounts.reduce((sum, item) => sum + item._count._all, 0);
+
   return (
     <TrainingPageShell title="Training 管理总览" subtitle="只读查看各小组工作台记录数量。">
       {!event ? (
@@ -72,44 +63,104 @@ export default async function TrainingAdminPage() {
           活动数据尚未初始化。
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-950">
-              <tr>
-                <th className="px-4 py-3">小组</th>
-                <th className="px-4 py-3">讨论纪要</th>
-                <th className="px-4 py-3">阶段成果</th>
-                <th className="px-4 py-3">导师点评</th>
-                <th className="px-4 py-3">最终成果</th>
-                <th className="px-4 py-3">文件</th>
-                <th className="px-4 py-3">全部记录</th>
-                <th className="px-4 py-3">查看</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {groups.map((group) => (
-                <tr key={group.id}>
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">{group.name}</td>
-                  <td className="px-4 py-3">{countFor(group.id, "discussion_note")}</td>
-                  <td className="px-4 py-3">{countFor(group.id, "task_submission")}</td>
-                  <td className="px-4 py-3">{countFor(group.id, "mentor_review")}</td>
-                  <td className="px-4 py-3">{countFor(group.id, "final_submission")}</td>
-                  <td className="px-4 py-3">{fileCountFor(group.id)}</td>
-                  <td className="px-4 py-3">{countFor(group.id)}</td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/training/workspace?groupId=${group.id}`}
-                      className="text-teal-700 underline underline-offset-2 dark:text-teal-300"
-                    >
-                      查看工作台
-                    </Link>
-                  </td>
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            <CardStat label="小组数" value={`${groups.length}`} />
+            <CardStat label="案例数" value={`${cases.length}`} />
+            <CardStat label="调查提交数" value={`${totalSurveyCount}`} />
+            <CardStat
+              label="导出入口"
+              value="CSV"
+              href="/training/admin/survey"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link href="/training/admin/groups" className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-teal-600 hover:text-teal-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-teal-400 dark:hover:text-teal-300">
+              查看小组详情
+            </Link>
+            <Link href="/training/admin/survey" className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-teal-600 hover:text-teal-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-teal-400 dark:hover:text-teal-300">
+              查看调查结果
+            </Link>
+            <a href="/api/training/admin/survey/export" className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-teal-600 hover:text-teal-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-teal-400 dark:hover:text-teal-300">
+              导出调查 CSV
+            </a>
+            <a href="/api/training/admin/records/export" className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-teal-600 hover:text-teal-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-teal-400 dark:hover:text-teal-300">
+              导出记录 CSV
+            </a>
+            <a href="/api/training/admin/files/export" className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-teal-600 hover:text-teal-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-teal-400 dark:hover:text-teal-300">
+              导出文件 CSV
+            </a>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-950">
+                <tr>
+                  <th className="px-4 py-3">小组</th>
+                  <th className="px-4 py-3">讨论纪要</th>
+                  <th className="px-4 py-3">阶段成果</th>
+                  <th className="px-4 py-3">导师点评</th>
+                  <th className="px-4 py-3">最终成果</th>
+                  <th className="px-4 py-3">文件</th>
+                  <th className="px-4 py-3">调查</th>
+                  <th className="px-4 py-3">全部记录</th>
+                  <th className="px-4 py-3">查看</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {groups.map((group) => (
+                  <tr key={group.id}>
+                    <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">{group.name}</td>
+                    <td className="px-4 py-3">{countFor(group.id, "discussion_note")}</td>
+                    <td className="px-4 py-3">{countFor(group.id, "task_submission")}</td>
+                    <td className="px-4 py-3">{countFor(group.id, "mentor_review")}</td>
+                    <td className="px-4 py-3">{countFor(group.id, "final_submission")}</td>
+                    <td className="px-4 py-3">{fileCountFor(group.id)}</td>
+                    <td className="px-4 py-3">{surveyCountFor(group)}</td>
+                    <td className="px-4 py-3">{countFor(group.id)}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/training/admin/groups/${group.id}`}
+                        className="text-teal-700 underline underline-offset-2 dark:text-teal-300"
+                      >
+                        查看小组详情
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </TrainingPageShell>
   );
+}
+
+function CardStat({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  const content = (
+    <>
+      <div className="text-sm text-zinc-500 dark:text-zinc-400">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{value}</div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="rounded-xl border border-zinc-200 bg-white p-4 hover:border-teal-600 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-teal-400">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">{content}</div>;
 }

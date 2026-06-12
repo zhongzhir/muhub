@@ -185,3 +185,205 @@ export async function getTrainingWorkspace(participant: TrainingAccessParticipan
     files,
   };
 }
+
+export async function getTrainingSurveyResponseForParticipant(userId: string | undefined | null) {
+  if (!userId) return null;
+  const participant = await getCurrentTrainingParticipant(userId);
+  if (!participant) return null;
+
+  return prisma.trainingSurveyResponse.findFirst({
+    where: {
+      eventId: participant.eventId,
+      participantId: participant.id,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getTrainingAdminOverview() {
+  const event = await getCurrentTrainingEvent();
+  if (!event) return null;
+
+  const [groups, cases, recordCounts, fileCounts, surveyCounts] = await Promise.all([
+    prisma.trainingGroup.findMany({
+      where: { eventId: event.id },
+      orderBy: [{ classNo: "asc" }, { groupNo: "asc" }],
+    }),
+    prisma.trainingCase.findMany({
+      where: { eventId: event.id },
+      orderBy: [{ classNo: "asc" }, { groupNo: "asc" }],
+    }),
+    prisma.trainingRecord.groupBy({
+      by: ["groupId", "type"],
+      where: { eventId: event.id },
+      _count: { _all: true },
+    }),
+    prisma.trainingFile.groupBy({
+      by: ["groupId"],
+      where: { eventId: event.id },
+      _count: { _all: true },
+    }),
+    prisma.trainingSurveyResponse.groupBy({
+      by: ["classNo", "groupNo"],
+      where: { eventId: event.id },
+      _count: { _all: true },
+    }),
+  ]);
+
+  return { event, groups, cases, recordCounts, fileCounts, surveyCounts };
+}
+
+export async function listTrainingSurveyResponsesForAdmin() {
+  const event = await getCurrentTrainingEvent();
+  if (!event) return [];
+
+  return prisma.trainingSurveyResponse.findMany({
+    where: { eventId: event.id },
+    include: {
+      participant: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: [{ classNo: "asc" }, { groupNo: "asc" }, { createdAt: "desc" }],
+  });
+}
+
+export async function listTrainingAdminGroups() {
+  const event = await getCurrentTrainingEvent();
+  if (!event) return null;
+
+  const [groups, cases, participants, recordCounts, fileCounts, surveyCounts] = await Promise.all([
+    prisma.trainingGroup.findMany({
+      where: { eventId: event.id },
+      orderBy: [{ classNo: "asc" }, { groupNo: "asc" }],
+    }),
+    prisma.trainingCase.findMany({
+      where: { eventId: event.id },
+      orderBy: [{ classNo: "asc" }, { groupNo: "asc" }],
+    }),
+    prisma.trainingParticipant.findMany({
+      where: { eventId: event.id },
+      orderBy: [{ classNo: "asc" }, { groupNo: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.trainingRecord.groupBy({
+      by: ["groupId"],
+      where: { eventId: event.id },
+      _count: { _all: true },
+    }),
+    prisma.trainingFile.groupBy({
+      by: ["groupId"],
+      where: { eventId: event.id },
+      _count: { _all: true },
+    }),
+    prisma.trainingSurveyResponse.groupBy({
+      by: ["classNo", "groupNo"],
+      where: { eventId: event.id },
+      _count: { _all: true },
+    }),
+  ]);
+
+  return { event, groups, cases, participants, recordCounts, fileCounts, surveyCounts };
+}
+
+export async function getTrainingAdminGroupDetail(groupId: string) {
+  const event = await getCurrentTrainingEvent();
+  if (!event) return null;
+
+  const group = await prisma.trainingGroup.findFirst({
+    where: { id: groupId, eventId: event.id },
+  });
+  if (!group) return null;
+
+  const [trainingCase, tasks, participants, records, files, surveys] = await Promise.all([
+    prisma.trainingCase.findFirst({
+      where: {
+        eventId: event.id,
+        classNo: group.classNo,
+        groupNo: group.groupNo,
+      },
+    }),
+    prisma.trainingTask.findMany({
+      where: { eventId: event.id },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.trainingParticipant.findMany({
+      where: {
+        eventId: event.id,
+        OR: [
+          { classNo: group.classNo, groupNo: group.groupNo },
+          { role: "mentor", classNo: group.classNo },
+        ],
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.trainingRecord.findMany({
+      where: {
+        eventId: event.id,
+        groupId: group.id,
+      },
+      include: {
+        authorParticipant: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+        task: true,
+      },
+      orderBy: [{ taskId: "asc" }, { updatedAt: "desc" }],
+    }),
+    prisma.trainingFile.findMany({
+      where: {
+        eventId: event.id,
+        groupId: group.id,
+      },
+      include: {
+        task: true,
+        uploaderParticipant: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.trainingSurveyResponse.findMany({
+      where: {
+        eventId: event.id,
+        classNo: group.classNo,
+        groupNo: group.groupNo,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  return { event, group, trainingCase, tasks, participants, records, files, surveys };
+}

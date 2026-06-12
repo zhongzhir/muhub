@@ -23,6 +23,7 @@ import {
   buildTrainingStorageKey,
   sanitizeTrainingFileName,
 } from "@/app/training/lib/file-storage";
+import { buildCsv } from "@/app/training/lib/csv";
 import { loginAsE2EUser, skipWithoutE2EAuthGate } from "./helpers/auth";
 
 test.describe("training 2026 practice module", () => {
@@ -217,6 +218,16 @@ test.describe("training 2026 practice module", () => {
     expect(() => assertAllowedTrainingUpload({ name: "too-large.pdf", size: 51 * 1024 * 1024 })).toThrow(
       "文件不能超过 50MB",
     );
+  });
+
+  test("csv export helper emits UTF-8 BOM and escapes Chinese text safely", () => {
+    const csv = buildCsv([
+      ["姓名", "建议"],
+      ["张三", '需要支持 "CSV" 导出'],
+    ]);
+
+    expect(csv.startsWith("\uFEFF")).toBe(true);
+    expect(csv).toContain('张三,"需要支持 ""CSV"" 导出"');
   });
 });
 
