@@ -1,8 +1,10 @@
+import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { CreateProjectMenu } from "@/components/layout/create-project-menu";
 import { UserMenu } from "@/components/layout/user-menu";
+import { isTrainingHost } from "@/lib/pwa/training-host";
 import { getUnreadFollowingNotificationCount } from "@/lib/project-notifications";
 
 /** 与 public/brand/muhub_logo_horizontal.png 源文件比例一致 */
@@ -10,6 +12,11 @@ const HORIZONTAL_WIDTH = 530;
 const HORIZONTAL_HEIGHT = 600;
 
 export async function SiteHeader() {
+  const host = (await headers()).get("host") ?? "";
+  if (isTrainingHost(host)) {
+    return null;
+  }
+
   const session = await auth();
   const user = session?.user;
   const unreadNotifyCount =

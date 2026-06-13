@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { TrainingPageShell } from "../_components/training-chrome";
 import { SurveyForm } from "../_components/survey-form";
-import { requireTrainingLogin } from "../lib/auth";
+import { TrainingPageShell, trainingLoginHref } from "../_components/training-chrome";
+import { getTrainingSessionContext } from "../lib/auth";
 import { getTrainingSurveyResponseForParticipant } from "../lib/queries";
 
 export const metadata: Metadata = {
@@ -20,23 +20,38 @@ function roleLabel(role: string) {
 }
 
 export default async function TrainingSurveyPage() {
-  const context = await requireTrainingLogin("/training/survey");
+  const context = await getTrainingSessionContext();
+
+  if (!context.userId) {
+    return (
+      <TrainingPageShell title="满意度调查" subtitle="请先登录并绑定活动身份后填写满意度调查。">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            请先登录并绑定活动身份后填写满意度调查。
+          </p>
+          <Link
+            href={trainingLoginHref("/training/survey")}
+            className="mt-5 inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 dark:bg-teal-500 dark:hover:bg-teal-400"
+          >
+            登录后填写
+          </Link>
+        </div>
+      </TrainingPageShell>
+    );
+  }
 
   if (!context.participant) {
     return (
-      <TrainingPageShell
-        title="满意度调查"
-        subtitle="请先绑定本次活动身份，再提交满意度调查。"
-      >
+      <TrainingPageShell title="满意度调查" subtitle="请先完成活动身份绑定，再提交满意度调查。">
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            你已登录，但尚未绑定本次实践交流活动身份。请先完成身份绑定后再填写调查问卷。
+            你尚未绑定本次活动身份，请先完成身份绑定。
           </p>
           <Link
             href="/training/register"
             className="mt-5 inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 dark:bg-teal-500 dark:hover:bg-teal-400"
           >
-            去绑定活动身份
+            绑定活动身份
           </Link>
         </div>
       </TrainingPageShell>

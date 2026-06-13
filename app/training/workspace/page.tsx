@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 
 import { FinalSubmissionForm } from "../_components/final-submission-form";
 import { GroupSwitcher } from "../_components/group-switcher";
-import { SceneTag, TrainingPageShell } from "../_components/training-chrome";
+import { SceneTag, TrainingPageShell, trainingLoginHref } from "../_components/training-chrome";
 import type { TrainingFileListItem } from "../_components/training-file-list";
 import { TrainingRecordList, type TrainingRecordListItem } from "../_components/training-record-list";
 import { TrainingTaskCard } from "../_components/training-task-card";
-import { requireTrainingLogin } from "../lib/auth";
+import { getTrainingSessionContext } from "../lib/auth";
 import { getTrainingWorkspace } from "../lib/queries";
 
 export const metadata: Metadata = {
@@ -22,6 +22,13 @@ function asStringArray(value: unknown): string[] {
 
 function formatTime(value: Date): string {
   return value.toLocaleString("zh-CN", { hour12: false });
+}
+
+function roleLabel(role: string) {
+  if (role === "student") return "学员";
+  if (role === "mentor") return "导师";
+  if (role === "admin") return "管理员";
+  return role;
 }
 
 function authorName(record: {
@@ -45,14 +52,9 @@ function fileUploaderName(file: {
 }) {
   const uploader = file.uploaderParticipant;
   if (!uploader) return "未知成员";
-  return uploader.displayName || uploader.user.name || uploader.user.phone || uploader.user.email || roleLabel(uploader.role);
-}
-
-function roleLabel(role: string) {
-  if (role === "student") return "学员";
-  if (role === "mentor") return "导师";
-  if (role === "admin") return "管理员";
-  return role;
+  return (
+    uploader.displayName || uploader.user.name || uploader.user.phone || uploader.user.email || roleLabel(uploader.role)
+  );
 }
 
 export default async function TrainingWorkspacePage({
@@ -60,17 +62,30 @@ export default async function TrainingWorkspacePage({
 }: {
   searchParams: Promise<{ groupId?: string }>;
 }) {
-  const context = await requireTrainingLogin("/training/workspace");
+  const context = await getTrainingSessionContext();
+
+  if (!context.userId) {
+    return (
+      <TrainingPageShell title="我的工作台" subtitle="请先登录后进入本期实践交流活动工作台。">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">请先登录后进入我的工作台。</p>
+          <Link
+            href={trainingLoginHref("/training/workspace")}
+            className="mt-5 inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 dark:bg-teal-500 dark:hover:bg-teal-400"
+          >
+            登录并进入工作台
+          </Link>
+        </div>
+      </TrainingPageShell>
+    );
+  }
 
   if (!context.accessParticipant) {
     return (
-      <TrainingPageShell
-        title="我的工作台"
-        subtitle="请先绑定本次活动身份，绑定后即可进入对应班级和小组工作台。"
-      >
+      <TrainingPageShell title="我的工作台" subtitle="请先完成活动身份绑定，再进入对应班级和小组工作台。">
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            你已登录，但尚未绑定本次实践交流活动身份。请使用主办方发放的邀请码完成绑定。
+            你尚未绑定本次活动身份，请使用主办方发放的邀请码完成绑定。
           </p>
           <Link
             href="/training/register"
@@ -92,13 +107,10 @@ export default async function TrainingWorkspacePage({
     ? workspace?.cases.find((item) => item.classNo === selectedGroup.classNo && item.groupNo === selectedGroup.groupNo)
     : null;
   const selectedRecords =
-    selectedGroup && workspace
-      ? workspace.records.filter((record) => record.groupId === selectedGroup.id)
-      : [];
+    selectedGroup && workspace ? workspace.records.filter((record) => record.groupId === selectedGroup.id) : [];
   const selectedFiles =
-    selectedGroup && workspace
-      ? workspace.files.filter((file) => file.groupId === selectedGroup.id)
-      : [];
+    selectedGroup && workspace ? workspace.files.filter((file) => file.groupId === selectedGroup.id) : [];
+
   const recordsForDisplay: TrainingRecordListItem[] = selectedRecords.map((record) => ({
     id: record.id,
     type: record.type,
@@ -107,6 +119,7 @@ export default async function TrainingWorkspacePage({
     updatedAt: formatTime(record.updatedAt),
     authorName: authorName(record),
   }));
+
   const finalRecord = selectedRecords.find((record) => record.type === "final_submission") ?? null;
   const currentRole = context.accessParticipant.role;
   const canWriteStudentRecords = currentRole === "student";
@@ -119,10 +132,7 @@ export default async function TrainingWorkspacePage({
       : [];
 
   return (
-    <TrainingPageShell
-      title="我的工作台"
-      subtitle="按小组记录阶段讨论、阶段成果、导师点评和最终成果。"
-    >
+    <TrainingPageShell title="我的工作台" subtitle="按小组记录阶段讨论、阶段成果、导师点评和最终成果。">
       {!workspace || !selectedGroup ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
           活动数据尚未初始化，请联系工作人员。
@@ -155,9 +165,7 @@ export default async function TrainingWorkspacePage({
                 <div className="font-semibold text-zinc-900 dark:text-zinc-50">本组导师</div>
                 <div className="mt-2 text-zinc-600 dark:text-zinc-300">
                   {mentors.length
-                    ? mentors
-                        .map((item) => item.displayName || item.phone || "已绑定导师")
-                        .join("、")
+                    ? mentors.map((item) => item.displayName || item.phone || "已绑定导师").join("、")
                     : "导师信息待绑定"}
                 </div>
               </div>

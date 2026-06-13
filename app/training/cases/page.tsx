@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { SceneTag, TrainingPageShell } from "../_components/training-chrome";
+import { SceneTag, TrainingPageShell, trainingLoginHref } from "../_components/training-chrome";
 import { getTrainingSessionContext } from "../lib/auth";
 import { listAccessibleTrainingCases } from "../lib/queries";
 
@@ -26,10 +26,10 @@ export default async function TrainingCasesPage() {
             请先登录并使用活动邀请码绑定身份，绑定后即可查看对应班级和小组的案例资料。
           </p>
           <Link
-            href={context.userId ? "/training/register" : "/login?redirect=/training/register"}
+            href={context.userId ? "/training/register" : trainingLoginHref("/training/register")}
             className="mt-5 inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 dark:bg-teal-500 dark:hover:bg-teal-400"
           >
-            {context.userId ? "绑定活动身份" : "去登录"}
+            {context.userId ? "绑定活动身份" : "登录后绑定"}
           </Link>
         </div>
       ) : cases.length === 0 ? (

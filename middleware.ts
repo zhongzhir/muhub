@@ -107,6 +107,11 @@ export default async function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
   if (isTrainingHost(host)) {
     const passthrough =
+      pathname === "/login" ||
+      pathname === "/auth" ||
+      pathname.startsWith("/auth/") ||
+      pathname === "/api/auth" ||
+      pathname.startsWith("/api/auth/") ||
       pathname.startsWith("/training") ||
       pathname.startsWith("/api/") ||
       pathname.startsWith("/_next/") ||

@@ -1,17 +1,20 @@
 import Link from "next/link";
+
 import { auth } from "@/auth";
+
+import { TrainingAuthButton } from "./training-auth-button";
 
 const BRAND = {
   navy: "#1a2035",
   gold: "#c9a84c",
 } as const;
 
+export function trainingLoginHref(redirectTo: string) {
+  return `/login?redirect=${encodeURIComponent(redirectTo)}`;
+}
+
 export async function TrainingHeader() {
   const session = await auth();
-  const accountHref = session?.user?.id
-    ? "/training/workspace"
-    : "/login?redirect=/training/workspace";
-  const accountLabel = session?.user?.id ? "进入工作台" : "登录";
 
   return (
     <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -24,12 +27,10 @@ export async function TrainingHeader() {
             出版融合发展工程实践交流活动
           </div>
         </Link>
-        <Link
-          href={accountHref}
-          className="shrink-0 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-900 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-zinc-200 dark:hover:text-zinc-50"
-        >
-          {accountLabel}
-        </Link>
+        <TrainingAuthButton
+          loggedIn={Boolean(session?.user?.id)}
+          loginHref={trainingLoginHref("/training/workspace")}
+        />
       </div>
     </header>
   );
@@ -67,11 +68,14 @@ export function TrainingFooter() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-center gap-2 text-center text-xs text-zinc-400 sm:flex-row sm:justify-between">
           <span>出版融合发展工程实践交流活动专项工作台</span>
-          <span>
-            <Link href="/" className="underline underline-offset-2 hover:text-zinc-600">
-              MUHUB
-            </Link>
-          </span>
+          <a
+            href="https://www.muhub.cn"
+            className="underline underline-offset-2 hover:text-zinc-600"
+            target="_blank"
+            rel="noreferrer"
+          >
+            MUHUB
+          </a>
         </div>
       </div>
     </footer>

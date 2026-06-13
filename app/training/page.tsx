@@ -109,12 +109,14 @@ export default function TrainingPage() {
               </p>
             </div>
             <div className="mt-6">
-              <Link
-                href="/projects?category=publishing_media"
+              <a
+                href="https://www.muhub.cn/projects?category=publishing_media"
+                target="_blank"
+                rel="noreferrer"
                 className="inline-flex rounded-lg border border-zinc-900 px-5 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-900 hover:text-white dark:border-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-100 dark:hover:text-zinc-900"
               >
-                查看出版与传媒项目
-              </Link>
+                查看 MUHUB 出版与传媒项目
+              </a>
             </div>
           </div>
         </section>

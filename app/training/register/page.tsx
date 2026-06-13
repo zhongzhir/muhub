@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 import { auth } from "@/auth";
 
-import { TrainingPageShell } from "../_components/training-chrome";
+import { TrainingPageShell, trainingLoginHref } from "../_components/training-chrome";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
@@ -23,13 +23,13 @@ export default async function TrainingRegisterPage() {
       {!session?.user?.id ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-            绑定活动身份前，请先登录 MUHUB 账号。建议使用手机号验证码登录，便于活动现场快速进入工作台。
+            请先登录，再使用主办方发放的邀请码绑定活动身份。
           </p>
           <Link
-            href="/login?redirect=/training/register"
+            href={trainingLoginHref("/training/register")}
             className="mt-5 inline-flex rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 dark:bg-teal-500 dark:hover:bg-teal-400"
           >
-            去登录
+            登录后绑定
           </Link>
         </div>
       ) : (
