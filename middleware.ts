@@ -1,19 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import NextAuth from "next-auth";
-import authConfig from "@/auth.config";
-import { isTrainingHost } from "@/lib/pwa/training-host";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-// ─── Rate Limiter（Upstash Redis 分布式滑动窗口） ────────────────────────────
-//
-// 使用 @upstash/ratelimit + Upstash Redis，跨实例/跨 worker 精确限流。
-// 若环境变量未配置（本地无 Redis），自动降级为放行（保开发体验）。
-//
-// 分级限流：
-//   /api/auth/*      → 30 次/分钟（认证接口，最敏感）
-//   /api/internal/*  → 10 次/分钟（内部 cron 接口）
-//   /api/*           → 120 次/分钟（通用接口）
+import authConfig from "@/auth.config";
+import { isTrainingHost } from "@/lib/pwa/training-host";
 
 let rlAuth: Ratelimit | null = null;
 let rlInternal: Ratelimit | null = null;
@@ -25,7 +16,7 @@ function initRatelimiters() {
 
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return; // 未配置：降级模式
+  if (!url || !token) return;
 
   const redis = new Redis({ url, token });
 
@@ -33,7 +24,7 @@ function initRatelimiters() {
     redis,
     limiter: Ratelimit.slidingWindow(30, "1 m"),
     prefix: "rl:auth",
-    ephemeralCache: new Map(), // 同实例内命中缓存，减少 Redis 往返
+    ephemeralCache: new Map(),
   });
 
   rlInternal = new Ratelimit({
@@ -57,10 +48,12 @@ function getRatelimiter(pathname: string): {
   limiter: Ratelimit | null;
   max: number;
 } {
-  if (pathname.startsWith("/api/auth/"))
+  if (pathname.startsWith("/api/auth/")) {
     return { limiter: rlAuth, max: 30 };
-  if (pathname.startsWith("/api/internal/"))
+  }
+  if (pathname.startsWith("/api/internal/")) {
     return { limiter: rlInternal, max: 10 };
+  }
   return { limiter: rlGeneral, max: 120 };
 }
 
@@ -71,8 +64,6 @@ function getClientIp(req: NextRequest): string {
     "127.0.0.1"
   );
 }
-
-// ─── NextAuth 中间件（仅处理鉴权保护路由） ────────────────────────────────────
 
 const { auth } = NextAuth({
   ...authConfig,
@@ -98,13 +89,23 @@ const { auth } = NextAuth({
   },
 });
 
-// ─── 主中间件入口 ──────────────────────────────────────────────────────────────
-
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  // ── 0. 子域名路由：training.muhub.cn → /training（URL 保持根路径） ─────────
   const host = req.headers.get("host") ?? "";
+  const normalizedHost = host.split(":")[0]?.toLowerCase() ?? "";
+
+  const isMainMuHubHost =
+    normalizedHost === "muhub.cn" ||
+    normalizedHost === "www.muhub.cn" ||
+    normalizedHost === "localhost" ||
+    normalizedHost === "127.0.0.1";
+
+  if (isMainMuHubHost && (pathname === "/training" || pathname.startsWith("/training/"))) {
+    const url = new URL(`https://training.muhub.cn${pathname === "/training" ? "" : pathname}`);
+    url.search = req.nextUrl.search;
+    return NextResponse.redirect(url);
+  }
+
   if (isTrainingHost(host)) {
     const passthrough =
       pathname === "/login" ||
@@ -119,23 +120,22 @@ export default async function middleware(req: NextRequest) {
       pathname === "/apple-touch-icon.png" ||
       pathname === "/icon.png" ||
       pathname === "/favicon.ico";
+
     if (passthrough) {
       return NextResponse.next();
     }
+
     const url = req.nextUrl.clone();
     url.pathname = pathname === "/" ? "/training" : `/training${pathname}`;
     return NextResponse.rewrite(url);
   }
 
-  // ── 1. API 路由：先限流，通过则放行（不走 Auth 中间件） ──────────────────
   if (pathname.startsWith("/api/")) {
-    // 惰性初始化限流器（首次请求时建立 Redis 连接）
     initRatelimiters();
 
     const ip = getClientIp(req);
     const { limiter, max } = getRatelimiter(pathname);
 
-    // 若 Redis 未配置，直接放行（降级模式）
     if (!limiter) {
       return NextResponse.next();
     }
@@ -150,7 +150,6 @@ export default async function middleware(req: NextRequest) {
       remaining = result.remaining;
       reset = result.reset;
     } catch {
-      // Redis 连接失败：降级为放行，不阻断请求
       console.error("[middleware] Rate limit check failed, allowing request");
       return NextResponse.next();
     }
@@ -162,18 +161,16 @@ export default async function middleware(req: NextRequest) {
     };
 
     if (!success) {
-      return new NextResponse(
-        JSON.stringify({ error: "Too many requests", retryAfter: 60 }),
-        {
-          status: 429,
-          headers: {
-            "Content-Type": "application/json",
-            "Retry-After": "60",
-            ...rlHeaders,
-          },
+      return new NextResponse(JSON.stringify({ error: "Too many requests", retryAfter: 60 }), {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": "60",
+          ...rlHeaders,
         },
-      );
+      });
     }
+
     const res = NextResponse.next();
     for (const [k, v] of Object.entries(rlHeaders)) {
       res.headers.set(k, v);
@@ -181,23 +178,18 @@ export default async function middleware(req: NextRequest) {
     return res;
   }
 
-  // ── 2. 鉴权保护路由：委托给 NextAuth ────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (auth as any)(req);
 }
 
 export const config = {
   matcher: [
-    // 根路径必须显式匹配（training 子域 / → /training rewrite）
     "/",
-    // 鉴权保护路由（NextAuth 处理）
     "/dashboard/:path*",
     "/me/:path*",
     "/settings/:path*",
     "/admin/:path*",
-    // API 路由（限流处理）
     "/api/:path*",
-    // 子域名路由（training.muhub.cn → /training）
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
