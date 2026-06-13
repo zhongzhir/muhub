@@ -1,6 +1,9 @@
+import { headers } from "next/headers";
 import Link from "next/link";
-import { PhoneLoginForm } from "@/components/auth/phone-login-form";
+
 import { GitHubSignInButton } from "@/components/auth/github-sign-in-button";
+import { PhoneLoginForm } from "@/components/auth/phone-login-form";
+import { isTrainingHost } from "@/lib/pwa/training-host";
 
 function safeCallbackUrl(raw: string | undefined): string {
   if (typeof raw !== "string") {
@@ -19,6 +22,8 @@ export default async function PhoneAuthPage({
   searchParams: Promise<{ callbackUrl?: string }>;
 }) {
   const sp = await searchParams;
+  const host = (await headers()).get("host") ?? "";
+  const trainingHost = isTrainingHost(host);
   const callbackUrl = safeCallbackUrl(sp.callbackUrl);
   const showPhoneLogin = process.env.PHONE_LOGIN_ENABLED !== "false";
 
@@ -44,12 +49,14 @@ export default async function PhoneAuthPage({
           <Link href="/" className="underline-offset-4 hover:underline">
             返回首页
           </Link>
-          <Link
-            href={`/login?redirect=${encodeURIComponent(callbackUrl)}`}
-            className="underline-offset-4 hover:underline"
-          >
-            其它登录方式
-          </Link>
+          {!trainingHost ? (
+            <Link
+              href={`/login?redirect=${encodeURIComponent(callbackUrl)}`}
+              className="underline-offset-4 hover:underline"
+            >
+              其他登录方式
+            </Link>
+          ) : null}
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">手机号登录</h1>
         <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
@@ -63,21 +70,25 @@ export default async function PhoneAuthPage({
           <PhoneLoginForm callbackUrl={callbackUrl} />
         </section>
 
-        <div className="relative my-10" aria-hidden>
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-zinc-200 dark:border-zinc-700" />
-          </div>
-          <div className="relative flex justify-center text-xs font-medium uppercase tracking-wide text-zinc-400">
-            <span className="bg-zinc-50 px-3 dark:bg-zinc-950">或</span>
-          </div>
-        </div>
+        {!trainingHost ? (
+          <>
+            <div className="relative my-10" aria-hidden>
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-zinc-200 dark:border-zinc-700" />
+              </div>
+              <div className="relative flex justify-center text-xs font-medium uppercase tracking-wide text-zinc-400">
+                <span className="bg-zinc-50 px-3 dark:bg-zinc-950">或</span>
+              </div>
+            </div>
 
-        <section aria-labelledby="github-from-phone-page">
-          <h2 id="github-from-phone-page" className="sr-only">
-            GitHub 登录
-          </h2>
-          <GitHubSignInButton callbackUrl={callbackUrl} />
-        </section>
+            <section aria-labelledby="github-from-phone-page">
+              <h2 id="github-from-phone-page" className="sr-only">
+                GitHub 登录
+              </h2>
+              <GitHubSignInButton callbackUrl={callbackUrl} />
+            </section>
+          </>
+        ) : null}
       </div>
     </div>
   );

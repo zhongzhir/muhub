@@ -1,7 +1,10 @@
+import { headers } from "next/headers";
 import Link from "next/link";
+
 import { auth } from "@/auth";
 import { GitHubSignInButton } from "@/components/auth/github-sign-in-button";
 import { PhoneLoginForm } from "@/components/auth/phone-login-form";
+import { isTrainingHost } from "@/lib/pwa/training-host";
 
 function safeCallbackUrl(raw: string | undefined): string {
   if (typeof raw !== "string") {
@@ -30,6 +33,8 @@ export default async function SignInPage({
   searchParams: Promise<{ callbackUrl?: string; redirect?: string; error?: string }>;
 }) {
   const sp = await searchParams;
+  const host = (await headers()).get("host") ?? "";
+  const trainingHost = isTrainingHost(host);
   const callbackUrl = safeCallbackUrl(sp.redirect ?? sp.callbackUrl);
   const showPhoneLogin = process.env.PHONE_LOGIN_ENABLED !== "false";
   const session = await auth();
@@ -45,9 +50,10 @@ export default async function SignInPage({
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">登录 MUHUB</h1>
         <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          创建项目、管理资料与发布动态前请先登录。可使用 GitHub
-          {showPhoneLogin ? " 或手机号验证码" : ""}。
-          {showPhoneLogin
+          {trainingHost
+            ? "本期实践交流活动统一使用手机号验证码登录，登录后再使用邀请码绑定学员或导师身份。"
+            : `创建项目、管理资料与发布动态前请先登录。可使用 GitHub${showPhoneLogin ? " 或手机号验证码" : ""}。`}
+          {!trainingHost && showPhoneLogin
             ? " 认领绑定 GitHub 的公开仓库项目时，可在账号设置中绑定 GitHub。"
             : null}
         </p>
@@ -69,35 +75,39 @@ export default async function SignInPage({
           </p>
         ) : null}
 
-        <section aria-labelledby="github-login-heading" className="mt-8">
-          <h2 id="github-login-heading" className="sr-only">
-            GitHub 登录
-          </h2>
-          <div className="flex flex-col items-stretch">
-            <GitHubSignInButton callbackUrl={callbackUrl} />
-          </div>
-          <p className="mt-4 text-center text-xs text-zinc-500">
-            使用 GitHub 登录即表示授权读取公开资料（头像、用户名等）用于展示。
-          </p>
-        </section>
+        {!trainingHost ? (
+          <section aria-labelledby="github-login-heading" className="mt-8">
+            <h2 id="github-login-heading" className="sr-only">
+              GitHub 登录
+            </h2>
+            <div className="flex flex-col items-stretch">
+              <GitHubSignInButton callbackUrl={callbackUrl} />
+            </div>
+            <p className="mt-4 text-center text-xs text-zinc-500">
+              使用 GitHub 登录即表示授权读取公开资料，用于账号展示和项目认领绑定。
+            </p>
+          </section>
+        ) : null}
 
         {showPhoneLogin ? (
           <>
-            <div className="relative my-10" aria-hidden>
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-zinc-200 dark:border-zinc-700" />
+            {!trainingHost ? (
+              <div className="relative my-10" aria-hidden>
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-zinc-200 dark:border-zinc-700" />
+                </div>
+                <div className="relative flex justify-center text-xs font-medium uppercase tracking-wide text-zinc-400">
+                  <span className="bg-zinc-50 px-3 dark:bg-zinc-950">或</span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-xs font-medium uppercase tracking-wide text-zinc-400">
-                <span className="bg-zinc-50 px-3 dark:bg-zinc-950">或</span>
-              </div>
-            </div>
+            ) : null}
 
-            <section aria-labelledby="phone-login-heading">
+            <section aria-labelledby="phone-login-heading" className={trainingHost ? "mt-8" : undefined}>
               <h2 id="phone-login-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 手机号验证码登录
               </h2>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                仅支持中国大陆 11 位手机号。亦可前往{" "}
+                仅支持中国大陆 11 位手机号。也可前往{" "}
                 <Link
                   href={`/auth/phone?callbackUrl=${encodeURIComponent(callbackUrl)}`}
                   className="font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
