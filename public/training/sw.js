@@ -1,5 +1,5 @@
 /* MUHUB 实训平台最小 Service Worker（仅 training 子域注册） */
-const CACHE_NAME = "muhub-training-v1";
+const CACHE_NAME = "muhub-training-v2";
 
 const PRECACHE_URLS = [
   "/training/manifest.webmanifest",
@@ -7,6 +7,7 @@ const PRECACHE_URLS = [
   "/icons/icon-512.png",
   "/apple-touch-icon.png",
 ];
+const PRECACHE_SET = new Set(PRECACHE_URLS);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -34,24 +35,23 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
+  const isDocument =
+    event.request.mode === "navigate" ||
+    event.request.destination === "document";
+
+  // 训练首页和其它 HTML 页面一律优先走网络，避免手机桌面入口长期命中旧页面。
+  if (isDocument) {
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
+    return;
+  }
+
+  // 仅对显式预缓存资源走 cache-first，其它资源全部直连网络。
+  if (!PRECACHE_SET.has(url.pathname)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          if (!response || response.status !== 200 || response.type !== "basic") {
-            return response;
-          }
-          const isDocument =
-            event.request.mode === "navigate" ||
-            event.request.destination === "document";
-          if (isDocument) {
-            const copy = response.clone();
-            void caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request));
-    }),
+    caches.match(event.request).then((cached) => cached || fetch(event.request)),
   );
 });

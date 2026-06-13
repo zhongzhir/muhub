@@ -13,7 +13,22 @@ export function TrainingServiceWorkerRegister() {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     if (!isTrainingHost(window.location.hostname)) return;
 
-    void navigator.serviceWorker.register("/training/sw.js", { scope: "/" }).catch(() => {});
+    async function setupTrainingServiceWorker() {
+      try {
+        // 先清理旧 training cache，减少旧首页继续命中的机会。
+        if ("caches" in window) {
+          const keys = await window.caches.keys();
+          await Promise.all(keys.filter((key) => key.startsWith("muhub-training-")).map((key) => window.caches.delete(key)));
+        }
+
+        const registration = await navigator.serviceWorker.register("/training/sw.js", { scope: "/" });
+        await registration.update();
+      } catch {
+        /* 失败静默，不影响页面 */
+      }
+    }
+
+    void setupTrainingServiceWorker();
   }, []);
 
   return null;
