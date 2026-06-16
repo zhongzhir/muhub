@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { AdminAuthError } from "@/lib/admin-auth";
 
 import { TrainingPageShell } from "../_components/training-chrome";
+import { requireTrainingAdmin } from "../lib/admin-auth";
 import { getTrainingAdminOverview } from "../lib/queries";
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function TrainingAdminPage() {
   try {
-    await requireMuHubAdmin();
+    await requireTrainingAdmin();
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return (

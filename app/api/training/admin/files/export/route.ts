@@ -1,6 +1,7 @@
-import { AdminAuthError, requireMuHubAdmin } from "@/lib/admin-auth";
+import { AdminAuthError } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
+import { requireTrainingAdmin } from "@/app/training/lib/admin-auth";
 import { buildCsv, csvDownloadHeaders } from "@/app/training/lib/csv";
 import { TRAINING_2026_EVENT_SLUG } from "@/app/training/lib/current-event";
 
@@ -19,7 +20,7 @@ function uploaderName(file: {
 
 export async function GET() {
   try {
-    await requireMuHubAdmin();
+    await requireTrainingAdmin();
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return Response.json({ ok: false, error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });

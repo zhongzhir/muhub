@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 
+import { isTrainingAdminUser } from "../lib/admin-auth";
 import { TrainingAuthButton } from "./training-auth-button";
 
 const BRAND = {
@@ -36,7 +37,14 @@ export async function TrainingHeader() {
   );
 }
 
-export function TrainingNav() {
+export async function TrainingNav() {
+  const session = await auth();
+  const isTrainingAdmin = isTrainingAdminUser({
+    id: session?.user?.id,
+    email: session?.user?.email,
+    phone: (session?.user as { phone?: string | null } | undefined)?.phone ?? null,
+    role: (session?.user as { role?: string | null } | undefined)?.role ?? null,
+  });
   const links = [
     { href: "/training", label: "活动首页" },
     { href: "/training/cases", label: "案例资料" },
@@ -44,11 +52,14 @@ export function TrainingNav() {
     { href: "/training/survey", label: "满意度调查" },
     { href: "/training/register", label: "身份绑定" },
   ];
+  const visibleLinks = isTrainingAdmin
+    ? [...links, { href: "/training/admin", label: "Training Admin" }]
+    : links;
 
   return (
     <nav className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-2.5 sm:px-6">
-        {links.map((link) => (
+        {visibleLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}

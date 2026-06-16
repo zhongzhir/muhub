@@ -32,7 +32,7 @@ const entries = [
   },
 ];
 
-export default function TrainingPage() {
+export default async function TrainingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
       <TrainingHeader />

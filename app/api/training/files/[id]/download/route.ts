@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
-import { isMuHubAdminUser } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 import { canDownloadTrainingFile } from "@/app/training/lib/access";
+import { isTrainingAdminUser } from "@/app/training/lib/admin-auth";
 import { TRAINING_2026_EVENT_SLUG } from "@/app/training/lib/current-event";
 import { readTrainingStoredFile } from "@/app/training/lib/file-storage";
 
@@ -36,9 +36,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return Response.json({ ok: false, error: "文件不存在。" }, { status: 404 });
   }
 
-  const isMuHubAdmin = isMuHubAdminUser({
+  const isTrainingAdmin = isTrainingAdminUser({
     id: session.user?.id,
     email: session.user?.email,
+    phone: (session.user as { phone?: string | null } | undefined)?.phone ?? null,
     role: (session.user as { role?: string | null } | undefined)?.role ?? null,
   });
   const participant = await prisma.trainingParticipant.findUnique({
@@ -55,7 +56,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         classNo: participant.classNo,
         groupNo: participant.groupNo,
       }
-    : isMuHubAdmin
+    : isTrainingAdmin
       ? {
           role: "admin",
           classNo: null,

@@ -1,17 +1,18 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { isMuHubAdminUser } from "@/lib/admin-auth";
 
+import { isTrainingAdminUser } from "./admin-auth";
 import { getCurrentTrainingParticipant } from "./queries";
 
 export async function getTrainingSessionContext() {
   const session = await auth();
   const userId = session?.user?.id;
   const participant = await getCurrentTrainingParticipant(userId);
-  const isMuHubAdmin = isMuHubAdminUser({
+  const isTrainingAdmin = isTrainingAdminUser({
     id: session?.user?.id,
     email: session?.user?.email,
+    phone: (session?.user as { phone?: string | null } | undefined)?.phone ?? null,
     role: (session?.user as { role?: string | null } | undefined)?.role ?? null,
   });
 
@@ -19,14 +20,14 @@ export async function getTrainingSessionContext() {
     session,
     userId,
     participant,
-    isMuHubAdmin,
+    isMuHubAdmin: isTrainingAdmin,
     accessParticipant: participant
       ? {
           role: participant.role,
           classNo: participant.classNo,
           groupNo: participant.groupNo,
         }
-      : isMuHubAdmin
+      : isTrainingAdmin
         ? {
             role: "admin",
             classNo: null,
