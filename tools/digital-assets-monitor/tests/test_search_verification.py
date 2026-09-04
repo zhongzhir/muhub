@@ -59,6 +59,14 @@ class VerificationTests(unittest.TestCase):
         self.assertEqual(len(_source_items(src)), 1)
         self.assertEqual(crawl.call_count, 2)
 
+    @patch("app.scraper.verification.requests.get")
+    def test_truncated_200_is_not_irrelevance_or_verified(self, get):
+        response = MagicMock(status_code=200, headers={"Content-Type": "text/html"})
+        response.iter_content.return_value = [('<html><meta name="firstpublishedtime" content="2026-07-12"><article>' + '公安机关依法处置涉案虚拟货币。' * 20).encode()]
+        get.return_value.__enter__.return_value = response
+        result = verify_search_item(self.item, self.source)
+        self.assertEqual(result["verification"]["status"], "incomplete_html_response")
+
     def test_unverified_candidate_retained_not_published(self):
         conn = sqlite3.connect(":memory:")
         conn.executescript(db.SCHEMA)

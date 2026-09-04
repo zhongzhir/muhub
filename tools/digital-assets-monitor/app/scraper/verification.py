@@ -42,6 +42,10 @@ def verify_search_item(item, source):
                     return result
                 chunks.append(chunk)
         html = decode(b"".join(chunks))
+        evidence["response_bytes"] = size
+        if re.search(r"<html(?:\s|>)", html, re.I) and not re.search(r"</html\s*>", html, re.I):
+            evidence["status"] = "incomplete_html_response"
+            return result
         evidence.update(publication_evidence(html, item.get("publish_date")))
         soup = BeautifulSoup(html, "html.parser")
         nodes = soup.select(selector)
@@ -51,6 +55,7 @@ def verify_search_item(item, source):
         for node in nodes[0].select("script, style, nav, header, footer"):
             node.decompose()
         body = nodes[0].get_text(" ", strip=True)
+        evidence["body_characters"] = len(body)
         if len(body) < 100 or not is_relevant(body):
             evidence["status"] = "article_body_insufficient_or_irrelevant"
             return result
