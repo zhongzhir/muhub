@@ -10,7 +10,10 @@ STAGE=$BASE/release-$STAMP
 BACKUP=$BASE/app-before-$STAMP
 [[ -d "$BASE/app" && ! -L "$BASE/app" ]] || { echo 'Unexpected app path; stop'; exit 1; }
 [[ ! -e "$STAGE" && ! -e "$BACKUP" ]] || exit 1
-git -C "$REPO" fetch origin "$REV"
+# A previously fetched immutable revision needs no second network request.
+if ! git -C "$REPO" cat-file -e "$REV^{commit}" 2>/dev/null; then
+  git -C "$REPO" fetch origin "$REV"
+fi
 git -C "$REPO" cat-file -e "$REV^{commit}"
 mkdir "$STAGE"
 git -C "$REPO" archive "$REV" tools/digital-assets-monitor | tar -x --strip-components=2 -C "$STAGE"
