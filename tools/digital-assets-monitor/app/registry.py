@@ -48,8 +48,10 @@ def sync_registry():
             conn.execute("INSERT OR IGNORE INTO institutions VALUES (?,?,?,?,?,?,?,?)",
                 (iid,source["name"],"police",None,"verified_official_metadata",source["url"],1,db.now_iso()))
             conn.execute("UPDATE institutions SET identity_status='verified_official_metadata',current_identity_verified=1,updated_at=? WHERE id=?",(db.now_iso(),iid))
-            conn.execute("INSERT OR REPLACE INTO institution_channels VALUES (?,?,?,?,?,?,?,?)",
-                ("configured-"+source["id"],iid,source["url"],source["url"],"configured_fail_closed",1,1,db.now_iso()))
+            conn.execute("""INSERT INTO institution_channels VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
+                institution_id=excluded.institution_id,url=excluded.url,evidence_url=excluded.evidence_url,
+                collection_enabled=1,updated_at=excluded.updated_at""",
+                ("configured-"+source["id"],iid,source["url"],source["url"],"configured_pending_production",0,1,db.now_iso()))
         conn.commit()
     finally: conn.close()
 

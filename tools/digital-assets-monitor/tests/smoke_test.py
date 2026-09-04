@@ -37,6 +37,7 @@ print("sources ->", len(c.get("/api/sources").json()), "src health keys ok")
 coverage=c.get("/api/coverage").json()
 assert coverage["institutions"]["candidates"] >= 94
 assert coverage["channels"]["collection_enabled"] == 3
+assert coverage["channels"]["endpoint_verified"] == 0
 print("coverage ->",coverage["institutions"],coverage["channels"])
 print("high_value ->", len(c.get("/api/high_value").json()))
 print("items ->", c.get("/api/items?page=1&page_size=5").json().get("total"))

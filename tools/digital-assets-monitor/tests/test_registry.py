@@ -12,7 +12,10 @@ class RegistryTests(unittest.TestCase):
     self.assertGreaterEqual(result["institutions"]["candidates"],94)
     self.assertGreaterEqual(result["channels"]["candidates"],3)
     self.assertEqual(result["channels"]["collection_enabled"],3)
-    self.assertEqual(result["channels"]["endpoint_verified"],3)
+    self.assertEqual(result["channels"]["endpoint_verified"],0)
+    conn=db.connect();conn.execute("UPDATE institution_channels SET endpoint_verified=1,status='production_scan_ok' WHERE id='configured-police-tianjin'");conn.commit();conn.close()
+    sync_registry()
+    self.assertEqual(coverage_summary()["channels"]["endpoint_verified"],1)
     self.assertGreater(result["institutions"]["candidates"],result["institutions"]["identity_verified"])
    finally:db.DB_PATH=old
 if __name__=="__main__":unittest.main()
