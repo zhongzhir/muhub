@@ -1,9 +1,10 @@
 """搜索引擎回溯抓取：多引擎（Bing 国际/中国站 + DuckDuckGo HTML）并行检索。
 兜底查全、覆盖全部信息源，并对结果做相关性过滤，滤除无关内容。"""
 import base64
+import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import quote, unquote, urlparse
+from urllib.parse import quote, unquote, urlparse, parse_qs
 
 from bs4 import BeautifulSoup
 
@@ -83,7 +84,8 @@ def parse_ddg(page_text):
         href = a.get("href")
         if not href:
             continue
-        url = unquote(href).replace("//duckduckgo.com/l/?uddg=", "")
+        parsed = urlparse("https:" + href if href.startswith("//") else href)
+        url = parse_qs(parsed.query).get("uddg", [href])[0]
         title = _strip(a.get_text())
         snippet = _strip(block.select_one("a.result__snippet, .result__snippet").get_text()) if block.select_one("a.result__snippet, .result__snippet") else ""
         if not title or len(title) < 6:
@@ -114,13 +116,36 @@ def _run_engine(query, name, tmpl, parser):
     return rows
 
 
+def matches_domain(url, domain):
+    host = (urlparse(url).hostname or "").lower()
+    domain = domain.lower().removeprefix("www.")
+    return host == domain or host.endswith("." + domain)
+
+
 def run_search(query):
+    from app.analysis.classify import is_relevant
+    scope = re.search(r"(?:^|\s)site:([^\s]+)", query)
     for name, tmpl, parser in _ENGINES:
         try:
-            return _run_engine(query, name, tmpl, parser)
-        except Exception:
-            continue
+            rows = _run_engine(query, name, tmpl, parser)
+            useful = [r for r in rows
+                      if urlparse(r.get("url", "")).scheme in ("http", "https")
+                      and is_relevant(r.get("title", "") + " " + r.get("summary", ""))
+                      and (not scope or matches_domain(r.get("url", ""), scope.group(1)))]
+            if useful:
+                return useful
+            logging.getLogger("search").warning("%s: %s candidates, none usable for query %s", name, len(rows), query)
+        except Exception as exc:
+            logging.getLogger("search").warning("%s query %s failed: %s", name, query, str(exc)[:300])
     return None
+
+
+class SearchRows(list):
+    def __init__(self, rows, queries_planned, queries_ok):
+        super().__init__(rows)
+        self.queries_planned = queries_planned
+        self.queries_ok = queries_ok
+        self.queries_failed = queries_planned - queries_ok
 
 
 def _match_filter(row, flt):
@@ -131,7 +156,9 @@ def _match_filter(row, flt):
 
 
 def run_all_queries(queries=None, workers=None, query_filter=None):
-    queries = queries or search_queries()
+    queries = search_queries() if queries is None else queries
+    if not queries:
+        raise ValueError("Search query list is empty")
     workers = workers or int(get_settings().get("scanner", {}).get("search_workers", 8))
     all_rows = []
     succeeded = 0
@@ -142,7 +169,7 @@ def run_all_queries(queries=None, workers=None, query_filter=None):
                 all_rows.extend(rows)
     if not succeeded:
         from app.scraper.base import FetchError
-        raise FetchError("All search queries failed")
+        raise FetchError("All search queries returned no usable evidence (network, parser, or irrelevant results); see search logs")
     if query_filter:
         all_rows = [r for r in all_rows if _match_filter(r, query_filter)]
     # 去重（按 title+url）
@@ -154,4 +181,4 @@ def run_all_queries(queries=None, workers=None, query_filter=None):
             continue
         seen.add(k)
         out.append(r)
-    return out
+    return SearchRows(out, len(queries), succeeded)

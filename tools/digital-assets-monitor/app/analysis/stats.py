@@ -19,7 +19,7 @@ def overview():
         ).fetchone()["c"]
         high = conn.execute("SELECT COUNT(*) c FROM items WHERE importance='high'").fetchone()["c"]
         sources_total = conn.execute("SELECT COUNT(*) c FROM sources").fetchone()["c"]
-        sources_ok = conn.execute("SELECT COUNT(*) c FROM sources WHERE last_status='成功'").fetchone()["c"]
+        sources_ok = conn.execute("SELECT COUNT(*) c FROM sources WHERE last_status LIKE '成功%'").fetchone()["c"]
         regions = conn.execute("SELECT COUNT(DISTINCT region) c FROM items WHERE region IS NOT NULL").fetchone()["c"]
         amount = conn.execute(
             "SELECT SUM(amount_value) s FROM items WHERE amount_currency IN ('人民币','元') AND amount_value IS NOT NULL"

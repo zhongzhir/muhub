@@ -1,5 +1,7 @@
 """采集流水线：同步源 -> 抓取 -> 去重 -> 分类标注 -> 持久化。"""
 import hashlib
+import logging
+from urllib.parse import urlparse
 import re
 from datetime import datetime
 
@@ -36,7 +38,14 @@ def _source_items(src):
     url = src.get("url", "")
     if stype == "search":
         qf = src.get("query_filter")
-        return search_mod.run_all_queries(query_filter=qf)
+        queries = src.get("search_queries")
+        if src["id"] != "search-backfill":
+            domain = (urlparse(url).hostname or "").removeprefix("www.")
+            if not domain:
+                raise ValueError("Named search source requires a valid domain")
+            terms = queries or (["cryptocurrency forfeiture", "bitcoin seizure"] if src.get("category") == "国际" else ["涉案虚拟货币 处置", "数字资产 罚没"])
+            queries = [f"site:{domain} {term}" for term in terms]
+        return search_mod.run_all_queries(queries=queries, query_filter=qf)
     if stype == "rss":
         return rss_mod.parse_feed(url)
     if stype == "web":
@@ -64,6 +73,10 @@ def process_item(dbconn, item, source, new_count):
     if source.get("type") not in ("seed", "manual") and not classify.is_relevant(raw_text):
         return new_count
 
+    source = dict(source)
+    if source.get("id") == "search-backfill":
+        source["name"] = urlparse(item.get("url") or "").hostname or "未知发布域名"
+        source["category"] = "综合检索"
     amount_val, amount_cur = extract.extract_amount(raw_text)
     inst = extract.extract_institution(raw_text)
     itype = classify.classify_institution_type(raw_text)
@@ -141,24 +154,33 @@ def run_scan(dbconn=None, manual=False):
             try:
                 conn.execute("BEGIN")
                 source_new = 0
+                relevant_count = sum(1 for it in items if classify.is_relevant(_content_text(it)) and not _neg_filter(_content_text(it), it.get("title")))
                 for it in items:
                     source_new = process_item(conn, it, src, source_new)
                 conn.commit()
                 new_items += source_new
+                query_failed = getattr(items, "queries_failed", 0)
+                status = ("部分失败" if query_failed else "成功") + f": 候选{len(items)} 相关{relevant_count} 新增{source_new}"
+                if hasattr(items, "queries_planned"):
+                    status += f" 查询有效{items.queries_ok}/{items.queries_planned}"
                 conn.execute(
                     """UPDATE sources SET last_scan_at=?, last_status=?, item_count=(SELECT COUNT(*) FROM items WHERE source_name=?) WHERE id=?""",
-                    (db.now_iso(), "成功", src["name"], src["id"]),
+                    (db.now_iso(), status, src["name"], src["id"]),
                 )
                 conn.commit()
             finally:
                 conn.close()
-            ok += 1
+            if query_failed:
+                failed += 1
+            else:
+                ok += 1
         except Exception as e:  # noqa
+            logging.getLogger("scanner").exception("Source %s failed", src["id"])
             conn = db.connect()
             try:
                 conn.execute(
                     "UPDATE sources SET last_scan_at=?, last_status=? WHERE id=?",
-                    (db.now_iso(), f"失败: {type(e).__name__}", src["id"]),
+                    (db.now_iso(), f"失败: {type(e).__name__}: {str(e)[:350]}", src["id"]),
                 )
                 conn.commit()
             finally:
@@ -179,7 +201,7 @@ def log_scan(run_at, planned, ok, failed, new_items):
     conn = db.connect()
     try:
         total = conn.execute("SELECT COUNT(*) c FROM items").fetchone()["c"]
-        status = "成功" if failed == 0 else ("部分失败" if ok else "失败")
+        status = "成功" if failed == 0 else ("部分失败" if ok or new_items else "失败")
         conn.execute(
             "INSERT INTO scan_logs (run_at, sources_planned, sources_ok, sources_failed, new_items, total_items, status, message) "
             "VALUES (?,?,?,?,?,?,?,?)",

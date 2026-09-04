@@ -19,8 +19,9 @@ def check(src):
     name = src.get("name")
     try:
         if stype == "search":
-            rows = search_mod.run_search(search_mod.search_queries()[0])
-            return name, f"search(OK, 首关键词 {len(rows)} 条)", "reach"
+            from app.scraper.pipeline import _source_items
+            rows = _source_items(src)
+            return name, f"search(有效结果 {len(rows)} 条，查询 {rows.queries_ok}/{rows.queries_planned})", "reach"
         if stype == "rss":
             rows = rss_mod.parse_feed(url)
             return name, f"rss OK {len(rows)} 条", "reach"
@@ -30,7 +31,7 @@ def check(src):
             return name, f"web OK {len(rows)} 条", "reach" if rows else "parse"
         return name, "unknown type", "unknown"
     except Exception as e:  # noqa
-        return name, f"FAIL: {type(e).__name__}", "fail"
+        return name, f"FAIL: {type(e).__name__}: {str(e)[:350]}", "fail"
 
 
 def main():

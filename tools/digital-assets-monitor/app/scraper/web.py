@@ -39,32 +39,28 @@ def crawl_list(url, rules):
         href = _attr(link_el, "href") if link_el else _attr(node, "href")
         if not href:
             continue
-        href = absolute_url(url, href)
+        href = absolute_url(resp.url, href)
         if not href or href in seen:
             continue
         seen.add(href)
 
-        title_el = None
-        if node.name == "a":
-            title_el = node
-        else:
-            t = _txt(node)
-            title_el = node if t else node.find_parent(["li", "div", "article"])
-
-        title = _txt(title_el) or _txt(link_el)
+        title = (link_el.get("title") or _txt(link_el)) if link_el else _txt(node)
         if not title or len(title) < 6:
             continue
         # 日期：取正则或规则
         pub = None
+        context = node if node.name != "a" else (node.find_parent("li") or node)
         if rules.get("date"):
-            d = node.select_one(rules["date"])
+            d = context.select_one(rules["date"])
             if d:
                 pub = _txt(d)
-        if not pub:
-            m = re.search(r"(\d{4})[年./-](\d{1,2})[月./-](\d{1,2})", _txt(node))
+        date_text = pub or _txt(context)
+        pub = None
+        if date_text:
+            m = re.search(r"(\d{4})[年./-](\d{1,2})[月./-](\d{1,2})", date_text)
             if m:
                 pub = f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
-        out.append({"title": title, "url": href, "publish_date": pub, "summary": _txt(node)[:400]})
+        out.append({"title": title, "url": href, "publish_date": pub, "summary": _txt(context)[:400]})
     if not out:
         raise FetchError("No list entries parsed; check selector or access restrictions")
     return out
