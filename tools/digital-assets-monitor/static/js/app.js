@@ -380,7 +380,7 @@
   async function loadSources() {
     const [srcs, logs, coverage] = await Promise.all([api("/sources"), api("/scan/logs?limit=12"), api("/coverage")]);
     $("#srcBody").innerHTML = srcs.map((s) => {
-      const st = s.last_status || "未运行";
+      const st = s.enabled ? (s.last_status || "未运行") : "已暂停：搜索传输不可用";
       const cls = st.includes("成功") ? "tag-ok" : st.includes("失败") ? "tag-fail" : st.includes("运行") ? "tag-run" : "";
       return `<tr><td style="color:var(--txt);font-weight:500">${esc(s.name)}</td><td>${esc(s.category || "—")}</td><td class="tag">${s.source_type}</td><td class="tag">${fmtDate(s.last_scan_at)}</td><td class="${cls}">${esc(st)}</td><td class="tag">${s.item_count || 0}</td></tr>`;
     }).join("");

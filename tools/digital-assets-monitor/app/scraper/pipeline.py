@@ -10,6 +10,7 @@ from datetime import datetime
 from app import database as db
 from app.config import get_sources, get_keywords, get_settings
 from app.scraper import rss as rss_mod, web as web_mod, search as search_mod
+from app.scraper.base import FetchError
 from app.analysis import classify, extract, summarize
 
 
@@ -219,7 +220,11 @@ def run_scan(dbconn=None, manual=False):
             else:
                 ok += 1
         except Exception as e:  # noqa
-            logging.getLogger("scanner").exception("Source %s failed", src["id"])
+            logger = logging.getLogger("scanner")
+            if isinstance(e, FetchError):
+                logger.warning("Source %s unavailable: %s", src["id"], str(e)[:350])
+            else:
+                logger.exception("Source %s failed", src["id"])
             conn = db.connect()
             try:
                 conn.execute(

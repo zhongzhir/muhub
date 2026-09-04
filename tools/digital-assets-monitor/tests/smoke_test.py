@@ -29,7 +29,9 @@ tok = r.json().get("token")
 print("auth ok ->", r.json()["ok"], "token len:", len(tok or ""))
 c.headers["x-access-token"] = tok
 
-print("overview ->", c.get("/api/overview").json())
+overview=c.get("/api/overview").json()
+assert overview["sources_total"] == 23
+print("overview ->",overview)
 print("trend ->", len(c.get("/api/trend?days=30").json()))
 print("dist->", len(c.get("/api/distribution?field=institution_type").json()))
 print("heatmap ->", len(c.get("/api/heatmap").json()))

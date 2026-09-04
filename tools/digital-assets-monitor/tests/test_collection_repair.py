@@ -47,6 +47,13 @@ class CollectionRepairTests(unittest.TestCase):
         pipeline.process_item(conn, dict(GOOD, verification={"status": "verified_article"}), {"id":"search-backfill", "type":"search", "name":"全网关键词回溯", "category":"综合检索"}, 0)
         self.assertEqual(conn.execute("SELECT source_name FROM items").fetchone()[0], "www.justice.gov")
         conn.close()
+    def test_unavailable_search_transports_are_not_scheduled(self):
+        from app.config import get_sources
+        searches = [source for source in get_sources()["sources"] if source["type"] == "search"]
+        self.assertTrue(searches)
+        self.assertTrue(all(not source.get("enabled", True) for source in searches))
+        self.assertTrue(all(source.get("operational_status") == "paused_unavailable_search_transport" for source in searches))
+
     def test_list_title_and_date_are_separate(self):
         page='<li><a href="/spp/xwfbh/wsfbt/202609/t20260904_1.shtml">涉案虚拟货币处置工作情况</a><span>2026年09月04日</span></li>'
         response=SimpleNamespace(content=page.encode(),url="https://www.spp.gov.cn/xwfbh/wsfbt/")

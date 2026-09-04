@@ -1,15 +1,17 @@
 {
-  "note": "信息源清单。type: rss(订阅源) / web(网页爬虫) / search(搜索引擎回溯)。search 类型用 keywords.json 的 search_queries，可用 query_filter 限定该源关注的命中词。所有非种子/手工条目均需通过赛道相关度把关。",
+  "note": "信息源清单。type: rss(订阅源) / web(网页爬虫) / search(搜索引擎回溯)。search 类型用 keywords.json 的 search_queries，可用 query_filter 限定该源关注的命中词。所有非种子/手工条目均需通过赛道相关度把关。 搜索通道若ECS无可靠传输则暂停，候选配置不等同生产启用。",
   "sources": [
     {
       "id": "search-backfill",
       "name": "全网关键词回溯",
       "category": "综合检索",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 100,
       "url": "https://www.bing.com/search",
-      "note": "全局兜底检索，覆盖全部赛道信息源"
+      "note": "全局兜底检索，覆盖全部赛道信息源；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "mof",
@@ -191,7 +193,7 @@
       "name": "21世纪经济报道",
       "category": "媒体",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 65,
       "url": "https://www.21jingji.com/",
       "query_filter": [
@@ -202,7 +204,9 @@
         "crypto",
         "digital asset"
       ],
-      "note": "追踪首创模式；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "追踪首创模式；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "media-caixin",
@@ -239,7 +243,7 @@
       "name": "第一财经",
       "category": "媒体",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 60,
       "url": "https://www.yicai.com/",
       "query_filter": [
@@ -249,14 +253,16 @@
         "数字资产",
         "crypto"
       ],
-      "note": "财经资讯；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "财经资讯；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "media-cdst",
       "name": "链捕手",
       "category": "行业媒体",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 60,
       "url": "https://www.lianbushou.com/",
       "query_filter": [
@@ -266,14 +272,16 @@
         "司法",
         "crypto"
       ],
-      "note": "行业观察；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "行业观察；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "media-jinse",
       "name": "金色财经",
       "category": "行业媒体",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 60,
       "url": "https://www.jinse.cn/",
       "query_filter": [
@@ -284,14 +292,16 @@
         "罚没",
         "crypto"
       ],
-      "note": "监管与司法；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "监管与司法；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "media-odaily",
       "name": "Odaily星球日报",
       "category": "行业媒体",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 60,
       "url": "https://www.odaily.news/",
       "query_filter": [
@@ -301,14 +311,16 @@
         "司法",
         "crypto"
       ],
-      "note": "行业动态；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "行业动态；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "media-imt",
       "name": "观察者/风闻",
       "category": "行业媒体",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 60,
       "url": "https://www.guancha.cn/",
       "query_filter": [
@@ -319,14 +331,16 @@
         "法院",
         "加密"
       ],
-      "note": "社会/政法；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "社会/政法；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "intl-usms",
       "name": "美国法警局 USMS",
       "category": "国际",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 80,
       "url": "https://www.usmarshals.gov/",
       "query_filter": [
@@ -336,14 +350,16 @@
         "crypto",
         "seiz"
       ],
-      "note": "罚没资产拍卖；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "罚没资产拍卖；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "intl-doj",
       "name": "美国司法部 DOJ",
       "category": "国际",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 85,
       "url": "https://www.justice.gov/news",
       "query_filter": [
@@ -355,14 +371,16 @@
         "虚拟货币",
         "数字货币"
       ],
-      "note": "刑事/资产罚没；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "刑事/资产罚没；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "intl-ofac",
       "name": "美国财政部 OFAC/SEC/CFTC",
       "category": "国际",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 75,
       "url": "https://home.treasury.gov/news",
       "query_filter": [
@@ -373,14 +391,16 @@
         "bitcoin",
         "tether"
       ],
-      "note": "制裁与执法；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "制裁与执法；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "intl-europol",
       "name": "欧洲刑警 Europol",
       "category": "国际",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 70,
       "url": "https://www.europol.europa.eu/media-press/newsroom/news",
       "query_filter": [
@@ -390,14 +410,16 @@
         "数字资产",
         "虚拟货币"
       ],
-      "note": "国际执法；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "国际执法；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "intl-chainalysis",
       "name": "Chainalysis 报告",
       "category": "国际",
       "type": "search",
-      "enabled": true,
+      "enabled": false,
       "priority": 70,
       "url": "https://www.chainalysis.com/blog/",
       "query_filter": [
@@ -408,7 +430,9 @@
         "bitcoin",
         "数字资产"
       ],
-      "note": "链上数据/执法；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "链上数据/执法；仅接收本站域名结果，空结果不代表本站已完整覆盖；2026-09-04 ECS连续扫描无可用搜索证据，暂停生产调用，保留配置待可靠提供商接入后复测。",
+      "operational_status": "paused_unavailable_search_transport",
+      "paused_on": "2026-09-04"
     },
     {
       "id": "policy-supreme",
