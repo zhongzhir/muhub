@@ -1,0 +1,41 @@
+{
+  "note": "信息源清单。type: rss(订阅源) / web(网页爬虫) / search(搜索引擎回溯)。search 类型用 keywords.json 的 search_queries，可用 query_filter 限定该源关注的命中词。所有非种子/手工条目均需通过赛道相关度把关。",
+  "sources": [
+    { "id": "search-backfill", "name": "全网关键词回溯", "category": "综合检索", "type": "search", "enabled": true, "priority": 100, "url": "https://www.bing.com/search", "note": "全局兜底检索，覆盖全部赛道信息源" },
+
+    { "id": "mof", "name": "财政部 - 罚没财物/国有资产", "category": "财政", "type": "web", "enabled": true, "priority": 80, "url": "https://www.mof.gov.cn/gkml/caizhengwengao/", "note": "财政部公告" },
+    { "id": "ccdi", "name": "中央纪委国家监委网站", "category": "纪委监委", "type": "web", "enabled": true, "priority": 90, "url": "https://www.ccdi.gov.cn/yaowenn/", "note": "审查调查/资产处置要闻" },
+    { "id": "spp", "name": "最高人民检察院", "category": "人民检察院", "type": "web", "enabled": true, "priority": 85, "url": "https://www.spp.gov.cn/xwfbh/wsfbt/", "note": "涉案财物/指导案例" },
+    { "id": "court", "name": "最高人民法院 / 中国法院网", "category": "人民法院", "type": "web", "enabled": true, "priority": 90, "url": "https://www.chinacourt.org/index.shtml", "note": "法院要闻" },
+    { "id": "mps", "name": "公安部官网", "category": "公安机关", "type": "web", "enabled": true, "priority": 80, "url": "https://www.mps.gov.cn/n2254314/n2254457/", "note": "公安新闻" },
+    { "id": "ccgp", "name": "中国政府采购网", "category": "招投标", "type": "web", "enabled": true, "priority": 90, "url": "https://www.ccgp.gov.cn/cggg/dfgg/", "note": "罚没/涉案资产招标公告" },
+    { "id": "ggzy", "name": "全国公共资源交易平台", "category": "招投标", "type": "web", "enabled": true, "priority": 85, "url": "https://www.ggzy.gov.cn/information/gg/", "note": "公告" },
+    { "id": "cbex", "name": "北京产权交易所 / 北交互联", "category": "产权交易所", "type": "web", "enabled": true, "priority": 95, "url": "https://www.cbex.com.cn/", "note": "罚没资产/司法处置板块" },
+    { "id": "wscc", "name": "山西技术产权交易中心", "category": "产权交易所", "type": "web", "enabled": true, "priority": 75, "url": "https://www.sxscpre.com/", "note": "数字货币处置业务" },
+    { "id": "hubei-whpre", "name": "华中文化产权交易所", "category": "产权交易所", "type": "web", "enabled": true, "priority": 75, "url": "http://www.hbcpre.com/", "note": "湖北罚没虚拟货币处置" },
+    { "id": "xjpre", "name": "江西省产权交易所", "category": "产权交易所", "type": "web", "enabled": true, "priority": 70, "url": "http://www.jxcq.com.cn/", "note": "产权交易" },
+    { "id": "ahpre", "name": "安徽省产权交易中心", "category": "产权交易所", "type": "web", "enabled": true, "priority": 70, "url": "https://www.ahcqjy.com/", "note": "虚拟货币处置试点" },
+    { "id": "gxcpre", "name": "广西联合产权交易", "category": "产权交易所", "type": "web", "enabled": true, "priority": 70, "url": "http://www.gxcq.com.cn/", "note": "虚拟货币处置合作" },
+    { "id": "hkpre", "name": "海南国际文化艺术品交易中心", "category": "产权交易所", "type": "web", "enabled": true, "priority": 80, "url": "https://www.hicpre.com/", "note": "数字资产包拍卖/FT结算" },
+    { "id": "qdpre", "name": "青岛公共资源交易", "category": "产权交易所", "type": "web", "enabled": true, "priority": 70, "url": "https://www.qdgzy.com/", "note": "数字资产处置请示" },
+
+    { "id": "media-jjrb", "name": "经济日报", "category": "媒体", "type": "web", "enabled": true, "priority": 70, "url": "http://paper.ce.cn/", "note": "涉案虚拟货币处置专题" },
+    { "id": "media-21jingji", "name": "21世纪经济报道", "category": "媒体", "type": "search", "enabled": true, "priority": 65, "url": "https://www.21jingji.com/", "query_filter": ["虚拟货币", "涉案", "处置", "数字资产", "crypto", "digital asset"], "note": "追踪首创模式" },
+    { "id": "media-caixin", "name": "财新网", "category": "媒体", "type": "web", "enabled": true, "priority": 85, "url": "https://finance.caixin.com/", "note": "财经要闻" },
+    { "id": "media-thepaper", "name": "澎湃新闻", "category": "媒体", "type": "web", "enabled": true, "priority": 70, "url": "https://www.thepaper.cn/", "note": "时政要闻" },
+    { "id": "media-sina", "name": "新浪财经", "category": "媒体", "type": "web", "enabled": true, "priority": 65, "url": "https://finance.sina.com.cn/", "note": "财经滚动" },
+    { "id": "media-yicai", "name": "第一财经", "category": "媒体", "type": "search", "enabled": true, "priority": 60, "url": "https://www.yicai.com/", "query_filter": ["虚拟货币", "涉案", "处置", "数字资产", "crypto"], "note": "财经资讯" },
+    { "id": "media-cdst", "name": "链捕手", "category": "行业媒体", "type": "search", "enabled": true, "priority": 60, "url": "https://www.lianbushou.com/", "query_filter": ["虚拟货币", "处置", "涉案", "司法", "crypto"], "note": "行业观察" },
+    { "id": "media-jinse", "name": "金色财经", "category": "行业媒体", "type": "search", "enabled": true, "priority": 60, "url": "https://www.jinse.cn/", "query_filter": ["虚拟货币", "处置", "监管", "司法", "罚没", "crypto"], "note": "监管与司法" },
+    { "id": "media-odaily", "name": "Odaily星球日报", "category": "行业媒体", "type": "search", "enabled": true, "priority": 60, "url": "https://www.odaily.news/", "query_filter": ["虚拟货币", "处置", "监管", "司法", "crypto"], "note": "行业动态" },
+    { "id": "media-imt", "name": "观察者/风闻", "category": "行业媒体", "type": "search", "enabled": true, "priority": 60, "url": "https://www.guancha.cn/", "query_filter": ["虚拟货币", "处置", "涉案", "公安", "法院", "加密"], "note": "社会/政法" },
+
+    { "id": "intl-usms", "name": "美国法警局 USMS", "category": "国际", "type": "search", "enabled": true, "priority": 80, "url": "https://www.usmarshals.gov/", "query_filter": ["forfeit", "auction", "bitcoin", "crypto", "seiz"], "note": "罚没资产拍卖" },
+    { "id": "intl-doj", "name": "美国司法部 DOJ", "category": "国际", "type": "search", "enabled": true, "priority": 85, "url": "https://www.justice.gov/news", "query_filter": ["forfeit", "bitcoin", "crypto", "laund", "seiz", "虚拟货币", "数字货币"], "note": "刑事/资产罚没" },
+    { "id": "intl-ofac", "name": "美国财政部 OFAC/SEC/CFTC", "category": "国际", "type": "search", "enabled": true, "priority": 75, "url": "https://home.treasury.gov/news", "query_filter": ["sanction", "forfeit", "crypto", "digital asset", "bitcoin", "tether"], "note": "制裁与执法" },
+    { "id": "intl-europol", "name": "欧洲刑警 Europol", "category": "国际", "type": "search", "enabled": true, "priority": 70, "url": "https://www.europol.europa.eu/media-press/newsroom/news", "query_filter": ["forfeit", "crypto", "bitcoin", "数字资产", "虚拟货币"], "note": "国际执法" },
+    { "id": "intl-chainalysis", "name": "Chainalysis 报告", "category": "国际", "type": "search", "enabled": true, "priority": 70, "url": "https://www.chainalysis.com/blog/", "query_filter": ["crime", "forfeit", "laund", "crypto", "bitcoin", "数字资产"], "note": "链上数据/执法" },
+
+    { "id": "policy-supreme", "name": "司法政策与课题", "category": "政策", "type": "search", "enabled": true, "priority": 80, "url": "https://www.spp.gov.cn/spp/tjfx/", "query_filter": ["虚拟货币", "处置", "司法", "涉案", "刑事"], "note": "最高法/最高检课题" }
+  ]
+}

@@ -1,0 +1,197 @@
+"""采集流水线：同步源 -> 抓取 -> 去重 -> 分类标注 -> 持久化。"""
+import hashlib
+import re
+from datetime import datetime
+
+from app import database as db
+from app.config import get_sources, get_keywords, get_settings
+from app.scraper import rss as rss_mod, web as web_mod, search as search_mod
+from app.analysis import classify, extract, summarize
+
+
+def normalize_title(t):
+    t = t or ""
+    t = t.lower()
+    t = re.sub(r"[^\w\u4e00-\u9fa5]+", "", t)
+    return t
+
+
+def make_fingerprint(title, url=None):
+    nt = normalize_title(title)
+    return hashlib.sha1(f"{nt}|{url or ''}".encode("utf-8")).hexdigest()
+
+
+def _neg_filter(text, title):
+    neg = get_keywords().get("negative_filter", [])
+    interest = get_keywords().get("interest_terms", [])
+    combined = f"{title or ''} {text or ''}"
+    has_interest = any(k.lower() in combined.lower() for k in interest)
+    if has_interest:
+        return False
+    return any(k.lower() in combined.lower() for k in neg)
+
+
+def _source_items(src):
+    stype = src.get("type")
+    url = src.get("url", "")
+    if stype == "search":
+        qf = src.get("query_filter")
+        return search_mod.run_all_queries(query_filter=qf)
+    if stype == "rss":
+        return rss_mod.parse_feed(url)
+    if stype == "web":
+        rules = {
+            "item": src.get("item_selector", "h2 a, h3 a"),
+            "date": src.get("date_selector", None),
+        }
+        return web_mod.crawl_list(url, rules)
+    return []
+
+
+def _content_text(item):
+    return f"{item.get('title', '')} {item.get('summary', '')}"
+
+
+def process_item(dbconn, item, source, new_count):
+    fp = make_fingerprint(item.get("title"), item.get("url"))
+    if db.item_exists(dbconn, fp):
+        return new_count
+
+    raw_text = _content_text(item)
+    if _neg_filter(raw_text, item.get("title")):
+        return new_count
+    # 非种子/手工条目需通过赛道相关度把关，过滤噪音
+    if source.get("type") not in ("seed", "manual") and not classify.is_relevant(raw_text):
+        return new_count
+
+    amount_val, amount_cur = extract.extract_amount(raw_text)
+    inst = extract.extract_institution(raw_text)
+    itype = classify.classify_institution_type(raw_text)
+    region = classify.classify_region(raw_text)
+    assets = classify.classify_asset_types(raw_text)
+    method = classify.classify_disposal_method(raw_text)
+    importance = classify.classify_importance(raw_text, amount_val)
+    tags = classify.make_tags(raw_text, itype, region, assets, method)
+
+    summary = summarize.default_summary(item.get("summary") or item.get("title"))
+    analysis = summarize.build_analysis(
+        item.get("title"), raw_text, itype, region, assets, method, amount_val, amount_cur
+    )
+
+    now = db.now_iso()
+    dbconn.execute(
+        """INSERT INTO items (fingerprint, title, url, source_name, source_category, source_type,
+             publish_date, fetch_date, content, summary, analysis, region, institution, institution_type,
+             asset_types, disposal_method, amount_value, amount_currency, importance, tags, is_processed,
+             created_at, updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            fp, item.get("title"), item.get("url"), source.get("name"), source.get("category"),
+            source.get("type"), item.get("publish_date"), now, raw_text, summary, analysis,
+            region, inst, itype, ",".join(assets), method, amount_val, amount_cur, importance,
+            ",".join(tags), 1, now, now,
+        ),
+    )
+    return new_count + 1
+
+
+def sync_sources():
+    """仅同步信息源注册信息（不抓取），供启动时初始化源列表。"""
+    cfg = get_sources().get("sources", [])
+    conn = db.connect()
+    try:
+        conn.execute("BEGIN")
+        for s in cfg:
+            db.upsert_source(conn, {
+                "id": s["id"], "name": s["name"], "category": s.get("category"),
+                "type": s.get("type"), "enabled": 1 if s.get("enabled", True) else 0,
+                "priority": s.get("priority", 50), "url": s.get("url"), "note": s.get("note"),
+            })
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def run_scan(dbconn=None, manual=False):
+    cfg = get_sources().get("sources", [])
+    total_planned = len([s for s in cfg if s.get("enabled", True)])
+    ok, failed = 0, 0
+    new_items = 0
+    run_at = db.now_iso()
+
+    conn = db.connect()
+    try:
+        conn.execute("BEGIN")
+        for s in cfg:
+            db.upsert_source(conn, {
+                "id": s["id"], "name": s["name"], "category": s.get("category"),
+                "type": s.get("type"), "enabled": 1 if s.get("enabled", True) else 0,
+                "priority": s.get("priority", 50), "url": s.get("url"), "note": s.get("note"),
+            })
+        conn.commit()
+    finally:
+        conn.close()
+
+    for src in cfg:
+        if not src.get("enabled", True):
+            continue
+        try:
+            items = _source_items(src)
+            conn = db.connect()
+            try:
+                conn.execute("BEGIN")
+                source_new = 0
+                for it in items:
+                    source_new = process_item(conn, it, src, source_new)
+                conn.commit()
+                new_items += source_new
+                conn.execute(
+                    """UPDATE sources SET last_scan_at=?, last_status=?, item_count=(SELECT COUNT(*) FROM items WHERE source_name=?) WHERE id=?""",
+                    (db.now_iso(), "成功", src["name"], src["id"]),
+                )
+                conn.commit()
+            finally:
+                conn.close()
+            ok += 1
+        except Exception as e:  # noqa
+            conn = db.connect()
+            try:
+                conn.execute(
+                    "UPDATE sources SET last_scan_at=?, last_status=? WHERE id=?",
+                    (db.now_iso(), f"失败: {type(e).__name__}", src["id"]),
+                )
+                conn.commit()
+            finally:
+                conn.close()
+            failed += 1
+
+    log_scan(run_at, total_planned, ok, failed, new_items)
+    return {
+        "run_at": run_at,
+        "sources_planned": total_planned,
+        "sources_ok": ok,
+        "sources_failed": failed,
+        "new_items": new_items,
+    }
+
+
+def log_scan(run_at, planned, ok, failed, new_items):
+    conn = db.connect()
+    try:
+        total = conn.execute("SELECT COUNT(*) c FROM items").fetchone()["c"]
+        status = "成功" if failed == 0 else ("部分失败" if ok else "失败")
+        conn.execute(
+            "INSERT INTO scan_logs (run_at, sources_planned, sources_ok, sources_failed, new_items, total_items, status, message) "
+            "VALUES (?,?,?,?,?,?,?,?)",
+            (run_at, planned, ok, failed, new_items, total, status,
+             f"计划{planned} 成功{ok} 失败{failed} 新增{new_items}"),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+if __name__ == "__main__":
+    db.init_db()
+    res = run_scan()
+    print(res)

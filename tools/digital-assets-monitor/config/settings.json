@@ -1,0 +1,38 @@
+{
+  "app_name": "数字资产处置情报驾驶舱",
+  "app_name_en": "Digital Asset Disposal Intelligence Cockpit",
+  "version": "1.0.0",
+  "host": "0.0.0.0",
+  "port": 8000,
+  "data_dir": "data",
+  "db_file": "data/monitor.db",
+  "seed_on_first_run": false,
+  "schedule": {
+    "enabled": true,
+    "daily_scan_time": "19:00",
+    "timezone": "Asia/Shanghai",
+    "footer_timeout_hours": 6
+  },
+  "access": {
+    "invite_codes": [],
+    "session_secret": "",
+    "session_hours": 168,
+    "max_failed_attempts": 10
+  },
+  "scanner": {
+    "request_timeout_seconds": 12,
+    "search_workers": 8,
+    "search_retries": 1,
+    "user_agents": [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0"
+    ],
+    "max_items_per_source_per_run": 40,
+    "lookback_days_search": 30,
+    "fetch_pause_range_seconds": [
+      0.2,
+      0.6
+    ]
+  }
+}

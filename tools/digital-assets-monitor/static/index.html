@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数字资产处置情报驾驶舱</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔗</text></svg>">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-mark">数</div>
+        <div>
+          <h1>数字资产处置情报驾驶舱</h1>
+          <small>Digital Asset Disposal Intelligence</small>
+        </div>
+      </div>
+      <p class="login-tag">监控公安 / 法院 / 纪检监察 / 检察机关罚没处置、交易所挂牌、招标及国际罚没等赛道动态。</p>
+      <p class="hero-caption">本系统为内部邀请访问，请输入您的邀请码以进入管理驾驶舱。</p>
+      <input id="login-code" class="input" type="text" placeholder="输入邀请码" autocomplete="off">
+      <button id="login-btn" class="btn" style="width:100%;margin-top:16px">进入驾驶舱</button>
+      <div id="login-err" class="login-err"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app">
+    <header>
+      <div class="hdr-left">
+        <div class="brand-mark" style="width:42px;height:42px;font-size:20px;border-radius:12px">数</div>
+        <div>
+          <div class="brand-line" style="font-size:16px;font-weight:700;letter-spacing:.4px">数字资产处置情报驾驶舱</div>
+          <div class="tagline" style="font-size:11px;color:var(--txt-mute);letter-spacing:1px">DIGITAL ASSET DISPOSAL INTELLIGENCE</div>
+        </div>
+      </div>
+      <nav>
+        <a data-view="dashboard" class="active">总览驾驶舱</a>
+        <a data-view="items">情报入库</a>
+        <a data-view="sources">数据源与运行</a>
+      </nav>
+      <div class="hdr-right">
+        <div class="status-pill"><span class="dot"></span><span id="liveStatus">监测运行中</span></div>
+        <div class="clock" id="clock">--:--:--</div>
+        <button id="scanBtn" class="btn sm">立即扫描</button>
+        <button id="addBtn" class="btn sm ghost">+ 手工录入</button>
+        <button id="logoutBtn" class="btn sm ghost">退出</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- DASHBOARD VIEW -->
+      <div id="view-dashboard" class="view active">
+        <div class="kpis" id="kpis"></div>
+
+        <div class="grid" style="margin-bottom:18px">
+          <div class="panel span-8">
+            <div class="panel-title"><h3>赛道情报趋势</h3><span class="tag">近30日新增</span></div>
+            <div id="chartTrend" class="chart"></div>
+          </div>
+          <div class="panel span-4">
+            <div class="panel-title"><h3>主体类型分布</h3><span class="tag">institution</span></div>
+            <div id="chartType" class="chart"></div>
+          </div>
+
+          <div class="panel span-4">
+            <div class="panel-title"><h3>资产类型结构</h3><span class="tag">asset</span></div>
+            <div id="chartAsset" class="chart"></div>
+          </div>
+          <div class="panel span-4">
+            <div class="panel-title"><h3>处置方式</h3><span class="tag">method</span></div>
+            <div id="chartMethod" class="chart"></div>
+          </div>
+          <div class="panel span-4">
+            <div class="panel-title"><h3>地域热度</h3><span class="tag">region</span></div>
+            <div id="chartRegion" class="chart"></div>
+          </div>
+
+          <div class="panel span-7">
+            <div class="panel-title"><h3>信息源覆盖矩阵</h3><span class="tag">近8周 × 类别</span></div>
+            <div id="chartHeat" class="chart"></div>
+          </div>
+          <div class="panel span-5">
+            <div class="panel-title"><h3>情报来源排行</h3><span class="tag">source</span></div>
+            <div id="chartSource" class="chart"></div>
+          </div>
+
+          <div class="panel span-7">
+            <div class="panel-title"><h3>高价值情报</h3><span class="tag">high value</span></div>
+            <div id="highValue" class="list-rows"></div>
+          </div>
+          <div class="panel span-5">
+            <div class="panel-title"><h3>最新情报日报</h3><span class="tag" id="reportDate">--</span></div>
+            <pre id="reportBody" class="dw-analysis" style="max-height:420px;overflow:auto;white-space:pre-wrap"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEMS VIEW -->
+      <div id="view-items" class="view">
+        <div class="filters" id="itemFilters"></div>
+        <div class="panel" style="padding:0;overflow:hidden">
+          <div class="table-wrap">
+            <table class="items">
+              <thead>
+                <tr>
+                  <th style="width:44%">标题</th><th>主体类型</th><th>地域</th><th>资产</th>
+                  <th>处置方式</th><th>金额/量</th><th>重要度</th><th>来源</th><th style="width:44px"></th>
+                </tr>
+              </thead>
+              <tbody id="itemsBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button id="prevPage">上一页</button>
+            <span id="pageInfo">1 / 1</span>
+            <button id="nextPage">下一页</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOURCES VIEW -->
+      <div id="view-sources" class="view">
+        <div class="grid">
+          <div class="panel span-7">
+            <div class="panel-title"><h3>信息源健康度</h3><span class="tag">source health</span></div>
+            <div style="overflow-x:auto">
+              <table class="src-table">
+                <thead><tr><th>信息源</th><th>类别</th><th>类型</th><th>最近扫描</th><th>状态</th><th>线索</th></tr></thead>
+                <tbody id="srcBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel span-5">
+            <div class="panel-title"><h3>扫描日志</h3><span class="tag">scanner</span></div>
+            <div id="scanLogs" class="list-rows"></div>
+          </div>
+          <div class="panel span-12">
+            <div class="panel-title"><h3>赛道概览与监控口径</h3></div>
+            <div class="section-hint" id="scopeHint"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="overlay"></div>
+  <div id="drawer"></div>
+  <div id="toast"></div>
+  <div class="watermark">DIGITAL ASSET DISPOSAL · INTELLIGENCE COCKPIT</div>
+
+  <script src="/static/assets/echarts.min.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

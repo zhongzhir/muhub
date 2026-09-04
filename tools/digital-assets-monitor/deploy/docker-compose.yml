@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  cockpit:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: dzs-cockpit:latest
+    container_name: dzs-cockpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18080:8000"          # 仅本机回环，由 Nginx 对外提供 HTTPS 二级域名
+    environment:
+      - TZ=Asia/Shanghai
+      - SESSION_SECRET=${SESSION_SECRET:?Set SESSION_SECRET}
+      - INVITE_CODES=${INVITE_CODES:?Set INVITE_CODES}
+    volumes:
+      - ../data:/app/data              # SQLite/日志持久化
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/',timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
