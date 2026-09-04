@@ -1,0 +1,2099 @@
+[
+  {
+    "name": "北京市公安局",
+    "homepage_candidate": "http://gaj.beijing.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "河北省公安厅",
+    "homepage_candidate": "http://gat.hebei.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "内蒙古自治区公安厅",
+    "homepage_candidate": "http://gat.nmg.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "吉林省公安厅",
+    "homepage_candidate": "http://gat.jl.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "黑龙江省公安厅",
+    "homepage_candidate": "http://www.hljga.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "江苏省公安厅",
+    "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "浙江省公安厅",
+    "homepage_candidate": "http://gat.zj.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "安徽省公安厅",
+    "homepage_candidate": "http://gat.ah.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "江西省公安厅",
+    "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "河南省公安厅",
+    "homepage_candidate": "https://hnga.henan.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "湖北省公安厅",
+    "homepage_candidate": "http://gat.hubei.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "广东省公安厅",
+    "homepage_candidate": "http://gdga.gd.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "广西壮族自治区公安厅",
+    "homepage_candidate": "http://gat.gxzf.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "重庆市公安局",
+    "homepage_candidate": "http://gaj.cq.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "四川省公安厅",
+    "homepage_candidate": "http://gat.sc.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "贵州省公安厅",
+    "homepage_candidate": "http://gat.guizhou.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "甘肃省公安厅",
+    "homepage_candidate": "http://gat.gansu.gov.cn/",
+    "evidence_url": "https://ga.tj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://ga.tj.gov.cn/",
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "天津市公安局",
+    "homepage_candidate": "http://ga.tj.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "山西省公安厅",
+    "homepage_candidate": "http://gat.shanxi.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "辽宁省公安厅",
+    "homepage_candidate": "http://gat.ln.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "黑龙江省公安厅",
+    "homepage_candidate": "http://gat.hlj.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "上海市公安局",
+    "homepage_candidate": "https://gaj.sh.gov.cn/shga/index.html",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "浙江省公安厅",
+    "homepage_candidate": "https://gat.zj.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "福建省公安厅",
+    "homepage_candidate": "http://gat.fujian.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "山东省公安厅",
+    "homepage_candidate": "http://gat.shandong.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "河南省公安厅",
+    "homepage_candidate": "http://hnga.henan.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "湖南省公安厅",
+    "homepage_candidate": "http://gat.hunan.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "海南省公安厅",
+    "homepage_candidate": "http://ga.hainan.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://ga.hainan.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "云南省公安厅",
+    "homepage_candidate": "http://gonganting.yn.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "西藏自治区公安厅",
+    "homepage_candidate": "http://gat.xizang.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "陕西省公安厅",
+    "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "https://gat.zj.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "青海省公安厅",
+    "homepage_candidate": "http://gat.qinghai.gov.cn/stmhwz/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "宁夏回族自治区公安厅",
+    "homepage_candidate": "http://gat.nx.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "http://gat.fujian.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "新疆维吾尔自治区公安厅",
+    "homepage_candidate": "http://gat.xinjiang.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/",
+      "https://gat.jl.gov.cn/",
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "呼和浩特市公安局",
+    "homepage_candidate": "http://gaj.huhhot.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "包头市公安局",
+    "homepage_candidate": "http://gaj.baotou.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "呼伦贝尔市公安局",
+    "homepage_candidate": "http://gaj.hlbe.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "兴安盟公安局",
+    "homepage_candidate": "http://gaj.xam.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "通辽市公安局",
+    "homepage_candidate": "http://gaj.tongliao.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "赤峰市公安局",
+    "homepage_candidate": "http://gaj.chifeng.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "锡林郭勒盟公安局",
+    "homepage_candidate": "http://gaj.xlgl.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "乌兰察布市公安局",
+    "homepage_candidate": "http://gaj.wulanchabu.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "鄂尔多斯市公安局",
+    "homepage_candidate": "http://ga.ordos.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "巴彦淖尔市公安局",
+    "homepage_candidate": "http://gaj.bynr.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "乌海市公安局",
+    "homepage_candidate": "http://gaj.wuhai.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "阿拉善盟公安局",
+    "homepage_candidate": "http://gaj.als.gov.cn/",
+    "evidence_url": "http://gat.nmg.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.nmg.gov.cn/"
+    ]
+  },
+  {
+    "name": "辽宁省公安厅",
+    "homepage_candidate": "https://gat.ln.gov.cn/gat/index/index.shtml",
+    "evidence_url": "https://gat.ln.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.ln.gov.cn/"
+    ]
+  },
+  {
+    "name": "吉林省公安厅",
+    "homepage_candidate": "https://gat.jl.gov.cn/",
+    "evidence_url": "https://gat.jl.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.jl.gov.cn/"
+    ]
+  },
+  {
+    "name": "山西省公安厅",
+    "homepage_candidate": "https://gat.shanxi.gov.cn/#/home",
+    "evidence_url": "https://gat.jl.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.jl.gov.cn/"
+    ]
+  },
+  {
+    "name": "上海市公安局",
+    "homepage_candidate": "https://gaj.sh.gov.cn/index.html",
+    "evidence_url": "https://gat.jl.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.jl.gov.cn/"
+    ]
+  },
+  {
+    "name": "天津市公安局",
+    "homepage_candidate": "http://ga.tj.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "河北省公安厅",
+    "homepage_candidate": "http://gat.hebei.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "山西省公安厅",
+    "homepage_candidate": "https://gat.shanxi.gov.cn/",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "辽宁省公安厅",
+    "homepage_candidate": "http://gat.ln.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "吉林省公安厅",
+    "homepage_candidate": "http://gat.jl.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "上海市公安局",
+    "homepage_candidate": "http://gaj.sh.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "江苏省公安厅",
+    "homepage_candidate": "https://gat.jiangsu.gov.cn/",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "福建省公安厅",
+    "homepage_candidate": "http://gat.fujian.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "湖北省公安厅",
+    "homepage_candidate": "http://gat.hubei.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "广西壮族自治区公安厅",
+    "homepage_candidate": "http://gat.gxzf.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "海南省公安厅",
+    "homepage_candidate": "http://ga.hainan.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "甘肃省公安厅",
+    "homepage_candidate": "http://gat.gansu.gov.cn",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "内蒙古公安厅",
+    "homepage_candidate": "http://gat.nmg.gov.cn/",
+    "evidence_url": "https://gat.zj.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.zj.gov.cn/",
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "上海市公安局",
+    "homepage_candidate": "http://gaj.sh.gov.cn/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "青海省公安厅",
+    "homepage_candidate": "http://gat.qinghai.gov.cn/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/",
+      "http://gat.shandong.gov.cn/",
+      "http://gat.hubei.gov.cn/",
+      "http://gat.gxzf.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "新疆维吾尔自治区公安厅",
+    "homepage_candidate": "https://gat.xinjiang.gov.cn/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/",
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "新疆生产建设兵团公安局",
+    "homepage_candidate": "http://btgaj.xjbt.gov.cn//",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "平潭综合实验区公安局",
+    "homepage_candidate": "https://www.pingtan.gov.cn/zwgk/ztzl/gazl/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "宁德市公安局",
+    "homepage_candidate": "http://gaj.ningde.gov.cn/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "龙岩市公安局",
+    "homepage_candidate": "http://ga.longyan.gov.cn",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "三明市公安局",
+    "homepage_candidate": "http://gaj.sm.gov.cn/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "南平市公安局",
+    "homepage_candidate": "http://gaj.np.gov.cn/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "泉州市公安局",
+    "homepage_candidate": "http://gaj.quanzhou.gov.cn",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "莆田市公安局",
+    "homepage_candidate": "http://gaj.putian.gov.cn",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "厦门市公安局",
+    "homepage_candidate": "http://ga.xm.gov.cn",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "漳州市公安局",
+    "homepage_candidate": "http://gaj.zhangzhou.gov.cn",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "福州市公安局",
+    "homepage_candidate": "http://gaj.fuzhou.gov.cn/",
+    "evidence_url": "http://gat.fujian.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.fujian.gov.cn/"
+    ]
+  },
+  {
+    "name": "北京市公安局",
+    "homepage_candidate": "http://gaj.beijing.gov.cn",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "江苏省公安厅",
+    "homepage_candidate": "http://www.jsga.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "江西省公安厅",
+    "homepage_candidate": "http://www.jxga.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "河南省公安厅",
+    "homepage_candidate": "http://www.henanga.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "贵州省公安厅",
+    "homepage_candidate": "http://www.gzga.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "陕西省公安厅",
+    "homepage_candidate": "http://www.shxga.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "宁夏公安厅",
+    "homepage_candidate": "http://gat.nx.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "新疆公安厅",
+    "homepage_candidate": "https://gat.xinjiang.gov.cn/gat/index.shtml",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "济南市公安局",
+    "homepage_candidate": "http://jnga.jinan.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "青岛市公安局",
+    "homepage_candidate": "http://police.qingdao.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "淄博市公安局",
+    "homepage_candidate": "http://gaj.zibo.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "枣庄市公安局",
+    "homepage_candidate": "http://gaj.zaozhuang.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "东营市公安局",
+    "homepage_candidate": "http://dyga.dongying.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "烟台市公安局",
+    "homepage_candidate": "http://gaj.yantai.gov.cn",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "潍坊市公安局",
+    "homepage_candidate": "http://gaj.weifang.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "济宁市公安局",
+    "homepage_candidate": "http://ga.jining.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "泰安市公安局",
+    "homepage_candidate": "http://gaj.taian.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "威海市公安局",
+    "homepage_candidate": "http://gaj.weihai.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "日照市公安局",
+    "homepage_candidate": "http://gaj.rizhao.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "临沂市公安局",
+    "homepage_candidate": "http://gaj.linyi.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "德州市公安局",
+    "homepage_candidate": "http://dzga.dezhou.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "聊城市公安局",
+    "homepage_candidate": "http://gaj.liaocheng.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "滨州市公安局",
+    "homepage_candidate": "http://ga.binzhou.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "菏泽市公安局",
+    "homepage_candidate": "http://sdhzga.heze.gov.cn/",
+    "evidence_url": "http://gat.shandong.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.shandong.gov.cn/"
+    ]
+  },
+  {
+    "name": "山西省公安厅",
+    "homepage_candidate": "https://gat.shanxi.gov.cn/#/",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "福建省公安厅",
+    "homepage_candidate": "http://gat.fj.gov.cn/",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "新疆维吾尔自治区公安厅",
+    "homepage_candidate": "http://www.xjgat.gov.cn/",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "武汉市公安局",
+    "homepage_candidate": "http://gaj.wuhan.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "黄石市公安局",
+    "homepage_candidate": "http://gaj.huangshi.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "十堰市公安局",
+    "homepage_candidate": "http://gaj.shiyan.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "襄阳市公安局",
+    "homepage_candidate": "http://gaj.xiangyang.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "鄂州市公安局",
+    "homepage_candidate": "http://gaj.ezhou.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "荆门市公安局",
+    "homepage_candidate": "http://gaj.jingmen.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "孝感市公安局",
+    "homepage_candidate": "http://gaj.xiaogan.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "荆州市公安局",
+    "homepage_candidate": "http://gaj.jingzhou.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "黄冈市公安局",
+    "homepage_candidate": "http://gaj.hg.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "咸宁市公安局",
+    "homepage_candidate": "http://gaj.xianning.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "随州市公安局",
+    "homepage_candidate": "http://gaj.suizhou.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "恩施州公安局",
+    "homepage_candidate": "http://gaj.enshi.gov.cn",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "潜江市公安局",
+    "homepage_candidate": "http://www.hbqj.gov.cn/xxgk/xxgkml/szfbmxxgkml/sgaj/",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "天门市公安局",
+    "homepage_candidate": "http://www.tianmen.gov.cn/zwgk/bmhxzxxgkml/bm/sgaj/",
+    "evidence_url": "http://gat.hubei.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.hubei.gov.cn/"
+    ]
+  },
+  {
+    "name": "自治区公安厅",
+    "homepage_candidate": "http://gat.gxzf.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "四川省公安厅",
+    "homepage_candidate": "http://gat.sc.gov.cn",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "宁夏回族自治区公安厅",
+    "homepage_candidate": "http://gat.nx.gov.cn",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "南宁市公安局",
+    "homepage_candidate": "http://gaj.nanning.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "柳州市公安局",
+    "homepage_candidate": "http://gaj.liuzhou.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "桂林市公安局",
+    "homepage_candidate": "http://gaj.guilin.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "梧州市公安局",
+    "homepage_candidate": "http://gaj.wuzhou.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "北海市公安局",
+    "homepage_candidate": "http://www.beihai.gov.cn/xxgkbm/bhsgaj/index.shtml",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "防城港市公安局",
+    "homepage_candidate": "http://gaj.fcgs.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "钦州市公安局",
+    "homepage_candidate": "http://gaj.qinzhou.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "贵港市公安局",
+    "homepage_candidate": "http://gaj.gxgg.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "玉林市公安局",
+    "homepage_candidate": "http://gaj.yulin.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "百色市公安局",
+    "homepage_candidate": "http://gaj.baise.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "贺州市公安局",
+    "homepage_candidate": "http://gaj.gxhz.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "河池市公安局",
+    "homepage_candidate": "http://gaj.hechi.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "来宾市公安局",
+    "homepage_candidate": "http://gaj.laibin.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "崇左市公安局",
+    "homepage_candidate": "http://gaj.chongzuo.gov.cn/",
+    "evidence_url": "http://gat.gxzf.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gat.gxzf.gov.cn/"
+    ]
+  },
+  {
+    "name": "三亚市公安局",
+    "homepage_candidate": "http://gaj.sanya.gov.cn/",
+    "evidence_url": "http://ga.hainan.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://ga.hainan.gov.cn/"
+    ]
+  },
+  {
+    "name": "海口市公安局",
+    "homepage_candidate": "http://police.haikou.gov.cn/",
+    "evidence_url": "http://ga.hainan.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://ga.hainan.gov.cn/"
+    ]
+  },
+  {
+    "name": "宁夏公安厅",
+    "homepage_candidate": "http://gat.nx.gov.cn",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "万州区公安局",
+    "homepage_candidate": "http://www.wz.gov.cn/bmjz_89642/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "黔江区公安局",
+    "homepage_candidate": "https://www.qianjiang.gov.cn/bmjd/xzfgzbm/qgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "涪陵区公安局",
+    "homepage_candidate": "http://www.fl.gov.cn/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "渝中区公安分局",
+    "homepage_candidate": "http://www.cqyz.gov.cn/bm_229/qgafj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "大渡口区公安分局",
+    "homepage_candidate": "http://www.ddk.gov.cn/sjbm/qgafj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "两江新区公安分局",
+    "homepage_candidate": "https://www.ljxq.gov.cn/bm/qgafj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "沙坪坝区公安分局",
+    "homepage_candidate": "http://www.cqspb.gov.cn/bm/qgafj_63641/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "九龙坡区公安分局",
+    "homepage_candidate": "http://cqjlp.gov.cn/bmjz/qzfbm_97119/qgafj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "南岸区公安分局",
+    "homepage_candidate": "https://www.cqna.gov.cn/bm/qgafj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "北碚区公安分局",
+    "homepage_candidate": "http://www.beibei.gov.cn/bm/qgafj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "巴南区公安分局",
+    "homepage_candidate": "http://www.cqbn.gov.cn/bmjz/bm/gafj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "长寿区公安局",
+    "homepage_candidate": "http://www.cqcs.gov.cn/bm/qgaj_75251/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "江津区公安局",
+    "homepage_candidate": "http://www.jiangjin.gov.cn/bm/qgaj_69005/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "合川区公安局",
+    "homepage_candidate": "https://www.hc.gov.cn/bmjd/bm_100475/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "永川区公安局",
+    "homepage_candidate": "https://www.cqyc.gov.cn/bm/qgaj_87638/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "南川区公安局",
+    "homepage_candidate": "http://www.cqnc.gov.cn/qzfbm_197/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "綦江区公安局",
+    "homepage_candidate": "http://www.cqqj.gov.cn/bm/qgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "大足区公安局",
+    "homepage_candidate": "https://www.dazu.gov.cn/qzfbm/qgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "铜梁区公安局",
+    "homepage_candidate": "https://www.cqstl.gov.cn/bm/qgaj_71102/zwgk_70831/zfxxgkzn_70833/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "璧山区公安局",
+    "homepage_candidate": "https://www.bishan.gov.cn/bmjz/bm_97237/qgaj_97243/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "潼南区公安局",
+    "homepage_candidate": "https://www.cqtn.gov.cn/bm/qgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "荣昌区公安局",
+    "homepage_candidate": "http://www.rongchang.gov.cn/bm/qgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "开州区公安局",
+    "homepage_candidate": "http://www.cqkz.gov.cn/kz/fzhggwyh_80867/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "梁平区公安局",
+    "homepage_candidate": "http://www.cqlp.gov.cn/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "武隆区公安局",
+    "homepage_candidate": "https://cqwl.gov.cn/bmjz_sites/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "城口县公安局",
+    "homepage_candidate": "http://www.cqck.gov.cn/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "丰都县公安局",
+    "homepage_candidate": "https://www.cqfd.gov.cn/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "忠县公安局",
+    "homepage_candidate": "http://www.zhongxian.gov.cn/bm/zxgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "垫江县公安局",
+    "homepage_candidate": "http://www.cqsdj.gov.cn/bmjz/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "云阳县公安局",
+    "homepage_candidate": "https://www.yunyang.gov.cn/bm_257/xgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "奉节县公安局",
+    "homepage_candidate": "http://www.cqfj.gov.cn/bm_168/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "巫山县公安局",
+    "homepage_candidate": "http://www.cqws.gov.cn/xzfbm_73744/fzhggwyh_74360/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "巫溪县公安局",
+    "homepage_candidate": "http://www.cqwx.gov.cn/bm/xgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "石柱县公安局",
+    "homepage_candidate": "http://cqszx.gov.cn/bm/xgaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "秀山县公安局",
+    "homepage_candidate": "http://www.cqxs.gov.cn/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "酉阳县公安局",
+    "homepage_candidate": "https://youyang.gov.cn/bmjz_sites/bm/gaj/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "彭水县公安局",
+    "homepage_candidate": "http://www.psx.gov.cn/zfbm_174/fzhggwyh_82890/",
+    "evidence_url": "http://gaj.cq.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "http://gaj.cq.gov.cn/"
+    ]
+  },
+  {
+    "name": "上海市公安局",
+    "homepage_candidate": "https://gaj.sh.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "贵州省公安厅",
+    "homepage_candidate": "https://gat.guizhou.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "榆林市公安局",
+    "homepage_candidate": "http://gaj.yl.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "杨凌示范区公安局",
+    "homepage_candidate": "http://gaj.yangling.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "商洛市公安局",
+    "homepage_candidate": "https://www.shangluo.gov.cn/gaj/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "宝鸡市公安局",
+    "homepage_candidate": "http://gaj.baoji.gov.cn",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "延安市公安局",
+    "homepage_candidate": "http://gaj.yanan.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "安康市公安局",
+    "homepage_candidate": "http://gaj.ankang.gov.cn",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "渭南市公安局",
+    "homepage_candidate": "http://gaj.weinan.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "汉中市公安局",
+    "homepage_candidate": "http://police.hanzhong.gov.cn",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "西安市公安局",
+    "homepage_candidate": "http://police.xa.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "铜川市公安局",
+    "homepage_candidate": "http://www.tongchuan.gov.cn/index_page.rt?siteId=80",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "咸阳市公安局",
+    "homepage_candidate": "http://sxxyga.xianyang.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  },
+  {
+    "name": "陕西省公安厅",
+    "homepage_candidate": "https://gat.shaanxi.gov.cn/",
+    "evidence_url": "https://gat.shaanxi.gov.cn/",
+    "identity_status": "official_page_link_candidate",
+    "collection_enabled": false,
+    "evidence_urls": [
+      "https://gat.shaanxi.gov.cn/"
+    ]
+  }
+]

@@ -42,7 +42,19 @@
       "note": "涉案财物/指导案例",
       "item_selector": "li:has(a[href*=\"/spp/xwfbh/wsfbt/\"][href$=\".shtml\"])",
       "date_selector": "span",
-      "selector_verified_on": "2026-09-04"
+      "selector_verified_on": "2026-09-04",
+      "article_selector": "#fontzoom",
+      "article_path_pattern": "/spp/.*/\\d{6}/t\\d{8}_\\d+\\.shtml",
+      "verify_articles": true,
+      "article_discovery_terms": [
+        "涉案",
+        "财物",
+        "洗钱",
+        "追赃",
+        "虚拟货币",
+        "数字资产",
+        "加密资产"
+      ]
     },
     {
       "id": "court",
@@ -400,12 +412,12 @@
     },
     {
       "id": "policy-supreme",
-      "name": "司法政策与课题",
+      "name": "最高人民检察院理论研究",
       "category": "政策",
-      "type": "search",
+      "type": "web",
       "enabled": true,
       "priority": 80,
-      "url": "https://www.spp.gov.cn/spp/tjfx/",
+      "url": "https://www.spp.gov.cn/spp/llyj/index.shtml",
       "query_filter": [
         "虚拟货币",
         "处置",
@@ -413,7 +425,26 @@
         "涉案",
         "刑事"
       ],
-      "note": "最高法/最高检课题；仅接收本站域名结果，空结果不代表本站已完整覆盖"
+      "note": "直接读取最高检理论研究列表并核验文章正文及原始日期；政策研究资料，不代表处置公告或商业机会。",
+      "article_selector": "#fontzoom",
+      "article_path_pattern": "/spp/.*/\\d{6}/t\\d{8}_\\d+\\.shtml",
+      "verify_articles": true,
+      "selector_verified_on": "2026-09-04",
+      "item_selector": "li:has(a[href*=\"/spp/llyj/\"][href$=\".shtml\"])",
+      "list_urls": [
+        "https://www.spp.gov.cn/spp/llyj/index.shtml",
+        "https://www.spp.gov.cn/spp/llyj/index_2.shtml",
+        "https://www.spp.gov.cn/spp/llyj/index_3.shtml"
+      ],
+      "article_discovery_terms": [
+        "涉案",
+        "财物",
+        "洗钱",
+        "追赃",
+        "虚拟货币",
+        "数字资产",
+        "加密资产"
+      ]
     }
   ]
 }

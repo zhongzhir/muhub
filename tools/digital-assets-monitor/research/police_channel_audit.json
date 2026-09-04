@@ -1,0 +1,3194 @@
+[
+  {
+    "institution_id": "98660c8b74fcc9d4",
+    "name": "北京市公安局",
+    "province": "北京",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gaj.beijing.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.029050+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 403,
+    "final_url": "http://gaj.beijing.gov.cn/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "7c56a2db348b12e2",
+    "name": "天津市公安局",
+    "province": "天津",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://ga.tj.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.029515+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古自治区公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://www.hljga.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "http://gat.zj.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "https://hnga.henan.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn/",
+        "evidence_url": "https://ga.tj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "https://ga.tj.gov.cn/",
+    "title": "天津市公安局"
+  },
+  {
+    "institution_id": "0247b005f6b1c471",
+    "name": "河北省公安厅",
+    "province": "河北",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.hebei.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.029819+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [],
+    "http_status": 200,
+    "final_url": "http://gat.hebei.gov.cn/",
+    "title": "河北省公安厅"
+  },
+  {
+    "institution_id": "0fdaeaef562b8024",
+    "name": "山西省公安厅",
+    "province": "山西",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "https://gatgw.shanxi.gov.cn/",
+    "checked_at": "2026-09-04T11:09:48.030145+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [],
+    "http_status": 200,
+    "final_url": "https://gatgw.shanxi.gov.cn/",
+    "title": "山西省公安厅"
+  },
+  {
+    "institution_id": "b2317d484396d0e4",
+    "name": "内蒙古自治区公安厅",
+    "province": "内蒙古",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.nmg.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.030472+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "http://gat.shanxi.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://gat.hlj.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "https://gaj.sh.gov.cn/shga/index.html",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "https://gat.zj.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山东省公安厅",
+        "homepage_candidate": "http://gat.shandong.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "http://hnga.henan.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "西藏自治区公安厅",
+        "homepage_candidate": "http://gat.xizang.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "青海省公安厅",
+        "homepage_candidate": "http://gat.qinghai.gov.cn/stmhwz/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁夏回族自治区公安厅",
+        "homepage_candidate": "http://gat.nx.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆维吾尔自治区公安厅",
+        "homepage_candidate": "http://gat.xinjiang.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "呼和浩特市公安局",
+        "homepage_candidate": "http://gaj.huhhot.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "包头市公安局",
+        "homepage_candidate": "http://gaj.baotou.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "呼伦贝尔市公安局",
+        "homepage_candidate": "http://gaj.hlbe.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "兴安盟公安局",
+        "homepage_candidate": "http://gaj.xam.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "通辽市公安局",
+        "homepage_candidate": "http://gaj.tongliao.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "赤峰市公安局",
+        "homepage_candidate": "http://gaj.chifeng.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "锡林郭勒盟公安局",
+        "homepage_candidate": "http://gaj.xlgl.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "乌兰察布市公安局",
+        "homepage_candidate": "http://gaj.wulanchabu.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "鄂尔多斯市公安局",
+        "homepage_candidate": "http://ga.ordos.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "巴彦淖尔市公安局",
+        "homepage_candidate": "http://gaj.bynr.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "乌海市公安局",
+        "homepage_candidate": "http://gaj.wuhai.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "阿拉善盟公安局",
+        "homepage_candidate": "http://gaj.als.gov.cn/",
+        "evidence_url": "http://gat.nmg.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "http://gat.nmg.gov.cn/",
+    "title": "内蒙古自治区公安厅"
+  },
+  {
+    "institution_id": "90464ed601a18935",
+    "name": "辽宁省公安厅",
+    "province": "辽宁",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.ln.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.031056+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "https://gat.ln.gov.cn/gat/index/index.shtml",
+        "evidence_url": "https://gat.ln.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "https://gat.ln.gov.cn/",
+    "title": "辽宁省公安厅"
+  },
+  {
+    "institution_id": "ad8fbe1364a75cda",
+    "name": "吉林省公安厅",
+    "province": "吉林",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.jl.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.200488+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "https://gat.jl.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "https://gat.shanxi.gov.cn/#/home",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古自治区公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://gat.hlj.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "https://gaj.sh.gov.cn/index.html",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "http://gat.zj.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山东省公安厅",
+        "homepage_candidate": "http://gat.shandong.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "https://hnga.henan.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆维吾尔自治区公安厅",
+        "homepage_candidate": "http://gat.xinjiang.gov.cn/",
+        "evidence_url": "https://gat.jl.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "https://gat.jl.gov.cn/",
+    "title": "吉林省公安厅"
+  },
+  {
+    "institution_id": "495ec0a3595af00c",
+    "name": "黑龙江省公安厅",
+    "province": "黑龙江",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.hlj.gov.cn/",
+    "checked_at": "2026-09-04T11:09:48.233878+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 403,
+    "final_url": "http://gat.hlj.gov.cn/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "cabb04c6d5b2539d",
+    "name": "上海市公安局",
+    "province": "上海",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "https://gaj.sh.gov.cn/shga/index.html",
+    "checked_at": "2026-09-04T11:09:48.384090+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 403,
+    "final_url": "https://gaj.sh.gov.cn/shga/index.html",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "076fb8f2896c1826",
+    "name": "江苏省公安厅",
+    "province": "江苏",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.jiangsu.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.606780+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 403,
+    "final_url": "http://gat.jiangsu.gov.cn/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "5d39348dbb8512a6",
+    "name": "浙江省公安厅",
+    "province": "浙江",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.zj.gov.cn/",
+    "checked_at": "2026-09-04T11:09:48.675924+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "https://gat.shanxi.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://gat.hlj.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "http://gaj.sh.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "https://gat.jiangsu.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "https://gat.zj.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "https://gat.zj.gov.cn/",
+    "title": "浙江省公安厅"
+  },
+  {
+    "institution_id": "2b4060dad8981bef",
+    "name": "安徽省公安厅",
+    "province": "安徽",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.ah.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.702202+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 403,
+    "final_url": "http://gat.ah.gov.cn/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "9c5140622b6bd99c",
+    "name": "福建省公安厅",
+    "province": "福建",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.fujian.gov.cn",
+    "checked_at": "2026-09-04T11:09:48.741298+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "http://gat.shanxi.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古自治区公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://gat.hlj.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "http://gaj.sh.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "https://gat.zj.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山东省公安厅",
+        "homepage_candidate": "http://gat.shandong.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "https://hnga.henan.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "西藏自治区公安厅",
+        "homepage_candidate": "http://gat.xizang.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "青海省公安厅",
+        "homepage_candidate": "http://gat.qinghai.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁夏回族自治区公安厅",
+        "homepage_candidate": "http://gat.nx.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆维吾尔自治区公安厅",
+        "homepage_candidate": "https://gat.xinjiang.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆生产建设兵团公安局",
+        "homepage_candidate": "http://btgaj.xjbt.gov.cn//",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "平潭综合实验区公安局",
+        "homepage_candidate": "https://www.pingtan.gov.cn/zwgk/ztzl/gazl/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁德市公安局",
+        "homepage_candidate": "http://gaj.ningde.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "龙岩市公安局",
+        "homepage_candidate": "http://ga.longyan.gov.cn",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "三明市公安局",
+        "homepage_candidate": "http://gaj.sm.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "南平市公安局",
+        "homepage_candidate": "http://gaj.np.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "泉州市公安局",
+        "homepage_candidate": "http://gaj.quanzhou.gov.cn",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "莆田市公安局",
+        "homepage_candidate": "http://gaj.putian.gov.cn",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "厦门市公安局",
+        "homepage_candidate": "http://ga.xm.gov.cn",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "漳州市公安局",
+        "homepage_candidate": "http://gaj.zhangzhou.gov.cn",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福州市公安局",
+        "homepage_candidate": "http://gaj.fuzhou.gov.cn/",
+        "evidence_url": "http://gat.fujian.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "http://gat.fujian.gov.cn/",
+    "title": "福建公安公众服务网"
+  },
+  {
+    "institution_id": "066ea87aeb168462",
+    "name": "江西省公安厅",
+    "province": "江西",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.jiangxi.gov.cn/",
+    "checked_at": "2026-09-04T11:09:48.792209+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [],
+    "http_status": 200,
+    "final_url": "http://gat.jiangxi.gov.cn/",
+    "title": "江西省公安厅"
+  },
+  {
+    "institution_id": "16cfc573e5627ace",
+    "name": "山东省公安厅",
+    "province": "山东",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.shandong.gov.cn/",
+    "checked_at": "2026-09-04T11:09:48.941929+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "https://gat.shanxi.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古自治区公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山东省公安厅",
+        "homepage_candidate": "http://gat.shandong.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://www.hljga.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "https://gaj.sh.gov.cn/shga/index.html",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://www.jsga.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "http://gat.zj.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://www.jxga.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "http://www.henanga.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://www.gzga.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "西藏自治区公安厅",
+        "homepage_candidate": "http://gat.xizang.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://www.shxga.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "青海省公安厅",
+        "homepage_candidate": "http://gat.qinghai.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁夏公安厅",
+        "homepage_candidate": "http://gat.nx.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆公安厅",
+        "homepage_candidate": "https://gat.xinjiang.gov.cn/gat/index.shtml",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "济南市公安局",
+        "homepage_candidate": "http://jnga.jinan.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "青岛市公安局",
+        "homepage_candidate": "http://police.qingdao.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "淄博市公安局",
+        "homepage_candidate": "http://gaj.zibo.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "枣庄市公安局",
+        "homepage_candidate": "http://gaj.zaozhuang.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "东营市公安局",
+        "homepage_candidate": "http://dyga.dongying.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "烟台市公安局",
+        "homepage_candidate": "http://gaj.yantai.gov.cn",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "潍坊市公安局",
+        "homepage_candidate": "http://gaj.weifang.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "济宁市公安局",
+        "homepage_candidate": "http://ga.jining.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "泰安市公安局",
+        "homepage_candidate": "http://gaj.taian.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "威海市公安局",
+        "homepage_candidate": "http://gaj.weihai.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "日照市公安局",
+        "homepage_candidate": "http://gaj.rizhao.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "临沂市公安局",
+        "homepage_candidate": "http://gaj.linyi.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "德州市公安局",
+        "homepage_candidate": "http://dzga.dezhou.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "聊城市公安局",
+        "homepage_candidate": "http://gaj.liaocheng.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "滨州市公安局",
+        "homepage_candidate": "http://ga.binzhou.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "菏泽市公安局",
+        "homepage_candidate": "http://sdhzga.heze.gov.cn/",
+        "evidence_url": "http://gat.shandong.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "http://gat.shandong.gov.cn/",
+    "title": "山东省公安厅"
+  },
+  {
+    "institution_id": "117b91c74fe9e667",
+    "name": "河南省公安厅",
+    "province": "河南",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://hnga.henan.gov.cn/",
+    "checked_at": "2026-09-04T11:09:49.036891+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [],
+    "http_status": 200,
+    "final_url": "https://hnga.henan.gov.cn:443/",
+    "title": "河南省公安厅"
+  },
+  {
+    "institution_id": "e947f6fbc2330d5a",
+    "name": "湖北省公安厅",
+    "province": "湖北",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.hubei.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.052712+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "https://gat.shanxi.gov.cn/#/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古自治区公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "https://gaj.sh.gov.cn/shga/index.html",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "http://gat.zj.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fj.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山东省公安厅",
+        "homepage_candidate": "http://gat.shandong.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "http://hnga.henan.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "西藏自治区公安厅",
+        "homepage_candidate": "http://gat.xizang.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "青海省公安厅",
+        "homepage_candidate": "http://gat.qinghai.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁夏回族自治区公安厅",
+        "homepage_candidate": "http://gat.nx.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆维吾尔自治区公安厅",
+        "homepage_candidate": "http://www.xjgat.gov.cn/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "武汉市公安局",
+        "homepage_candidate": "http://gaj.wuhan.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黄石市公安局",
+        "homepage_candidate": "http://gaj.huangshi.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "十堰市公安局",
+        "homepage_candidate": "http://gaj.shiyan.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "襄阳市公安局",
+        "homepage_candidate": "http://gaj.xiangyang.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "鄂州市公安局",
+        "homepage_candidate": "http://gaj.ezhou.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "荆门市公安局",
+        "homepage_candidate": "http://gaj.jingmen.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "孝感市公安局",
+        "homepage_candidate": "http://gaj.xiaogan.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "荆州市公安局",
+        "homepage_candidate": "http://gaj.jingzhou.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黄冈市公安局",
+        "homepage_candidate": "http://gaj.hg.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "咸宁市公安局",
+        "homepage_candidate": "http://gaj.xianning.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "随州市公安局",
+        "homepage_candidate": "http://gaj.suizhou.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "恩施州公安局",
+        "homepage_candidate": "http://gaj.enshi.gov.cn",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "潜江市公安局",
+        "homepage_candidate": "http://www.hbqj.gov.cn/xxgk/xxgkml/szfbmxxgkml/sgaj/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天门市公安局",
+        "homepage_candidate": "http://www.tianmen.gov.cn/zwgk/bmhxzxxgkml/bm/sgaj/",
+        "evidence_url": "http://gat.hubei.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "http://gat.hubei.gov.cn/",
+    "title": "湖北省公安厅"
+  },
+  {
+    "institution_id": "b199889d3e43e862",
+    "name": "湖南省公安厅",
+    "province": "湖南",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.hunan.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.063259+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [],
+    "http_status": 200,
+    "final_url": "http://gat.hunan.gov.cn/",
+    "title": "湖南省公安厅"
+  },
+  {
+    "institution_id": "e5423976f830789a",
+    "name": "广东省公安厅",
+    "province": "广东",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gdga.gd.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.205173+00:00",
+    "status": "unreachable",
+    "links": [],
+    "error_type": "ConnectionError"
+  },
+  {
+    "institution_id": "170239844e5e7ac1",
+    "name": "广西壮族自治区公安厅",
+    "province": "广西",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.gxzf.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.300053+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "https://gat.shanxi.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古自治区公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://gat.hlj.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "http://gaj.sh.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "http://gat.zj.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山东省公安厅",
+        "homepage_candidate": "http://gat.shandong.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "http://hnga.henan.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "西藏自治区公安厅",
+        "homepage_candidate": "http://gat.xizang.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "青海省公安厅",
+        "homepage_candidate": "http://gat.qinghai.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁夏回族自治区公安厅",
+        "homepage_candidate": "http://gat.nx.gov.cn",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆维吾尔自治区公安厅",
+        "homepage_candidate": "http://gat.xinjiang.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "南宁市公安局",
+        "homepage_candidate": "http://gaj.nanning.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "柳州市公安局",
+        "homepage_candidate": "http://gaj.liuzhou.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "桂林市公安局",
+        "homepage_candidate": "http://gaj.guilin.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "梧州市公安局",
+        "homepage_candidate": "http://gaj.wuzhou.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "北海市公安局",
+        "homepage_candidate": "http://www.beihai.gov.cn/xxgkbm/bhsgaj/index.shtml",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "防城港市公安局",
+        "homepage_candidate": "http://gaj.fcgs.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "钦州市公安局",
+        "homepage_candidate": "http://gaj.qinzhou.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵港市公安局",
+        "homepage_candidate": "http://gaj.gxgg.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "玉林市公安局",
+        "homepage_candidate": "http://gaj.yulin.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "百色市公安局",
+        "homepage_candidate": "http://gaj.baise.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贺州市公安局",
+        "homepage_candidate": "http://gaj.gxhz.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河池市公安局",
+        "homepage_candidate": "http://gaj.hechi.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "来宾市公安局",
+        "homepage_candidate": "http://gaj.laibin.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "崇左市公安局",
+        "homepage_candidate": "http://gaj.chongzuo.gov.cn/",
+        "evidence_url": "http://gat.gxzf.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "http://gat.gxzf.gov.cn/",
+    "title": "广西壮族自治区公安厅网站"
+  },
+  {
+    "institution_id": "9d3de7037afc38f7",
+    "name": "海南省公安厅",
+    "province": "海南",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://ga.hainan.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.349620+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "三亚市公安局",
+        "homepage_candidate": "http://gaj.sanya.gov.cn/",
+        "evidence_url": "http://ga.hainan.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海口市公安局",
+        "homepage_candidate": "http://police.haikou.gov.cn/",
+        "evidence_url": "http://ga.hainan.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn/",
+        "evidence_url": "http://ga.hainan.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "http://ga.hainan.gov.cn/",
+    "title": "海南省公安厅"
+  },
+  {
+    "institution_id": "ec48ea31c326cb66",
+    "name": "重庆市公安局",
+    "province": "重庆",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gaj.cq.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.354354+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "https://gat.shanxi.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://gat.hlj.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "http://gaj.sh.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "https://gat.zj.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "https://gat.jiangsu.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "http://gat.guizhou.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "http://gat.shaanxi.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁夏公安厅",
+        "homepage_candidate": "http://gat.nx.gov.cn",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "万州区公安局",
+        "homepage_candidate": "http://www.wz.gov.cn/bmjz_89642/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黔江区公安局",
+        "homepage_candidate": "https://www.qianjiang.gov.cn/bmjd/xzfgzbm/qgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "涪陵区公安局",
+        "homepage_candidate": "http://www.fl.gov.cn/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "渝中区公安分局",
+        "homepage_candidate": "http://www.cqyz.gov.cn/bm_229/qgafj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "大渡口区公安分局",
+        "homepage_candidate": "http://www.ddk.gov.cn/sjbm/qgafj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "两江新区公安分局",
+        "homepage_candidate": "https://www.ljxq.gov.cn/bm/qgafj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "沙坪坝区公安分局",
+        "homepage_candidate": "http://www.cqspb.gov.cn/bm/qgafj_63641/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "九龙坡区公安分局",
+        "homepage_candidate": "http://cqjlp.gov.cn/bmjz/qzfbm_97119/qgafj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "南岸区公安分局",
+        "homepage_candidate": "https://www.cqna.gov.cn/bm/qgafj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "北碚区公安分局",
+        "homepage_candidate": "http://www.beibei.gov.cn/bm/qgafj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "巴南区公安分局",
+        "homepage_candidate": "http://www.cqbn.gov.cn/bmjz/bm/gafj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "长寿区公安局",
+        "homepage_candidate": "http://www.cqcs.gov.cn/bm/qgaj_75251/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江津区公安局",
+        "homepage_candidate": "http://www.jiangjin.gov.cn/bm/qgaj_69005/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "合川区公安局",
+        "homepage_candidate": "https://www.hc.gov.cn/bmjd/bm_100475/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "永川区公安局",
+        "homepage_candidate": "https://www.cqyc.gov.cn/bm/qgaj_87638/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "南川区公安局",
+        "homepage_candidate": "http://www.cqnc.gov.cn/qzfbm_197/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "綦江区公安局",
+        "homepage_candidate": "http://www.cqqj.gov.cn/bm/qgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "大足区公安局",
+        "homepage_candidate": "https://www.dazu.gov.cn/qzfbm/qgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "铜梁区公安局",
+        "homepage_candidate": "https://www.cqstl.gov.cn/bm/qgaj_71102/zwgk_70831/zfxxgkzn_70833/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "璧山区公安局",
+        "homepage_candidate": "https://www.bishan.gov.cn/bmjz/bm_97237/qgaj_97243/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "潼南区公安局",
+        "homepage_candidate": "https://www.cqtn.gov.cn/bm/qgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "荣昌区公安局",
+        "homepage_candidate": "http://www.rongchang.gov.cn/bm/qgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "开州区公安局",
+        "homepage_candidate": "http://www.cqkz.gov.cn/kz/fzhggwyh_80867/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "梁平区公安局",
+        "homepage_candidate": "http://www.cqlp.gov.cn/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "武隆区公安局",
+        "homepage_candidate": "https://cqwl.gov.cn/bmjz_sites/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "城口县公安局",
+        "homepage_candidate": "http://www.cqck.gov.cn/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "丰都县公安局",
+        "homepage_candidate": "https://www.cqfd.gov.cn/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "忠县公安局",
+        "homepage_candidate": "http://www.zhongxian.gov.cn/bm/zxgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "垫江县公安局",
+        "homepage_candidate": "http://www.cqsdj.gov.cn/bmjz/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云阳县公安局",
+        "homepage_candidate": "https://www.yunyang.gov.cn/bm_257/xgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "奉节县公安局",
+        "homepage_candidate": "http://www.cqfj.gov.cn/bm_168/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "巫山县公安局",
+        "homepage_candidate": "http://www.cqws.gov.cn/xzfbm_73744/fzhggwyh_74360/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "巫溪县公安局",
+        "homepage_candidate": "http://www.cqwx.gov.cn/bm/xgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "石柱县公安局",
+        "homepage_candidate": "http://cqszx.gov.cn/bm/xgaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "秀山县公安局",
+        "homepage_candidate": "http://www.cqxs.gov.cn/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "酉阳县公安局",
+        "homepage_candidate": "https://youyang.gov.cn/bmjz_sites/bm/gaj/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "彭水县公安局",
+        "homepage_candidate": "http://www.psx.gov.cn/zfbm_174/fzhggwyh_82890/",
+        "evidence_url": "http://gaj.cq.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "http://gaj.cq.gov.cn/",
+    "title": "重庆市公安局"
+  },
+  {
+    "institution_id": "bbb7c4917ae37614",
+    "name": "四川省公安厅",
+    "province": "四川",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.sc.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.475087+00:00",
+    "status": "unreachable",
+    "links": [],
+    "error_type": "ConnectionError"
+  },
+  {
+    "institution_id": "ed61fabc82221c2a",
+    "name": "贵州省公安厅",
+    "province": "贵州",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.guizhou.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.575491+00:00",
+    "status": "unreachable",
+    "links": [],
+    "error_type": "ConnectTimeout"
+  },
+  {
+    "institution_id": "9538f2102b671371",
+    "name": "云南省公安厅",
+    "province": "云南",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gonganting.yn.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.610208+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [],
+    "http_status": 200,
+    "final_url": "http://gonganting.yn.gov.cn/",
+    "title": "云南省公安厅"
+  },
+  {
+    "institution_id": "ef24715a44547d94",
+    "name": "西藏自治区公安厅",
+    "province": "西藏",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.xizang.gov.cn/",
+    "checked_at": "2026-09-04T11:09:49.692099+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 508,
+    "final_url": "http://gat.xizang.gov.cn/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "9569304867bf7ec7",
+    "name": "陕西省公安厅",
+    "province": "陕西",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.shaanxi.gov.cn/",
+    "checked_at": "2026-09-04T11:09:49.807041+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [
+      {
+        "name": "四川省公安厅",
+        "homepage_candidate": "http://gat.sc.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖南省公安厅",
+        "homepage_candidate": "http://gat.hunan.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "天津市公安局",
+        "homepage_candidate": "http://ga.tj.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "浙江省公安厅",
+        "homepage_candidate": "http://gat.zj.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江西省公安厅",
+        "homepage_candidate": "http://gat.jiangxi.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "甘肃省公安厅",
+        "homepage_candidate": "http://gat.gansu.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "辽宁省公安厅",
+        "homepage_candidate": "http://gat.ln.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "新疆维吾尔自治区公安厅",
+        "homepage_candidate": "https://gat.xinjiang.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山西省公安厅",
+        "homepage_candidate": "http://gat.shanxi.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "海南省公安厅",
+        "homepage_candidate": "http://ga.hainan.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广西壮族自治区公安厅",
+        "homepage_candidate": "http://gat.gxzf.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "青海省公安厅",
+        "homepage_candidate": "http://gat.qinghai.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "重庆市公安局",
+        "homepage_candidate": "http://gaj.cq.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河南省公安厅",
+        "homepage_candidate": "https://hnga.henan.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "福建省公安厅",
+        "homepage_candidate": "http://gat.fujian.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "河北省公安厅",
+        "homepage_candidate": "http://gat.hebei.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "湖北省公安厅",
+        "homepage_candidate": "http://gat.hubei.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "广东省公安厅",
+        "homepage_candidate": "http://gdga.gd.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "上海市公安局",
+        "homepage_candidate": "https://gaj.sh.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "黑龙江省公安厅",
+        "homepage_candidate": "http://gat.hlj.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "吉林省公安厅",
+        "homepage_candidate": "http://gat.jl.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "山东省公安厅",
+        "homepage_candidate": "http://gat.shandong.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "内蒙古自治区公安厅",
+        "homepage_candidate": "http://gat.nmg.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "北京市公安局",
+        "homepage_candidate": "http://gaj.beijing.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "江苏省公安厅",
+        "homepage_candidate": "http://gat.jiangsu.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "云南省公安厅",
+        "homepage_candidate": "http://gonganting.yn.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "贵州省公安厅",
+        "homepage_candidate": "https://gat.guizhou.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安徽省公安厅",
+        "homepage_candidate": "http://gat.ah.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宁夏回族自治区公安厅",
+        "homepage_candidate": "http://gat.nx.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "榆林市公安局",
+        "homepage_candidate": "http://gaj.yl.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "杨凌示范区公安局",
+        "homepage_candidate": "http://gaj.yangling.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "商洛市公安局",
+        "homepage_candidate": "https://www.shangluo.gov.cn/gaj/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "宝鸡市公安局",
+        "homepage_candidate": "http://gaj.baoji.gov.cn",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "延安市公安局",
+        "homepage_candidate": "http://gaj.yanan.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "安康市公安局",
+        "homepage_candidate": "http://gaj.ankang.gov.cn",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "渭南市公安局",
+        "homepage_candidate": "http://gaj.weinan.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "汉中市公安局",
+        "homepage_candidate": "http://police.hanzhong.gov.cn",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "西安市公安局",
+        "homepage_candidate": "http://police.xa.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "铜川市公安局",
+        "homepage_candidate": "http://www.tongchuan.gov.cn/index_page.rt?siteId=80",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "咸阳市公安局",
+        "homepage_candidate": "http://sxxyga.xianyang.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      },
+      {
+        "name": "陕西省公安厅",
+        "homepage_candidate": "https://gat.shaanxi.gov.cn/",
+        "evidence_url": "https://gat.shaanxi.gov.cn/",
+        "identity_status": "official_page_link_candidate",
+        "collection_enabled": false
+      }
+    ],
+    "http_status": 200,
+    "final_url": "https://gat.shaanxi.gov.cn/",
+    "title": "陕西省公安厅"
+  },
+  {
+    "institution_id": "97db0740cb7daefb",
+    "name": "甘肃省公安厅",
+    "province": "甘肃",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.gansu.gov.cn",
+    "checked_at": "2026-09-04T11:09:49.838190+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 412,
+    "final_url": "https://gat.gansu.gov.cn/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "95f1126e696f14cc",
+    "name": "青海省公安厅",
+    "province": "青海",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.qinghai.gov.cn/stmhwz/",
+    "checked_at": "2026-09-04T11:09:49.851480+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 412,
+    "final_url": "http://gat.qinghai.gov.cn/stmhwz/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "8ffc197f5b86d51f",
+    "name": "宁夏回族自治区公安厅",
+    "province": "宁夏",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.nx.gov.cn",
+    "checked_at": "2026-09-04T11:09:50.370348+00:00",
+    "status": "unreachable",
+    "links": [],
+    "http_status": 403,
+    "final_url": "http://gat.nx.gov.cn/",
+    "error_type": "HTTPError"
+  },
+  {
+    "institution_id": "855a5570fd41464d",
+    "name": "新疆维吾尔自治区公安厅",
+    "province": "新疆",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://gat.xinjiang.gov.cn/",
+    "checked_at": "2026-09-04T11:09:50.370684+00:00",
+    "status": "http_ok_identity_unverified",
+    "links": [],
+    "http_status": 200,
+    "final_url": "http://gat.xinjiang.gov.cn/",
+    "title": "新疆维吾尔自治区公安厅"
+  },
+  {
+    "institution_id": "1c1bbd4bd87258af",
+    "name": "新疆生产建设兵团公安局",
+    "province": "新疆",
+    "directory_evidence": "https://gat.ln.gov.cn/gat/gsgawz50/index.shtml",
+    "requested_url": "http://btgaj.xjbt.gov.cn/",
+    "checked_at": "2026-09-04T11:09:50.438266+00:00",
+    "status": "unreachable",
+    "links": [],
+    "error_type": "ConnectionError"
+  }
+]

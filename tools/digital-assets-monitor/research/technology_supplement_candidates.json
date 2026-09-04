@@ -1,0 +1,44 @@
+[
+  {
+    "id": "567ddbf6079aef54",
+    "name": "河北省科技成果展示交易中心",
+    "province": "河北",
+    "kind": "technology_transfer",
+    "discovery_evidence_url": "https://www.most.gov.cn/dfkj/hb/zxdt/202512/t20251226_195599.html",
+    "evidence_date": "2025-12-26",
+    "evidence_checked_at": "2026-09-04",
+    "identity_status": "official_report_candidate",
+    "homepage_candidate": null,
+    "current_identity_verified": false,
+    "collection_enabled": false,
+    "note": "科技部报道的技术交易活动参与机构；技术转移服务机构不等同交易所，官网和当前机构状态待交叉核实。"
+  },
+  {
+    "id": "eafd446aeceb272f",
+    "name": "天津市科技创新发展中心",
+    "province": "天津",
+    "kind": "technology_transfer",
+    "discovery_evidence_url": "https://www.most.gov.cn/dfkj/hb/zxdt/202512/t20251226_195599.html",
+    "evidence_date": "2025-12-26",
+    "evidence_checked_at": "2026-09-04",
+    "identity_status": "official_report_candidate",
+    "homepage_candidate": null,
+    "current_identity_verified": false,
+    "collection_enabled": false,
+    "note": "科技部报道的技术交易活动参与机构；技术转移服务机构不等同交易所，官网和当前机构状态待交叉核实。"
+  },
+  {
+    "id": "bb88b4ae87d7c792",
+    "name": "福建海峡技术转移中心",
+    "province": "福建",
+    "kind": "technology_transfer",
+    "discovery_evidence_url": "https://www.most.gov.cn/dfkj/hb/zxdt/202512/t20251226_195599.html",
+    "evidence_date": "2025-12-26",
+    "evidence_checked_at": "2026-09-04",
+    "identity_status": "official_report_candidate",
+    "homepage_candidate": null,
+    "current_identity_verified": false,
+    "collection_enabled": false,
+    "note": "科技部报道的技术交易活动参与机构；技术转移服务机构不等同交易所，官网和当前机构状态待交叉核实。"
+  }
+]

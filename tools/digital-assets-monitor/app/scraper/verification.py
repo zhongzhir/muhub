@@ -1,4 +1,5 @@
 """Fail closed for search hits; fetch only explicitly configured article channels."""
+import re
 from datetime import date
 from urllib.parse import urlparse
 import requests
@@ -20,6 +21,9 @@ def verify_search_item(item, source):
             or target.hostname != origin.hostname or target.username or target.password
             or target.netloc != origin.netloc):
         evidence["status"] = "needs_domain_review"
+        return result
+    if source.get("article_path_pattern") and not re.fullmatch(source["article_path_pattern"], target.path):
+        evidence["status"] = "not_article_path"
         return result
     try:
         # Redirects require a separately reviewed channel; never follow blindly.

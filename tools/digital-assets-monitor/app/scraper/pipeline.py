@@ -55,7 +55,18 @@ def _source_items(src):
             "item": src.get("item_selector", "h2 a, h3 a"),
             "date": src.get("date_selector", None),
         }
-        return web_mod.crawl_list(url, rules)
+        rows, seen = [], set()
+        pages = src.get("list_urls") or [url]
+        if len(pages) > 5:
+            raise ValueError("At most five configured list pages per scan")
+        for page in pages:
+            if urlparse(page).netloc != urlparse(url).netloc:
+                raise ValueError("List pages must belong to the configured source")
+            for item in web_mod.crawl_list(page, rules):
+                if item["url"] not in seen:
+                    seen.add(item["url"])
+                    rows.append(item)
+        return rows
     return []
 
 
@@ -63,12 +74,19 @@ def _content_text(item):
     return f"{item.get('title', '')} {item.get('summary', '')}"
 
 
+def should_verify_article(item, source):
+    text = _content_text(item)
+    return classify.is_relevant(text) or any(
+        term.lower() in text.lower() for term in source.get("article_discovery_terms", [])
+    )
+
+
 def process_item(dbconn, item, source, new_count):
     fp = make_fingerprint(item.get("title"), item.get("url"))
     if db.item_exists(dbconn, fp):
         return new_count
 
-    if source.get("type") == "search":
+    if source.get("type") == "search" or source.get("verify_articles"):
         evidence = item.get("verification") or {"status": "unverified"}
         dbconn.execute(
             "INSERT INTO search_candidates VALUES (?,?,?,?,?,?) "
@@ -109,13 +127,13 @@ def process_item(dbconn, item, source, new_count):
         """INSERT INTO items (fingerprint, title, url, source_name, source_category, source_type,
              publish_date, fetch_date, content, summary, analysis, region, institution, institution_type,
              asset_types, disposal_method, amount_value, amount_currency, importance, tags, is_processed,
-             created_at, updated_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+             created_at, updated_at, raw)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             fp, item.get("title"), item.get("url"), source.get("name"), source.get("category"),
             source.get("type"), item.get("publish_date"), now, raw_text, summary, analysis,
             region, inst, itype, ",".join(assets), method, amount_val, amount_cur, importance,
-            ",".join(tags), 1, now, now,
+            ",".join(tags), 1, now, now, json.dumps(item.get("verification"), ensure_ascii=False),
         ),
     )
     return new_count + 1
@@ -163,10 +181,13 @@ def run_scan(dbconn=None, manual=False):
             continue
         try:
             items = _source_items(src)
-            if src.get("type") == "search":
+            if src.get("type") == "search" or src.get("verify_articles"):
                 # Perform network work before opening the database write transaction.
                 for index, item in enumerate(items):
-                    items[index] = verify_search_item(item, src)
+                    if should_verify_article(item, src):
+                        items[index] = verify_search_item(item, src)
+                    else:
+                        items[index] = dict(item, verification={"status": "irrelevant_candidate"})
             conn = db.connect()
             try:
                 conn.execute("BEGIN")
@@ -178,7 +199,7 @@ def run_scan(dbconn=None, manual=False):
                 new_items += source_new
                 query_failed = getattr(items, "queries_failed", 0)
                 status = ("部分失败" if query_failed else "成功") + f": 候选{len(items)} 相关{relevant_count} 新增{source_new}"
-                if src.get("type") == "search":
+                if src.get("type") == "search" or src.get("verify_articles"):
                     pending = sum(it.get("verification", {}).get("status") != "verified_article" for it in items)
                     status += f" 待核验{pending}"
                 if hasattr(items, "queries_planned"):

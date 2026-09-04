@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.scraper.verification import verify_search_item
-from app.scraper.pipeline import process_item
+from app.scraper.pipeline import process_item, should_verify_article, _source_items
 from app import database as db
 
 class VerificationTests(unittest.TestCase):
@@ -39,6 +39,25 @@ class VerificationTests(unittest.TestCase):
         self.assertEqual(process_item(conn, item, self.source, 0), 1)
         self.assertEqual(conn.execute("SELECT publish_date FROM items").fetchone()[0], "2026-07-12")
         conn.close()
+
+    def test_broad_title_allows_body_check_without_admitting_item(self):
+        self.source["article_discovery_terms"] = ["涉案"]
+        item = dict(self.item, title="完善程序机制提升刑事涉案财物处置质效")
+        self.assertTrue(should_verify_article(item, self.source))
+
+    @patch("app.scraper.verification.requests.get")
+    def test_aggregation_path_rejected_without_network(self, get):
+        self.source["article_path_pattern"] = r"/spp/.*/t[0-9]+_[0-9]+\.shtml"
+        self.item["url"] = "https://www.spp.gov.cn/spp/llyj/index.shtml"
+        self.assertEqual(verify_search_item(self.item, self.source)["verification"]["status"], "not_article_path")
+        get.assert_not_called()
+
+    @patch("app.scraper.pipeline.web_mod.crawl_list")
+    def test_list_pages_deduplicate_urls(self, crawl):
+        crawl.return_value = [self.item]
+        src = dict(self.source, type="web", list_urls=[self.source["url"], self.source["url"]+"index_2.shtml"])
+        self.assertEqual(len(_source_items(src)), 1)
+        self.assertEqual(crawl.call_count, 2)
 
     def test_unverified_candidate_retained_not_published(self):
         conn = sqlite3.connect(":memory:")
