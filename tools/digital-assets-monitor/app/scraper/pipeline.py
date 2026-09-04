@@ -1,5 +1,7 @@
 """采集流水线：同步源 -> 抓取 -> 去重 -> 分类标注 -> 持久化。"""
 import hashlib
+import json
+from app.scraper.verification import verify_search_item
 import logging
 from urllib.parse import urlparse
 import re
@@ -65,6 +67,17 @@ def process_item(dbconn, item, source, new_count):
     fp = make_fingerprint(item.get("title"), item.get("url"))
     if db.item_exists(dbconn, fp):
         return new_count
+
+    if source.get("type") == "search":
+        evidence = item.get("verification") or {"status": "unverified"}
+        dbconn.execute(
+            "INSERT INTO search_candidates VALUES (?,?,?,?,?,?) "
+            "ON CONFLICT(fingerprint) DO UPDATE SET status=excluded.status, evidence=excluded.evidence, updated_at=excluded.updated_at",
+            (fp, source.get("id"), item.get("url"), evidence["status"],
+             json.dumps(item, ensure_ascii=False), db.now_iso()),
+        )
+        if evidence.get("status") != "verified_article":
+            return new_count
 
     raw_text = _content_text(item)
     if _neg_filter(raw_text, item.get("title")):
@@ -150,6 +163,10 @@ def run_scan(dbconn=None, manual=False):
             continue
         try:
             items = _source_items(src)
+            if src.get("type") == "search":
+                # Perform network work before opening the database write transaction.
+                for index, item in enumerate(items):
+                    items[index] = verify_search_item(item, src)
             conn = db.connect()
             try:
                 conn.execute("BEGIN")
@@ -161,6 +178,9 @@ def run_scan(dbconn=None, manual=False):
                 new_items += source_new
                 query_failed = getattr(items, "queries_failed", 0)
                 status = ("部分失败" if query_failed else "成功") + f": 候选{len(items)} 相关{relevant_count} 新增{source_new}"
+                if src.get("type") == "search":
+                    pending = sum(it.get("verification", {}).get("status") != "verified_article" for it in items)
+                    status += f" 待核验{pending}"
                 if hasattr(items, "queries_planned"):
                     status += f" 查询有效{items.queries_ok}/{items.queries_planned}"
                 conn.execute(

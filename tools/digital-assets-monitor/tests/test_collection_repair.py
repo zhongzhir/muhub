@@ -44,7 +44,7 @@ class CollectionRepairTests(unittest.TestCase):
         self.assertTrue(all(q.startswith("site:justice.gov ") for q in query.call_args.kwargs["queries"]))
     def test_global_search_attributes_publisher_host(self):
         conn=sqlite3.connect(":memory:");conn.row_factory=sqlite3.Row;conn.executescript(db.SCHEMA)
-        pipeline.process_item(conn, GOOD, {"id":"search-backfill", "type":"search", "name":"全网关键词回溯", "category":"综合检索"}, 0)
+        pipeline.process_item(conn, dict(GOOD, verification={"status": "verified_article"}), {"id":"search-backfill", "type":"search", "name":"全网关键词回溯", "category":"综合检索"}, 0)
         self.assertEqual(conn.execute("SELECT source_name FROM items").fetchone()[0], "www.justice.gov")
         conn.close()
     def test_list_title_and_date_are_separate(self):

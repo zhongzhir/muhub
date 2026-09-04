@@ -95,6 +95,15 @@ CREATE TABLE IF NOT EXISTS scan_logs (
     message TEXT
 );
 
+CREATE TABLE IF NOT EXISTS search_candidates (
+    fingerprint TEXT PRIMARY KEY,
+    source_id TEXT,
+    url TEXT,
+    status TEXT NOT NULL,
+    evidence TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     report_date TEXT,
