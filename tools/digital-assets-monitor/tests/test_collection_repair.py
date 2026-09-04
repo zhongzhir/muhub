@@ -13,6 +13,15 @@ GOOD = {"title": "DOJ cryptocurrency forfeiture case", "summary": "Bitcoin seizu
 JUNK = {"title": "Hatta Resorts hotel", "summary": "Book a holiday", "url": "https://example.org/hotel"}
 
 class CollectionRepairTests(unittest.TestCase):
+    def setUp(self):
+        search.reset_circuits()
+    def test_circuit_limits_repeated_failed_provider(self):
+        for _ in range(3): search.engine_result("bing", False)
+        self.assertFalse(search.engine_available("bing"))
+        self.assertTrue(search.engine_available("bingcn"))
+        search.engine_result("bing", True)
+        self.assertTrue(search.engine_available("bing"))
+
     def test_irrelevant_engine_does_not_stop_fallback(self):
         with patch.object(search, "_run_engine", side_effect=[[JUNK], [GOOD]]) as fetch:
             self.assertEqual(search.run_search("DOJ cryptocurrency forfeiture"), [GOOD])

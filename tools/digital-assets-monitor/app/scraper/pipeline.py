@@ -145,7 +145,7 @@ def run_scan(dbconn=None, manual=False):
     finally:
         conn.close()
 
-    for src in cfg:
+    for src in sorted(cfg, key=lambda s: s.get("type") == "search"):
         if not src.get("enabled", True):
             continue
         try:

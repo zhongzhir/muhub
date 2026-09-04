@@ -2,6 +2,30 @@
 兜底查全、覆盖全部信息源，并对结果做相关性过滤，滤除无关内容。"""
 import base64
 import logging
+import threading
+import time
+
+_circuit_lock = threading.Lock()
+_circuit = {}
+
+def reset_circuits():
+    with _circuit_lock:
+        _circuit.clear()
+
+def engine_available(name):
+    with _circuit_lock:
+        count, until = _circuit.get(name, (0, 0))
+        return time.monotonic() >= until
+
+def engine_result(name, success):
+    with _circuit_lock:
+        count, until = _circuit.get(name, (0, 0))
+        if success:
+            _circuit[name] = (0, 0)
+        else:
+            count += 1
+            _circuit[name] = (count, time.monotonic() + 600 if count >= 3 else until)
+
 import re
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import quote, unquote, urlparse, parse_qs
@@ -126,6 +150,8 @@ def run_search(query):
     from app.analysis.classify import is_relevant
     scope = re.search(r"(?:^|\s)site:([^\s]+)", query)
     for name, tmpl, parser in _ENGINES:
+        if not engine_available(name):
+            continue
         try:
             rows = _run_engine(query, name, tmpl, parser)
             useful = [r for r in rows
@@ -133,9 +159,12 @@ def run_search(query):
                       and is_relevant(r.get("title", "") + " " + r.get("summary", ""))
                       and (not scope or matches_domain(r.get("url", ""), scope.group(1)))]
             if useful:
+                engine_result(name, True)
                 return useful
+            engine_result(name, False)
             logging.getLogger("search").warning("%s: %s candidates, none usable for query %s", name, len(rows), query)
         except Exception as exc:
+            engine_result(name, False)
             logging.getLogger("search").warning("%s query %s failed: %s", name, query, str(exc)[:300])
     return None
 
