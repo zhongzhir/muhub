@@ -67,6 +67,23 @@ class VerificationTests(unittest.TestCase):
         result = verify_search_item(self.item, self.source)
         self.assertEqual(result["verification"]["status"], "incomplete_html_response")
 
+    @patch("app.scraper.verification.requests.get")
+    def test_official_site_identity_is_required_when_configured(self, get):
+        self.source["official_site_names"] = ["最高人民检察院"]
+        response = MagicMock(status_code=200, headers={"Content-Type": "text/html"})
+        response.iter_content.return_value = [('<html><head><meta name="SiteName" content="仿冒网站"><meta name="firstpublishedtime" content="2026-07-12"></head><body><article>' + '公安依法处置涉案虚拟货币。' * 20 + '</article></body></html>').encode()]
+        get.return_value.__enter__.return_value = response
+        self.assertEqual(verify_search_item(self.item, self.source)["verification"]["status"], "official_site_identity_mismatch")
+
+    def test_national_police_sources_have_fail_closed_rules(self):
+        from app.config import get_sources
+        sources = [x for x in get_sources()["sources"] if x["id"].startswith("police-")]
+        self.assertEqual({x["id"] for x in sources}, {"police-tianjin", "police-ningde", "police-chongqing"})
+        for source in sources:
+            self.assertTrue(source["verify_articles"])
+            self.assertTrue(source["article_path_pattern"])
+            self.assertTrue(source["official_site_names"])
+
     def test_unverified_candidate_retained_not_published(self):
         conn = sqlite3.connect(":memory:")
         conn.executescript(db.SCHEMA)

@@ -48,6 +48,13 @@ def verify_search_item(item, source):
             return result
         evidence.update(publication_evidence(html, item.get("publish_date")))
         soup = BeautifulSoup(html, "html.parser")
+        expected_sites = set(source.get("official_site_names", []))
+        site_names = {node.get("content", "").strip() for node in soup.select("meta[name]")
+                      if node.get("name", "").lower() == "sitename" and node.get("content")}
+        evidence["site_names"] = sorted(site_names)
+        if expected_sites and not (expected_sites & site_names):
+            evidence["status"] = "official_site_identity_mismatch"
+            return result
         nodes = soup.select(selector)
         if len(nodes) != 1:
             evidence["status"] = "article_container_missing_or_ambiguous"

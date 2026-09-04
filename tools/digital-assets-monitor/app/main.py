@@ -29,6 +29,8 @@ def create_app():
     db.init_db()
     from app.scraper.pipeline import sync_sources
     sync_sources()
+    from app.registry import sync_registry
+    sync_registry()
     conn = db.connect()
     try:
         count = conn.execute("SELECT COUNT(*) c FROM items").fetchone()["c"]

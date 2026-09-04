@@ -18,7 +18,7 @@ git -C "$REPO" cat-file -e "$REV^{commit}"
 mkdir "$STAGE"
 git -C "$REPO" archive "$REV" tools/digital-assets-monitor | tar -x --strip-components=2 -C "$STAGE"
 printf '%s\n' "$REV" > "$STAGE/REVISION"
-for test in test_publication.py test_search_verification.py test_collection_repair.py test_security.py test_pipeline.py smoke_test.py; do
+for test in test_publication.py test_search_verification.py test_registry.py test_collection_repair.py test_security.py test_pipeline.py smoke_test.py; do
   "$BASE/venv/bin/python" "$STAGE/tests/$test"
 done
 python3 - "$STAMP" <<'PYBACKUP'

@@ -95,6 +95,30 @@ CREATE TABLE IF NOT EXISTS scan_logs (
     message TEXT
 );
 
+CREATE TABLE IF NOT EXISTS institutions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    province TEXT,
+    identity_status TEXT NOT NULL,
+    evidence_url TEXT,
+    current_identity_verified INTEGER DEFAULT 0,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_institutions_kind_province ON institutions(kind, province);
+CREATE TABLE IF NOT EXISTS institution_channels (
+    id TEXT PRIMARY KEY,
+    institution_id TEXT NOT NULL,
+    url TEXT NOT NULL,
+    evidence_url TEXT,
+    status TEXT NOT NULL,
+    endpoint_verified INTEGER DEFAULT 0,
+    collection_enabled INTEGER DEFAULT 0,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(institution_id) REFERENCES institutions(id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_channels_institution_url ON institution_channels(institution_id, url);
+
 CREATE TABLE IF NOT EXISTS search_candidates (
     fingerprint TEXT PRIMARY KEY,
     source_id TEXT,

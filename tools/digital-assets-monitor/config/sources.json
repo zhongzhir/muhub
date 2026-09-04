@@ -445,6 +445,88 @@
         "数字资产",
         "加密资产"
       ]
+    },
+    {
+      "id": "police-tianjin",
+      "name": "天津市公安局",
+      "category": "公安机关",
+      "type": "web",
+      "enabled": true,
+      "priority": 85,
+      "url": "https://ga.tj.gov.cn/xxfb/tztg/",
+      "note": "天津公安通知公告；官方站点身份、原始日期和正文核验后才入库。",
+      "item_selector": "li:has(a[href*=\"/2026\"][href$=\".html\"])",
+      "article_selector": ".trs_editor_view",
+      "article_path_pattern": "/xxfb/tztg/.*/2026\\d{2}/t2026\\d{4}_\\d+\\.html",
+      "article_discovery_terms": [
+        "涉案",
+        "财物",
+        "洗钱",
+        "追赃",
+        "虚拟货币",
+        "数字资产",
+        "加密资产"
+      ],
+      "verify_articles": true,
+      "official_site_names": [
+        "天津市公安局"
+      ],
+      "selector_verified_on": "2026-09-04"
+    },
+    {
+      "id": "police-ningde",
+      "name": "宁德市公安局",
+      "category": "公安机关",
+      "type": "web",
+      "enabled": true,
+      "priority": 85,
+      "url": "https://gaj.ningde.gov.cn/zwgk/jqtb/",
+      "note": "宁德公安警情通报；官方站点身份、原始日期和正文核验后才入库。",
+      "item_selector": "li:has(a[href*=\"/2026\"][href$=\".htm\"])",
+      "article_selector": ".TRS_Editor",
+      "article_path_pattern": "/zwgk/jqtb/2026\\d{2}/t2026\\d{4}_\\d+\\.htm",
+      "article_discovery_terms": [
+        "涉案",
+        "财物",
+        "洗钱",
+        "追赃",
+        "虚拟货币",
+        "数字资产",
+        "加密资产",
+        "警情通报"
+      ],
+      "verify_articles": true,
+      "official_site_names": [
+        "宁德公安公众服务网"
+      ],
+      "selector_verified_on": "2026-09-04"
+    },
+    {
+      "id": "police-chongqing",
+      "name": "重庆市公安局",
+      "category": "公安机关",
+      "type": "web",
+      "enabled": true,
+      "priority": 85,
+      "url": "https://gaj.cq.gov.cn/sy_245/bmdt/",
+      "note": "重庆公安要闻和基层警务；官方站点身份、原始日期和正文核验后才入库。",
+      "item_selector": "div.list a[href*=\"/2026\"][href$=\".html\"]",
+      "article_selector": ".trs_editor_view",
+      "article_path_pattern": "/sy_245/bmdt/2026\\d{2}/t2026\\d{4}_\\d+\\.html",
+      "article_discovery_terms": [
+        "涉案",
+        "财物",
+        "洗钱",
+        "追赃",
+        "虚拟货币",
+        "数字资产",
+        "加密资产"
+      ],
+      "verify_articles": true,
+      "official_site_names": [
+        "重庆市公安局"
+      ],
+      "selector_verified_on": "2026-09-04"
     }
   ]
 }

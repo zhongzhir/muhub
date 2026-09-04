@@ -34,6 +34,10 @@ print("trend ->", len(c.get("/api/trend?days=30").json()))
 print("dist->", len(c.get("/api/distribution?field=institution_type").json()))
 print("heatmap ->", len(c.get("/api/heatmap").json()))
 print("sources ->", len(c.get("/api/sources").json()), "src health keys ok")
+coverage=c.get("/api/coverage").json()
+assert coverage["institutions"]["candidates"] >= 94
+assert coverage["channels"]["collection_enabled"] == 3
+print("coverage ->",coverage["institutions"],coverage["channels"])
 print("high_value ->", len(c.get("/api/high_value").json()))
 print("items ->", c.get("/api/items?page=1&page_size=5").json().get("total"))
 print("SMOKE OK")

@@ -107,6 +107,12 @@ def sources():
     return stats.source_health()
 
 
+@router.get("/coverage", dependencies=[Depends(require_auth)])
+def coverage():
+    from app.registry import coverage_summary
+    return coverage_summary()
+
+
 @router.get("/source_rank", dependencies=[Depends(require_auth)])
 def source_rank(limit: int = Query(10, ge=1, le=100)):
     return stats.source_rank(limit)
