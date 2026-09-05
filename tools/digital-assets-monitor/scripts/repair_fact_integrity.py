@@ -1,8 +1,10 @@
-"""修复已知错误结构化字段。默认 dry-run，需 --apply 才写库。"""
+"""修复已知错误结构化字段。默认 dry-run 只读，需 --apply 才写库。"""
 from __future__ import annotations
 
 import argparse
+import os
 import sqlite3
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -64,24 +66,36 @@ def _eq(left, right):
     return left == right
 
 
+def row_value(row, field):
+    if row is None:
+        return None
+    keys = row.keys()
+    if field not in keys:
+        return None
+    return row[field]
+
+
 def planned_fields(row):
     text = " ".join(
-        part for part in (row["title"] or "", row["content"] or "", row["summary"] or "") if part
+        part for part in (
+            row_value(row, "title"),
+            row_value(row, "content"),
+            row_value(row, "summary"),
+        ) if part
     )
     fields = structure_item(
-        row["title"],
+        row_value(row, "title"),
         text,
-        url=row["url"] or "",
-        source_name=row["source_name"] or "",
-        source_category=row["source_category"] or "",
+        url=row_value(row, "url") or "",
+        source_name=row_value(row, "source_name") or "",
+        source_category=row_value(row, "source_category") or "",
     )
-    known = KNOWN_ANALYSIS.get(row["url"] or "")
+    known = KNOWN_ANALYSIS.get(row_value(row, "url") or "")
     nature = (known or {}).get("information_nature") or fields["information_nature"]
     analysis = (known or {}).get("analysis") or fields["analysis"]
     assets = fields["asset_types"]
     if isinstance(assets, (list, tuple)):
         assets = ",".join(assets)
-    # 这两条均为理论研究/政策文章：事件属性与无证据数量一律留空
     return {
         "amount_value": None,
         "amount_currency": None,
@@ -101,7 +115,7 @@ def planned_fields(row):
 def diff_row(row, planned):
     changes = {}
     for field in REPAIR_FIELDS:
-        old = row[field] if field in row.keys() else None
+        old = row_value(row, field)
         new = planned[field]
         if not _eq(old, new):
             changes[field] = {"from": old, "to": new}
@@ -116,14 +130,79 @@ def load_targets(conn):
     return rows
 
 
-def backup_sqlite(db_path, dest_path):
-    src = sqlite3.connect(str(db_path))
+def connect_readonly(db_path):
+    path = Path(db_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"database is not an existing file: {path}")
+    conn = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def connect_writable(db_path):
+    path = Path(db_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"database is not an existing file: {path}")
+    conn = sqlite3.connect(str(path.resolve()))
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys=ON;")
+    return conn
+
+
+def unique_backup_path(db_path):
+    db_path = Path(db_path)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    candidate = db_path.with_name(f"{db_path.stem}.factfix-{stamp}{db_path.suffix}")
+    if candidate.exists():
+        raise FileExistsError(f"backup already exists: {candidate}")
+    return candidate
+
+
+def restrict_admin_only(path):
+    """备份仅允许管理员与当前操作用户读写，去掉 Users 等继承权限。
+
+    Windows UAC 下，未提升进程的 Administrators 属于 deny-only SID；
+    若 ACL 只有 Administrators，创建备份的同一进程将无法复验文件。
+    """
+    path = str(Path(path))
+    if os.name == "nt":
+        user = os.environ.get("USERNAME") or os.getlogin()
+        completed = subprocess.run(
+            [
+                "icacls", path, "/inheritance:r",
+                "/grant:r", "Administrators:F",
+                "/grant:r", f"{user}:(R,W)",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(completed.stderr or completed.stdout or "icacls failed")
+        return
+    os.chmod(path, 0o600)
+
+
+def backup_sqlite(src_path, dest_path):
+    dest_path = Path(dest_path)
+    if dest_path.exists():
+        raise FileExistsError(f"backup already exists: {dest_path}")
+    flags = os.O_CREAT | os.O_EXCL | os.O_RDWR
+    if hasattr(os, "O_BINARY"):
+        flags |= os.O_BINARY
+    fd = os.open(str(dest_path), flags, 0o600)
+    os.close(fd)
+    src = sqlite3.connect(str(src_path))
     dst = sqlite3.connect(str(dest_path))
     try:
         src.backup(dst)
-    finally:
+    except Exception:
         dst.close()
         src.close()
+        dest_path.unlink(missing_ok=True)
+        raise
+    dst.close()
+    src.close()
+    restrict_admin_only(dest_path)
 
 
 def apply_changes(conn, item_id, planned):
@@ -146,46 +225,60 @@ def redact(value):
     return value
 
 
+def _plan(conn):
+    pending = []
+    for row in load_targets(conn):
+        planned = planned_fields(row)
+        changes = diff_row(row, planned)
+        pending.append({
+            "id": row["id"],
+            "url": row_value(row, "url"),
+            "planned": planned,
+            "changes": {
+                k: {"from": redact(v["from"]), "to": redact(v["to"])}
+                for k, v in changes.items()
+            },
+            "_raw_changes": changes,
+            "_row": row,
+        })
+    return pending
+
+
 def repair_database(db_path, apply=False):
-    db.DB_PATH = Path(db_path)
-    db.init_db()
-    conn = db.connect()
-    backup_path = None
+    path = Path(db_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"database is not an existing file: {path}")
+    if not apply:
+        conn = connect_readonly(path)
+        try:
+            return {"apply": False, "backup": None, "items": _plan(conn)}
+        finally:
+            conn.close()
+
+    readonly = connect_readonly(path)
     try:
-        db.migrate_schema(conn)
-        rows = load_targets(conn)
-        pending = []
-        for row in rows:
-            planned = planned_fields(row)
-            changes = diff_row(row, planned)
-            pending.append({
-                "id": row["id"],
-                "url": row["url"],
-                "planned": planned,
-                "changes": {
-                    k: {"from": redact(v["from"]), "to": redact(v["to"])}
-                    for k, v in changes.items()
-                },
-                "_raw_changes": changes,
-                "_row": row,
-            })
-        if not apply:
-            return {"apply": False, "backup": None, "items": pending}
-        if not any(item["_raw_changes"] for item in pending):
-            return {"apply": True, "backup": None, "items": pending}
-        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        backup_path = Path(db_path).with_name(Path(db_path).stem + f".factfix-{stamp}" + Path(db_path).suffix)
-        conn.close()
-        backup_sqlite(db_path, backup_path)
-        conn = db.connect()
+        pending = _plan(readonly)
+    finally:
+        readonly.close()
+    if not any(item["_raw_changes"] for item in pending):
+        return {"apply": True, "backup": None, "items": pending}
+
+    backup_path = unique_backup_path(path)
+    backup_sqlite(path, backup_path)
+    conn = connect_writable(path)
+    try:
         conn.execute("BEGIN")
+        db.migrate_schema(conn)
         for item in pending:
             if item["_raw_changes"]:
                 apply_changes(conn, item["id"], item["planned"])
         conn.commit()
-        return {"apply": True, "backup": str(backup_path), "items": pending}
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
+    return {"apply": True, "backup": str(backup_path), "items": pending}
 
 
 def main(argv=None):

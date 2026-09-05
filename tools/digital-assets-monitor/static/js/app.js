@@ -209,8 +209,12 @@
       xAxis: Object.assign({ type: "value", minInterval: 1 }, baseAxis),
       yAxis: Object.assign({ type: "category", data: rows.map((d) => d.name), inverse: true }, baseAxis),
       series: [{
-        type: "bar", data: rows.map((d, i) => d.value), barWidth: 14,
-        itemStyle: { color: COLORS[i % COLORS.length], borderRadius: [0, 6, 6, 0] },
+        type: "bar",
+        data: rows.map((d, i) => ({
+          value: d.value,
+          itemStyle: { color: COLORS[i % COLORS.length], borderRadius: [0, 6, 6, 0] },
+        })),
+        barWidth: 14,
         label: { show: true, position: "right", color: "#8ea0bb", fontFamily: "monospace", fontSize: 11 },
       }],
     });
@@ -219,6 +223,8 @@
       if (name) goItems({ asset_types: name });
     });
   }
+
+  function renderRose(c, data) {
     c.setOption({
       color: COLORS, tooltip: { trigger: "item", formatter: "{b}: {c}" },
       series: [{
@@ -437,7 +443,8 @@
           <td><button class="btn sm danger del">删</button></td>
         </tr>`).join("");
       body.querySelectorAll(".rowClick").forEach((tr) => tr.addEventListener("click", (e) => {
-        if (e.target.closest(".del")) return; openDetail(tr.dataset.id);
+        if (e.target.closest("a, button")) return;
+        openDetail(tr.dataset.id);
       }));
       body.querySelectorAll(".del").forEach((b) => b.addEventListener("click", async (e) => {
         e.stopPropagation();

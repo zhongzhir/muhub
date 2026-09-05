@@ -31,6 +31,27 @@ def _event_institution_text(text):
     return t
 
 
+_FORMAL_NOTICE = re.compile(r"(挂牌公告|成交公告|拍卖公告|转让公告|竞价公告|中标公告)")
+_CASE_FACT = re.compile(r"(判决|裁定|被告人|案号|刑初|刑终|犯罪嫌疑人)")
+_COMPLETED_ACTION = re.compile(
+    r"(首次成功处置|成功变现|回流入境|经.{0,12}持牌交易所变现|已扣押|查获|"
+    r"公开挂牌|已经成交|成交价)"
+)
+_NAMED_SUBJECT = re.compile(r"(公安局|公安厅|人民法院|检察院|产权交易所|财政厅|财政局|监委)")
+_ASSET_OBJECT = re.compile(r"(比特币|以太坊|以太币|泰达币|虚拟货币|数字资产|USDT|USDC|BTC|ETH)")
+_DISCUSSION = re.compile(r"(研究|理论|法理|分析|探讨|建议|制度|机制|应当|可以|本文|若干问题)")
+_RESEARCH_SIGNAL = re.compile(r"(研究|理论|法理|分析|探讨|若干问题|本文)")
+_POLICY_SIGNAL = re.compile(r"(制度|机制|建议|应当|可以|完善程序|管理办法|指导意见)")
+
+
+def _has_notice_evidence(title, text):
+    """处置公告必须有正式公告标题，或已发生动作 + 具体主体 + 对象。"""
+    blob = f"{title or ''}\n{text or ''}"
+    if _FORMAL_NOTICE.search(title or "") or _FORMAL_NOTICE.search(blob):
+        return True
+    return bool(_COMPLETED_ACTION.search(blob) and _NAMED_SUBJECT.search(blob) and _ASSET_OBJECT.search(blob))
+
+
 def classify_information_nature(title, text, url="", source_name="", source_category=""):
     """区分案件、公告、政策、研究等，避免把讨论文包装成处置事件。"""
     title = title or ""
@@ -38,6 +59,8 @@ def classify_information_nature(title, text, url="", source_name="", source_cate
     url = (url or "").lower()
     blob = f"{title}\n{text}"
     source_blob = f"{source_name or ''} {source_category or ''}"
+    notice = _has_notice_evidence(title, text)
+    case = bool(_CASE_FACT.search(blob))
 
     if "/llyj/" in url or "理论研究" in blob or "理论研究" in source_blob:
         if any(k in title for k in ("完善程序", "质效", "制度建议", "机制")):
@@ -45,22 +68,24 @@ def classify_information_nature(title, text, url="", source_name="", source_cate
         return NATURE_RESEARCH
     if any(k in title for k in ("法理", "双重意蕴", "理论研究")):
         return NATURE_RESEARCH
-    if re.search(r"(判决|裁定|被告人|案号|刑初|刑终|犯罪嫌疑人)", blob):
+    if _FORMAL_NOTICE.search(title) or _FORMAL_NOTICE.search(blob):
+        return NATURE_NOTICE
+    if case:
         return NATURE_CASE
-    if re.search(r"(挂牌公告|成交公告|拍卖公告|转让公告|竞价公告|中标)", blob):
+    if notice:
         return NATURE_NOTICE
-    if re.search(r"(管理办法|指导意见|工作通知|印发.*办法|制度建设)", blob) and not re.search(
-        r"(被告人|判决|首次成功处置)", blob
-    ):
-        return NATURE_POLICY
-    if re.search(r"(首次成功处置|成功变现|回流入境|经.{0,8}持牌交易所变现)", blob):
-        return NATURE_NOTICE
-    if re.search(r"(框架协议|探索|经验|模式)", title) or re.search(r"(签署.{0,12}框架协议)", blob):
+    if re.search(r"签署.{0,12}框架协议", blob):
         return NATURE_EXPERIENCE
-    if re.search(r"(风险预警|行业风险|洗钱风险)", blob) and not re.search(r"(判决|挂牌公告)", blob):
+    if re.search(r"(管理办法|指导意见|工作通知|印发.*办法|制度建设)", blob):
+        return NATURE_POLICY
+    if _DISCUSSION.search(blob):
+        if _RESEARCH_SIGNAL.search(title) or _RESEARCH_SIGNAL.search(blob):
+            return NATURE_RESEARCH
+        if _POLICY_SIGNAL.search(blob):
+            return NATURE_POLICY
+        return NATURE_RESEARCH
+    if re.search(r"(风险预警|行业风险|洗钱风险)", blob):
         return NATURE_RISK
-    if re.search(r"(处置|变现|拍卖|罚没|查获)", blob):
-        return NATURE_NOTICE
     return NATURE_POLICY
 
 
