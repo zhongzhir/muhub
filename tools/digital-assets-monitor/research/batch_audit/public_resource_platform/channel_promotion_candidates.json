@@ -1,8 +1,9 @@
 {
-  "generated_at": "2026-09-05T08:52:26.160475+00:00",
+  "generated_at": "2026-09-05T09:05:25.431362+00:00",
   "kind": "public_resource_platform",
+  "schema_version": "2",
   "note": "Promotion here only means eligible for the next strict verification round. It does not enable collection or mark production coverage.",
-  "count": 14,
+  "count": 13,
   "candidates": [
     {
       "id": "311d70fbf6d78dfb",
@@ -11,7 +12,7 @@
       "province": "天津",
       "requested_url": "https://ggzy.zwfwb.tj.gov.cn/",
       "final_url": "https://ggzy.zwfwb.tj.gov.cn/",
-      "template_fingerprint": "be01bf88349d3e80",
+      "template_fingerprint": "ccd3d7b8929ade5b",
       "cms_family": "jeecms",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -25,6 +26,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -34,7 +36,7 @@
       "province": "山西",
       "requested_url": "https://prec.sxzwfw.gov.cn/",
       "final_url": "https://prec.sxzwfw.gov.cn/",
-      "template_fingerprint": "be01bf88349d3e80",
+      "template_fingerprint": "b083520ddeca0ed3",
       "cms_family": "jeecms",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -48,6 +50,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -57,7 +60,7 @@
       "province": "内蒙古",
       "requested_url": "https://ggzyjy.nmg.gov.cn/",
       "final_url": "https://ggzyjy.nmg.gov.cn/",
-      "template_fingerprint": "4e64127b5623b9a3",
+      "template_fingerprint": "ed974cbe0581100c",
       "cms_family": "epoint",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -71,6 +74,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -80,7 +84,7 @@
       "province": "湖北",
       "requested_url": "https://www.hbggzyfwpt.cn/",
       "final_url": "https://www.hbggzyfwpt.cn/",
-      "template_fingerprint": "feb8249bf222f81e",
+      "template_fingerprint": "d76fe5f3bc6d3126",
       "cms_family": "unknown",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -94,6 +98,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -103,7 +108,7 @@
       "province": "重庆",
       "requested_url": "https://www.cqggzy.com/",
       "final_url": "https://www.cqggzy.com/",
-      "template_fingerprint": "4e64127b5623b9a3",
+      "template_fingerprint": "69d29e03cf09fc0a",
       "cms_family": "epoint",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -117,6 +122,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -126,7 +132,7 @@
       "province": "四川",
       "requested_url": "https://ggzyjy.sc.gov.cn/",
       "final_url": "https://ggzyjy.sc.gov.cn/",
-      "template_fingerprint": "ca3c0f086f3e2590",
+      "template_fingerprint": "ac4e3cedfb11397f",
       "cms_family": "webbuilder",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -140,6 +146,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -149,7 +156,7 @@
       "province": "黑龙江",
       "requested_url": "https://ggzyjyw.hlj.gov.cn/",
       "final_url": "https://ggzyjyw.hlj.gov.cn/",
-      "template_fingerprint": "4e64127b5623b9a3",
+      "template_fingerprint": "12389014485fe113",
       "cms_family": "epoint",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -163,6 +170,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -172,7 +180,7 @@
       "province": "浙江",
       "requested_url": "https://ggzy.zj.gov.cn/",
       "final_url": "https://ggzy.zj.gov.cn/",
-      "template_fingerprint": "ca3c0f086f3e2590",
+      "template_fingerprint": "eef868f5fae5cbd0",
       "cms_family": "webbuilder",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -186,6 +194,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -195,7 +204,7 @@
       "province": "安徽",
       "requested_url": "https://ggzy.ah.gov.cn/",
       "final_url": "https://ggzy.ah.gov.cn/",
-      "template_fingerprint": "feb8249bf222f81e",
+      "template_fingerprint": "399558d98bcc5a7c",
       "cms_family": "unknown",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -209,6 +218,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -218,11 +228,11 @@
       "province": "山东",
       "requested_url": "https://ggzyjy.shandong.gov.cn/",
       "final_url": "https://ggzyjy.shandong.gov.cn/",
-      "template_fingerprint": "be01bf88349d3e80",
+      "template_fingerprint": "c65d526ef3cde954",
       "cms_family": "jeecms",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
-        "announcement": 73,
+        "announcement": 74,
         "property": 0,
         "asset": 0,
         "listing": 14,
@@ -232,6 +242,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -241,7 +252,7 @@
       "province": "陕西",
       "requested_url": "https://www.sxggzyjy.cn/",
       "final_url": "https://www.sxggzyjy.cn/",
-      "template_fingerprint": "4e64127b5623b9a3",
+      "template_fingerprint": "44dc0947370f0ffd",
       "cms_family": "epoint",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -255,6 +266,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -264,7 +276,7 @@
       "province": "青海",
       "requested_url": "https://www.qhggzyjy.gov.cn/",
       "final_url": "http://www.qhggzyjy.gov.cn/ggzy/",
-      "template_fingerprint": "4e64127b5623b9a3",
+      "template_fingerprint": "ecb3e2d8b3cd9129",
       "cms_family": "epoint",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -278,29 +290,7 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
-      "note": "May enter the next strict verification round; not an operational source."
-    },
-    {
-      "id": "a262692751331594",
-      "name": "宁夏公共资源交易平台",
-      "kind": "public_resource_platform",
-      "province": "宁夏",
-      "requested_url": "https://ggzyjy.fzggw.nx.gov.cn/",
-      "final_url": "https://ggzyjy.fzggw.nx.gov.cn/",
-      "template_fingerprint": "4e64127b5623b9a3",
-      "cms_family": "epoint",
-      "official_identity": "official_directory_evidence",
-      "column_link_counts": {
-        "announcement": 49,
-        "property": 3,
-        "asset": 7,
-        "listing": 0,
-        "deal": 5
-      },
-      "next_step": "strict_verification",
-      "promoted_to_production": false,
-      "collection_enabled": false,
-      "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     },
     {
@@ -310,7 +300,7 @@
       "province": "新疆",
       "requested_url": "https://ggzy.xinjiang.gov.cn/",
       "final_url": "https://ggzy.xinjiang.gov.cn/",
-      "template_fingerprint": "4e64127b5623b9a3",
+      "template_fingerprint": "1278055799797ec4",
       "cms_family": "epoint",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
@@ -324,10 +314,13 @@
       "promoted_to_production": false,
       "collection_enabled": false,
       "endpoint_verified": false,
+      "confirmed_institution": false,
       "note": "May enter the next strict verification round; not an operational source."
     }
   ],
   "collection_enabled": false,
   "endpoint_verified": false,
-  "promoted_to_production": false
+  "promoted_to_production": false,
+  "peer_ip_pinned": false,
+  "security_boundary": "dns_precheck_only; peer IP is not pinned; in-repo candidates only"
 }

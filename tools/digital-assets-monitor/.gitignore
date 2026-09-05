@@ -6,5 +6,8 @@ __pycache__/
 !.env.example
 data/
 .pytest_cache/
+research/batch_audit/**/channel_audit_progress.jsonl
+research/batch_audit/**/channel_audit_checkpoint.json
+*.pem
 *.pem
 *.key

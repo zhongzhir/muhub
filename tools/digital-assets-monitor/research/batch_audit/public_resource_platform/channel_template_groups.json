@@ -1,131 +1,130 @@
 {
-  "generated_at": "2026-09-05T08:52:26.160459+00:00",
+  "generated_at": "2026-09-05T09:05:25.431315+00:00",
   "kind": "public_resource_platform",
-  "note": "Same fingerprint means similar CMS or page structure, not a production collector.",
-  "group_count": 7,
-  "identified_count": 20,
-  "unidentified_count": 12,
+  "schema_version": "2",
+  "note": "template_fingerprint is a page-structure key; cms_family is coarser. Neither is a production collector.",
+  "group_count": 20,
+  "cms_family_count": 4,
+  "cms_families": [
+    "epoint",
+    "jeecms",
+    "vue_spa",
+    "webbuilder"
+  ],
+  "identified_count": 21,
+  "unidentified_count": 11,
   "groups": [
     {
-      "template_fingerprint": "4e64127b5623b9a3",
-      "template_label": "epoint",
-      "cms_family": "epoint",
-      "member_count": 8,
-      "shared_collector_ready_count": 7,
+      "template_fingerprint": "0a8f7366873c748e",
+      "template_label": "unknown|no-detail|static,favicon.ico|no-list",
+      "cms_family": "unknown",
+      "member_count": 2,
+      "shared_collector_ready_count": 0,
       "members": [
         {
-          "id": "8528b3bcee06a320",
-          "name": "内蒙古公共资源交易平台",
-          "province": "内蒙古",
-          "requested_url": "https://ggzyjy.nmg.gov.cn/",
-          "final_url": "https://ggzyjy.nmg.gov.cn/",
-          "shared_collector_ready": true
+          "id": "6a190cda2de069a5",
+          "name": "河南公共资源交易平台",
+          "province": "河南",
+          "requested_url": "https://ggzy.fgw.henan.gov.cn/",
+          "final_url": "https://ggzy.fgw.henan.gov.cn/",
+          "cms_family": "unknown",
+          "template_label": "unknown|no-detail|static,favicon.ico|no-list",
+          "shared_collector_ready": false
         },
         {
-          "id": "3aaed49c2c7f20b7",
-          "name": "重庆公共资源交易平台",
-          "province": "重庆",
-          "requested_url": "https://www.cqggzy.com/",
-          "final_url": "https://www.cqggzy.com/",
-          "shared_collector_ready": true
-        },
-        {
-          "id": "f2d9c4160b73b60a",
-          "name": "黑龙江公共资源交易平台",
-          "province": "黑龙江",
-          "requested_url": "https://ggzyjyw.hlj.gov.cn/",
-          "final_url": "https://ggzyjyw.hlj.gov.cn/",
-          "shared_collector_ready": true
-        },
+          "id": "131c12ba320a45c6",
+          "name": "云南公共资源交易平台",
+          "province": "云南",
+          "requested_url": "https://ggzy.yn.gov.cn/",
+          "final_url": "https://ggzy.yn.gov.cn/",
+          "cms_family": "unknown",
+          "template_label": "unknown|no-detail|static,favicon.ico|no-list",
+          "shared_collector_ready": false
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "0e9736d300771dac",
+      "template_label": "epoint|jhtml|r,u|no-list",
+      "cms_family": "epoint",
+      "member_count": 1,
+      "shared_collector_ready_count": 0,
+      "members": [
         {
           "id": "40b5c37411dec44d",
           "name": "上海公共资源交易平台",
           "province": "上海",
           "requested_url": "https://www.shggzy.com/",
           "final_url": "https://www.shggzy.com/",
+          "cms_family": "epoint",
+          "template_label": "epoint|jhtml|r,u|no-list",
           "shared_collector_ready": false
-        },
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "12389014485fe113",
+      "template_label": "epoint|no-detail|js,oauth,css|ul li a",
+      "cms_family": "epoint",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
         {
-          "id": "d4d1cab726eeabc4",
-          "name": "陕西公共资源交易平台",
-          "province": "陕西",
-          "requested_url": "https://www.sxggzyjy.cn/",
-          "final_url": "https://www.sxggzyjy.cn/",
+          "id": "f2d9c4160b73b60a",
+          "name": "黑龙江公共资源交易平台",
+          "province": "黑龙江",
+          "requested_url": "https://ggzyjyw.hlj.gov.cn/",
+          "final_url": "https://ggzyjyw.hlj.gov.cn/",
+          "cms_family": "epoint",
+          "template_label": "epoint|no-detail|js,oauth,css|ul li a",
           "shared_collector_ready": true
-        },
-        {
-          "id": "b15287c06be53946",
-          "name": "青海公共资源交易平台",
-          "province": "青海",
-          "requested_url": "https://www.qhggzyjy.gov.cn/",
-          "final_url": "http://www.qhggzyjy.gov.cn/ggzy/",
-          "shared_collector_ready": true
-        },
-        {
-          "id": "a262692751331594",
-          "name": "宁夏公共资源交易平台",
-          "province": "宁夏",
-          "requested_url": "https://ggzyjy.fzggw.nx.gov.cn/",
-          "final_url": "https://ggzyjy.fzggw.nx.gov.cn/",
-          "shared_collector_ready": true
-        },
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "1278055799797ec4",
+      "template_label": "epoint|jyxx|xinjiangggzy_new|ul li a,.news-list a",
+      "cms_family": "epoint",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
         {
           "id": "c5b596e13611a566",
           "name": "新疆公共资源交易平台",
           "province": "新疆",
           "requested_url": "https://ggzy.xinjiang.gov.cn/",
           "final_url": "https://ggzy.xinjiang.gov.cn/",
+          "cms_family": "epoint",
+          "template_label": "epoint|jyxx|xinjiangggzy_new|ul li a,.news-list a",
           "shared_collector_ready": true
         }
       ]
     },
     {
-      "template_fingerprint": "be01bf88349d3e80",
-      "template_label": "jeecms",
-      "cms_family": "jeecms",
-      "member_count": 4,
-      "shared_collector_ready_count": 3,
+      "template_fingerprint": "399558d98bcc5a7c",
+      "template_label": "unknown|jyxx|res,boots|no-list",
+      "cms_family": "unknown",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
       "members": [
         {
-          "id": "311d70fbf6d78dfb",
-          "name": "天津公共资源交易平台",
-          "province": "天津",
-          "requested_url": "https://ggzy.zwfwb.tj.gov.cn/",
-          "final_url": "https://ggzy.zwfwb.tj.gov.cn/",
-          "shared_collector_ready": true
-        },
-        {
-          "id": "7f98e9caaeec2c36",
-          "name": "山西公共资源交易平台",
-          "province": "山西",
-          "requested_url": "https://prec.sxzwfw.gov.cn/",
-          "final_url": "https://prec.sxzwfw.gov.cn/",
-          "shared_collector_ready": true
-        },
-        {
-          "id": "2f97b0fe630720e2",
-          "name": "西藏公共资源交易平台",
-          "province": "西藏",
-          "requested_url": "https://ggzy.xizang.gov.cn/",
-          "final_url": "https://ggzy.xizang.gov.cn/",
-          "shared_collector_ready": false
-        },
-        {
-          "id": "416a875ace4cf232",
-          "name": "山东公共资源交易平台",
-          "province": "山东",
-          "requested_url": "https://ggzyjy.shandong.gov.cn/",
-          "final_url": "https://ggzyjy.shandong.gov.cn/",
+          "id": "f59ef475b63fe26a",
+          "name": "安徽公共资源交易平台",
+          "province": "安徽",
+          "requested_url": "https://ggzy.ah.gov.cn/",
+          "final_url": "https://ggzy.ah.gov.cn/",
+          "cms_family": "unknown",
+          "template_label": "unknown|jyxx|res,boots|no-list",
           "shared_collector_ready": true
         }
       ]
     },
     {
-      "template_fingerprint": "ca3c0f086f3e2590",
-      "template_label": "webbuilder",
+      "template_fingerprint": "3c17743f50d8af92",
+      "template_label": "webbuilder|no-detail|js,oauth,cityjson,css|ul li a",
       "cms_family": "webbuilder",
-      "member_count": 3,
-      "shared_collector_ready_count": 2,
+      "member_count": 1,
+      "shared_collector_ready_count": 0,
       "members": [
         {
           "id": "52fd6e56ce50b85c",
@@ -133,71 +132,34 @@
           "province": "河北",
           "requested_url": "https://szj.hebei.gov.cn/",
           "final_url": "https://szj.hebei.gov.cn/",
+          "cms_family": "webbuilder",
+          "template_label": "webbuilder|no-detail|js,oauth,cityjson,css|ul li a",
           "shared_collector_ready": false
-        },
-        {
-          "id": "9bbb9a5f05c9bef0",
-          "name": "四川公共资源交易平台",
-          "province": "四川",
-          "requested_url": "https://ggzyjy.sc.gov.cn/",
-          "final_url": "https://ggzyjy.sc.gov.cn/",
-          "shared_collector_ready": true
-        },
-        {
-          "id": "ad27018485da3251",
-          "name": "浙江公共资源交易平台",
-          "province": "浙江",
-          "requested_url": "https://ggzy.zj.gov.cn/",
-          "final_url": "https://ggzy.zj.gov.cn/",
-          "shared_collector_ready": true
         }
       ]
     },
     {
-      "template_fingerprint": "feb8249bf222f81e",
-      "template_label": "path:jyxx",
-      "cms_family": "unknown",
-      "member_count": 2,
-      "shared_collector_ready_count": 2,
-      "members": [
-        {
-          "id": "040bbc5da3a4f747",
-          "name": "湖北公共资源交易平台",
-          "province": "湖北",
-          "requested_url": "https://www.hbggzyfwpt.cn/",
-          "final_url": "https://www.hbggzyfwpt.cn/",
-          "shared_collector_ready": true
-        },
-        {
-          "id": "f59ef475b63fe26a",
-          "name": "安徽公共资源交易平台",
-          "province": "安徽",
-          "requested_url": "https://ggzy.ah.gov.cn/",
-          "final_url": "https://ggzy.ah.gov.cn/",
-          "shared_collector_ready": true
-        }
-      ]
-    },
-    {
-      "template_fingerprint": "97090f9f7aff7283",
-      "template_label": "vue_spa",
-      "cms_family": "vue_spa",
+      "template_fingerprint": "44dc0947370f0ffd",
+      "template_label": "epoint|no-detail|js,css|ul li a",
+      "cms_family": "epoint",
       "member_count": 1,
-      "shared_collector_ready_count": 0,
+      "shared_collector_ready_count": 1,
       "members": [
         {
-          "id": "3ba355fea58aa76a",
-          "name": "福建公共资源交易平台",
-          "province": "福建",
-          "requested_url": "https://ggzyfw.fujian.gov.cn/",
-          "final_url": "https://ggzyfw.fujian.gov.cn/",
-          "shared_collector_ready": false
+          "id": "d4d1cab726eeabc4",
+          "name": "陕西公共资源交易平台",
+          "province": "陕西",
+          "requested_url": "https://www.sxggzyjy.cn/",
+          "final_url": "https://www.sxggzyjy.cn/",
+          "cms_family": "epoint",
+          "template_label": "epoint|no-detail|js,css|ul li a",
+          "shared_collector_ready": true
         }
       ]
     },
     {
-      "template_fingerprint": "bfd2489afdaa1865",
-      "template_label": "path:gov_dated",
+      "template_fingerprint": "45a6ea2ba2138ad1",
+      "template_label": "unknown|gov_dated|.,boots|ul li a,.list li a",
       "cms_family": "unknown",
       "member_count": 1,
       "shared_collector_ready_count": 0,
@@ -208,13 +170,167 @@
           "province": "吉林",
           "requested_url": "https://www.jl.gov.cn/",
           "final_url": "https://www.jl.gov.cn/",
+          "cms_family": "unknown",
+          "template_label": "unknown|gov_dated|.,boots|ul li a,.list li a",
           "shared_collector_ready": false
         }
       ]
     },
     {
-      "template_fingerprint": "f0be553707c576ab",
-      "template_label": "assets:t,vendors,js",
+      "template_fingerprint": "5830879462c3e8b8",
+      "template_label": "jeecms|jhtml|r,dist,client|no-list",
+      "cms_family": "jeecms",
+      "member_count": 1,
+      "shared_collector_ready_count": 0,
+      "members": [
+        {
+          "id": "2f97b0fe630720e2",
+          "name": "西藏公共资源交易平台",
+          "province": "西藏",
+          "requested_url": "https://ggzy.xizang.gov.cn/",
+          "final_url": "https://ggzy.xizang.gov.cn/",
+          "cms_family": "jeecms",
+          "template_label": "jeecms|jhtml|r,dist,client|no-list",
+          "shared_collector_ready": false
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "69d29e03cf09fc0a",
+      "template_label": "epoint|article,html_numeric|js,_nuxt|ul li a",
+      "cms_family": "epoint",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "3aaed49c2c7f20b7",
+          "name": "重庆公共资源交易平台",
+          "province": "重庆",
+          "requested_url": "https://www.cqggzy.com/",
+          "final_url": "https://www.cqggzy.com/",
+          "cms_family": "epoint",
+          "template_label": "epoint|article,html_numeric|js,_nuxt|ul li a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "6d5c06bab21e5824",
+      "template_label": "vue_spa|no-detail|exposure,npm,js,.,css|no-list",
+      "cms_family": "vue_spa",
+      "member_count": 1,
+      "shared_collector_ready_count": 0,
+      "members": [
+        {
+          "id": "3ba355fea58aa76a",
+          "name": "福建公共资源交易平台",
+          "province": "福建",
+          "requested_url": "https://ggzyfw.fujian.gov.cn/",
+          "final_url": "https://ggzyfw.fujian.gov.cn/",
+          "cms_family": "vue_spa",
+          "template_label": "vue_spa|no-detail|exposure,npm,js,.,css|no-list",
+          "shared_collector_ready": false
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "ac4e3cedfb11397f",
+      "template_label": "webbuilder|jyxx|js,css|ul li a",
+      "cms_family": "webbuilder",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "9bbb9a5f05c9bef0",
+          "name": "四川公共资源交易平台",
+          "province": "四川",
+          "requested_url": "https://ggzyjy.sc.gov.cn/",
+          "final_url": "https://ggzyjy.sc.gov.cn/",
+          "cms_family": "webbuilder",
+          "template_label": "webbuilder|jyxx|js,css|ul li a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "b083520ddeca0ed3",
+      "template_label": "jeecms|jhtml|r,client,chat-embed.js|ul li a",
+      "cms_family": "jeecms",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "7f98e9caaeec2c36",
+          "name": "山西公共资源交易平台",
+          "province": "山西",
+          "requested_url": "https://prec.sxzwfw.gov.cn/",
+          "final_url": "https://prec.sxzwfw.gov.cn/",
+          "cms_family": "jeecms",
+          "template_label": "jeecms|jhtml|r,client,chat-embed.js|ul li a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "c65d526ef3cde954",
+      "template_label": "jeecms|jhtml|r|ul li a",
+      "cms_family": "jeecms",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "416a875ace4cf232",
+          "name": "山东公共资源交易平台",
+          "province": "山东",
+          "requested_url": "https://ggzyjy.shandong.gov.cn/",
+          "final_url": "https://ggzyjy.shandong.gov.cn/",
+          "cms_family": "jeecms",
+          "template_label": "jeecms|jhtml|r|ul li a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "ccd3d7b8929ade5b",
+      "template_label": "jeecms|jhtml,jyxx|r|ul li a,.news-list a",
+      "cms_family": "jeecms",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "311d70fbf6d78dfb",
+          "name": "天津公共资源交易平台",
+          "province": "天津",
+          "requested_url": "https://ggzy.zwfwb.tj.gov.cn/",
+          "final_url": "https://ggzy.zwfwb.tj.gov.cn/",
+          "cms_family": "jeecms",
+          "template_label": "jeecms|jhtml,jyxx|r|ul li a,.news-list a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "d76fe5f3bc6d3126",
+      "template_label": "unknown|jyxx|res|ul li a",
+      "cms_family": "unknown",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "040bbc5da3a4f747",
+          "name": "湖北公共资源交易平台",
+          "province": "湖北",
+          "requested_url": "https://www.hbggzyfwpt.cn/",
+          "final_url": "https://www.hbggzyfwpt.cn/",
+          "cms_family": "unknown",
+          "template_label": "unknown|jyxx|res|ul li a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "db497950627ff62c",
+      "template_label": "unknown|no-detail|t,vendors,js,css,favicon.ico|no-list",
       "cms_family": "unknown",
       "member_count": 1,
       "shared_collector_ready_count": 0,
@@ -225,7 +341,66 @@
           "province": "湖南",
           "requested_url": "https://www.hnsggzy.com/",
           "final_url": "https://www.hnsggzy.com/",
+          "cms_family": "unknown",
+          "template_label": "unknown|no-detail|t,vendors,js,css,favicon.ico|no-list",
           "shared_collector_ready": false
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "ecb3e2d8b3cd9129",
+      "template_label": "epoint|jyxx|ggzy|ul li a",
+      "cms_family": "epoint",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "b15287c06be53946",
+          "name": "青海公共资源交易平台",
+          "province": "青海",
+          "requested_url": "https://www.qhggzyjy.gov.cn/",
+          "final_url": "http://www.qhggzyjy.gov.cn/ggzy/",
+          "cms_family": "epoint",
+          "template_label": "epoint|jyxx|ggzy|ul li a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "ed974cbe0581100c",
+      "template_label": "epoint|gov_dated,jyxx|.,material,c,boots|ul li a",
+      "cms_family": "epoint",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "8528b3bcee06a320",
+          "name": "内蒙古公共资源交易平台",
+          "province": "内蒙古",
+          "requested_url": "https://ggzyjy.nmg.gov.cn/",
+          "final_url": "https://ggzyjy.nmg.gov.cn/",
+          "cms_family": "epoint",
+          "template_label": "epoint|gov_dated,jyxx|.,material,c,boots|ul li a",
+          "shared_collector_ready": true
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "eef868f5fae5cbd0",
+      "template_label": "webbuilder|jyxx|zhejiangnew,js,trace.bundle.js,module,css|ul li a",
+      "cms_family": "webbuilder",
+      "member_count": 1,
+      "shared_collector_ready_count": 1,
+      "members": [
+        {
+          "id": "ad27018485da3251",
+          "name": "浙江公共资源交易平台",
+          "province": "浙江",
+          "requested_url": "https://ggzy.zj.gov.cn/",
+          "final_url": "https://ggzy.zj.gov.cn/",
+          "cms_family": "webbuilder",
+          "template_label": "webbuilder|jyxx|zhejiangnew,js,trace.bundle.js,module,css|ul li a",
+          "shared_collector_ready": true
         }
       ]
     }
@@ -238,22 +413,10 @@
       "error_class": "certificate_error"
     },
     {
-      "id": "6a190cda2de069a5",
-      "name": "河南公共资源交易平台",
-      "province": "河南",
-      "error_class": "accessible"
-    },
-    {
       "id": "70e9beceebaec117",
       "name": "贵州公共资源交易平台",
       "province": "贵州",
       "error_class": "timeout"
-    },
-    {
-      "id": "131c12ba320a45c6",
-      "name": "云南公共资源交易平台",
-      "province": "云南",
-      "error_class": "accessible"
     },
     {
       "id": "fb95cec247e72bd7",
@@ -298,6 +461,12 @@
       "error_class": "access_restricted"
     },
     {
+      "id": "a262692751331594",
+      "name": "宁夏公共资源交易平台",
+      "province": "宁夏",
+      "error_class": "dns_error"
+    },
+    {
       "id": "fe40e345724792e1",
       "name": "新疆生产建设兵团公共资源交易平台",
       "province": "兵团",
@@ -305,5 +474,7 @@
     }
   ],
   "collection_enabled": false,
-  "endpoint_verified": false
+  "endpoint_verified": false,
+  "peer_ip_pinned": false,
+  "security_boundary": "dns_precheck_only; peer IP is not pinned; in-repo candidates only"
 }

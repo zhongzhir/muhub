@@ -1,8 +1,12 @@
 """Batch-audit candidate homepages and cluster shared CMS/page templates.
 
-This research tool only reads public HTTP/HTTPS pages. It never writes
-production sources.json, never sets collection_enabled or endpoint_verified,
-and never calls paid search APIs.
+This research tool only reads public HTTP/HTTPS pages from in-repo candidate
+files. It never writes production sources.json, never sets collection_enabled
+or endpoint_verified, and never calls paid search APIs.
+
+DNS and redirect checks are preflight only: the process resolves names before
+requesting, but requests itself may still connect to a later DNS answer.
+Peer IPs are not pinned. Do not feed this script untrusted user-submitted URLs.
 """
 from __future__ import annotations
 
@@ -26,6 +30,7 @@ import requests
 from bs4 import BeautifulSoup
 
 ROOT = Path(__file__).resolve().parent
+SCHEMA_VERSION = "2"
 DEFAULT_MAX_WORKERS = 4
 HARD_MAX_WORKERS = 6
 CONNECT_TIMEOUT = 8
@@ -33,6 +38,8 @@ READ_TIMEOUT = 20
 MAX_BYTES = 2_000_000
 MAX_REDIRECTS = 5
 CHUNK_SIZE = 65536
+DEFAULT_CHECKPOINT_EVERY = 25
+DNS_WAIT_SECONDS = 3
 USER_AGENT = (
     "Mozilla/5.0 (compatible; MUHUB-source-audit/1.0; +https://monitor.muhub.cn)"
 )
@@ -40,11 +47,16 @@ CANDIDATE_FILES = (
     ROOT / "institution_candidates.json",
     ROOT / "technology_supplement_candidates.json",
     ROOT / "public_resource_platform_candidates.json",
+    ROOT / "police_link_candidates.json",
+    ROOT / "police_county_link_candidates.json",
 )
+POLICE_LINK_FILES = {
+    "police_link_candidates.json": "city_link",
+    "police_county_link_candidates.json": "county_link",
+}
 DIRECTORY_IDENTITY_STATUSES = {
     "official_directory_candidate",
     "official_national_directory_candidate",
-    "official_page_link_candidate",
     "verified_official_metadata",
 }
 COLUMN_KEYWORDS = {
@@ -91,9 +103,20 @@ LIST_SELECTOR_CANDIDATES = (
 )
 TRADE_TITLE_MARKERS = ("公共资源", "产权交易", "交易平台", "交易网", "交易中心")
 GENERIC_PORTAL_MARKERS = ("人民政府", "政务服务局", "人民政府办公厅")
+SECURITY_BOUNDARY = (
+    "dns_precheck_only; peer IP is not pinned; in-repo candidates only"
+)
 
 
 class UnsafeURLError(ValueError):
+    pass
+
+
+class DnsTimeoutError(Exception):
+    pass
+
+
+class DnsResolutionError(Exception):
     pass
 
 
@@ -116,6 +139,11 @@ def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
+def stable_candidate_id(kind, name, url):
+    raw = "|".join([kind or "", name or "", (url or "").strip()])
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
 def _is_blocked_ip(ip):
     return bool(
         ip.is_private
@@ -132,14 +160,88 @@ def _blocked_hostname(host):
     name = (host or "").strip(".").lower()
     if not name:
         return True
-    if name in {"localhost", "localhost.localdomain", "ip6-localhost", "ip6-loopback"}:
+    if name in {
+        "localhost",
+        "localhost.localdomain",
+        "ip6-localhost",
+        "ip6-loopback",
+        "metadata.google.internal",
+    }:
         return True
     if name.endswith(".localhost") or name.endswith(".local"):
         return True
     return False
 
 
-def validate_public_http_url(url, resolver=None):
+def socket_resolver(host, wait_seconds=DNS_WAIT_SECONDS):
+    import socket
+
+    box = {"addresses": [], "error": None}
+
+    def lookup():
+        try:
+            infos = socket.getaddrinfo(host, None)
+        except OSError as exc:
+            box["error"] = exc
+            return
+        found = []
+        for info in infos:
+            addr = info[4][0] if info[4] else None
+            if addr:
+                found.append(addr)
+        box["addresses"] = found
+
+    worker = threading.Thread(target=lookup, daemon=True)
+    worker.start()
+    worker.join(wait_seconds)
+    if worker.is_alive():
+        raise DnsTimeoutError("dns_lookup_timed_out")
+    if box["error"] is not None:
+        raise DnsResolutionError(str(box["error"]))
+    return box["addresses"]
+
+
+def authorize_host(host, resolver=None):
+    if _blocked_hostname(host):
+        raise UnsafeURLError("localhost_or_blocked_host")
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        ip = None
+    if ip is not None:
+        if _is_blocked_ip(ip):
+            raise UnsafeURLError("private_or_non_global_ip")
+        return [str(ip)]
+    resolve = socket_resolver if resolver is None else resolver
+    try:
+        addresses = resolve(host)
+    except DnsTimeoutError:
+        raise
+    except DnsResolutionError:
+        raise
+    except Exception as exc:
+        raise DnsResolutionError(str(exc)[:300]) from exc
+    if not addresses:
+        raise DnsResolutionError("dns_no_addresses")
+    public_ips = []
+    blocked = []
+    for address in addresses:
+        try:
+            parsed = ipaddress.ip_address(address)
+        except ValueError:
+            continue
+        if _is_blocked_ip(parsed):
+            blocked.append(str(parsed))
+        else:
+            public_ips.append(str(parsed))
+    if blocked:
+        raise UnsafeURLError("resolved_private_or_non_global_ip")
+    if not public_ips:
+        raise DnsResolutionError("dns_no_public_addresses")
+    return public_ips
+
+
+def inspect_public_http_url(url, resolver=None):
     if not url or not isinstance(url, str):
         raise UnsafeURLError("empty_url")
     parsed = urlparse(url.strip())
@@ -150,48 +252,35 @@ def validate_public_http_url(url, resolver=None):
     host = parsed.hostname
     if not host:
         raise UnsafeURLError("missing_host")
-    if _blocked_hostname(host):
-        raise UnsafeURLError("localhost_or_blocked_host")
-    try:
-        ip = ipaddress.ip_address(host)
-    except ValueError:
-        ip = None
-    if ip is not None and _is_blocked_ip(ip):
-        raise UnsafeURLError("private_or_non_global_ip")
-    resolve = socket_resolver if resolver is None else resolver
-    for address in resolve(host):
-        try:
-            resolved = ipaddress.ip_address(address)
-        except ValueError:
-            continue
-        if _is_blocked_ip(resolved):
-            raise UnsafeURLError("resolved_private_or_non_global_ip")
-    return parsed
+    resolved_ips = authorize_host(host, resolver=resolver)
+    return {"parsed": parsed, "host": host, "resolved_ips": resolved_ips}
 
 
-def socket_resolver(host, wait_seconds=3):
-    import socket
+def validate_public_http_url(url, resolver=None):
+    return inspect_public_http_url(url, resolver=resolver)["parsed"]
 
-    addresses = []
 
-    def lookup():
-        try:
-            infos = socket.getaddrinfo(host, None)
-        except OSError:
-            return
-        for info in infos:
-            addr = info[4][0] if info[4] else None
-            if addr:
-                addresses.append(addr)
+def build_session():
+    session = requests.Session()
+    session.trust_env = False
+    session.proxies = {"http": None, "https": None}
+    return session
 
-    worker = threading.Thread(target=lookup, daemon=True)
-    worker.start()
-    worker.join(wait_seconds)
-    return addresses
+
+_SESSION = None
+_SESSION_LOCK = threading.Lock()
+
+
+def default_session():
+    global _SESSION
+    with _SESSION_LOCK:
+        if _SESSION is None:
+            _SESSION = build_session()
+        return _SESSION
 
 
 def default_http_get(url, timeout, headers):
-    return requests.get(
+    return default_session().get(
         url,
         timeout=timeout,
         headers=headers,
@@ -216,10 +305,14 @@ def decode_bytes(raw):
 
 
 def classify_exception(exc):
-    name = type(exc).__name__
-    text = str(exc).lower()
     if isinstance(exc, UnsafeURLError):
         return "unsafe_url"
+    if isinstance(exc, DnsTimeoutError):
+        return "dns_timeout"
+    if isinstance(exc, DnsResolutionError):
+        return "dns_error"
+    name = type(exc).__name__
+    text = str(exc).lower()
     if isinstance(exc, (requests.Timeout, TimeoutError)):
         return "timeout"
     if "timeout" in name.lower() or "timed out" in text:
@@ -356,28 +449,29 @@ def _coarse_roots(prefixes, limit=4):
     return roots
 
 
-def template_fingerprint(cms_family, generator, script_prefixes, css_prefixes, detail_families):
+def template_fingerprint(cms_family, script_prefixes, css_prefixes, detail_families, list_selectors):
     coarse_scripts = _coarse_roots(script_prefixes)
-    if cms_family and cms_family != "unknown":
-        group_key = cms_family
-        identified = True
-    elif detail_families:
-        group_key = "path:" + ",".join(detail_families)
-        identified = True
-    elif len(coarse_scripts) >= 2:
-        group_key = "assets:" + ",".join(coarse_scripts[:3])
-        identified = True
-    else:
-        group_key = "unknown"
-        identified = False
+    coarse_css = _coarse_roots(css_prefixes)
+    asset_roots = []
+    for root in coarse_scripts + coarse_css:
+        if root not in asset_roots:
+            asset_roots.append(root)
+    list_features = [item["selector"] for item in (list_selectors or [])]
+    identified = bool(
+        (cms_family and cms_family != "unknown")
+        or detail_families
+        or len(asset_roots) >= 2
+        or list_features
+    )
     label = "|".join(
         [
-            group_key,
+            cms_family or "unknown",
             ",".join(detail_families) or "no-detail",
-            ",".join(coarse_scripts) or "no-script",
+            ",".join(asset_roots[:6]) or "no-assets",
+            ",".join(list_features[:4]) or "no-list",
         ]
     )
-    digest = hashlib.sha256(group_key.encode("utf-8")).hexdigest()[:16]
+    digest = hashlib.sha256(label.encode("utf-8")).hexdigest()[:16]
     return digest, label, identified
 
 
@@ -389,11 +483,11 @@ def analyze_html(html, page_url, headers):
     script_prefixes = _asset_prefixes(soup, "script", "src")
     css_prefixes = _asset_prefixes(soup, "link", "href")
     detail_families, detail_samples, detail_counts = collect_detail_patterns(soup, page_url)
+    selectors = collect_list_selectors(soup)
     fingerprint, label, identified = template_fingerprint(
-        cms_family, generator, script_prefixes, css_prefixes, detail_families
+        cms_family, script_prefixes, css_prefixes, detail_families, selectors
     )
     columns = collect_column_counts(soup)
-    selectors = collect_list_selectors(soup)
     return {
         "title": title,
         "page_generator": generator,
@@ -449,8 +543,10 @@ def base_result(entry):
         "name": entry.get("name"),
         "kind": entry.get("kind"),
         "province": entry.get("province"),
+        "source_layer": entry.get("source_layer"),
         "identity_status": entry.get("identity_status"),
         "official_identity": identity_assessment(entry),
+        "confirmed_institution": False,
         "requested_url": entry.get("homepage_candidate"),
         "final_url": None,
         "redirect_chain": [],
@@ -464,6 +560,10 @@ def base_result(entry):
         "error_type": None,
         "error": None,
         "audit_complete": True,
+        "schema_version": SCHEMA_VERSION,
+        "dns_precheck_ips": [],
+        "peer_ip_pinned": False,
+        "security_boundary": SECURITY_BOUNDARY,
         "collection_enabled": False,
         "endpoint_verified": False,
         "shared_collector_ready": False,
@@ -488,7 +588,7 @@ def read_limited_body(response, max_bytes=MAX_BYTES):
     return bytes(data), truncated
 
 
-def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=None):
+def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=None, host_gate=None):
     timeout = timeout or (CONNECT_TIMEOUT, READ_TIMEOUT)
     headers = {
         "User-Agent": USER_AGENT,
@@ -499,10 +599,20 @@ def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=Non
     chain = []
     started = time.perf_counter()
     response = None
+    resolved_hops = []
     try:
         for _ in range(MAX_REDIRECTS + 1):
-            validate_public_http_url(current, resolver=resolver)
-            response = http_get(current, timeout=timeout, headers=headers)
+            inspection = inspect_public_http_url(current, resolver=resolver)
+            resolved_hops.append({"url": current, "ips": inspection["resolved_ips"]})
+            host = inspection["host"]
+            lock = host_gate.slot(host) if host_gate is not None else None
+            try:
+                if lock is not None:
+                    lock.acquire()
+                response = http_get(current, timeout=timeout, headers=headers)
+            finally:
+                if lock is not None:
+                    lock.release()
             status = getattr(response, "status_code", None)
             location = None
             if hasattr(response, "headers"):
@@ -510,24 +620,6 @@ def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=Non
             chain.append({"url": current, "status": status, "location": location})
             if status in {301, 302, 303, 307, 308} and location:
                 nxt = urljoin(current, location)
-                try:
-                    validate_public_http_url(nxt, resolver=resolver)
-                except UnsafeURLError as exc:
-                    elapsed = int((time.perf_counter() - started) * 1000)
-                    return {
-                        "ok": False,
-                        "requested_url": url,
-                        "final_url": current,
-                        "redirect_chain": chain,
-                        "http_status": status,
-                        "content_type": (response.headers or {}).get("Content-Type"),
-                        "page_bytes": 0,
-                        "response_ms": elapsed,
-                        "body": b"",
-                        "error_class": "unsafe_url",
-                        "error_type": type(exc).__name__,
-                        "error": str(exc),
-                    }
                 current = nxt
                 if hasattr(response, "close"):
                     response.close()
@@ -547,6 +639,9 @@ def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=Non
                 "body": body,
                 "headers": dict(response.headers or {}),
                 "truncated": truncated,
+                "dns_precheck_ips": resolved_hops[-1]["ips"] if resolved_hops else [],
+                "dns_hops": resolved_hops,
+                "peer_ip_pinned": False,
             }
             if truncated:
                 result["error_class"] = "response_too_large"
@@ -565,6 +660,8 @@ def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=Non
             "response_ms": elapsed,
             "body": b"",
             "error_class": "too_many_redirects",
+            "dns_precheck_ips": resolved_hops[-1]["ips"] if resolved_hops else [],
+            "peer_ip_pinned": False,
         }
     finally:
         if response is not None and hasattr(response, "close"):
@@ -602,19 +699,28 @@ def eligible_for_strict_verification(result):
     )
 
 
-def audit_candidate(entry, http_get=default_http_get, resolver=None, timeout=None):
+def audit_candidate(entry, http_get=default_http_get, resolver=None, timeout=None, host_gate=None):
     result = base_result(entry)
     url = entry.get("homepage_candidate")
     try:
-        validate_public_http_url(url, resolver=resolver)
-    except UnsafeURLError as exc:
-        result["error_class"] = "unsafe_url"
+        inspection = inspect_public_http_url(url, resolver=resolver)
+        result["dns_precheck_ips"] = inspection["resolved_ips"]
+    except (UnsafeURLError, DnsTimeoutError, DnsResolutionError) as exc:
+        result["error_class"] = classify_exception(exc)
         result["error_type"] = type(exc).__name__
         result["error"] = str(exc)
-        result["needs_human_review"] = ["unsafe_or_non_public_url"]
+        if isinstance(exc, UnsafeURLError):
+            result["needs_human_review"] = ["unsafe_or_non_public_url"]
         return result
     try:
-        fetched = fetch_public_page(url, http_get=http_get, resolver=resolver, timeout=timeout)
+        fetched = fetch_public_page(
+            url, http_get=http_get, resolver=resolver, timeout=timeout, host_gate=host_gate
+        )
+    except (UnsafeURLError, DnsTimeoutError, DnsResolutionError) as exc:
+        result["error_class"] = classify_exception(exc)
+        result["error_type"] = type(exc).__name__
+        result["error"] = str(exc)[:400]
+        return result
     except Exception as exc:
         result["error_class"] = classify_exception(exc)
         result["error_type"] = type(exc).__name__
@@ -626,6 +732,8 @@ def audit_candidate(entry, http_get=default_http_get, resolver=None, timeout=Non
     result["content_type"] = fetched.get("content_type")
     result["page_bytes"] = fetched.get("page_bytes") or 0
     result["response_ms"] = fetched.get("response_ms")
+    result["dns_precheck_ips"] = fetched.get("dns_precheck_ips") or result["dns_precheck_ips"]
+    result["peer_ip_pinned"] = False
     requested_host = host_of(url)
     final_host = host_of(result["final_url"] or "")
     result["redirected_host_differs"] = bool(final_host and requested_host and final_host != requested_host)
@@ -671,7 +779,33 @@ def audit_candidate(entry, http_get=default_http_get, resolver=None, timeout=Non
             result["needs_human_review"].append("template_or_listing_unclear")
     result["collection_enabled"] = False
     result["endpoint_verified"] = False
+    result["confirmed_institution"] = False
     return result
+
+
+def normalize_candidate(row, source_path):
+    item = dict(row)
+    filename = Path(source_path).name
+    if filename in POLICE_LINK_FILES:
+        item["kind"] = item.get("kind") or "police"
+        item["source_layer"] = POLICE_LINK_FILES[filename]
+        item.setdefault("identity_status", "official_page_link_candidate")
+        item["current_identity_verified"] = False
+        item["endpoint_verified"] = False
+        item["collection_enabled"] = False
+        item["confirmed_institution"] = False
+        if not item.get("discovery_evidence_url"):
+            item["discovery_evidence_url"] = item.get("evidence_url")
+    elif item.get("kind") == "police":
+        item.setdefault("source_layer", "province_directory")
+        item["confirmed_institution"] = False
+    if not item.get("id"):
+        item["id"] = stable_candidate_id(
+            item.get("kind") or "",
+            item.get("name") or "",
+            item.get("homepage_candidate") or "",
+        )
+    return item
 
 
 def load_candidates(kind, extra_files=None, candidate_files=None):
@@ -683,18 +817,33 @@ def load_candidates(kind, extra_files=None, candidate_files=None):
     for path in files:
         if not path.exists():
             continue
+        if path.name == "national_discovery_tasks.csv":
+            continue
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, list):
             continue
-        for row in payload:
+        for raw in payload:
+            row = normalize_candidate(raw, path)
             if row.get("kind") != kind:
                 continue
-            key = row.get("id") or (row.get("name"), row.get("homepage_candidate"))
+            key = (row.get("kind"), row.get("name"), (row.get("homepage_candidate") or "").rstrip("/"))
             if key in seen:
                 continue
             seen.add(key)
             rows.append(row)
     return rows
+
+
+def police_candidate_counts(rows=None):
+    rows = rows if rows is not None else load_candidates("police")
+    counts = Counter(row.get("source_layer") or "unknown" for row in rows)
+    return {
+        "total": len(rows),
+        "province_directory": counts.get("province_directory", 0),
+        "city_link": counts.get("city_link", 0),
+        "county_link": counts.get("county_link", 0),
+        "confirmed_institutions": 0,
+    }
 
 
 def atomic_write_text(path, text):
@@ -719,6 +868,50 @@ def atomic_write_json(path, payload):
     atomic_write_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
+def append_progress(path, result, lock=None):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(result, ensure_ascii=False) + "\n"
+
+    def _write():
+        with open(path, "a", encoding="utf-8", newline="\n") as handle:
+            handle.write(line)
+            handle.flush()
+            os.fsync(handle.fileno())
+
+    if lock is None:
+        _write()
+    else:
+        with lock:
+            _write()
+
+
+def load_progress(path):
+    path = Path(path)
+    if not path.exists():
+        return []
+    items = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        try:
+            items.append(json.loads(text))
+        except json.JSONDecodeError:
+            continue
+    return items
+
+
+def reusable_result(saved, entry):
+    if not saved or not saved.get("audit_complete"):
+        return False
+    return (
+        saved.get("id") == entry.get("id")
+        and saved.get("requested_url") == entry.get("homepage_candidate")
+        and saved.get("schema_version") == SCHEMA_VERSION
+    )
+
+
 def load_existing_results(path):
     path = Path(path)
     if not path.exists():
@@ -727,14 +920,6 @@ def load_existing_results(path):
     if isinstance(payload, list):
         return payload
     return list(payload.get("results") or [])
-
-
-def completed_ids(results):
-    done = set()
-    for row in results:
-        if row.get("audit_complete") and row.get("id"):
-            done.add(row["id"])
-    return done
 
 
 def build_template_groups(results, kind):
@@ -752,10 +937,12 @@ def build_template_groups(results, kind):
                 "province": row.get("province"),
                 "requested_url": row.get("requested_url"),
                 "final_url": row.get("final_url"),
+                "cms_family": row.get("cms_family"),
+                "template_label": row.get("template_label"),
                 "shared_collector_ready": bool(row.get("shared_collector_ready")),
             }
         )
-        labels[fingerprint] = (row.get("template_label") or "").split("|", 1)[0] or row.get("cms_family")
+        labels[fingerprint] = row.get("template_label")
         cms[fingerprint] = row.get("cms_family")
     grouped = []
     for fingerprint, members in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
@@ -774,17 +961,26 @@ def build_template_groups(results, kind):
         for r in results
         if not r.get("template_identified")
     ]
+    cms_families = sorted({g["cms_family"] for g in grouped if g.get("cms_family") and g["cms_family"] != "unknown"})
     return {
         "generated_at": now_iso(),
         "kind": kind,
-        "note": "Same fingerprint means similar CMS or page structure, not a production collector.",
+        "schema_version": SCHEMA_VERSION,
+        "note": (
+            "template_fingerprint is a page-structure key; cms_family is coarser. "
+            "Neither is a production collector."
+        ),
         "group_count": len(grouped),
+        "cms_family_count": len(cms_families),
+        "cms_families": cms_families,
         "identified_count": sum(g["member_count"] for g in grouped),
         "unidentified_count": len(unidentified),
         "groups": grouped,
         "unidentified": unidentified,
         "collection_enabled": False,
         "endpoint_verified": False,
+        "peer_ip_pinned": False,
+        "security_boundary": SECURITY_BOUNDARY,
     }
 
 
@@ -809,12 +1005,14 @@ def build_promotion_candidates(results, kind):
                 "promoted_to_production": False,
                 "collection_enabled": False,
                 "endpoint_verified": False,
+                "confirmed_institution": False,
                 "note": "May enter the next strict verification round; not an operational source.",
             }
         )
     return {
         "generated_at": now_iso(),
         "kind": kind,
+        "schema_version": SCHEMA_VERSION,
         "note": (
             "Promotion here only means eligible for the next strict verification round. "
             "It does not enable collection or mark production coverage."
@@ -824,21 +1022,38 @@ def build_promotion_candidates(results, kind):
         "collection_enabled": False,
         "endpoint_verified": False,
         "promoted_to_production": False,
+        "peer_ip_pinned": False,
+        "security_boundary": SECURITY_BOUNDARY,
     }
 
 
 def summarize_results(results):
+    identified = [row for row in results if row.get("template_identified")]
+    cms_families = sorted(
+        {
+            row.get("cms_family")
+            for row in identified
+            if row.get("cms_family") and row.get("cms_family") != "unknown"
+        }
+    )
+    fingerprints = {row.get("template_fingerprint") for row in identified if row.get("template_fingerprint")}
     classes = Counter(row.get("error_class") or "unknown" for row in results)
     return {
         "candidates": len(results),
         "http_reachable": sum(1 for row in results if row.get("error_class") == "accessible"),
-        "template_identified": sum(1 for row in results if row.get("template_identified")),
+        "template_identified": len(identified),
+        "cms_family_count": len(cms_families),
+        "cms_families": cms_families,
+        "template_group_count": len(fingerprints),
         "eligible_for_strict_verification": sum(1 for row in results if row.get("eligible_for_strict_verification")),
         "formally_connected": 0,
         "production_success": 0,
         "error_classes": dict(classes),
+        "schema_version": SCHEMA_VERSION,
         "collection_enabled": False,
         "endpoint_verified": False,
+        "peer_ip_pinned": False,
+        "security_boundary": SECURITY_BOUNDARY,
     }
 
 
@@ -847,14 +1062,17 @@ def persist_outputs(output_dir, kind, results):
     payload = {
         "generated_at": now_iso(),
         "kind": kind,
+        "schema_version": SCHEMA_VERSION,
         "note": (
             "Per-channel public homepage audit. HTTP reachability is not official identity, "
-            "not collection_enabled, and not endpoint_verified."
+            "not collection_enabled, and not endpoint_verified. DNS checks are preflight only."
         ),
         "summary": summarize_results(results),
         "results": results,
         "collection_enabled": False,
         "endpoint_verified": False,
+        "peer_ip_pinned": False,
+        "security_boundary": SECURITY_BOUNDARY,
     }
     groups = build_template_groups(results, kind)
     promotion = build_promotion_candidates(results, kind)
@@ -862,6 +1080,35 @@ def persist_outputs(output_dir, kind, results):
     atomic_write_json(output_dir / "channel_template_groups.json", groups)
     atomic_write_json(output_dir / "channel_promotion_candidates.json", promotion)
     return payload, groups, promotion
+
+
+def write_recovery_checkpoint(output_dir, kind, results):
+    keys = [
+        {"id": row.get("id"), "requested_url": row.get("requested_url"), "schema_version": row.get("schema_version")}
+        for row in results
+        if row.get("audit_complete")
+    ]
+    atomic_write_json(
+        Path(output_dir) / "channel_audit_checkpoint.json",
+        {
+            "updated_at": now_iso(),
+            "kind": kind,
+            "schema_version": SCHEMA_VERSION,
+            "completed_count": len(keys),
+            "resume_keys": keys,
+            "note": "Recovery data only; not an official result file.",
+        },
+    )
+
+
+def scoped_results(candidates, saved_by_key):
+    ordered = []
+    for entry in candidates:
+        key = (entry.get("id"), entry.get("homepage_candidate"), SCHEMA_VERSION)
+        item = saved_by_key.get(key)
+        if item:
+            ordered.append(item)
+    return ordered
 
 
 def run_audit(
@@ -875,42 +1122,65 @@ def run_audit(
     timeout=None,
     extra_files=None,
     candidate_files=None,
+    checkpoint_every=DEFAULT_CHECKPOINT_EVERY,
     progress=None,
 ):
     workers = max(1, min(int(workers), HARD_MAX_WORKERS))
+    checkpoint_every = int(checkpoint_every)
     output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
     candidates = load_candidates(kind, extra_files=extra_files, candidate_files=candidate_files)
     if limit is not None:
         candidates = candidates[: int(limit)]
-    existing = load_existing_results(output_dir / "channel_audit_results.json") if resume else []
-    done = completed_ids(existing) if resume else set()
-    pending = [row for row in candidates if row.get("id") not in done]
-    results_by_id = {row.get("id"): row for row in existing if row.get("id")}
+    progress_path = output_dir / "channel_audit_progress.jsonl"
+    if not resume:
+        if progress_path.exists():
+            progress_path.unlink()
+        checkpoint_path = output_dir / "channel_audit_checkpoint.json"
+        if checkpoint_path.exists():
+            checkpoint_path.unlink()
+        saved_items = []
+    else:
+        saved_items = load_progress(progress_path)
+        if not saved_items:
+            saved_items = load_existing_results(output_dir / "channel_audit_results.json")
+    saved_by_key = {}
+    for item in saved_items:
+        saved_by_key[(item.get("id"), item.get("requested_url"), item.get("schema_version"))] = item
+    pending = []
+    for entry in candidates:
+        key = (entry.get("id"), entry.get("homepage_candidate"), SCHEMA_VERSION)
+        previous = saved_by_key.get(key)
+        if resume and reusable_result(previous, entry):
+            continue
+        pending.append(entry)
     gate = HostGate()
     write_lock = threading.Lock()
     log = progress or (lambda *_args, **_kwargs: None)
+    completed_since_checkpoint = 0
 
     def task(entry):
-        host = host_of(entry.get("homepage_candidate") or "")
-        with gate.slot(host):
-            return audit_candidate(entry, http_get=http_get, resolver=resolver, timeout=timeout)
+        return audit_candidate(
+            entry, http_get=http_get, resolver=resolver, timeout=timeout, host_gate=gate
+        )
 
-    def save_snapshot():
-        ordered = []
-        seen = set()
-        for entry in candidates:
-            item = results_by_id.get(entry.get("id"))
-            if item:
-                ordered.append(item)
-                seen.add(entry.get("id"))
-        for item in existing:
-            if item.get("id") not in seen:
-                ordered.append(item)
-        persist_outputs(output_dir, kind, ordered)
-        return ordered
+    def record_item(item):
+        nonlocal completed_since_checkpoint
+        item["collection_enabled"] = False
+        item["endpoint_verified"] = False
+        item["schema_version"] = SCHEMA_VERSION
+        key = (item.get("id"), item.get("requested_url"), SCHEMA_VERSION)
+        with write_lock:
+            saved_by_key[key] = item
+            append_progress(progress_path, item)
+            completed_since_checkpoint += 1
+            if checkpoint_every > 0 and completed_since_checkpoint >= checkpoint_every:
+                write_recovery_checkpoint(output_dir, kind, scoped_results(candidates, saved_by_key))
+                completed_since_checkpoint = 0
 
     if not pending:
-        ordered = save_snapshot()
+        ordered = scoped_results(candidates, saved_by_key)
+        persist_outputs(output_dir, kind, ordered)
         return summarize_results(ordered), ordered
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -924,14 +1194,12 @@ def run_audit(
                 item["error_class"] = classify_exception(exc)
                 item["error_type"] = type(exc).__name__
                 item["error"] = str(exc)[:400]
-            item["collection_enabled"] = False
-            item["endpoint_verified"] = False
-            with write_lock:
-                results_by_id[item.get("id")] = item
-                save_snapshot()
+            record_item(item)
             log(item)
 
-    ordered = save_snapshot()
+    ordered = scoped_results(candidates, saved_by_key)
+    write_recovery_checkpoint(output_dir, kind, ordered)
+    persist_outputs(output_dir, kind, ordered)
     return summarize_results(ordered), ordered
 
 
@@ -942,6 +1210,7 @@ def parse_args(argv=None):
     parser.add_argument("--workers", type=int, default=DEFAULT_MAX_WORKERS)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--checkpoint-every", type=int, default=DEFAULT_CHECKPOINT_EVERY)
     return parser.parse_args(argv)
 
 
@@ -954,6 +1223,7 @@ def main(argv=None):
         limit=args.limit,
         workers=args.workers,
         resume=args.resume,
+        checkpoint_every=args.checkpoint_every,
         progress=lambda item: print(
             json.dumps(
                 {
