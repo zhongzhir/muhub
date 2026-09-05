@@ -1,4 +1,4 @@
-"""定时任务：每日固定时刻扫描，成功后仅在出现新情报时生成报告。"""
+"""定时任务：按配置的频率扫描，成功后仅在出现新情报时生成报告。"""
 import logging
 import threading
 
@@ -38,9 +38,22 @@ def start():
         return
     _scheduler = BackgroundScheduler(timezone=schedule.get("timezone", "Asia/Shanghai"))
     hm = schedule.get("daily_scan_time", "08:00").split(":")
-    _scheduler.add_job(_daily_job, "cron", hour=int(hm[0]), minute=int(hm[1]), id="daily_scan")
+    frequency = schedule.get("frequency", "daily")
+    trigger_args = {"hour": int(hm[0]), "minute": int(hm[1])}
+    if frequency == "weekly":
+        trigger_args["day_of_week"] = schedule.get("day_of_week", "fri")
+    elif frequency != "daily":
+        raise ValueError(f"不支持的扫描频率: {frequency}")
+    _scheduler.add_job(_daily_job, "cron", id="scheduled_scan", **trigger_args)
     _scheduler.start()
-    log.info("定时任务启动，每日 %s 扫描", schedule.get("daily_scan_time"))
+    if frequency == "weekly":
+        log.info(
+            "定时任务启动，每周 %s %s 扫描",
+            trigger_args["day_of_week"],
+            schedule.get("daily_scan_time"),
+        )
+    else:
+        log.info("定时任务启动，每日 %s 扫描", schedule.get("daily_scan_time"))
 
 
 def stop():

@@ -11,7 +11,9 @@
     "enabled": true,
     "daily_scan_time": "19:00",
     "timezone": "Asia/Shanghai",
-    "footer_timeout_hours": 6
+    "footer_timeout_hours": 6,
+    "frequency": "weekly",
+    "day_of_week": "fri"
   },
   "access": {
     "invite_codes": [],

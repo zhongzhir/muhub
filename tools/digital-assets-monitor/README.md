@@ -22,7 +22,7 @@
 
 ## 二、技术架构
 
-- 后端：**Python + FastAPI**，SQLite 存储（`data/monitor.db`），APScheduler 每日定时扫描。
+- 后端：**Python + FastAPI**，SQLite 存储（`data/monitor.db`），APScheduler 默认每周五 19:00（Asia/Shanghai）定时扫描，并保留手动扫描。
 - 采集：RSS + 定向网页爬虫 + 多引擎检索回溯（Bing 国际/中国站、DuckDuckGo），全部失败容错、记录健康度。
 - 分析：自动分类（主体类型/行政区域/资产类型/处置方式/重要度/标签）、金额与机构抽取、中文简短分析。
 - 前端：**自研高端暗色主题 + ECharts**（本地内置 `echarts.min.js`，离线可用）。含登录、KPI、趋势、主体/资产/处置/地域分布、信息源覆盖矩阵、来源排行、高价值情报、最新日报、情报入库与筛选、数据源健康度与扫描日志。
