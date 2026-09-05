@@ -495,7 +495,9 @@
       "official_site_names": [
         "天津市公安局"
       ],
-      "selector_verified_on": "2026-09-04"
+      "selector_verified_on": "2026-09-04",
+      "track_production_endpoint": true,
+      "registry_kind": "police"
     },
     {
       "id": "police-ningde",
@@ -523,7 +525,9 @@
       "official_site_names": [
         "宁德公安公众服务网"
       ],
-      "selector_verified_on": "2026-09-04"
+      "selector_verified_on": "2026-09-04",
+      "track_production_endpoint": true,
+      "registry_kind": "police"
     },
     {
       "id": "police-chongqing",
@@ -550,7 +554,43 @@
       "official_site_names": [
         "重庆市公安局"
       ],
-      "selector_verified_on": "2026-09-04"
+      "selector_verified_on": "2026-09-04",
+      "track_production_endpoint": true,
+      "registry_kind": "police"
+    },
+    {
+      "id": "public-shanxi-forfeiture",
+      "name": "山西省公共资源交易平台·罚没资产处置",
+      "category": "产权交易所",
+      "type": "web",
+      "enabled": true,
+      "priority": 95,
+      "url": "https://prec.sxzwfw.gov.cn/jyxxsf/index.jhtml",
+      "note": "行政执法部门罚没资产处置栏目；同站正文、页面身份和官方列表日期核验后入库。",
+      "item_selector": "a[href*=\"/jyxxsfgg/\"][href$=\".jhtml\"]",
+      "article_selector": ".div-article2",
+      "article_path_pattern": "/jyxxsfgg/\\d+\\.jhtml",
+      "article_discovery_terms": [
+        "涉案",
+        "罚没",
+        "虚拟货币",
+        "数字货币",
+        "数字资产",
+        "加密资产",
+        "比特币",
+        "泰达币"
+      ],
+      "verify_articles": true,
+      "official_title_contains": [
+        "山西省公共资源交易平台"
+      ],
+      "trust_list_date": true,
+      "force_https": true,
+      "selector_verified_on": "2026-09-05",
+      "track_production_endpoint": true,
+      "registry_kind": "public_resource_platform",
+      "registry_province": "山西",
+      "registry_institution_name": "山西公共资源交易平台"
     }
   ]
 }

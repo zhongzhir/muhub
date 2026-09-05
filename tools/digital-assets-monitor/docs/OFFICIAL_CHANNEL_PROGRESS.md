@@ -52,3 +52,12 @@
 2ffa427部署后的扫描日志显示，12个搜索类型来源在同一轮继续反复报告“All search queries returned no usable evidence”。这不是单个媒体或机构失败，而是其共享的免费搜索传输在ECS不可用；继续把12个逻辑名称当作12个生产来源会制造虚假覆盖和重复等待。现将这些search配置统一暂停并保留，状态为paused_unavailable_search_transport。policy-supreme已改为最高检直接列表，不在暂停范围。生产计划从35个配置项降为23个启用项；这不代表剩余23个都成功，须以新扫描结果为准。IQS生产采集仍未启用，累计样本额度维持6/10。
 
 预期的网络不可用错误改为单行warning，保留数据库来源状态，不再为每个源打印重复堆栈；编程错误仍输出完整异常。此项在当前正在运行的2ffa427扫描之后生效。
+
+
+## 省级公共资源平台与山西罚没资产直采
+
+全国公共资源交易平台（https://www.ggzy.gov.cn/）当前导航列出31个省区市及新疆生产建设兵团入口。新增32条public_resource_platform候选，证据状态official_national_directory_candidate，未逐站核实者不标记身份或端点已验证。隔离库现为392个机构候选、330个候选频道；加入山西直采配置后为331个频道，其中4个配置启用。省级候选分布API明确显示public_resource_platform 31/31，但这是候选分布，不是实际采集覆盖率。
+
+32个平台公开HTTP审计：本机20个返回可解析页面，15个页面出现国有产权/产权交易/交易公告/成交公告/信息披露线索；12个因TLS、超时、403或412未取得页面。结果见research/public_resource_channel_audit.json。HTTP正常仍标为identity_unverified。
+
+山西省公共资源交易平台“行政执法部门开展的罚没资产处置”栏目（https://prec.sxzwfw.gov.cn/jyxxsf/index.jhtml）已配置直采。实测列表10条，6条标题候选；抽查5篇均不涉及数字资产并被过滤。栏目未提供发布日期元数据，日期来自同一官方列表并单独记录为official_list_date；站点标题、文章路径和正文容器均须通过后才能入库。该频道尚待ECS生产扫描决定endpoint_verified。

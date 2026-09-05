@@ -396,7 +396,8 @@
       机构候选 ${coverage.institutions.candidates} · 身份已核实 ${coverage.institutions.identity_verified} ·
       频道候选 ${coverage.channels.candidates} · 端点已验证 ${coverage.channels.endpoint_verified} ·
       已接通采集 ${coverage.channels.collection_enabled}<br>
-      <span class="tag">${coverage.by_kind.map(x => `${esc(x.kind)} ${x.candidates}/${x.identity_verified || 0}`).join(" · ")}</span><br><br>`;
+      <span class="tag">${coverage.by_kind.map(x => `${esc(x.kind)} ${x.candidates}/${x.identity_verified || 0}`).join(" · ")}</span><br>
+      <span class="tag">省级候选分布：${coverage.province_presence.map(x => `${esc(x.kind)} ${x.provinces_with_candidates}/31`).join(" · ")}</span><br><br>`;
     $("#scopeHint").innerHTML = `
       本驾驶舱聚焦「数字资产/虚拟货币」罚没、司法处置赛道，监控口径包括：<br>
       ① 公安机关（罚没财物处理、涉案虚拟货币查扣与变现）；② 法院执行局（刑事/民事涉案虚拟货币处置、司法拍卖）；③ 纪委监委（收缴资产处置）；④ 检察机关（涉案财物管理）；⑤ 财政部门（罚没财物管理办法、上缴国库）；⑥ 产权/文交所（数字资产公开挂牌处置）；⑦ 招投标网站（数字资产处置招标）；⑧ 新闻报道与行业媒体；⑨ 国际（美/欧/韩等执法罚没虚拟货币）。

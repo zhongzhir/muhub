@@ -66,6 +66,12 @@ def _source_items(src):
             for item in web_mod.crawl_list(page, rules):
                 if item["url"] not in seen:
                     seen.add(item["url"])
+                    if src.get("force_https"):
+                        parsed=urlparse(item["url"])
+                        host=(parsed.hostname or "") + ((":" + str(parsed.port)) if parsed.port not in (None,80,443) else "")
+                        item["url"]=parsed._replace(scheme="https",netloc=host).geturl()
+                    if src.get("trust_list_date") and item.get("publish_date"):
+                        item["date_origin"]="official_list"
                     rows.append(item)
         return rows
     return []
@@ -209,7 +215,7 @@ def run_scan(dbconn=None, manual=False):
                     """UPDATE sources SET last_scan_at=?, last_status=?, item_count=(SELECT COUNT(*) FROM items WHERE source_name=?) WHERE id=?""",
                     (db.now_iso(), status, src["name"], src["id"]),
                 )
-                if src.get("id", "").startswith("police-"):
+                if src.get("track_production_endpoint"):
                     conn.execute("UPDATE institution_channels SET endpoint_verified=1,status='production_scan_ok',updated_at=? WHERE id=?",
                                  (db.now_iso(), "configured-" + src["id"]))
                 conn.commit()
@@ -231,7 +237,7 @@ def run_scan(dbconn=None, manual=False):
                     "UPDATE sources SET last_scan_at=?, last_status=? WHERE id=?",
                     (db.now_iso(), f"失败: {type(e).__name__}: {str(e)[:350]}", src["id"]),
                 )
-                if src.get("id", "").startswith("police-"):
+                if src.get("track_production_endpoint"):
                     conn.execute("UPDATE institution_channels SET endpoint_verified=0,status=?,updated_at=? WHERE id=?",
                                  ("production_scan_failed:" + type(e).__name__, db.now_iso(), "configured-" + src["id"]))
                 conn.commit()

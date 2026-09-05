@@ -1,0 +1,481 @@
+[
+  {
+    "id": "790ccca3d87f6aee",
+    "name": "北京公共资源交易平台",
+    "province": "北京",
+    "requested_url": "https://ggzyfw.beijing.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.117579+00:00",
+    "status": "unreachable",
+    "error_type": "SSLError",
+    "error": "HTTPSConnectionPool(host='ggzyfw.beijing.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLError(1, '[SSL: BAD_ECPOINT] bad ecpoint (_ssl.c:1081)')))"
+  },
+  {
+    "id": "311d70fbf6d78dfb",
+    "name": "天津公共资源交易平台",
+    "province": "天津",
+    "requested_url": "https://ggzy.zwfwb.tj.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.118004+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzy.zwfwb.tj.gov.cn/",
+    "content_type": "text/html",
+    "title": "天津市公共资源交易平台",
+    "signals": [
+      "国有产权",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "52fd6e56ce50b85c",
+    "name": "河北公共资源交易平台",
+    "province": "河北",
+    "requested_url": "https://szj.hebei.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.118309+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://szj.hebei.gov.cn/",
+    "content_type": "text/html; charset=utf-8",
+    "title": "河北省数据和政务服务局",
+    "signals": [
+      "交易公告"
+    ]
+  },
+  {
+    "id": "7f98e9caaeec2c36",
+    "name": "山西公共资源交易平台",
+    "province": "山西",
+    "requested_url": "https://prec.sxzwfw.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.118672+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://prec.sxzwfw.gov.cn/",
+    "content_type": "text/html;charset=UTF-8",
+    "title": "山西省公共资源交易平台",
+    "signals": [
+      "国有产权",
+      "产权交易",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "8528b3bcee06a320",
+    "name": "内蒙古公共资源交易平台",
+    "province": "内蒙古",
+    "requested_url": "https://ggzyjy.nmg.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.119120+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzyjy.nmg.gov.cn/",
+    "content_type": "text/html",
+    "title": "内蒙古自治区公共资源交易网",
+    "signals": [
+      "产权交易"
+    ]
+  },
+  {
+    "id": "6a190cda2de069a5",
+    "name": "河南公共资源交易平台",
+    "province": "河南",
+    "requested_url": "https://ggzy.fgw.henan.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.120356+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzy.fgw.henan.gov.cn/",
+    "content_type": "text/html",
+    "title": "全国公共资源交易平台【河南省】",
+    "signals": []
+  },
+  {
+    "id": "040bbc5da3a4f747",
+    "name": "湖北公共资源交易平台",
+    "province": "湖北",
+    "requested_url": "https://www.hbggzyfwpt.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.728552+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://www.hbggzyfwpt.cn/",
+    "content_type": "text/html;charset=UTF-8",
+    "title": "湖北省公共资源电子交易服务系统",
+    "signals": [
+      "国有产权",
+      "产权交易",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "4e978d148bd01c70",
+    "name": "湖南公共资源交易平台",
+    "province": "湖南",
+    "requested_url": "https://www.hnsggzy.com/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.886801+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://www.hnsggzy.com/",
+    "content_type": "text/html",
+    "title": "湖南省公共资源交易服务平台",
+    "signals": []
+  },
+  {
+    "id": "3aaed49c2c7f20b7",
+    "name": "重庆公共资源交易平台",
+    "province": "重庆",
+    "requested_url": "https://www.cqggzy.com/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.889146+00:00",
+    "status": "unreachable",
+    "http_status": 403,
+    "final_url": "https://www.cqggzy.com/",
+    "content_type": null,
+    "error_type": "HTTPError",
+    "error": "403 Client Error: Forbidden for url: https://www.cqggzy.com/"
+  },
+  {
+    "id": "9bbb9a5f05c9bef0",
+    "name": "四川公共资源交易平台",
+    "province": "四川",
+    "requested_url": "https://ggzyjy.sc.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:42.940204+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzyjy.sc.gov.cn/",
+    "content_type": "text/html",
+    "title": "四川省公共资源交易信息网",
+    "signals": [
+      "国有产权",
+      "产权交易"
+    ]
+  },
+  {
+    "id": "70e9beceebaec117",
+    "name": "贵州公共资源交易平台",
+    "province": "贵州",
+    "requested_url": "https://ggzy.guizhou.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:43.276257+00:00",
+    "status": "unreachable",
+    "error_type": "ConnectTimeout",
+    "error": "HTTPSConnectionPool(host='ggzy.guizhou.gov.cn', port=443): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPSConnection(host='ggzy.guizhou.gov.cn', port=443) at 0x1749d0d9450>, 'Connection to ggzy.guizhou.gov.cn timed ou"
+  },
+  {
+    "id": "131c12ba320a45c6",
+    "name": "云南公共资源交易平台",
+    "province": "云南",
+    "requested_url": "https://ggzy.yn.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:43.328876+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzy.yn.gov.cn/",
+    "content_type": "text/html",
+    "title": "云南省公共资源交易信息网",
+    "signals": []
+  },
+  {
+    "id": "2f97b0fe630720e2",
+    "name": "西藏公共资源交易平台",
+    "province": "西藏",
+    "requested_url": "https://ggzy.xizang.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:43.476014+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzy.xizang.gov.cn/",
+    "content_type": "text/html;charset=UTF-8",
+    "title": "西藏公共资源交易平台",
+    "signals": [
+      "国有产权",
+      "交易公告",
+      "成交公告",
+      "信息披露"
+    ]
+  },
+  {
+    "id": "fb95cec247e72bd7",
+    "name": "辽宁公共资源交易平台",
+    "province": "辽宁",
+    "requested_url": "https://www.lnggzy.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:43.517823+00:00",
+    "status": "unreachable",
+    "error_type": "ConnectTimeout",
+    "error": "HTTPSConnectionPool(host='www.lnggzy.gov.cn', port=443): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.lnggzy.gov.cn', port=443) at 0x1749ceeb890>, 'Connection to www.lnggzy.gov.cn timed out. (co"
+  },
+  {
+    "id": "0672fc87fc4b1d43",
+    "name": "吉林公共资源交易平台",
+    "province": "吉林",
+    "requested_url": "https://www.jl.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:43.562094+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://www.jl.gov.cn/",
+    "content_type": "text/html",
+    "title": "吉林省人民政府",
+    "signals": []
+  },
+  {
+    "id": "f2d9c4160b73b60a",
+    "name": "黑龙江公共资源交易平台",
+    "province": "黑龙江",
+    "requested_url": "https://ggzyjyw.hlj.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:44.016342+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzyjyw.hlj.gov.cn/",
+    "content_type": "text/html; charset=utf-8",
+    "title": "黑龙江公共资源交易网",
+    "signals": [
+      "国有产权",
+      "产权交易",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "40b5c37411dec44d",
+    "name": "上海公共资源交易平台",
+    "province": "上海",
+    "requested_url": "https://www.shggzy.com/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:44.064067+00:00",
+    "status": "unreachable",
+    "http_status": 403,
+    "final_url": "https://www.shggzy.com/",
+    "content_type": "text/html",
+    "error_type": "HTTPError",
+    "error": "403 Client Error: Forbidden for url: https://www.shggzy.com/"
+  },
+  {
+    "id": "c5ae4bf1de89e87c",
+    "name": "江苏公共资源交易平台",
+    "province": "江苏",
+    "requested_url": "https://jsggzy.jszwfw.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:44.471860+00:00",
+    "status": "unreachable",
+    "error_type": "SSLError",
+    "error": "HTTPSConnectionPool(host='jsggzy.jszwfw.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate"
+  },
+  {
+    "id": "ad27018485da3251",
+    "name": "浙江公共资源交易平台",
+    "province": "浙江",
+    "requested_url": "https://ggzy.zj.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:44.553069+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzy.zj.gov.cn/",
+    "content_type": "text/html; charset=utf-8",
+    "title": "浙江省公共资源交易服务平台系统",
+    "signals": [
+      "国有产权",
+      "产权交易",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "f59ef475b63fe26a",
+    "name": "安徽公共资源交易平台",
+    "province": "安徽",
+    "requested_url": "https://ggzy.ah.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:44.634750+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzy.ah.gov.cn/",
+    "content_type": "text/html;charset=UTF-8",
+    "title": "安徽省公共资源交易监管网",
+    "signals": [
+      "国有产权",
+      "交易公告"
+    ]
+  },
+  {
+    "id": "3ba355fea58aa76a",
+    "name": "福建公共资源交易平台",
+    "province": "福建",
+    "requested_url": "https://ggzyfw.fujian.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:44.944234+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzyfw.fujian.gov.cn/",
+    "content_type": "text/html",
+    "title": "福建省公共资源交易电子公共服务平台",
+    "signals": []
+  },
+  {
+    "id": "dbf56c3e75be6bf4",
+    "name": "江西公共资源交易平台",
+    "province": "江西",
+    "requested_url": "https://www.jxsggzy.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:44.965023+00:00",
+    "status": "unreachable",
+    "error_type": "SSLError",
+    "error": "HTTPSConnectionPool(host='www.jxsggzy.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLError(1, '[SSL: UNSAFE_LEGACY_RENEGOTIATION_DISABLED] unsafe legacy renegotiation disabled (_ssl.c:1081)')))"
+  },
+  {
+    "id": "416a875ace4cf232",
+    "name": "山东公共资源交易平台",
+    "province": "山东",
+    "requested_url": "https://ggzyjy.shandong.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:45.256105+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzyjy.shandong.gov.cn/",
+    "content_type": "text/html;charset=UTF-8",
+    "title": "山东省公共资源交易网",
+    "signals": [
+      "国有产权",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "53aa08eef2fc09fb",
+    "name": "广东公共资源交易平台",
+    "province": "广东",
+    "requested_url": "https://ygp.gdzwfw.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:45.465693+00:00",
+    "status": "unreachable",
+    "error_type": "ConnectionError",
+    "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+  },
+  {
+    "id": "b20661c8d661a197",
+    "name": "广西公共资源交易平台",
+    "province": "广西",
+    "requested_url": "https://ggzy.jgswj.gxzf.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:45.615004+00:00",
+    "status": "unreachable",
+    "error_type": "SSLError",
+    "error": "HTTPSConnectionPool(host='ggzy.jgswj.gxzf.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, \"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is no"
+  },
+  {
+    "id": "0b75cb1f82459615",
+    "name": "海南公共资源交易平台",
+    "province": "海南",
+    "requested_url": "https://zw.hainan.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:45.828940+00:00",
+    "status": "unreachable",
+    "error_type": "SSLError",
+    "error": "HTTPSConnectionPool(host='zw.hainan.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_s"
+  },
+  {
+    "id": "d4d1cab726eeabc4",
+    "name": "陕西公共资源交易平台",
+    "province": "陕西",
+    "requested_url": "https://www.sxggzyjy.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:45.940212+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://www.sxggzyjy.cn/",
+    "content_type": "text/html; charset=utf-8",
+    "title": "全国公共资源交易平台（陕西省）陕西省公共资源交易中心",
+    "signals": [
+      "产权交易",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "009cf52a2b9a4291",
+    "name": "甘肃公共资源交易平台",
+    "province": "甘肃",
+    "requested_url": "https://ggzyjy.gansu.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:46.091514+00:00",
+    "status": "unreachable",
+    "http_status": 412,
+    "final_url": "https://ggzyjy.gansu.gov.cn/",
+    "content_type": "text/html; charset=utf-8",
+    "error_type": "HTTPError",
+    "error": "412 Client Error: Precondition Failed for url: https://ggzyjy.gansu.gov.cn/"
+  },
+  {
+    "id": "b15287c06be53946",
+    "name": "青海公共资源交易平台",
+    "province": "青海",
+    "requested_url": "https://www.qhggzyjy.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:46.278676+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "http://www.qhggzyjy.gov.cn/ggzy/",
+    "content_type": "text/html; charset=utf-8",
+    "title": "青海公共资源交易网",
+    "signals": [
+      "产权交易",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "a262692751331594",
+    "name": "宁夏公共资源交易平台",
+    "province": "宁夏",
+    "requested_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:46.350288+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+    "content_type": "text/html; charset=utf-8",
+    "title": "宁夏回族自治区公共资源交易网",
+    "signals": [
+      "产权交易",
+      "交易公告"
+    ]
+  },
+  {
+    "id": "c5b596e13611a566",
+    "name": "新疆公共资源交易平台",
+    "province": "新疆",
+    "requested_url": "https://ggzy.xinjiang.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:46.621792+00:00",
+    "status": "http_ok_identity_unverified",
+    "http_status": 200,
+    "final_url": "https://ggzy.xinjiang.gov.cn/",
+    "content_type": "text/html; charset=utf-8",
+    "title": "新疆公共资源交易网",
+    "signals": [
+      "产权交易",
+      "交易公告",
+      "成交公告"
+    ]
+  },
+  {
+    "id": "fe40e345724792e1",
+    "name": "新疆生产建设兵团公共资源交易平台",
+    "province": "兵团",
+    "requested_url": "https://ggzy.xjbt.gov.cn/",
+    "evidence_url": "https://www.ggzy.gov.cn/",
+    "checked_at": "2026-09-05T07:23:47.160451+00:00",
+    "status": "unreachable",
+    "error_type": "ConnectTimeout",
+    "error": "HTTPSConnectionPool(host='ggzy.xjbt.gov.cn', port=443): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPSConnection(host='ggzy.xjbt.gov.cn', port=443) at 0x1749d0da710>, 'Connection to ggzy.xjbt.gov.cn timed out. (conne"
+  }
+]

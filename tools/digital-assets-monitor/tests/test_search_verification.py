@@ -84,6 +84,17 @@ class VerificationTests(unittest.TestCase):
             self.assertTrue(source["article_path_pattern"])
             self.assertTrue(source["official_site_names"])
 
+    @patch("app.scraper.verification.requests.get")
+    def test_trusted_official_list_date_is_preserved_for_irrelevant_article(self, get):
+        source=dict(self.source, official_site_names=[], official_title_contains=["山西省公共资源交易平台"], trust_list_date=True)
+        item=dict(self.item, publish_date="2026-09-03", date_origin="official_list")
+        response=MagicMock(status_code=200,headers={"Content-Type":"text/html"})
+        response.iter_content.return_value=[('<html><head><title>山西省公共资源交易平台</title></head><body><article>' + 'ordinary asset auction '*20 + '</article></body></html>').encode()]
+        get.return_value.__enter__.return_value=response
+        result=verify_search_item(item,source)
+        self.assertEqual(result["verification"]["status"],"article_body_insufficient_or_irrelevant")
+        self.assertEqual(result["verification"]["publisher_date"],"2026-09-03")
+
     def test_unverified_candidate_retained_not_published(self):
         conn = sqlite3.connect(":memory:")
         conn.executescript(db.SCHEMA)

@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[1]/"research"
 def _id(name,url): return hashlib.sha256((name+"|"+(url or "")).encode()).hexdigest()[:16]
 
 def sync_registry():
-    files=[ROOT/"institution_candidates.json",ROOT/"technology_supplement_candidates.json"]
+    files=[ROOT/"institution_candidates.json",ROOT/"technology_supplement_candidates.json",ROOT/"public_resource_platform_candidates.json"]
     conn=db.connect()
     try:
         conn.execute("BEGIN")
@@ -41,12 +41,15 @@ def sync_registry():
                     (_id(iid,url),iid,url,evidence,"official_page_link_candidate",0,0,db.now_iso()))
         # Only channels with locally configured, publicly exercised fail-closed rules are operational.
         for source in get_sources().get("sources", []):
-            if not source.get("id", "").startswith("police-"):
+            if not source.get("track_production_endpoint"):
                 continue
-            found=conn.execute("SELECT id FROM institutions WHERE name=? AND kind='police' ORDER BY current_identity_verified DESC LIMIT 1",(source["name"],)).fetchone()
-            iid=found["id"] if found else _id(source["name"],source["url"])
+            name=source.get("registry_institution_name",source["name"])
+            kind=source.get("registry_kind","publisher")
+            province=source.get("registry_province")
+            found=conn.execute("SELECT id FROM institutions WHERE name=? AND kind=? ORDER BY current_identity_verified DESC LIMIT 1",(name,kind)).fetchone()
+            iid=found["id"] if found else _id(name,source["url"])
             conn.execute("INSERT OR IGNORE INTO institutions VALUES (?,?,?,?,?,?,?,?)",
-                (iid,source["name"],"police",None,"verified_official_metadata",source["url"],1,db.now_iso()))
+                (iid,name,kind,province,"verified_official_metadata",source["url"],1,db.now_iso()))
             conn.execute("UPDATE institutions SET identity_status='verified_official_metadata',current_identity_verified=1,updated_at=? WHERE id=?",(db.now_iso(),iid))
             conn.execute("""INSERT INTO institution_channels VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
                 institution_id=excluded.institution_id,url=excluded.url,evidence_url=excluded.evidence_url,
@@ -61,6 +64,7 @@ def coverage_summary():
         a=conn.execute("SELECT COUNT(*) total,SUM(current_identity_verified) verified FROM institutions").fetchone()
         c=conn.execute("SELECT COUNT(*) total,SUM(endpoint_verified) verified,SUM(collection_enabled) enabled FROM institution_channels").fetchone()
         groups=[dict(r) for r in conn.execute("SELECT kind,COUNT(*) candidates,SUM(current_identity_verified) identity_verified FROM institutions GROUP BY kind ORDER BY kind")]
+        province_presence=[dict(r) for r in conn.execute("SELECT kind,COUNT(DISTINCT province) provinces_with_candidates,SUM(current_identity_verified) identity_verified FROM institutions WHERE province IS NOT NULL AND province!='兵团' GROUP BY kind ORDER BY kind")]
         return {"institutions":{"candidates":a["total"],"identity_verified":a["verified"] or 0},
-                "channels":{"candidates":c["total"],"endpoint_verified":c["verified"] or 0,"collection_enabled":c["enabled"] or 0},"by_kind":groups}
+                "channels":{"candidates":c["total"],"endpoint_verified":c["verified"] or 0,"collection_enabled":c["enabled"] or 0},"by_kind":groups,"province_presence":province_presence}
     finally:conn.close()

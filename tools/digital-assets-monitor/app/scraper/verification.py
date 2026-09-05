@@ -49,10 +49,14 @@ def verify_search_item(item, source):
         evidence.update(publication_evidence(html, item.get("publish_date")))
         soup = BeautifulSoup(html, "html.parser")
         expected_sites = set(source.get("official_site_names", []))
+        expected_titles = source.get("official_title_contains", [])
+        page_title = soup.title.get_text(" ", strip=True) if soup.title else ""
+        evidence["page_title"] = page_title[:200]
         site_names = {node.get("content", "").strip() for node in soup.select("meta[name]")
                       if node.get("name", "").lower() == "sitename" and node.get("content")}
         evidence["site_names"] = sorted(site_names)
-        if expected_sites and not (expected_sites & site_names):
+        identity_ok = (not expected_sites and not expected_titles) or bool(expected_sites & site_names) or any(value in page_title for value in expected_titles)
+        if not identity_ok:
             evidence["status"] = "official_site_identity_mismatch"
             return result
         nodes = soup.select(selector)
@@ -62,11 +66,17 @@ def verify_search_item(item, source):
         for node in nodes[0].select("script, style, nav, header, footer"):
             node.decompose()
         body = nodes[0].get_text(" ", strip=True)
+        published = evidence.get("publisher_date")
+        if not published and source.get("trust_list_date") and item.get("date_origin") == "official_list":
+            from app.analysis.publication import normalized_date
+            published = normalized_date(item.get("publish_date"))
+            if published:
+                evidence["publisher_date"] = published
+                evidence["status"] = "official_list_date"
         evidence["body_characters"] = len(body)
         if len(body) < 100 or not is_relevant(body):
             evidence["status"] = "article_body_insufficient_or_irrelevant"
             return result
-        published = evidence.get("publisher_date")
         if not published:
             return result
         if published > date.today().isoformat():

@@ -30,7 +30,7 @@ print("auth ok ->", r.json()["ok"], "token len:", len(tok or ""))
 c.headers["x-access-token"] = tok
 
 overview=c.get("/api/overview").json()
-assert overview["sources_total"] == 23
+assert overview["sources_total"] == 24
 print("overview ->",overview)
 print("trend ->", len(c.get("/api/trend?days=30").json()))
 print("dist->", len(c.get("/api/distribution?field=institution_type").json()))
@@ -38,7 +38,7 @@ print("heatmap ->", len(c.get("/api/heatmap").json()))
 print("sources ->", len(c.get("/api/sources").json()), "src health keys ok")
 coverage=c.get("/api/coverage").json()
 assert coverage["institutions"]["candidates"] >= 94
-assert coverage["channels"]["collection_enabled"] == 3
+assert coverage["channels"]["collection_enabled"] == 4
 assert coverage["channels"]["endpoint_verified"] == 0
 print("coverage ->",coverage["institutions"],coverage["channels"])
 print("high_value ->", len(c.get("/api/high_value").json()))

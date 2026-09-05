@@ -9,9 +9,12 @@ class RegistryTests(unittest.TestCase):
    old=db.DB_PATH;db.DB_PATH=Path(folder)/"db.sqlite"
    try:
     db.init_db();sync_registry();result=coverage_summary()
-    self.assertGreaterEqual(result["institutions"]["candidates"],94)
+    self.assertGreaterEqual(result["institutions"]["candidates"],392)
     self.assertGreaterEqual(result["channels"]["candidates"],3)
-    self.assertEqual(result["channels"]["collection_enabled"],3)
+    self.assertEqual(result["channels"]["collection_enabled"],4)
+    public_resources=next(x for x in result["province_presence"] if x["kind"]=="public_resource_platform")
+    self.assertEqual(public_resources["provinces_with_candidates"],31)
+    self.assertEqual(public_resources["identity_verified"],1)
     self.assertEqual(result["channels"]["endpoint_verified"],0)
     conn=db.connect();conn.execute("UPDATE institution_channels SET endpoint_verified=1,status='production_scan_ok' WHERE id='configured-police-tianjin'");conn.commit();conn.close()
     sync_registry()
