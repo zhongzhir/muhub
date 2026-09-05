@@ -18,6 +18,17 @@ from app.config import get_keywords, get_settings
 from app.report import latest_report
 from app.security import valid_invite, create_token, require_auth
 
+
+def _public_item(row):
+    if row is None:
+        return None
+    d = dict(row)
+    if not (d.get("amount_evidence") or "").strip():
+        d["amount_value"] = None
+        d["amount_currency"] = None
+        d["amount_evidence"] = None
+    return d
+
 router = APIRouter(prefix="/api")
 
 
@@ -120,7 +131,7 @@ def source_rank(limit: int = Query(10, ge=1, le=100)):
 
 @router.get("/high_value", dependencies=[Depends(require_auth)])
 def high_value(limit: int = Query(8, ge=1, le=100)):
-    return stats.high_value(limit)
+    return [_public_item(r) for r in stats.high_value(limit)]
 
 
 @router.get("/report/latest", dependencies=[Depends(require_auth)])
@@ -141,6 +152,9 @@ def items(
     q: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
+    fetch_from: Optional[str] = None,
+    fetch_to: Optional[str] = None,
+    source_name: Optional[str] = None,
 ):
     conn = db.connect()
     try:
@@ -165,15 +179,22 @@ def items(
             where += " AND COALESCE(publish_date,fetch_date)>=?"; params.append(date_from)
         if date_to:
             where += " AND COALESCE(publish_date,fetch_date)<=?"; params.append(date_to)
+        if fetch_from:
+            where += " AND substr(fetch_date,1,10)>=?"; params.append(fetch_from)
+        if fetch_to:
+            where += " AND substr(fetch_date,1,10)<=?"; params.append(fetch_to)
+        if source_name and source_name != "全部":
+            where += " AND source_name=?"; params.append(source_name)
         total = conn.execute(f"SELECT COUNT(*) c FROM items {where}", params).fetchone()["c"]
         offset = (page - 1) * page_size
         rows = conn.execute(
             f"SELECT id,title,url,source_name,source_category,region,institution,institution_type,"
-            f"asset_types,disposal_method,amount_value,amount_currency,importance,tags,publish_date,analysis "
+            f"asset_types,disposal_method,amount_value,amount_currency,amount_evidence,information_nature,"
+            f"importance,tags,publish_date,fetch_date,analysis "
             f"FROM items {where} ORDER BY COALESCE(publish_date,fetch_date) DESC, id DESC LIMIT ? OFFSET ?",
             params + [page_size, offset],
         ).fetchall()
-        return {"total": total, "page": page, "page_size": page_size, "items": [dict(r) for r in rows]}
+        return {"total": total, "page": page, "page_size": page_size, "items": [_public_item(r) for r in rows]}
     finally:
         conn.close()
 
@@ -183,7 +204,7 @@ def item_detail(item_id: int):
     conn = db.connect()
     try:
         r = conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
-        return dict(r) if r else None
+        return _public_item(r) if r else None
     finally:
         conn.close()
 
@@ -206,17 +227,24 @@ def add_item(data: ItemManual):
         if db.item_exists(conn, make_fingerprint(data.title, data.url)):
             conn.commit()
             return {"ok": False, "message": "已存在该条情报"}
-        # 手工项直接用给定字段插入
+        amount_value = data.amount_value
+        amount_currency = data.amount_currency
+        if amount_value is None or not amount_currency:
+            amount_value = amount_currency = None
+        else:
+            # 手工录入没有原文证据时不落库金额/数量
+            amount_value = amount_currency = None
+        now = db.now_iso()
         conn.execute(
             """INSERT INTO items (fingerprint,title,url,source_name,source_category,source_type,publish_date,fetch_date,
                content,summary,analysis,region,institution,institution_type,asset_types,disposal_method,
-               amount_value,amount_currency,importance,tags,is_processed,created_at,updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'medium',?,1,?,?)""",
+               amount_value,amount_currency,amount_evidence,information_nature,importance,tags,is_processed,created_at,updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (make_fingerprint(data.title, data.url), data.title, data.url, data.source_name, data.source_category,
-             "manual", data.publish_date or datetime.now().strftime("%Y-%m-%d"), db.now_iso(),
+             "manual", data.publish_date or datetime.now().strftime("%Y-%m-%d"), now,
              data.summary or "", data.summary or "", "", data.region, data.institution, data.institution_type,
-             data.asset_types, data.disposal_method, data.amount_value, data.amount_currency,
-             (data.asset_types or "虚拟货币"), db.now_iso(), db.now_iso()),
+             data.asset_types, data.disposal_method, amount_value, amount_currency, None, None,
+             "medium", (data.asset_types or "虚拟货币"), 1, now, now),
         )
         conn.commit()
         return {"ok": True}

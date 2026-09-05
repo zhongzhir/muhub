@@ -2,6 +2,19 @@
 import re
 from app.config import get_keywords
 
+NATURE_CASE = "案件信息"
+NATURE_POLICY = "政策或制度指导"
+NATURE_NOTICE = "处置公告或交易机会"
+NATURE_EXPERIENCE = "可借鉴的管理经验"
+NATURE_RISK = "行业风险信号"
+NATURE_RESEARCH = "理论研究"
+
+_GENERIC_ASSETS = ["虚拟货币", "虚拟币", "数字货币", "加密资产", "数字资产", "加密货币", "代币"]
+_HYPOTHETICAL_INST = re.compile(
+    r"(如果|若|假如|例如|比如|应当|可以|可|或)在?.{0,12}(法院|检察|公安|纪委|监委)"
+)
+_ROLE_FILLER_INST = re.compile(r"充分发挥.{0,10}(检察|法院|公安|纪委)")
+
 
 def _has(text, patterns):
     text = (text or "").lower()
@@ -11,13 +24,65 @@ def _has(text, patterns):
     return False
 
 
+def _event_institution_text(text):
+    t = text or ""
+    t = _HYPOTHETICAL_INST.sub("", t)
+    t = _ROLE_FILLER_INST.sub("", t)
+    return t
+
+
+def classify_information_nature(title, text, url="", source_name="", source_category=""):
+    """区分案件、公告、政策、研究等，避免把讨论文包装成处置事件。"""
+    title = title or ""
+    text = text or ""
+    url = (url or "").lower()
+    blob = f"{title}\n{text}"
+    source_blob = f"{source_name or ''} {source_category or ''}"
+
+    if "/llyj/" in url or "理论研究" in blob or "理论研究" in source_blob:
+        if any(k in title for k in ("完善程序", "质效", "制度建议", "机制")):
+            return NATURE_POLICY
+        return NATURE_RESEARCH
+    if any(k in title for k in ("法理", "双重意蕴", "理论研究")):
+        return NATURE_RESEARCH
+    if re.search(r"(判决|裁定|被告人|案号|刑初|刑终|犯罪嫌疑人)", blob):
+        return NATURE_CASE
+    if re.search(r"(挂牌公告|成交公告|拍卖公告|转让公告|竞价公告|中标)", blob):
+        return NATURE_NOTICE
+    if re.search(r"(管理办法|指导意见|工作通知|印发.*办法|制度建设)", blob) and not re.search(
+        r"(被告人|判决|首次成功处置)", blob
+    ):
+        return NATURE_POLICY
+    if re.search(r"(首次成功处置|成功变现|回流入境|经.{0,8}持牌交易所变现)", blob):
+        return NATURE_NOTICE
+    if re.search(r"(框架协议|探索|经验|模式)", title) or re.search(r"(签署.{0,12}框架协议)", blob):
+        return NATURE_EXPERIENCE
+    if re.search(r"(风险预警|行业风险|洗钱风险)", blob) and not re.search(r"(判决|挂牌公告)", blob):
+        return NATURE_RISK
+    if re.search(r"(处置|变现|拍卖|罚没|查获)", blob):
+        return NATURE_NOTICE
+    return NATURE_POLICY
+
+
+def allows_event_attributes(nature):
+    """仅案件、处置公告和可核实的实践经验允许填写事件主体/地域/处置方式。"""
+    return nature in {NATURE_CASE, NATURE_NOTICE, NATURE_EXPERIENCE}
+
+
 def classify_institution_type(text):
     kw = get_keywords().get("institution_types", {})
-    order = ["纪检监察", "人民法院", "人民检察院", "公安机关", "财政部门",
-             "产权交易所", "境外处置机构", "持有牌交易平台", "第三方处置公司", "律所/研究"]
-    # 特例：纪检监察需先于公安等
+    scoped = _event_institution_text(text)
+    order = ["纪委监委", "纪检监察", "人民法院", "人民检察院", "公安机关", "财政部门",
+             "产权交易所", "境外处置机构", "持牌交易平台", "持有牌交易平台", "第三方处置公司", "律所/研究"]
     for tpe in order:
-        if tpe in kw and _has(text, kw[tpe]):
+        if tpe not in kw:
+            continue
+        patterns = [p for p in kw[tpe] if p not in ("检察", "反诈")]
+        if tpe == "人民检察院":
+            patterns = [p for p in patterns if p in ("检察院", "人民检察院")] or ["检察院", "人民检察院"]
+        if tpe == "人民法院":
+            patterns = [p for p in patterns if p != "法庭"]
+        if _has(scoped, patterns):
             return tpe
     return "其他"
 
@@ -55,22 +120,49 @@ def classify_region(text):
 
 def classify_asset_types(text):
     kw = get_keywords().get("asset_types", {})
-    found = []
+    specific = []
+    other_coin = False
+    generic = False
+    generic_l = {g.lower() for g in _GENERIC_ASSETS}
     for asset, patterns in kw.items():
-        if _has(text, patterns):
-            found.append(asset)
-    # 去重逻辑：(稳定币)已含在"其他代币"关键词，但保留优先级
-    return found or ["虚拟货币"]
+        if asset in ("BTC", "ETH", "USDT", "USDC", "稳定币"):
+            if _has(text, patterns):
+                specific.append(asset)
+            continue
+        extra = [p for p in patterns if p.lower() not in generic_l]
+        if extra and _has(text, extra):
+            other_coin = True
+        if _has(text, [p for p in patterns if p.lower() in generic_l]):
+            generic = True
+    if specific:
+        return specific
+    if other_coin:
+        return ["其他代币"]
+    if generic:
+        return ["虚拟货币"]
+    return ["虚拟货币"]
 
 
 def classify_disposal_method(text):
-    kw = get_keywords().get("disposal_methods", {})
-    # 高优先级匹配
-    priority = ["境外持牌交易所变现", "司法拍卖/网络司法拍卖", "先驱处置", "试点/合作机制建设",
-                "定向回收/协商回收", "委托第三方机构处置", "涉案管控/扣押"]
-    for m in priority:
-        if m in kw and _has(text, kw[m]):
-            return m
+    t = text or ""
+    if (("持牌交易所" in t) or ("持牌虚拟资产" in t) or ("持牌数字资产" in t)) and any(
+        k in t for k in ("变现", "结汇", "回流入境", "处置")
+    ):
+        return "境外持牌交易所变现"
+    if any(k in t for k in ("司法拍卖", "网络司法拍卖")):
+        return "司法拍卖/网络司法拍卖"
+    if any(k in t for k in ("委托处置", "受托处置", "代为处置")) or (
+        "委托" in t and "第三方" in t and "处置" in t
+    ):
+        return "委托第三方机构处置"
+    if any(k in t for k in ("协商回收", "定向回收", "商户回收", "发行方回收")):
+        return "定向回收/协商回收"
+    if any(k in t for k in ("先行处置", "先行变现", "提前变现")):
+        return "先行处置"
+    if any(k in t for k in ("框架协议", "合作备忘录", "试点机构", "揭牌")):
+        return "试点/合作机制建设"
+    if any(k in t for k in ("已扣押", "扣押了", "查获", "扣押涉案", "收缴涉案", "查扣涉案")):
+        return "涉案管控/扣押"
     return "其他"
 
 

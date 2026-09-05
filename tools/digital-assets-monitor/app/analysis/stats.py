@@ -22,10 +22,12 @@ def overview():
         sources_ok = conn.execute("SELECT COUNT(*) c FROM sources WHERE enabled=1 AND last_status LIKE '成功%'").fetchone()["c"]
         regions = conn.execute("SELECT COUNT(DISTINCT region) c FROM items WHERE region IS NOT NULL").fetchone()["c"]
         amount = conn.execute(
-            "SELECT SUM(amount_value) s FROM items WHERE amount_currency IN ('人民币','元') AND amount_value IS NOT NULL"
+            "SELECT SUM(amount_value) s FROM items WHERE amount_currency IN ('人民币','元') "
+            "AND amount_value IS NOT NULL AND IFNULL(amount_evidence,'') != ''"
         ).fetchone()["s"]
         amount_usd = conn.execute(
-            "SELECT SUM(amount_value) s FROM items WHERE amount_currency='美元' AND amount_value IS NOT NULL"
+            "SELECT SUM(amount_value) s FROM items WHERE amount_currency='美元' "
+            "AND amount_value IS NOT NULL AND IFNULL(amount_evidence,'') != ''"
         ).fetchone()["s"]
         last_report = conn.execute(
             "SELECT report_date, new_item_count, title FROM reports ORDER BY report_date DESC LIMIT 1"
@@ -117,7 +119,8 @@ def high_value(limit=8):
     try:
         rows = conn.execute(
             "SELECT id, title, url, region, institution, institution_type, asset_types, disposal_method, "
-            "amount_value, amount_currency, importance, publish_date, tags, source_name "
+            "amount_value, amount_currency, amount_evidence, information_nature, importance, publish_date, "
+            "tags, source_name, analysis "
             "FROM items WHERE importance='high' ORDER BY COALESCE(amount_value,0) DESC, publish_date DESC LIMIT ?",
             (limit,),
         ).fetchall()

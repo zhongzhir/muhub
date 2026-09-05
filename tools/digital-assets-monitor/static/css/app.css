@@ -127,6 +127,12 @@ main{padding:26px;max-width:1500px;margin:0 auto}
 .kpi .val{font-family:var(--mono);font-size:30px;font-weight:700;margin:8px 0 2px;letter-spacing:-.5px}
 .kpi .sub{color:var(--txt-mute);font-size:11.5px}
 .kpi .ico{position:absolute;right:14px;top:14px;font-size:20px;opacity:.85}
+.kpi.clickable{cursor:pointer}
+.kpi.clickable:hover{border-color:rgba(47,224,200,.55)}
+.latest-panel{margin-bottom:18px}
+.filter-active{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;margin-top:4px}
+.url-break{word-break:break-all;overflow-wrap:anywhere;white-space:normal;max-width:100%;display:inline-block}
+.chart.clickable{cursor:pointer}
 
 /* ---------- CHARTS GRID ---------- */
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
@@ -198,7 +204,7 @@ table.items .tcell{color:var(--txt);font-weight:500}
 .dw-field{margin-bottom:14px}
 .dw-field label{display:block;font-size:12px;color:var(--txt-mute);margin-bottom:6px}
 .dw-field .value{font-size:14px;color:var(--txt);line-height:1.6}
-.dw-analysis{background:rgba(47,224,200,.06);border:1px solid rgba(47,224,200,.18);border-radius:12px;padding:14px;color:var(--txt);font-size:13.5px;line-height:1.8;margin-top:6px}
+.dw-analysis{background:rgba(47,224,200,.06);border:1px solid rgba(47,224,200,.18);border-radius:12px;padding:14px;color:var(--txt);font-size:13.5px;line-height:1.8;margin-top:6px;white-space:pre-wrap}
 #overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;opacity:0;pointer-events:none;transition:.3s}
 #overlay.show{opacity:1;pointer-events:auto}
 

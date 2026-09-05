@@ -6,6 +6,39 @@
   let charts = {};
   let itemState = { page: 1, page_size: 10, filters: {} };
 
+  function emptyFilters() {
+    return {
+      institution_type: "全部", region: "全部", asset_types: "全部",
+      disposal_method: "全部", importance: "全部", source_category: "全部",
+      q: "", date_from: "", date_to: "", fetch_from: "", fetch_to: "", source_name: "",
+    };
+  }
+  function ymd(d) {
+    const z = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+  }
+  function todayStr() { return ymd(new Date()); }
+  function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return ymd(d); }
+  function safeHttpUrl(u) {
+    try {
+      const x = new URL(u);
+      if (x.protocol === "http:" || x.protocol === "https:") return x.href;
+    } catch (e) {}
+    return "";
+  }
+  function urlLink(u) {
+    const href = safeHttpUrl(u);
+    if (!href) return `<span class="url-break">—</span>`;
+    return `<a class="url-break" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(href)}</a>`;
+  }
+  function analysisValueLine(text) {
+    if (!text) return "—";
+    const line = String(text).split("\n").find((x) => x.startsWith("对实际工作的价值"));
+    return line ? line.split("：").slice(1).join("：").replace(/。$/, "") : String(text).split("\n")[0];
+  }
+  function undisclosed(v) { return v ? esc(v) : "未披露"; }
+  function hasAmount(r) { return r && r.amount_value != null && r.amount_evidence; }
+
   const COLORS = ["#2fe0c8", "#3b82f6", "#8b5cf6", "#f472b6", "#ffb547", "#34d399", "#60a5fa", "#a78bfb"];
   const FONT = "PingFang SC, Microsoft YaHei, sans-serif";
 
@@ -79,23 +112,22 @@
   }
 
   // ---------- nav ----------
-  $$("nav a").forEach((a) => a.addEventListener("click", () => {
-    $$("nav a").forEach((x) => x.classList.remove("active"));
-    a.classList.add("active");
-    $$(".view").forEach((v) => v.classList.remove("active"));
-    $("#view-" + a.dataset.view).classList.add("active");
-    if (a.dataset.view === "dashboard") loadDashboard();
-    if (a.dataset.view === "items") loadItems();
-    if (a.dataset.view === "sources") loadSources();
-  }));
+  function switchView(name) {
+    $$("nav a").forEach((x) => x.classList.toggle("active", x.dataset.view === name));
+    $$(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + name));
+    if (name === "dashboard") loadDashboard();
+    if (name === "items") loadItems();
+    if (name === "sources") loadSources();
+  }
+  $$("nav a").forEach((a) => a.addEventListener("click", () => switchView(a.dataset.view)));
 
   // ---------- dashboard ----------
   async function loadDashboard() {
-    const [ov, trend, typeDist, assetDist, methodDist, regionDist, heat, srank, hv, report] = await Promise.all([
+    const [ov, trend, typeDist, assetDist, methodDist, regionDist, heat, srank, hv, report, latest] = await Promise.all([
       api("/overview"), api("/trend?days=30"), api("/distribution?field=institution_type"),
       api("/distribution?field=asset_types"), api("/distribution?field=disposal_method"),
       api("/distribution?field=region"), api("/heatmap?weeks=8"), api("/source_rank?limit=8"),
-      api("/high_value?limit=7"), api("/report/latest"),
+      api("/high_value?limit=7"), api("/report/latest"), api("/items?page=1&page_size=6"),
     ]);
     renderKpis(ov);
     renderTrend(trend);
@@ -107,6 +139,7 @@
     renderSourceRank(srank);
     renderHighValue(hv);
     renderReport(report);
+    renderLatest(latest.items || []);
     $("#liveStatus").textContent = ov.sources_ok >= ov.sources_total && ov.sources_total > 0 ? "监测运行中 · 源在线" : "监测运行中 · 部分源离线";
   }
   const chartType = () => mkChart("chartType");
@@ -116,19 +149,22 @@
 
   function renderKpis(ov) {
     const k = [
-      { lbl: "累计情报", val: ov.total_items, sub: "全量情报条目", ico: "🗂️" },
-      { lbl: "今日新增", val: ov.new_today, sub: "今日新增情报", ico: "🔔" },
-      { lbl: "近7日新增", val: ov.new_week, sub: "近一周新增", ico: "📈" },
-      { lbl: "高价值信号", val: ov.high_value, sub: "重点/金额类", ico: "⭐" },
+      { lbl: "累计情报", val: ov.total_items, sub: "全量情报条目", ico: "🗂️", drill: {} },
+      { lbl: "今日新增", val: ov.new_today, sub: "今日新增情报", ico: "🔔", drill: { fetch_from: todayStr(), fetch_to: todayStr() } },
+      { lbl: "近7日新增", val: ov.new_week, sub: "近一周新增", ico: "📈", drill: { fetch_from: daysAgo(7), fetch_to: todayStr() } },
+      { lbl: "高价值信号", val: ov.high_value, sub: "重点/金额类", ico: "⭐", drill: { importance: "high" } },
       { lbl: "覆盖地域", val: ov.regions, sub: "行政区域分布", ico: "📍" },
       { lbl: "处置金额(¥)", val: fmtMoney(ov.amount_rmb, "人民币"), sub: "已识别合计", ico: "💰", mono: 1 },
       { lbl: "监测信息源", val: `${ov.sources_ok}/${ov.sources_total}`, sub: "在线/总数", ico: "📡" },
     ];
-    $("#kpis").innerHTML = k.map((o) => `
-      <div class="kpi"><div class="ico">${o.ico}</div>
+    $("#kpis").innerHTML = k.map((o, i) => `
+      <div class="kpi${o.drill ? " clickable" : ""}" data-kpi="${i}"><div class="ico">${o.ico}</div>
         <div class="lbl">${o.lbl}</div>
         <div class="val" style="font-size:${o.mono && String(o.val).length > 8 ? 24 : 30}px">${o.val}</div>
         <div class="sub">${o.sub}</div></div>`).join("");
+    $("#kpis").querySelectorAll(".kpi.clickable").forEach((el) => {
+      el.addEventListener("click", () => goItems(k[Number(el.dataset.kpi)].drill));
+    });
   }
 
   function renderTrend(data) {
@@ -146,6 +182,7 @@
         itemStyle: { color: "#2fe0c8" }, areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: "rgba(47,224,200,.3)" }, { offset: 1, color: "rgba(47,224,200,0)" }]) },
       }],
     });
+    bindChartClick(c, (p) => { if (p && p.name) goItems({ date_from: p.name, date_to: p.name }); });
   }
 
   function renderDonut(c, data) {
@@ -161,6 +198,7 @@
         emphasis: { label: { show: true } }, data,
       }],
     });
+    bindChartClick(c, (p) => { if (p && p.name) goItems({ institution_type: p.name }); });
   }
 
   function renderBar(c, data) {
@@ -176,9 +214,11 @@
         label: { show: true, position: "right", color: "#8ea0bb", fontFamily: "monospace", fontSize: 11 },
       }],
     });
+    bindChartClick(c, (p) => {
+      const name = p && (p.name || (p.dataIndex != null && rows[p.dataIndex] && rows[p.dataIndex].name));
+      if (name) goItems({ asset_types: name });
+    });
   }
-
-  function renderRose(c, data) {
     c.setOption({
       color: COLORS, tooltip: { trigger: "item", formatter: "{b}: {c}" },
       series: [{
@@ -187,6 +227,7 @@
         data: data.slice(0, 9),
       }],
     });
+    bindChartClick(c, (p) => { if (p && p.name) goItems({ disposal_method: p.name }); });
   }
 
   function renderRegion(c, data) {
@@ -201,6 +242,7 @@
         itemStyle: { borderRadius: [6, 6, 0, 0] }, label: { show: true, position: "top", color: "#8ea0bb", fontSize: 11 },
       }],
     });
+    bindChartClick(c, (p) => { if (p && p.name) goItems({ region: p.name }); });
   }
 
   function renderHeat(hc) {
@@ -232,6 +274,7 @@
         label: { show: true, position: "right", color: "#8ea0bb", fontFamily: "monospace", fontSize: 11 },
       }],
     });
+    bindChartClick(c, (p) => { if (p && p.name) goItems({ source_name: p.name }); });
   }
 
   function renderHighValue(rows) {
@@ -243,15 +286,47 @@
         <div class="body">
           <div class="title">${esc(r.title)}</div>
           <div class="meta">
-            ${r.amount_value ? `<span class="amount">${fmtMoney(r.amount_value, r.amount_currency)}</span>` : ""}
-            ${r.region ? `<span class="chip acc">${r.region}</span>` : ""}
-            <span class="chip">${r.institution_type || "—"}</span>
-            <span class="chip">${r.disposal_method || "—"}</span>
+            ${hasAmount(r) ? `<span class="amount">${fmtMoney(r.amount_value, r.amount_currency)}</span>` : ""}
+            ${r.information_nature ? `<span class="chip acc">${esc(r.information_nature)}</span>` : ""}
+            ${r.region ? `<span class="chip">${esc(r.region)}</span>` : ""}
             <span class="tag">${fmtDate(r.publish_date)}</span>
           </div>
         </div>
       </div>`).join("");
     el.querySelectorAll(".list-row").forEach((x) => x.addEventListener("click", () => openDetail(x.dataset.id)));
+  }
+
+  function renderLatest(rows) {
+    const el = $("#latestIntel");
+    if (!el) return;
+    if (!rows.length) { el.innerHTML = `<div class="empty">暂无情报</div>`; return; }
+    el.innerHTML = rows.map((r) => `
+      <div class="list-row" data-id="${r.id}">
+        <div class="body">
+          <div class="title">${esc(r.title)}</div>
+          <div class="meta">
+            <span class="tag">${fmtDate(r.publish_date)}</span>
+            <span class="chip">${esc(r.source_name || "未披露")}</span>
+            <span class="chip acc">${esc(r.information_nature || "未披露")}</span>
+            <span>${esc(analysisValueLine(r.analysis))}</span>
+          </div>
+        </div>
+      </div>`).join("");
+    el.querySelectorAll(".list-row").forEach((x) => x.addEventListener("click", () => openDetail(x.dataset.id)));
+  }
+
+  function bindChartClick(chart, handler) {
+    if (!chart) return;
+    chart.off("click");
+    chart.getDom().classList.add("clickable");
+    chart.on("click", handler);
+  }
+
+  function goItems(partial) {
+    itemState.page = 1;
+    itemState.filters = Object.assign(emptyFilters(), partial || {});
+    syncFilterForm();
+    switchView("items");
   }
 
   function renderReport(r) {
@@ -262,7 +337,7 @@
   // ---------- items ----------
   function buildFilters() {
     const wrap = $("#itemFilters");
-    const opt = (list, cur) => ["全部"].concat(list).map((o) => `<option ${o === cur ? "selected" : ""}>${o}</option>`).join("");
+    const opt = (list, cur) => ["全部"].concat(list).map((o) => `<option ${o === cur ? "selected" : ""}>${esc(o)}</option>`).join("");
     wrap.innerHTML = `
       <div class="filter"><label>主体类型</label><select id="fType" class="select">${opt(meta.institution_types)}</select></div>
       <div class="filter"><label>行政区域</label><select id="fRegion" class="select">${opt(meta.regions)}</select></div>
@@ -270,40 +345,95 @@
       <div class="filter"><label>处置方式</label><select id="fMethod" class="select">${opt(meta.disposal_methods)}</select></div>
       <div class="filter"><label>重要度</label><select id="fImp" class="select"><option>全部</option><option>high</option><option>medium</option><option>low</option></select></div>
       <div class="filter"><label>来源类别</label><select id="fCat" class="select">${opt(meta.source_categories)}</select></div>
+      <div class="filter"><label>发布从</label><input id="fDateFrom" class="input" type="date"></div>
+      <div class="filter"><label>发布至</label><input id="fDateTo" class="input" type="date"></div>
       <div class="filter"><label>关键词</label><input id="fQ" class="input" placeholder="搜索标题/内容" style="min-width:180px"></div>
-      <button id="fGo" class="btn sm">查询</button>`;
-    ["fType", "fRegion", "fAsset", "fMethod", "fImp", "fCat"].forEach((id) => $("#" + id).addEventListener("change", () => { gatherFilters(); loadItems(); }));
+      <input id="fFetchFrom" type="hidden"><input id="fFetchTo" type="hidden"><input id="fSourceName" type="hidden">
+      <button id="fGo" class="btn sm">查询</button>
+      <button id="fClear" class="btn sm ghost" type="button">清除筛选</button>
+      <div id="activeFilters" class="filter-active"></div>`;
+    ["fType", "fRegion", "fAsset", "fMethod", "fImp", "fCat", "fDateFrom", "fDateTo"].forEach((id) => $("#" + id).addEventListener("change", () => { gatherFilters(); loadItems(); }));
     $("#fQ").addEventListener("keydown", (e) => { if (e.key === "Enter") { gatherFilters(); loadItems(); } });
     $("#fGo").addEventListener("click", () => { gatherFilters(); loadItems(); });
+    $("#fClear").addEventListener("click", () => goItems({}));
     $("#prevPage").addEventListener("click", () => { if (itemState.page > 1) { itemState.page--; loadItems(); } });
     $("#nextPage").addEventListener("click", () => { itemState.page++; loadItems(); });
+    syncFilterForm();
   }
   function gatherFilters() {
     itemState.filters = {
-      institution_type: $("#fType").value, region: $("#fRegion").value, asset_types: $("#fAsset").value,
-      disposal_method: $("#fMethod").value, importance: $("#fImp").value, source_category: $("#fCat").value,
-      q: $("#fQ").value.trim(),
+      institution_type: $("#fType") ? $("#fType").value : "全部",
+      region: $("#fRegion") ? $("#fRegion").value : "全部",
+      asset_types: $("#fAsset") ? $("#fAsset").value : "全部",
+      disposal_method: $("#fMethod") ? $("#fMethod").value : "全部",
+      importance: $("#fImp") ? $("#fImp").value : "全部",
+      source_category: $("#fCat") ? $("#fCat").value : "全部",
+      q: $("#fQ") ? $("#fQ").value.trim() : "",
+      date_from: $("#fDateFrom") ? $("#fDateFrom").value : "",
+      date_to: $("#fDateTo") ? $("#fDateTo").value : "",
+      fetch_from: $("#fFetchFrom") ? $("#fFetchFrom").value : "",
+      fetch_to: $("#fFetchTo") ? $("#fFetchTo").value : "",
+      source_name: $("#fSourceName") ? $("#fSourceName").value : "",
     };
+  }
+  function syncFilterForm() {
+    const f = Object.assign(emptyFilters(), itemState.filters || {});
+    itemState.filters = f;
+    const set = (id, val) => { const el = $("#" + id); if (el) el.value = val || ""; };
+    set("fType", f.institution_type);
+    set("fRegion", f.region);
+    set("fAsset", f.asset_types);
+    set("fMethod", f.disposal_method);
+    set("fImp", f.importance);
+    set("fCat", f.source_category);
+    set("fQ", f.q);
+    set("fDateFrom", f.date_from);
+    set("fDateTo", f.date_to);
+    set("fFetchFrom", f.fetch_from);
+    set("fFetchTo", f.fetch_to);
+    set("fSourceName", f.source_name);
+    renderActiveFilters();
+  }
+  function renderActiveFilters() {
+    const el = $("#activeFilters");
+    if (!el) return;
+    const f = itemState.filters || {};
+    const chips = [];
+    const add = (k, v, label) => { if (v && v !== "全部") chips.push(`${label}：${v}`); };
+    add("institution_type", f.institution_type, "主体");
+    add("region", f.region, "地域");
+    add("asset_types", f.asset_types, "资产");
+    add("disposal_method", f.disposal_method, "处置");
+    add("importance", f.importance, "重要度");
+    add("source_category", f.source_category, "来源类别");
+    add("source_name", f.source_name, "来源");
+    add("q", f.q, "关键词");
+    if (f.date_from || f.date_to) chips.push(`发布 ${f.date_from || "…"} ~ ${f.date_to || "…"}`);
+    if (f.fetch_from || f.fetch_to) chips.push(`入库 ${f.fetch_from || "…"} ~ ${f.fetch_to || "…"}`);
+    el.innerHTML = chips.length ? chips.map((c) => `<span class="chip acc">${esc(c)}</span>`).join("") : "";
   }
   function qs() {
     const p = new URLSearchParams({ page: itemState.page, page_size: itemState.page_size });
-    Object.entries(itemState.filters).forEach(([k, v]) => { if (v && v !== "全部") p.set(k, v); });
+    Object.entries(itemState.filters || {}).forEach(([k, v]) => { if (v && v !== "全部") p.set(k, v); });
     return p.toString();
   }
   async function loadItems() {
     if (!meta) return;
+    renderActiveFilters();
     const data = await api("/items?" + qs());
     const body = $("#itemsBody");
     if (!data.items.length) { body.innerHTML = `<tr><td colspan="9" class="empty">暂无匹配情报</td></tr>`; }
     else {
       body.innerHTML = data.items.map((r) => `
         <tr data-id="${r.id}" class="rowClick">
-          <td><div class="tcell">${esc(r.title)}</div><div class="minipips">${r.tags ? esc(String(r.tags)).split(",").slice(0, 3).map((t) => `<span class="chip">${t}</span>`).join("") : ""}</div></td>
-          <td>${r.institution_type || "—"}</td><td>${r.region || "—"}</td><td>${esc(r.asset_types || "—")}</td>
-          <td>${esc(r.disposal_method || "—")}</td>
-          <td>${r.amount_value ? `<span class="amount">${fmtMoney(r.amount_value, r.amount_currency)}</span>` : "—"}</td>
+          <td><div class="tcell">${esc(r.title)}</div>
+            <div class="url-break">${urlLink(r.url)}</div>
+            <div class="minipips">${r.tags ? esc(String(r.tags)).split(",").slice(0, 3).map((t) => `<span class="chip">${t}</span>`).join("") : ""}</div></td>
+          <td>${undisclosed(r.institution_type)}</td><td>${undisclosed(r.region)}</td><td>${esc(r.asset_types || "未披露")}</td>
+          <td>${undisclosed(r.disposal_method)}</td>
+          <td>${hasAmount(r) ? `<span class="amount">${fmtMoney(r.amount_value, r.amount_currency)}</span>` : "未披露"}</td>
           <td>${r.importance === "high" ? `<span class="chip hi">高</span>` : r.importance === "medium" ? `<span class="chip">中</span>` : `<span class="chip">低</span>`}</td>
-          <td>${esc(r.source_name || "—")}</td>
+          <td>${esc(r.source_name || "未披露")}</td>
           <td><button class="btn sm danger del">删</button></td>
         </tr>`).join("");
       body.querySelectorAll(".rowClick").forEach((tr) => tr.addEventListener("click", (e) => {
@@ -326,17 +456,21 @@
   async function openDetail(id) {
     const r = await api("/items/" + id);
     if (!r) return;
-    const row = (l, v) => `<div class="dw-field"><label>${l}</label><div class="value">${v || "—"}</div></div>`;
+    const row = (l, v) => `<div class="dw-field"><label>${l}</label><div class="value">${v || "未披露"}</div></div>`;
+    const amountBlock = hasAmount(r)
+      ? row("金额/数量", `${fmtMoney(r.amount_value, r.amount_currency)}<div class="url-break" style="margin-top:6px;color:var(--txt-dim)">证据：${esc(r.amount_evidence)}</div>`)
+      : row("金额/数量", "未披露");
     $("#drawer").innerHTML = `
       <div class="dw-head"><h2 class="dw-title">${esc(r.title)}</h2><button class="dw-close" onclick="document.querySelector('#drawer').classList.remove('open');document.querySelector('#overlay').classList.remove('show')">×</button></div>
-      ${row("来源", `${esc(r.source_name)} · ${fmtDate(r.publish_date)}`)}
-      ${row("主体", `${esc(r.institution || "—")}　<span class="chip">${r.institution_type || "—"}</span>`)}
-      ${row("地域 / 资产 / 处置", `${esc(r.region || "—")}　|　${esc(r.asset_types || "—")}　|　${esc(r.disposal_method || "—")}`)}
-      ${row("金额/量", r.amount_value ? fmtMoney(r.amount_value, r.amount_currency) : "—")}
-      ${row("标签", r.tags ? esc(String(r.tags)).split(",").map((t) => `<span class="chip">${t}</span>`).join(" ") : "—")}
-      <div class="dw-field"><label>简要分析</label><div class="dw-analysis">${esc(r.analysis || "")}</div></div>
-      ${r.content ? row("摘要", esc(String(r.content).slice(0, 400))) : ""}
-      ${r.url ? `<div class="dw-field"><label>原文</label><div class="value"><a href="${esc(/^https?:\/\//i.test(r.url) ? r.url : "#")}" target="_blank" rel="noopener">打开原链接 ↗</a></div></div>` : ""}
+      <div class="dw-field"><label>处置价值分析</label><div class="dw-analysis">${esc(r.analysis || "未披露")}</div></div>
+      ${row("原文链接", `${esc(r.source_name || "未披露")}<div style="margin-top:6px">${urlLink(r.url)}</div>`)}
+      ${row("发布时间", fmtDate(r.publish_date))}
+      ${row("发布来源", esc(r.source_name || "未披露"))}
+      ${amountBlock}
+      ${row("信息性质", esc(r.information_nature || "未披露"))}
+      ${row("事件主体", `${undisclosed(r.institution)}　<span class="chip">${undisclosed(r.institution_type)}</span>`)}
+      ${row("已核实字段", `地域 ${undisclosed(r.region)}　|　资产 ${esc(r.asset_types || "未披露")}　|　处置方式 ${undisclosed(r.disposal_method)}`)}
+      ${row("标签", r.tags ? esc(String(r.tags)).split(",").map((t) => `<span class="chip">${t}</span>`).join(" ") : "未披露")}
     `;
     const dw = $("#drawer"); dw.classList.add("open"); $("#overlay").classList.add("show");
   }
@@ -367,7 +501,7 @@
     });
   });
   function formField(f) {
-    const labels = { title: "标题 *", url: "链接", source_name: "来源", source_category: "来源类别", publish_date: "日期(YYYY-MM-DD)", summary: "摘要", region: "地域", institution: "机构", institution_type: "主体类型", asset_types: "资产类型", disposal_method: "处置方式", amount_value: "金额/数量", amount_currency: "币种(人民币/美元/枚)" };
+    const labels = { title: "标题 *", url: "链接", source_name: "来源", source_category: "来源类别", publish_date: "日期(YYYY-MM-DD)", summary: "备注", region: "地域", institution: "机构", institution_type: "主体类型", asset_types: "资产类型", disposal_method: "处置方式", amount_value: "金额/数量", amount_currency: "币种(人民币/美元/枚)" };
     if (["source_category", "institution_type", "disposal_method", "asset_types"].includes(f)) return `<div class="dw-field"><label>${labels[f]}</label><select id="af-${f}" class="select" style="width:100%"></select></div>`;
     return `<div class="dw-field"><label>${labels[f]}</label><input id="af-${f}" class="input" ${f === "title" ? "required" : ""}></div>`;
   }
@@ -424,6 +558,8 @@
   $("#logoutBtn").addEventListener("click", () => logout(true));
   $("#login-btn").addEventListener("click", login);
   $("#login-code").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+  const viewAll = document.getElementById("viewAllItems");
+  if (viewAll) viewAll.addEventListener("click", () => goItems({}));
 
   // ---------- boot ----------
   window.addEventListener("resize", () => {

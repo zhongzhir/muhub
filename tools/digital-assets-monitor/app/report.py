@@ -7,15 +7,15 @@ def _today_items(conn):
     today = datetime.now().strftime("%Y-%m-%d")
     rows = conn.execute(
         "SELECT title, url, source_name, source_category, region, institution_type, "
-        "asset_types, disposal_method, amount_value, amount_currency, importance, tags, analysis, publish_date "
+        "asset_types, disposal_method, amount_value, amount_currency, amount_evidence, importance, tags, analysis, publish_date "
         "FROM items WHERE substr(fetch_date,1,10)=? ORDER BY importance DESC, publish_date DESC",
         (today,),
     ).fetchall()
     return [dict(r) for r in rows]
 
 
-def _fmt_amount(amt, cur):
-    if not amt:
+def _fmt_amount(amt, cur, evidence=None):
+    if not amt or not evidence:
         return ""
     unit = "枚" if cur == "枚" else (cur or "元")
     return f"（{amt:,.0f} {unit}）"
@@ -42,9 +42,7 @@ def generate_daily_report(force=False):
         for i in high[:6]:
             meta = "、".join([x for x in [i["region"], i["institution_type"], i["disposal_method"]] if x])
             lines.append(
-                f"• 【{i['importance'].upper()}】{i['title']}{_fmt_amount(i['amount_value'], i['amount_currency'])}"
-                if False
-                else f"• 【高价值】{i['title']}{_fmt_amount(i['amount_value'], i['amount_currency'])}"
+                f"• 【高价值】{i['title']}{_fmt_amount(i['amount_value'], i['amount_currency'], i.get('amount_evidence'))}"
             )
             lines.append(f"   {meta}｜来源：{i['source_name']}｜{i.get('analysis') or ''}")
             if i["url"]:

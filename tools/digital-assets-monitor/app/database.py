@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS items (
     disposal_method TEXT,
     amount_value REAL,
     amount_currency TEXT,
+    amount_evidence TEXT,
+    information_nature TEXT,
     importance TEXT DEFAULT 'medium',
     tags TEXT,
     raw TEXT,
@@ -146,9 +148,23 @@ CREATE TABLE IF NOT EXISTS scan_tokens (
 """
 
 
+_ITEM_MIGRATIONS = (
+    ("amount_evidence", "TEXT"),
+    ("information_nature", "TEXT"),
+)
+
+
+def migrate_schema(conn):
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(items)")}
+    for name, ddl in _ITEM_MIGRATIONS:
+        if name not in cols:
+            conn.execute(f"ALTER TABLE items ADD COLUMN {name} {ddl}")
+
+
 def init_db():
     with get_db(write=True) as db:
         db.executescript(SCHEMA)
+        migrate_schema(db)
 
 
 def now_iso():

@@ -20,6 +20,7 @@ from app.report import generate_daily_report
 
 class RegressionTests(unittest.TestCase):
     def setUp(self):
+        db.init_db()
         self.c = TestClient(app)
         self.c.headers["x-access-token"] = security.create_token()
     def test_auth_required(self):
@@ -64,7 +65,10 @@ class RegressionTests(unittest.TestCase):
             conn.execute("DELETE FROM reports")
             for title, currency in [("人民币涉案虚拟货币处置", "人民币"),("美元涉案虚拟货币处置", "美元")]:
                 pipeline.process_item(conn,{"title":title,"url":"https://example.com/"+currency},{"name":"test","category":"测试","type":"manual"},0)
-                conn.execute("UPDATE items SET amount_value=100,amount_currency=? WHERE title=?",(currency,title))
+                conn.execute(
+                    "UPDATE items SET amount_value=100,amount_currency=?,amount_evidence=? WHERE title=?",
+                    (currency, f"100{currency}涉案虚拟货币", title),
+                )
         self.assertEqual(stats.overview()["amount_rmb"],100)
         self.assertEqual(stats.overview()["amount_usd"],100)
         self.assertIsNotNone(generate_daily_report())

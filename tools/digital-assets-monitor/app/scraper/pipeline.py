@@ -11,7 +11,8 @@ from app import database as db
 from app.config import get_sources, get_keywords, get_settings
 from app.scraper import rss as rss_mod, web as web_mod, search as search_mod
 from app.scraper.base import FetchError
-from app.analysis import classify, extract, summarize
+from app.analysis import classify
+from app.analysis.structure import structure_item
 
 
 def normalize_title(t):
@@ -115,32 +116,39 @@ def process_item(dbconn, item, source, new_count):
     if source.get("id") == "search-backfill":
         source["name"] = urlparse(item.get("url") or "").hostname or "未知发布域名"
         source["category"] = "综合检索"
-    amount_val, amount_cur = extract.extract_amount(raw_text)
-    inst = extract.extract_institution(raw_text)
-    itype = classify.classify_institution_type(raw_text)
-    region = classify.classify_region(raw_text)
-    assets = classify.classify_asset_types(raw_text)
-    method = classify.classify_disposal_method(raw_text)
-    importance = classify.classify_importance(raw_text, amount_val)
-    tags = classify.make_tags(raw_text, itype, region, assets, method)
-
-    summary = summarize.default_summary(item.get("summary") or item.get("title"))
-    analysis = summarize.build_analysis(
-        item.get("title"), raw_text, itype, region, assets, method, amount_val, amount_cur
+    fields = structure_item(
+        item.get("title"),
+        raw_text,
+        url=item.get("url") or "",
+        source_name=source.get("name") or "",
+        source_category=source.get("category") or "",
     )
+    amount_val = fields["amount_value"]
+    amount_cur = fields["amount_currency"]
+    amount_ev = fields["amount_evidence"]
+    inst = fields["institution"]
+    itype = fields["institution_type"]
+    region = fields["region"]
+    assets = fields["asset_types"]
+    method = fields["disposal_method"]
+    importance = fields["importance"]
+    tags = fields["tags"]
+    analysis = fields["analysis"]
+    summary = fields["analysis_value_line"] or item.get("title") or ""
 
     now = db.now_iso()
     dbconn.execute(
         """INSERT INTO items (fingerprint, title, url, source_name, source_category, source_type,
              publish_date, fetch_date, content, summary, analysis, region, institution, institution_type,
-             asset_types, disposal_method, amount_value, amount_currency, importance, tags, is_processed,
-             created_at, updated_at, raw)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+             asset_types, disposal_method, amount_value, amount_currency, amount_evidence, information_nature,
+             importance, tags, is_processed, created_at, updated_at, raw)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             fp, item.get("title"), item.get("url"), source.get("name"), source.get("category"),
             source.get("type"), item.get("publish_date"), now, raw_text, summary, analysis,
-            region, inst, itype, ",".join(assets), method, amount_val, amount_cur, importance,
-            ",".join(tags), 1, now, now, json.dumps(item.get("verification"), ensure_ascii=False),
+            region, inst, itype, ",".join(assets), method, amount_val, amount_cur, amount_ev,
+            fields["information_nature"], importance, ",".join(tags), 1, now, now,
+            json.dumps(item.get("verification"), ensure_ascii=False),
         ),
     )
     return new_count + 1
