@@ -61,3 +61,10 @@
 32个平台公开HTTP审计：本机20个返回可解析页面，15个页面出现国有产权/产权交易/交易公告/成交公告/信息披露线索；12个因TLS、超时、403或412未取得页面。结果见research/public_resource_channel_audit.json。HTTP正常仍标为identity_unverified。
 
 山西省公共资源交易平台“行政执法部门开展的罚没资产处置”栏目（https://prec.sxzwfw.gov.cn/jyxxsf/index.jhtml）已配置直采。实测列表10条，6条标题候选；抽查5篇均不涉及数字资产并被过滤。栏目未提供发布日期元数据，日期来自同一官方列表并单独记录为official_list_date；站点标题、文章路径和正文容器均须通过后才能入库。该频道尚待ECS生产扫描决定endpoint_verified。
+
+
+## 新疆国有产权直采
+
+新疆公共资源交易网（https://ggzy.xinjiang.gov.cn/）由全国公共资源交易平台当前导航指向。首页国有产权挂牌及成交公告使用公开静态链接；样本页面SiteName=新疆公共资源交易网、PubDate=2026-09-04，正文容器.public-article-container。新增public-xinjiang-property直采，文章路径仅允许国有产权001005下挂牌与成交页面。
+
+本机实测列表14条，当前标题无数字资产处置候选；抽查一篇普通产权公告被相关性规则排除。配置启用不代表已有目标情报，ECS端点状态须由生产扫描决定。启用来源增至25，配置直采频道增至5。

@@ -591,6 +591,38 @@
       "registry_kind": "public_resource_platform",
       "registry_province": "山西",
       "registry_institution_name": "山西公共资源交易平台"
+    },
+    {
+      "id": "public-xinjiang-property",
+      "name": "新疆公共资源交易网·国有产权",
+      "category": "产权交易所",
+      "type": "web",
+      "enabled": true,
+      "priority": 90,
+      "url": "https://ggzy.xinjiang.gov.cn/",
+      "note": "全国公共资源交易平台官方导航所列新疆入口；首页国有产权公告，正文身份、路径及发布日期核验后入库。",
+      "item_selector": "a[href*=\"/jyxx/001005/00100500\"][href$=\".html\"]",
+      "article_selector": ".public-article-container",
+      "article_path_pattern": "/xinjiangggzy_new/jyxx/001005/00100500[12]/\\d{8}/[^/]+\\.html",
+      "article_discovery_terms": [
+        "涉案",
+        "罚没",
+        "虚拟货币",
+        "数字货币",
+        "数字资产",
+        "加密资产",
+        "比特币",
+        "泰达币"
+      ],
+      "verify_articles": true,
+      "official_site_names": [
+        "新疆公共资源交易网"
+      ],
+      "track_production_endpoint": true,
+      "registry_kind": "public_resource_platform",
+      "registry_province": "新疆",
+      "registry_institution_name": "新疆公共资源交易平台",
+      "selector_verified_on": "2026-09-05"
     }
   ]
 }

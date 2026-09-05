@@ -7,6 +7,15 @@ ROOT=Path(__file__).resolve().parents[1]/"research"
 
 def _id(name,url): return hashlib.sha256((name+"|"+(url or "")).encode()).hexdigest()[:16]
 
+def _upsert_candidate_channel(conn,cid,iid,url,evidence,status,endpoint_verified,collection_enabled):
+    existing=conn.execute("SELECT id FROM institution_channels WHERE institution_id=? AND url=?",(iid,url)).fetchone()
+    if existing and existing["id"] != cid:
+        return
+    conn.execute("""INSERT INTO institution_channels VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
+        evidence_url=excluded.evidence_url,status=excluded.status,endpoint_verified=excluded.endpoint_verified,
+        collection_enabled=excluded.collection_enabled,updated_at=excluded.updated_at""",
+        (cid,iid,url,evidence,status,endpoint_verified,collection_enabled,db.now_iso()))
+
 def sync_registry():
     files=[ROOT/"institution_candidates.json",ROOT/"technology_supplement_candidates.json",ROOT/"public_resource_platform_candidates.json"]
     conn=db.connect()
@@ -24,11 +33,8 @@ def sync_registry():
                      row.get("discovery_evidence_url"),int(row.get("current_identity_verified",False)),db.now_iso()))
                 if row.get("homepage_candidate"):
                     url=row["homepage_candidate"].strip();cid=_id(iid,url)
-                    conn.execute("""INSERT INTO institution_channels VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
-                        evidence_url=excluded.evidence_url,status=excluded.status,endpoint_verified=excluded.endpoint_verified,
-                        collection_enabled=excluded.collection_enabled,updated_at=excluded.updated_at""",
-                        (cid,iid,url,row.get("discovery_evidence_url"),"homepage_candidate",
-                         int(row.get("endpoint_verified",False)),int(row.get("collection_enabled",False)),db.now_iso()))
+                    _upsert_candidate_channel(conn,cid,iid,url,row.get("discovery_evidence_url"),"homepage_candidate",
+                        int(row.get("endpoint_verified",False)),int(row.get("collection_enabled",False)))
         for filename in ("police_link_candidates.json","police_county_link_candidates.json"):
             path=ROOT/filename
             if not path.exists(): continue
@@ -37,8 +43,7 @@ def sync_registry():
                 evidence=(row.get("evidence_urls") or [row.get("evidence_url")])[0]
                 conn.execute("INSERT OR IGNORE INTO institutions VALUES (?,?,?,?,?,?,?,?)",
                     (iid,row["name"],"police",None,row.get("identity_status","official_page_link_candidate"),evidence,0,db.now_iso()))
-                conn.execute("INSERT OR REPLACE INTO institution_channels VALUES (?,?,?,?,?,?,?,?)",
-                    (_id(iid,url),iid,url,evidence,"official_page_link_candidate",0,0,db.now_iso()))
+                _upsert_candidate_channel(conn,_id(iid,url),iid,url,evidence,"official_page_link_candidate",0,0)
         # Only channels with locally configured, publicly exercised fail-closed rules are operational.
         for source in get_sources().get("sources", []):
             if not source.get("track_production_endpoint"):
@@ -51,10 +56,15 @@ def sync_registry():
             conn.execute("INSERT OR IGNORE INTO institutions VALUES (?,?,?,?,?,?,?,?)",
                 (iid,name,kind,province,"verified_official_metadata",source["url"],1,db.now_iso()))
             conn.execute("UPDATE institutions SET identity_status='verified_official_metadata',current_identity_verified=1,updated_at=? WHERE id=?",(db.now_iso(),iid))
+            configured_id="configured-"+source["id"]
+            existing=conn.execute("SELECT id,evidence_url FROM institution_channels WHERE institution_id=? AND url=?",(iid,source["url"])).fetchone()
+            evidence_url=(existing["evidence_url"] if existing and existing["evidence_url"] else source["url"])
+            if existing and existing["id"] != configured_id:
+                conn.execute("DELETE FROM institution_channels WHERE id=?",(existing["id"],))
             conn.execute("""INSERT INTO institution_channels VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
                 institution_id=excluded.institution_id,url=excluded.url,evidence_url=excluded.evidence_url,
                 collection_enabled=1,updated_at=excluded.updated_at""",
-                ("configured-"+source["id"],iid,source["url"],source["url"],"configured_pending_production",0,1,db.now_iso()))
+                (configured_id,iid,source["url"],evidence_url,"configured_pending_production",0,1,db.now_iso()))
         conn.commit()
     finally: conn.close()
 
