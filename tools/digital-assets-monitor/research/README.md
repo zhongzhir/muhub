@@ -7,6 +7,10 @@
 - national_discovery_tasks.csv：公安按行政区划和交易机构按31省建立的待执行调查任务，任务数不是机构数。
 - province_coverage.csv：全国覆盖缺口；候选不计入已验证或采集成功。
 - build_initial_registry.py：重建首批官方基准，会刷新当前目录下上述文件；不修改线上数据库或sources.json。
+- audit_channel_templates.py：对候选官网做可断点续跑的公开HTTP批量审计，并按CMS/页面结构聚类。默认不启用采集、不验证端点。
+- public_resource_platform_candidates.json：31省区市及兵团公共资源交易平台候选，不是已接入来源。
+- batch_audit/public_resource_platform/：2026-09-05公共资源省级入口审计结果。channel_audit_results.json为逐渠道记录，channel_template_groups.json为模板分组，channel_promotion_candidates.json仅表示可进入下一轮严格验证。
+- audit_police_channels.py：公安候选门户探活与显式公安链接收获，不升级采集状态。
 
 原始证据：
 - https://gat.ln.gov.cn/gat/gsgawz50/index.shtml

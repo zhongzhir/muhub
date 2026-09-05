@@ -1,0 +1,2148 @@
+{
+  "generated_at": "2026-09-05T08:52:26.160358+00:00",
+  "kind": "public_resource_platform",
+  "note": "Per-channel public homepage audit. HTTP reachability is not official identity, not collection_enabled, and not endpoint_verified.",
+  "summary": {
+    "candidates": 32,
+    "http_reachable": 23,
+    "template_identified": 20,
+    "eligible_for_strict_verification": 14,
+    "formally_connected": 0,
+    "production_success": 0,
+    "error_classes": {
+      "certificate_error": 5,
+      "accessible": 23,
+      "timeout": 3,
+      "access_restricted": 1
+    },
+    "collection_enabled": false,
+    "endpoint_verified": false
+  },
+  "results": [
+    {
+      "id": "790ccca3d87f6aee",
+      "name": "北京公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "北京",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyfw.beijing.gov.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "certificate_error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='ggzyfw.beijing.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLError(1, '[SSL: BAD_ECPOINT] bad ecpoint (_ssl.c:1081)')))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:09.013548+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "311d70fbf6d78dfb",
+      "name": "天津公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "天津",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.zwfwb.tj.gov.cn/",
+      "final_url": "https://ggzy.zwfwb.tj.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzy.zwfwb.tj.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 85487,
+      "response_ms": 728,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:09.014051+00:00",
+      "title": "天津市公共资源交易平台",
+      "page_generator": null,
+      "cms_family": "jeecms",
+      "script_path_features": [
+        "/r/cms"
+      ],
+      "css_path_features": [
+        "/r/cms"
+      ],
+      "detail_path_patterns": [
+        "jhtml",
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/xwzx.jhtml",
+        "/p54/jyxx.html",
+        "/jytj.jhtml",
+        "/zcfg.jhtml",
+        "/fwzn.jhtml",
+        "/hd.jhtml",
+        "/xzzx.jhtml",
+        "/xwzx.jhtml"
+      ],
+      "detail_path_counts": {
+        "jhtml": 268,
+        "jyxx": 1
+      },
+      "column_link_counts": {
+        "announcement": 87,
+        "property": 3,
+        "asset": 4,
+        "listing": 12,
+        "deal": 3
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 241
+        },
+        {
+          "selector": ".news-list a",
+          "sample_count": 12
+        }
+      ],
+      "template_fingerprint": "be01bf88349d3e80",
+      "template_label": "jeecms|jhtml,jyxx|r",
+      "template_identified": true
+    },
+    {
+      "id": "52fd6e56ce50b85c",
+      "name": "河北公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "河北",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://szj.hebei.gov.cn/",
+      "final_url": "https://szj.hebei.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://szj.hebei.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 121252,
+      "response_ms": 872,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "homepage_title_not_trading_platform"
+      ],
+      "checked_at": "2026-09-05T08:52:09.014425+00:00",
+      "title": "河北省数据和政务服务局",
+      "page_generator": null,
+      "cms_family": "webbuilder",
+      "script_path_features": [
+        "/js/lib",
+        "/oauth/js",
+        "/cityjson",
+        "/js/abt",
+        "/js/webbuildercommon.js",
+        "/js/pageview.js",
+        "/js/popad.js",
+        "/js/movead.js"
+      ],
+      "css_path_features": [
+        "/js/lib",
+        "/css/jquery.easy_slides.css",
+        "/css/common.css",
+        "/css/index.css",
+        "/css/popad.css",
+        "/css/adcss.css",
+        "/css/openguide.css",
+        "/css/webbuildercommongray.css"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 6,
+        "property": 0,
+        "asset": 1,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 64
+        }
+      ],
+      "template_fingerprint": "ca3c0f086f3e2590",
+      "template_label": "webbuilder|no-detail|js,oauth,cityjson",
+      "template_identified": true
+    },
+    {
+      "id": "7f98e9caaeec2c36",
+      "name": "山西公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "山西",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://prec.sxzwfw.gov.cn/",
+      "final_url": "https://prec.sxzwfw.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://prec.sxzwfw.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "page_bytes": 212054,
+      "response_ms": 566,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:09.015161+00:00",
+      "title": "山西省公共资源交易平台",
+      "page_generator": null,
+      "cms_family": "jeecms",
+      "script_path_features": [
+        "/r/cms",
+        "/client/glodonrobotjssdk.js",
+        "/chat-embed.js"
+      ],
+      "css_path_features": [
+        "/r/cms"
+      ],
+      "detail_path_patterns": [
+        "jhtml"
+      ],
+      "detail_path_samples": [
+        "/xwzx/index.jhtml",
+        "/jyxx/index.jhtml",
+        "/jyxxgc/index.jhtml",
+        "/jyxxzc/index.jhtml",
+        "/jyxxtd/index.jhtml",
+        "/jyxxcq/index.jhtml",
+        "/jyxxsf/index.jhtml",
+        "/jyxxnc/index.jhtml"
+      ],
+      "detail_path_counts": {
+        "jhtml": 411
+      },
+      "column_link_counts": {
+        "announcement": 153,
+        "property": 4,
+        "asset": 31,
+        "listing": 26,
+        "deal": 15
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 14
+        }
+      ],
+      "template_fingerprint": "be01bf88349d3e80",
+      "template_label": "jeecms|jhtml|r,client,chat-embed.js",
+      "template_identified": true
+    },
+    {
+      "id": "8528b3bcee06a320",
+      "name": "内蒙古公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "内蒙古",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyjy.nmg.gov.cn/",
+      "final_url": "https://ggzyjy.nmg.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzyjy.nmg.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 184554,
+      "response_ms": 840,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:09.392153+00:00",
+      "title": "内蒙古自治区公共资源交易网",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/./images",
+        "/./material",
+        "/material/djl",
+        "/c/js",
+        "/boots/trs.nmsuny.com"
+      ],
+      "css_path_features": [
+        "/./material",
+        "/./images"
+      ],
+      "detail_path_patterns": [
+        "gov_dated",
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/jyxx/",
+        "/xwzx/gzdt_1110/202608/t20260824_68223.html",
+        "/xwzx/gzdt_1110/202604/t20260430_65582.html",
+        "/xwzx/gzdt_1110/202604/t20260420_65119.html",
+        "/xwzx/gzdt_1110/202604/t20260416_65043.html",
+        "/xwzx/gzdt_1110/202608/t20260824_68223.html",
+        "/xwzx/gzdt_1110/202608/t20260812_67933.html",
+        "/xwzx/gzdt_1110/202608/t20260805_67782.html"
+      ],
+      "detail_path_counts": {
+        "jyxx": 2,
+        "gov_dated": 24
+      },
+      "column_link_counts": {
+        "announcement": 1,
+        "property": 1,
+        "asset": 1,
+        "listing": 0,
+        "deal": 14
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 107
+        }
+      ],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|gov_dated,jyxx|.,material,c,boots",
+      "template_identified": true
+    },
+    {
+      "id": "6a190cda2de069a5",
+      "name": "河南公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "河南",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.fgw.henan.gov.cn/",
+      "final_url": "https://ggzy.fgw.henan.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzy.fgw.henan.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 3418,
+      "response_ms": 532,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "template_or_listing_unclear"
+      ],
+      "checked_at": "2026-09-05T08:52:09.837232+00:00",
+      "title": "全国公共资源交易平台【河南省】",
+      "page_generator": null,
+      "cms_family": "unknown",
+      "script_path_features": [
+        "/static/js"
+      ],
+      "css_path_features": [
+        "/static/js",
+        "/static/css",
+        "/favicon.ico"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "b23a6a8439c0dde5",
+      "template_label": "unknown|no-detail|static",
+      "template_identified": false
+    },
+    {
+      "id": "040bbc5da3a4f747",
+      "name": "湖北公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "湖北",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.hbggzyfwpt.cn/",
+      "final_url": "https://www.hbggzyfwpt.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://www.hbggzyfwpt.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "page_bytes": 130170,
+      "response_ms": 823,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:09.951213+00:00",
+      "title": "湖北省公共资源电子交易服务系统",
+      "page_generator": null,
+      "cms_family": "unknown",
+      "script_path_features": [
+        "/res/hubei"
+      ],
+      "css_path_features": [
+        "/res/hubei"
+      ],
+      "detail_path_patterns": [
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/jyxx/jsgcXmxx",
+        "/jyxx/jsgcXmxx",
+        "/jyxx/jsgcXmxx",
+        "/jyxx/jsgcXmxxDetail2",
+        "/jyxx/jsgcXmxxDetail2",
+        "/jyxx/jsgcXmxxDetail2",
+        "/jyxx/jsgcXmxxDetail2",
+        "/jyxx/jsgcXmxxDetail2"
+      ],
+      "detail_path_counts": {
+        "jyxx": 46
+      },
+      "column_link_counts": {
+        "announcement": 1,
+        "property": 4,
+        "asset": 1,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 70
+        }
+      ],
+      "template_fingerprint": "feb8249bf222f81e",
+      "template_label": "path:jyxx|jyxx|res",
+      "template_identified": true
+    },
+    {
+      "id": "4e978d148bd01c70",
+      "name": "湖南公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "湖南",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.hnsggzy.com/",
+      "final_url": "https://www.hnsggzy.com/",
+      "redirect_chain": [
+        {
+          "url": "https://www.hnsggzy.com/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 14757,
+      "response_ms": 791,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "template_or_listing_unclear"
+      ],
+      "checked_at": "2026-09-05T08:52:10.047080+00:00",
+      "title": "湖南省公共资源交易服务平台",
+      "page_generator": null,
+      "cms_family": "unknown",
+      "script_path_features": [
+        "/t/c",
+        "/vendors/polyfill.min.js",
+        "/vendors/vue.min.js",
+        "/vendors/vue-router.min.js",
+        "/vendors/axios.min.js",
+        "/vendors/vuex.min.js",
+        "/js/chunk-elementui.efbc997c.js",
+        "/js/chunk-echarts.24aacc29.js"
+      ],
+      "css_path_features": [
+        "/t/c",
+        "/css/app.bf910793.css",
+        "/css/chunk-elementui.5d450bca.css",
+        "/css/styles.57e9dd4c.css",
+        "/favicon.ico",
+        "/css/credit.cf80aa8a.css",
+        "/css/news.92a1fd5f.css",
+        "/css/transaction.da3ab0db.css"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "f0be553707c576ab",
+      "template_label": "assets:t,vendors,js|no-detail|t,vendors,js",
+      "template_identified": true
+    },
+    {
+      "id": "3aaed49c2c7f20b7",
+      "name": "重庆公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "重庆",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.cqggzy.com/",
+      "final_url": "https://www.cqggzy.com/",
+      "redirect_chain": [
+        {
+          "url": "https://www.cqggzy.com/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "page_bytes": 268527,
+      "response_ms": 995,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:10.365330+00:00",
+      "title": "重庆市公共资源交易网_重庆市公共资源交易中心",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/js/ie11-polyfills.js",
+        "/js/my97datepicker",
+        "/_nuxt/diiop1p4.js",
+        "/js/global.js"
+      ],
+      "css_path_features": [
+        "/_nuxt/entry.dgssx45y.css",
+        "/_nuxt/basesearchie.cvjb8v_j.css",
+        "/_nuxt/thefooter.ddmbz3qm.css",
+        "/_nuxt/diiop1p4.js",
+        "/_nuxt/qb0j708h.js",
+        "/_nuxt/caltbnvr.js",
+        "/_nuxt/dswfd_wq.js",
+        "/_nuxt/mgs_kwbc.js"
+      ],
+      "detail_path_patterns": [
+        "article",
+        "html_numeric"
+      ],
+      "detail_path_samples": [
+        "/news/002001",
+        "/news/002005",
+        "/news/002002",
+        "/news/002003",
+        "/trade/014002",
+        "/trade/014002",
+        "/trade/014002",
+        "/trade/014002"
+      ],
+      "detail_path_counts": {
+        "html_numeric": 105,
+        "article": 65
+      },
+      "column_link_counts": {
+        "announcement": 25,
+        "property": 8,
+        "asset": 3,
+        "listing": 0,
+        "deal": 4
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 144
+        }
+      ],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|article,html_numeric|js,_nuxt",
+      "template_identified": true
+    },
+    {
+      "id": "9bbb9a5f05c9bef0",
+      "name": "四川公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "四川",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyjy.sc.gov.cn/",
+      "final_url": "https://ggzyjy.sc.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzyjy.sc.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 45105,
+      "response_ms": 785,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:10.407591+00:00",
+      "title": "四川省公共资源交易信息网",
+      "page_generator": null,
+      "cms_family": "webbuilder",
+      "script_path_features": [
+        "/js/lib",
+        "/js/jquery.min.js",
+        "/js/placeholder.min.js",
+        "/js/mustache.js",
+        "/js/webbuildercommon.js",
+        "/js/pageview.js",
+        "/js/common.js",
+        "/js/searchindex.js"
+      ],
+      "css_path_features": [
+        "/js/lib",
+        "/css/common.css",
+        "/css/index.css",
+        "/css/webbuildercommongray.css",
+        "/css/popad.css",
+        "/css/adcss.css"
+      ],
+      "detail_path_patterns": [
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/jyxx/transactionInfo.html",
+        "/jyxx/transactionInfo.html",
+        "/jyxx/transactionInfo.html",
+        "/jyxx/transactionInfo.html",
+        "/jyxx/002001/transactionInfo.html",
+        "/jyxx/002002/transactionInfo.html",
+        "/jyxx/002003/transactionInfo.html",
+        "/jyxx/transactionInfo.html"
+      ],
+      "detail_path_counts": {
+        "jyxx": 8
+      },
+      "column_link_counts": {
+        "announcement": 1,
+        "property": 1,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 22
+        }
+      ],
+      "template_fingerprint": "ca3c0f086f3e2590",
+      "template_label": "webbuilder|jyxx|js",
+      "template_identified": true
+    },
+    {
+      "id": "70e9beceebaec117",
+      "name": "贵州公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "贵州",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.guizhou.gov.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "timeout",
+      "error_type": "ConnectTimeout",
+      "error": "HTTPSConnectionPool(host='ggzy.guizhou.gov.cn', port=443): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPSConnection(host='ggzy.guizhou.gov.cn', port=443) at 0x18549d5d6d0>, 'Connection to ggzy.guizhou.gov.cn timed out. (connect timeout=8)'))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:10.838858+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "131c12ba320a45c6",
+      "name": "云南公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "云南",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.yn.gov.cn/",
+      "final_url": "https://ggzy.yn.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzy.yn.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 11688,
+      "response_ms": 554,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "template_or_listing_unclear"
+      ],
+      "checked_at": "2026-09-05T08:52:10.848499+00:00",
+      "title": "云南省公共资源交易信息网",
+      "page_generator": null,
+      "cms_family": "unknown",
+      "script_path_features": [
+        "/static/js"
+      ],
+      "css_path_features": [
+        "/static/css",
+        "/static/js",
+        "/favicon.ico"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "b23a6a8439c0dde5",
+      "template_label": "unknown|no-detail|static",
+      "template_identified": false
+    },
+    {
+      "id": "2f97b0fe630720e2",
+      "name": "西藏公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "西藏",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.xizang.gov.cn/",
+      "final_url": "https://ggzy.xizang.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzy.xizang.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "page_bytes": 204818,
+      "response_ms": 597,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "template_or_listing_unclear"
+      ],
+      "checked_at": "2026-09-05T08:52:11.288652+00:00",
+      "title": "西藏公共资源交易平台",
+      "page_generator": null,
+      "cms_family": "jeecms",
+      "script_path_features": [
+        "/r/cms",
+        "/dist/aria.js",
+        "/client/glodonrobotjssdk.js"
+      ],
+      "css_path_features": [
+        "/r/cms"
+      ],
+      "detail_path_patterns": [
+        "jhtml"
+      ],
+      "detail_path_samples": [
+        "/xwzx.jhtml",
+        "/xwzxtz/1338519.jhtml"
+      ],
+      "detail_path_counts": {
+        "jhtml": 2
+      },
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "be01bf88349d3e80",
+      "template_label": "jeecms|jhtml|r,dist,client",
+      "template_identified": true
+    },
+    {
+      "id": "fb95cec247e72bd7",
+      "name": "辽宁公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "辽宁",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.lnggzy.gov.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "timeout",
+      "error_type": "ConnectTimeout",
+      "error": "HTTPSConnectionPool(host='www.lnggzy.gov.cn', port=443): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.lnggzy.gov.cn', port=443) at 0x18549c07ed0>, 'Connection to www.lnggzy.gov.cn timed out. (connect timeout=8)'))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:11.438846+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "0672fc87fc4b1d43",
+      "name": "吉林公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "吉林",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.jl.gov.cn/",
+      "final_url": "https://www.jl.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://www.jl.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 71221,
+      "response_ms": 913,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "homepage_title_not_trading_platform"
+      ],
+      "checked_at": "2026-09-05T08:52:11.592075+00:00",
+      "title": "吉林省人民政府",
+      "page_generator": null,
+      "cms_family": "unknown",
+      "script_path_features": [
+        "/./images",
+        "/boots/jl.gov.cn"
+      ],
+      "css_path_features": [
+        "/./images"
+      ],
+      "detail_path_patterns": [
+        "gov_dated"
+      ],
+      "detail_path_samples": [
+        "/szyw/jlyw/tp/202609/t20260904_3668380.html",
+        "/szyw/jlyw/tp/202609/t20260902_3667555.html",
+        "/szyw/jlyw/tp/202608/t20260829_3666503.html",
+        "/szyw/zwlb/202609/t20260904_3668026.html",
+        "/szyw/zwlb/202609/t20260904_3668024.html",
+        "/yaowen/202609/t20260904_3668028.html",
+        "/yaowen/202609/t20260903_3667649.html",
+        "/yaowen/202608/t20260829_3666500.html"
+      ],
+      "detail_path_counts": {
+        "gov_dated": 13
+      },
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 38
+        },
+        {
+          "selector": ".list li a",
+          "sample_count": 26
+        }
+      ],
+      "template_fingerprint": "bfd2489afdaa1865",
+      "template_label": "path:gov_dated|gov_dated|.,boots",
+      "template_identified": true
+    },
+    {
+      "id": "f2d9c4160b73b60a",
+      "name": "黑龙江公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "黑龙江",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyjyw.hlj.gov.cn/",
+      "final_url": "https://ggzyjyw.hlj.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzyjyw.hlj.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 380160,
+      "response_ms": 348,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:11.987997+00:00",
+      "title": "黑龙江公共资源交易网",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/js/lib",
+        "/oauth/js",
+        "/js/popad.js",
+        "/js/movead.js",
+        "/js/floatad.js",
+        "/js/mustache.js",
+        "/js/common.min.js",
+        "/js/serviceutil.js"
+      ],
+      "css_path_features": [
+        "/js/lib",
+        "/css/common.css",
+        "/css/index.css",
+        "/css/popad.css",
+        "/css/adcss.css",
+        "/css/webbuildercommongray.css"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 133,
+        "property": 21,
+        "asset": 6,
+        "listing": 28,
+        "deal": 33
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 338
+        }
+      ],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|no-detail|js,oauth",
+      "template_identified": true
+    },
+    {
+      "id": "40b5c37411dec44d",
+      "name": "上海公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "上海",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.shggzy.com/",
+      "final_url": "https://www.shggzy.com/",
+      "redirect_chain": [
+        {
+          "url": "https://www.shggzy.com/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "page_bytes": 304759,
+      "response_ms": 730,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "template_or_listing_unclear"
+      ],
+      "checked_at": "2026-09-05T08:52:12.549919+00:00",
+      "title": "上海公共资源交易平台",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/r/cms"
+      ],
+      "css_path_features": [
+        "/r/cms",
+        "/u/cms"
+      ],
+      "detail_path_patterns": [
+        "jhtml"
+      ],
+      "detail_path_samples": [
+        "/jyznczzn/231595.jhtml",
+        "/glyhgc.jhtml",
+        "/tdjyhzb.jhtml",
+        "/downPage.jhtml"
+      ],
+      "detail_path_counts": {
+        "jhtml": 4
+      },
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|jhtml|r",
+      "template_identified": true
+    },
+    {
+      "id": "c5ae4bf1de89e87c",
+      "name": "江苏公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "江苏",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://jsggzy.jszwfw.gov.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "certificate_error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='jsggzy.jszwfw.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1081)')))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:12.642262+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "ad27018485da3251",
+      "name": "浙江公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "浙江",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.zj.gov.cn/",
+      "final_url": "https://ggzy.zj.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzy.zj.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 69859,
+      "response_ms": 378,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:13.042325+00:00",
+      "title": "浙江省公共资源交易服务平台系统",
+      "page_generator": null,
+      "cms_family": "webbuilder",
+      "script_path_features": [
+        "/zhejiangnew/js",
+        "/js/mustache.js",
+        "/trace.bundle.js",
+        "/module/freshnews",
+        "/z_stat.php",
+        "/js/webbuildercommon.js",
+        "/js/js.cookie.min.js",
+        "/js/common.min.js"
+      ],
+      "css_path_features": [
+        "/zhejiangnew/js",
+        "/zhejiangnew/css",
+        "/css/common.css",
+        "/css/popad.css",
+        "/css/adcss.css",
+        "/css/webbuildercommongray.css"
+      ],
+      "detail_path_patterns": [
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/jyxxgk/002001/002001001/list.html",
+        "/jyxxgk/002001/002001001/20260904/6fe2c2c5-8ed1-4c05-a884-19f30087f2c4.html",
+        "/jyxxgk/002001/002001001/20260904/ec016927-ab1d-45b8-bece-fbdf0e72155d.html",
+        "/jyxxgk/002001/002001001/20260904/ba461013-1786-4f48-a6ce-7b8440ebe7b8.html",
+        "/jyxxgk/002001/002001001/20260904/c815e7c0-868f-47ea-b9e8-06596a14a0b1.html",
+        "/jyxxgk/002001/002001001/20260904/2c458957-5e00-48fb-8030-664059f305f7.html",
+        "/jyxxgk/002001/002001001/20260904/584a0541-38dc-4727-8a89-3d195d07bee4.html",
+        "/jyxxgk/002001/002001001/20260904/f0455bee-896e-4b68-8e43-890cc04f1d85.html"
+      ],
+      "detail_path_counts": {
+        "jyxx": 61
+      },
+      "column_link_counts": {
+        "announcement": 39,
+        "property": 3,
+        "asset": 0,
+        "listing": 1,
+        "deal": 3
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 53
+        }
+      ],
+      "template_fingerprint": "ca3c0f086f3e2590",
+      "template_label": "webbuilder|jyxx|zhejiangnew,js,trace.bundle.js,module",
+      "template_identified": true
+    },
+    {
+      "id": "f59ef475b63fe26a",
+      "name": "安徽公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "安徽",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.ah.gov.cn/",
+      "final_url": "https://ggzy.ah.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzy.ah.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "page_bytes": 188605,
+      "response_ms": 1453,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:13.424291+00:00",
+      "title": "安徽省公共资源交易监管网",
+      "page_generator": null,
+      "cms_family": "unknown",
+      "script_path_features": [
+        "/res/ah",
+        "/res/js",
+        "/res/static",
+        "/boots/ggzy.ah.gov.cn"
+      ],
+      "css_path_features": [
+        "/res/ah",
+        "/res/static"
+      ],
+      "detail_path_patterns": [
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/jyxx/tongji/"
+      ],
+      "detail_path_counts": {
+        "jyxx": 1
+      },
+      "column_link_counts": {
+        "announcement": 1,
+        "property": 1,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "feb8249bf222f81e",
+      "template_label": "path:jyxx|jyxx|res,boots",
+      "template_identified": true
+    },
+    {
+      "id": "3ba355fea58aa76a",
+      "name": "福建公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "福建",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyfw.fujian.gov.cn/",
+      "final_url": "https://ggzyfw.fujian.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzyfw.fujian.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 1483,
+      "response_ms": 519,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "template_or_listing_unclear"
+      ],
+      "checked_at": "2026-09-05T08:52:13.567174+00:00",
+      "title": "福建省公共资源交易电子公共服务平台",
+      "page_generator": null,
+      "cms_family": "vue_spa",
+      "script_path_features": [
+        "/exposure/jiucuo.js",
+        "/npm/vue@2.6.11",
+        "/npm/vue-router@3.1.3",
+        "/npm/element-ui@2.13.0",
+        "/npm/echarts@4.8.0",
+        "/js/chunk-vendors.de56716c.js",
+        "/js/app.d78d235d.js"
+      ],
+      "css_path_features": [
+        "/",
+        "/./favicon.ico",
+        "/npm/element-ui@2.13.0",
+        "/css/chunk-vendors.0c3723b4.css",
+        "/css/app.f32eb578.css"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "97090f9f7aff7283",
+      "template_label": "vue_spa|no-detail|exposure,npm,js",
+      "template_identified": true
+    },
+    {
+      "id": "dbf56c3e75be6bf4",
+      "name": "江西公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "江西",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.jxsggzy.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "certificate_error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='www.jxsggzy.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLError(1, '[SSL: UNSAFE_LEGACY_RENEGOTIATION_DISABLED] unsafe legacy renegotiation disabled (_ssl.c:1081)')))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:14.188223+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "416a875ace4cf232",
+      "name": "山东公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "山东",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyjy.shandong.gov.cn/",
+      "final_url": "https://ggzyjy.shandong.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzyjy.shandong.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "page_bytes": 109500,
+      "response_ms": 449,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:14.524764+00:00",
+      "title": "山东省公共资源交易网",
+      "page_generator": null,
+      "cms_family": "jeecms",
+      "script_path_features": [
+        "/r/cms"
+      ],
+      "css_path_features": [
+        "/r/cms"
+      ],
+      "detail_path_patterns": [
+        "jhtml"
+      ],
+      "detail_path_samples": [
+        "/xwdt2/index.jhtml",
+        "/xxgkdljg/index.jhtml",
+        "/zyxxtj/index.jhtml",
+        "/xxgkzt/index.jhtml",
+        "/gjfg/index.jhtml",
+        "/zxts/index.jhtml",
+        "/zyxw/14534793.jhtml",
+        "/zyxw/14496871.jhtml"
+      ],
+      "detail_path_counts": {
+        "jhtml": 183
+      },
+      "column_link_counts": {
+        "announcement": 73,
+        "property": 0,
+        "asset": 0,
+        "listing": 14,
+        "deal": 7
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 169
+        }
+      ],
+      "template_fingerprint": "be01bf88349d3e80",
+      "template_label": "jeecms|jhtml|r",
+      "template_identified": true
+    },
+    {
+      "id": "53aa08eef2fc09fb",
+      "name": "广东公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "广东",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ygp.gdzwfw.gov.cn/",
+      "final_url": "https://ygp.gdzwfw.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ygp.gdzwfw.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html",
+      "page_bytes": 21933,
+      "response_ms": 706,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [
+        "template_or_listing_unclear"
+      ],
+      "checked_at": "2026-09-05T08:52:15.062727+00:00",
+      "title": "广东省公共资源交易平台",
+      "page_generator": null,
+      "cms_family": "unknown",
+      "script_path_features": [
+        "/ggzy-portal/assets"
+      ],
+      "css_path_features": [
+        "/ggzy-portal/favicon.svg",
+        "/ggzy-portal/favicon.ico",
+        "/ggzy-portal/apple-touch-icon.png",
+        "/ggzy-portal/assets"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": "b23a6a8439c0dde5",
+      "template_label": "unknown|no-detail|ggzy-portal",
+      "template_identified": false
+    },
+    {
+      "id": "b20661c8d661a197",
+      "name": "广西公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "广西",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.jgswj.gxzf.gov.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "certificate_error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='ggzy.jgswj.gxzf.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, \"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'ggzy.jgswj.gxzf.gov.cn'. (_ssl.c:1081)\")))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:15.105242+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "0b75cb1f82459615",
+      "name": "海南公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "海南",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://zw.hainan.gov.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "certificate_error",
+      "error_type": "SSLError",
+      "error": "HTTPSConnectionPool(host='zw.hainan.gov.cn', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1081)')))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:15.805495+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "d4d1cab726eeabc4",
+      "name": "陕西公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "陕西",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.sxggzyjy.cn/",
+      "final_url": "https://www.sxggzyjy.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://www.sxggzyjy.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 97566,
+      "response_ms": 496,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:15.845102+00:00",
+      "title": "全国公共资源交易平台（陕西省）陕西省公共资源交易中心",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/js/lib",
+        "/js/floatad.js",
+        "/js/full_search.js",
+        "/js/webbuildercommon.js",
+        "/js/common.js",
+        "/js/pageview2.js",
+        "/js/mustache.js",
+        "/js/index.js"
+      ],
+      "css_path_features": [
+        "/js/lib",
+        "/css/common.css",
+        "/css/index.css",
+        "/css/adcss.css",
+        "/css/webbuildercommongray.css"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 29,
+        "property": 1,
+        "asset": 2,
+        "listing": 0,
+        "deal": 8
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 21
+        }
+      ],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|no-detail|js",
+      "template_identified": true
+    },
+    {
+      "id": "009cf52a2b9a4291",
+      "name": "甘肃公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "甘肃",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyjy.gansu.gov.cn/",
+      "final_url": "https://ggzyjy.gansu.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzyjy.gansu.gov.cn/",
+          "status": 412,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 412,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 6406,
+      "response_ms": 466,
+      "error_class": "access_restricted",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:16.404048+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    },
+    {
+      "id": "b15287c06be53946",
+      "name": "青海公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "青海",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://www.qhggzyjy.gov.cn/",
+      "final_url": "http://www.qhggzyjy.gov.cn/ggzy/",
+      "redirect_chain": [
+        {
+          "url": "https://www.qhggzyjy.gov.cn/",
+          "status": 301,
+          "location": "http://www.qhggzyjy.gov.cn/ggzy/"
+        },
+        {
+          "url": "http://www.qhggzyjy.gov.cn/ggzy/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 656873,
+      "response_ms": 664,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [
+        "https_downgraded_to_http"
+      ],
+      "checked_at": "2026-09-05T08:52:16.412613+00:00",
+      "title": "青海公共资源交易网",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/ggzy/js"
+      ],
+      "css_path_features": [
+        "/ggzy/css",
+        "/ggzy/js"
+      ],
+      "detail_path_patterns": [
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/ggzy/jyxx/001001/001001009/transinfo_list.html",
+        "/ggzy/jyxx/001001/001001001/transinfo_list.html",
+        "/ggzy/jyxx/001001/001001002/transinfo_list.html",
+        "/ggzy/jyxx/001001/001001003/transinfo_list.html",
+        "/ggzy/jyxx/001001/001001005/transinfo_list.html",
+        "/ggzy/jyxx/001001/001001006/transinfo_list.html",
+        "/ggzy/jyxx/001001/001001010/transinfo_list.html",
+        "/ggzy/jyxx/001001/001001007/transinfo_list.html"
+      ],
+      "detail_path_counts": {
+        "jyxx": 250
+      },
+      "column_link_counts": {
+        "announcement": 411,
+        "property": 5,
+        "asset": 15,
+        "listing": 63,
+        "deal": 57
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 653
+        }
+      ],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|jyxx|ggzy",
+      "template_identified": true
+    },
+    {
+      "id": "a262692751331594",
+      "name": "宁夏公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "宁夏",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+      "final_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzyjy.fzggw.nx.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 99811,
+      "response_ms": 801,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:16.882774+00:00",
+      "title": "宁夏回族自治区公共资源交易网",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/js/lib",
+        "/js/floatad.js",
+        "/js/webbuildercommon.js",
+        "/js/js.cookie.min.js",
+        "/js/common.min.js",
+        "/js/popad.js",
+        "/js/movead.js",
+        "/js/pageview.js"
+      ],
+      "css_path_features": [
+        "/js/lib",
+        "/css/common.css",
+        "/css/index.css",
+        "/css/popad.css",
+        "/css/adcss.css",
+        "/css/webbuildercommongray.css"
+      ],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 49,
+        "property": 3,
+        "asset": 7,
+        "listing": 0,
+        "deal": 5
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 109
+        }
+      ],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|no-detail|js",
+      "template_identified": true
+    },
+    {
+      "id": "c5b596e13611a566",
+      "name": "新疆公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "新疆",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.xinjiang.gov.cn/",
+      "final_url": "https://ggzy.xinjiang.gov.cn/",
+      "redirect_chain": [
+        {
+          "url": "https://ggzy.xinjiang.gov.cn/",
+          "status": 200,
+          "location": null
+        }
+      ],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "page_bytes": 447571,
+      "response_ms": 1099,
+      "error_class": "accessible",
+      "error_type": null,
+      "error": null,
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": true,
+      "eligible_for_strict_verification": true,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:17.549065+00:00",
+      "title": "新疆公共资源交易网",
+      "page_generator": null,
+      "cms_family": "epoint",
+      "script_path_features": [
+        "/xinjiangggzy_new/js",
+        "/xinjiangggzy_new/_test"
+      ],
+      "css_path_features": [
+        "/xinjiangggzy_new/css",
+        "/xinjiangggzy_new/js"
+      ],
+      "detail_path_patterns": [
+        "jyxx"
+      ],
+      "detail_path_samples": [
+        "/xinjiangggzy_new/jyxx/001001/trade_info.html",
+        "/xinjiangggzy_new/jyxx/001001/001001001/20260904/b2d27719-786c-4f3c-a0b7-a7104e115b42.html",
+        "/xinjiangggzy_new/jyxx/001001/001001001/20260904/c8986463-ebb1-4726-9f8d-8284de333ee0.html",
+        "/xinjiangggzy_new/jyxx/001001/001001001/20260904/370524bd-1211-49e2-bc43-36f182055a4a.html",
+        "/xinjiangggzy_new/jyxx/001001/001001001/20260904/2d5d0fb5-01d2-4508-9f26-77f73276102f.html",
+        "/xinjiangggzy_new/jyxx/001001/001001001/20260904/87fa6a99-86bd-42fd-916f-83b8524efaf9.html",
+        "/xinjiangggzy_new/jyxx/001001/001001001/20260904/a00d21e1-a1c9-4a4a-a214-d7ec036a6d9c.html",
+        "/xinjiangggzy_new/jyxx/001001/trade_info.html"
+      ],
+      "detail_path_counts": {
+        "jyxx": 362
+      },
+      "column_link_counts": {
+        "announcement": 142,
+        "property": 24,
+        "asset": 7,
+        "listing": 36,
+        "deal": 17
+      },
+      "list_selector_candidates": [
+        {
+          "selector": "ul li a",
+          "sample_count": 30
+        },
+        {
+          "selector": ".news-list a",
+          "sample_count": 21
+        }
+      ],
+      "template_fingerprint": "4e64127b5623b9a3",
+      "template_label": "epoint|jyxx|xinjiangggzy_new",
+      "template_identified": true
+    },
+    {
+      "id": "fe40e345724792e1",
+      "name": "新疆生产建设兵团公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "兵团",
+      "identity_status": "official_national_directory_candidate",
+      "official_identity": "official_directory_evidence",
+      "requested_url": "https://ggzy.xjbt.gov.cn/",
+      "final_url": null,
+      "redirect_chain": [],
+      "redirected_host_differs": false,
+      "redirected_host_not_treated_as_official": true,
+      "http_status": null,
+      "content_type": null,
+      "page_bytes": 0,
+      "response_ms": null,
+      "error_class": "timeout",
+      "error_type": "ConnectTimeout",
+      "error": "HTTPSConnectionPool(host='ggzy.xjbt.gov.cn', port=443): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPSConnection(host='ggzy.xjbt.gov.cn', port=443) at 0x18549d5ca50>, 'Connection to ggzy.xjbt.gov.cn timed out. (connect timeout=8)'))",
+      "audit_complete": true,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "shared_collector_ready": false,
+      "eligible_for_strict_verification": false,
+      "needs_human_review": [],
+      "checked_at": "2026-09-05T08:52:18.010840+00:00",
+      "title": null,
+      "page_generator": null,
+      "cms_family": null,
+      "script_path_features": [],
+      "css_path_features": [],
+      "detail_path_patterns": [],
+      "detail_path_samples": [],
+      "detail_path_counts": {},
+      "column_link_counts": {
+        "announcement": 0,
+        "property": 0,
+        "asset": 0,
+        "listing": 0,
+        "deal": 0
+      },
+      "list_selector_candidates": [],
+      "template_fingerprint": null,
+      "template_label": null,
+      "template_identified": false
+    }
+  ],
+  "collection_enabled": false,
+  "endpoint_verified": false
+}
