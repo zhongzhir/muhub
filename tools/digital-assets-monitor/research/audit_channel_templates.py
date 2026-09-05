@@ -7,6 +7,11 @@ or endpoint_verified, and never calls paid search APIs.
 DNS and redirect checks are preflight only: the process resolves names before
 requesting, but requests itself may still connect to a later DNS answer.
 Peer IPs are not pinned. Do not feed this script untrusted user-submitted URLs.
+
+DNS lookups run on a bounded thread pool of DNS_MAX_WORKERS threads. The OS
+getaddrinfo call cannot be forcibly cancelled; after a timeout the worker may
+stay occupied until the system call returns. Later lookups then wait on the
+same pool and time out instead of creating unbounded threads.
 """
 from __future__ import annotations
 
@@ -21,7 +26,7 @@ import tempfile
 import threading
 import time
 from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
@@ -40,6 +45,7 @@ MAX_REDIRECTS = 5
 CHUNK_SIZE = 65536
 DEFAULT_CHECKPOINT_EVERY = 25
 DNS_WAIT_SECONDS = 3
+DNS_MAX_WORKERS = HARD_MAX_WORKERS
 USER_AGENT = (
     "Mozilla/5.0 (compatible; MUHUB-source-audit/1.0; +https://monitor.muhub.cn)"
 )
@@ -173,32 +179,62 @@ def _blocked_hostname(host):
     return False
 
 
-def socket_resolver(host, wait_seconds=DNS_WAIT_SECONDS):
+def _getaddrinfo_lookup(host):
     import socket
 
-    box = {"addresses": [], "error": None}
+    infos = socket.getaddrinfo(host, None)
+    found = []
+    for info in infos:
+        addr = info[4][0] if info[4] else None
+        if addr:
+            found.append(addr)
+    return found
 
-    def lookup():
-        try:
-            infos = socket.getaddrinfo(host, None)
-        except OSError as exc:
-            box["error"] = exc
-            return
-        found = []
-        for info in infos:
-            addr = info[4][0] if info[4] else None
-            if addr:
-                found.append(addr)
-        box["addresses"] = found
 
-    worker = threading.Thread(target=lookup, daemon=True)
-    worker.start()
-    worker.join(wait_seconds)
-    if worker.is_alive():
-        raise DnsTimeoutError("dns_lookup_timed_out")
-    if box["error"] is not None:
-        raise DnsResolutionError(str(box["error"]))
-    return box["addresses"]
+_dns_executor = None
+_dns_executor_lock = threading.Lock()
+
+
+def dns_executor():
+    """Bounded DNS workers. getaddrinfo cannot be cancelled after timeout."""
+    global _dns_executor
+    with _dns_executor_lock:
+        if _dns_executor is None:
+            _dns_executor = ThreadPoolExecutor(
+                max_workers=DNS_MAX_WORKERS,
+                thread_name_prefix="audit-dns",
+            )
+        return _dns_executor
+
+
+def reset_dns_executor(wait=False):
+    """Shut down the DNS pool. Timed-out getaddrinfo workers cannot be killed."""
+    global _dns_executor
+    with _dns_executor_lock:
+        if _dns_executor is not None:
+            try:
+                _dns_executor.shutdown(wait=wait, cancel_futures=True)
+            except TypeError:
+                _dns_executor.shutdown(wait=wait)
+            _dns_executor = None
+
+
+def socket_resolver(host, wait_seconds=DNS_WAIT_SECONDS, lookup=None):
+    # OS DNS cannot be forcibly cancelled. Timed-out work may keep a pool
+    # worker busy until getaddrinfo returns; new lookups share that pool
+    # and time out instead of spawning extra threads.
+    worker = lookup or _getaddrinfo_lookup
+    future = dns_executor().submit(worker, host)
+    try:
+        return future.result(timeout=wait_seconds)
+    except FuturesTimeoutError as exc:
+        raise DnsTimeoutError("dns_lookup_timed_out") from exc
+    except DnsTimeoutError:
+        raise
+    except DnsResolutionError:
+        raise
+    except Exception as exc:
+        raise DnsResolutionError(str(exc)[:300]) from exc
 
 
 def authorize_host(host, resolver=None):
@@ -267,20 +303,19 @@ def build_session():
     return session
 
 
-_SESSION = None
-_SESSION_LOCK = threading.Lock()
+_THREAD_STATE = threading.local()
 
 
-def default_session():
-    global _SESSION
-    with _SESSION_LOCK:
-        if _SESSION is None:
-            _SESSION = build_session()
-        return _SESSION
+def thread_session():
+    session = getattr(_THREAD_STATE, "session", None)
+    if session is None:
+        session = build_session()
+        _THREAD_STATE.session = session
+    return session
 
 
 def default_http_get(url, timeout, headers):
-    return default_session().get(
+    return thread_session().get(
         url,
         timeout=timeout,
         headers=headers,
@@ -562,6 +597,7 @@ def base_result(entry):
         "audit_complete": True,
         "schema_version": SCHEMA_VERSION,
         "dns_precheck_ips": [],
+        "dns_hops": [],
         "peer_ip_pinned": False,
         "security_boundary": SECURITY_BOUNDARY,
         "collection_enabled": False,
@@ -588,6 +624,14 @@ def read_limited_body(response, max_bytes=MAX_BYTES):
     return bytes(data), truncated
 
 
+def _close_response(response):
+    if response is not None and hasattr(response, "close"):
+        try:
+            response.close()
+        except Exception:
+            pass
+
+
 def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=None, host_gate=None):
     timeout = timeout or (CONNECT_TIMEOUT, READ_TIMEOUT)
     headers = {
@@ -598,57 +642,45 @@ def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=Non
     current = url
     chain = []
     started = time.perf_counter()
-    response = None
     resolved_hops = []
-    try:
-        for _ in range(MAX_REDIRECTS + 1):
-            inspection = inspect_public_http_url(current, resolver=resolver)
-            resolved_hops.append({"url": current, "ips": inspection["resolved_ips"]})
-            host = inspection["host"]
-            lock = host_gate.slot(host) if host_gate is not None else None
-            try:
-                if lock is not None:
-                    lock.acquire()
-                response = http_get(current, timeout=timeout, headers=headers)
-            finally:
-                if lock is not None:
-                    lock.release()
+    final_payload = None
+    for _ in range(MAX_REDIRECTS + 1):
+        inspection = inspect_public_http_url(current, resolver=resolver)
+        resolved_hops.append({"url": current, "ips": inspection["resolved_ips"]})
+        host = inspection["host"]
+        lock = host_gate.slot(host) if host_gate is not None else None
+        response = None
+        acquired = False
+        try:
+            if lock is not None:
+                lock.acquire()
+                acquired = True
+            response = http_get(current, timeout=timeout, headers=headers)
             status = getattr(response, "status_code", None)
             location = None
             if hasattr(response, "headers"):
                 location = response.headers.get("Location") or response.headers.get("location")
             chain.append({"url": current, "status": status, "location": location})
             if status in {301, 302, 303, 307, 308} and location:
-                nxt = urljoin(current, location)
-                current = nxt
-                if hasattr(response, "close"):
-                    response.close()
+                current = urljoin(current, location)
                 continue
             body, truncated = read_limited_body(response)
-            elapsed = int((time.perf_counter() - started) * 1000)
-            content_type = (response.headers or {}).get("Content-Type")
-            result = {
-                "ok": status == 200 and not truncated,
-                "requested_url": url,
-                "final_url": getattr(response, "url", None) or current,
-                "redirect_chain": chain,
-                "http_status": status,
-                "content_type": content_type,
-                "page_bytes": len(body),
-                "response_ms": elapsed,
+            final_payload = {
+                "status": status,
                 "body": body,
-                "headers": dict(response.headers or {}),
                 "truncated": truncated,
-                "dns_precheck_ips": resolved_hops[-1]["ips"] if resolved_hops else [],
-                "dns_hops": resolved_hops,
-                "peer_ip_pinned": False,
+                "content_type": (response.headers or {}).get("Content-Type"),
+                "headers": dict(response.headers or {}),
+                "final_url": getattr(response, "url", None) or current,
             }
-            if truncated:
-                result["error_class"] = "response_too_large"
-            elif status != 200:
-                result["error_class"] = classify_http_status(status)
-            return result
-        elapsed = int((time.perf_counter() - started) * 1000)
+        finally:
+            _close_response(response)
+            if acquired and lock is not None:
+                lock.release()
+        if final_payload is not None:
+            break
+    elapsed = int((time.perf_counter() - started) * 1000)
+    if final_payload is None:
         return {
             "ok": False,
             "requested_url": url,
@@ -661,14 +693,30 @@ def fetch_public_page(url, http_get=default_http_get, resolver=None, timeout=Non
             "body": b"",
             "error_class": "too_many_redirects",
             "dns_precheck_ips": resolved_hops[-1]["ips"] if resolved_hops else [],
+            "dns_hops": resolved_hops,
             "peer_ip_pinned": False,
         }
-    finally:
-        if response is not None and hasattr(response, "close"):
-            try:
-                response.close()
-            except Exception:
-                pass
+    result = {
+        "ok": final_payload["status"] == 200 and not final_payload["truncated"],
+        "requested_url": url,
+        "final_url": final_payload["final_url"],
+        "redirect_chain": chain,
+        "http_status": final_payload["status"],
+        "content_type": final_payload["content_type"],
+        "page_bytes": len(final_payload["body"]),
+        "response_ms": elapsed,
+        "body": final_payload["body"],
+        "headers": final_payload["headers"],
+        "truncated": final_payload["truncated"],
+        "dns_precheck_ips": resolved_hops[-1]["ips"] if resolved_hops else [],
+        "dns_hops": resolved_hops,
+        "peer_ip_pinned": False,
+    }
+    if final_payload["truncated"]:
+        result["error_class"] = "response_too_large"
+    elif final_payload["status"] != 200:
+        result["error_class"] = classify_http_status(final_payload["status"])
+    return result
 
 
 def host_of(url):
@@ -703,16 +751,6 @@ def audit_candidate(entry, http_get=default_http_get, resolver=None, timeout=Non
     result = base_result(entry)
     url = entry.get("homepage_candidate")
     try:
-        inspection = inspect_public_http_url(url, resolver=resolver)
-        result["dns_precheck_ips"] = inspection["resolved_ips"]
-    except (UnsafeURLError, DnsTimeoutError, DnsResolutionError) as exc:
-        result["error_class"] = classify_exception(exc)
-        result["error_type"] = type(exc).__name__
-        result["error"] = str(exc)
-        if isinstance(exc, UnsafeURLError):
-            result["needs_human_review"] = ["unsafe_or_non_public_url"]
-        return result
-    try:
         fetched = fetch_public_page(
             url, http_get=http_get, resolver=resolver, timeout=timeout, host_gate=host_gate
         )
@@ -720,6 +758,8 @@ def audit_candidate(entry, http_get=default_http_get, resolver=None, timeout=Non
         result["error_class"] = classify_exception(exc)
         result["error_type"] = type(exc).__name__
         result["error"] = str(exc)[:400]
+        if isinstance(exc, UnsafeURLError):
+            result["needs_human_review"] = ["unsafe_or_non_public_url"]
         return result
     except Exception as exc:
         result["error_class"] = classify_exception(exc)
@@ -732,7 +772,8 @@ def audit_candidate(entry, http_get=default_http_get, resolver=None, timeout=Non
     result["content_type"] = fetched.get("content_type")
     result["page_bytes"] = fetched.get("page_bytes") or 0
     result["response_ms"] = fetched.get("response_ms")
-    result["dns_precheck_ips"] = fetched.get("dns_precheck_ips") or result["dns_precheck_ips"]
+    result["dns_precheck_ips"] = fetched.get("dns_precheck_ips") or []
+    result["dns_hops"] = fetched.get("dns_hops") or []
     result["peer_ip_pinned"] = False
     requested_host = host_of(url)
     final_host = host_of(result["final_url"] or "")

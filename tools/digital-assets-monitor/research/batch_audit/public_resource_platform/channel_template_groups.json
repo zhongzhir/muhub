@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T09:05:25.431315+00:00",
+  "generated_at": "2026-09-05T09:45:30.691408+00:00",
   "kind": "public_resource_platform",
   "schema_version": "2",
   "note": "template_fingerprint is a page-structure key; cms_family is coarser. Neither is a production collector.",
@@ -11,8 +11,8 @@
     "vue_spa",
     "webbuilder"
   ],
-  "identified_count": 21,
-  "unidentified_count": 11,
+  "identified_count": 22,
+  "unidentified_count": 10,
   "groups": [
     {
       "template_fingerprint": "0a8f7366873c748e",
@@ -40,6 +40,35 @@
           "cms_family": "unknown",
           "template_label": "unknown|no-detail|static,favicon.ico|no-list",
           "shared_collector_ready": false
+        }
+      ]
+    },
+    {
+      "template_fingerprint": "44dc0947370f0ffd",
+      "template_label": "epoint|no-detail|js,css|ul li a",
+      "cms_family": "epoint",
+      "member_count": 2,
+      "shared_collector_ready_count": 2,
+      "members": [
+        {
+          "id": "d4d1cab726eeabc4",
+          "name": "陕西公共资源交易平台",
+          "province": "陕西",
+          "requested_url": "https://www.sxggzyjy.cn/",
+          "final_url": "https://www.sxggzyjy.cn/",
+          "cms_family": "epoint",
+          "template_label": "epoint|no-detail|js,css|ul li a",
+          "shared_collector_ready": true
+        },
+        {
+          "id": "a262692751331594",
+          "name": "宁夏公共资源交易平台",
+          "province": "宁夏",
+          "requested_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+          "final_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+          "cms_family": "epoint",
+          "template_label": "epoint|no-detail|js,css|ul li a",
+          "shared_collector_ready": true
         }
       ]
     },
@@ -135,25 +164,6 @@
           "cms_family": "webbuilder",
           "template_label": "webbuilder|no-detail|js,oauth,cityjson,css|ul li a",
           "shared_collector_ready": false
-        }
-      ]
-    },
-    {
-      "template_fingerprint": "44dc0947370f0ffd",
-      "template_label": "epoint|no-detail|js,css|ul li a",
-      "cms_family": "epoint",
-      "member_count": 1,
-      "shared_collector_ready_count": 1,
-      "members": [
-        {
-          "id": "d4d1cab726eeabc4",
-          "name": "陕西公共资源交易平台",
-          "province": "陕西",
-          "requested_url": "https://www.sxggzyjy.cn/",
-          "final_url": "https://www.sxggzyjy.cn/",
-          "cms_family": "epoint",
-          "template_label": "epoint|no-detail|js,css|ul li a",
-          "shared_collector_ready": true
         }
       ]
     },
@@ -459,12 +469,6 @@
       "name": "甘肃公共资源交易平台",
       "province": "甘肃",
       "error_class": "access_restricted"
-    },
-    {
-      "id": "a262692751331594",
-      "name": "宁夏公共资源交易平台",
-      "province": "宁夏",
-      "error_class": "dns_error"
     },
     {
       "id": "fe40e345724792e1",

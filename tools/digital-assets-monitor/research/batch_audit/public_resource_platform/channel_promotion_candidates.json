@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-09-05T09:05:25.431362+00:00",
+  "generated_at": "2026-09-05T09:45:30.691433+00:00",
   "kind": "public_resource_platform",
   "schema_version": "2",
   "note": "Promotion here only means eligible for the next strict verification round. It does not enable collection or mark production coverage.",
-  "count": 13,
+  "count": 14,
   "candidates": [
     {
       "id": "311d70fbf6d78dfb",
@@ -232,11 +232,11 @@
       "cms_family": "jeecms",
       "official_identity": "official_directory_evidence",
       "column_link_counts": {
-        "announcement": 74,
+        "announcement": 76,
         "property": 0,
         "asset": 0,
         "listing": 14,
-        "deal": 7
+        "deal": 8
       },
       "next_step": "strict_verification",
       "promoted_to_production": false,
@@ -285,6 +285,30 @@
         "asset": 15,
         "listing": 63,
         "deal": 57
+      },
+      "next_step": "strict_verification",
+      "promoted_to_production": false,
+      "collection_enabled": false,
+      "endpoint_verified": false,
+      "confirmed_institution": false,
+      "note": "May enter the next strict verification round; not an operational source."
+    },
+    {
+      "id": "a262692751331594",
+      "name": "宁夏公共资源交易平台",
+      "kind": "public_resource_platform",
+      "province": "宁夏",
+      "requested_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+      "final_url": "https://ggzyjy.fzggw.nx.gov.cn/",
+      "template_fingerprint": "44dc0947370f0ffd",
+      "cms_family": "epoint",
+      "official_identity": "official_directory_evidence",
+      "column_link_counts": {
+        "announcement": 48,
+        "property": 3,
+        "asset": 7,
+        "listing": 0,
+        "deal": 5
       },
       "next_step": "strict_verification",
       "promoted_to_production": false,

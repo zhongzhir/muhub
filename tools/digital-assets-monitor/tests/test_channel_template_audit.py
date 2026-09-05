@@ -16,8 +16,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research"))
 
 from audit_channel_templates import (
+    DNS_MAX_WORKERS,
     DnsResolutionError,
     DnsTimeoutError,
+    HARD_MAX_WORKERS,
     SCHEMA_VERSION,
     UnsafeURLError,
     analyze_html,
@@ -28,8 +30,11 @@ from audit_channel_templates import (
     load_candidates,
     persist_outputs,
     police_candidate_counts,
+    reset_dns_executor,
     run_audit,
+    socket_resolver,
     stable_candidate_id,
+    thread_session,
     validate_public_http_url,
 )
 
@@ -220,8 +225,12 @@ class ChannelTemplateAuditTests(unittest.TestCase):
         self.assertIn("redirect_host_changed", result["needs_human_review"])
         self.assertFalse(result["eligible_for_strict_verification"])
         self.assertEqual(calls, ["https://ggzy.example.gov.cn/", "https://other.example.gov.cn/portal"])
-        self.assertIn("ggzy.example.gov.cn", resolved)
-        self.assertIn("other.example.gov.cn", resolved)
+        self.assertEqual(resolved.count("ggzy.example.gov.cn"), 1)
+        self.assertEqual(resolved.count("other.example.gov.cn"), 1)
+        self.assertEqual(
+            [hop["url"] for hop in result["dns_hops"]],
+            ["https://ggzy.example.gov.cn/", "https://other.example.gov.cn/portal"],
+        )
         self.assertFalse(result["peer_ip_pinned"])
 
     def test_template_fingerprint_splits_structure_not_province(self):
@@ -438,20 +447,38 @@ class ChannelTemplateAuditTests(unittest.TestCase):
             ]
             candidates.write_text(json.dumps(rows), encoding="utf-8")
             shared = "https://shared.example.gov.cn/portal"
-            max_shared = [0]
-            active = {"n": 0}
+            max_shared_gets = [0]
+            max_shared_bodies = [0]
+            sneaked_gets_during_body = [0]
+            active_gets = {"n": 0}
+            active_bodies = {"n": 0}
             gate = threading.Lock()
+
+            class StreamedSharedResponse(FakeResponse):
+                def iter_content(self, chunk_size=65536):
+                    with gate:
+                        active_bodies["n"] += 1
+                        max_shared_bodies[0] = max(max_shared_bodies[0], active_bodies["n"])
+                    time.sleep(0.08)
+                    with gate:
+                        active_bodies["n"] -= 1
+                    yield from super().iter_content(chunk_size)
 
             def http_get(url, timeout, headers):
                 if url in {"https://left.example.gov.cn/", "https://right.example.gov.cn/"}:
                     return FakeResponse(url, status=302, location=shared)
                 with gate:
-                    active["n"] += 1
-                    max_shared[0] = max(max_shared[0], active["n"])
-                time.sleep(0.05)
-                with gate:
-                    active["n"] -= 1
-                return FakeResponse(url, content=SAMPLE_HTML.format(title=url).encode("utf-8"))
+                    if active_bodies["n"] > 0:
+                        sneaked_gets_during_body[0] += 1
+                    active_gets["n"] += 1
+                    max_shared_gets[0] = max(max_shared_gets[0], active_gets["n"])
+                try:
+                    return StreamedSharedResponse(
+                        url, content=SAMPLE_HTML.format(title=url).encode("utf-8")
+                    )
+                finally:
+                    with gate:
+                        active_gets["n"] -= 1
 
             run_audit(
                 "public_resource_platform",
@@ -461,7 +488,169 @@ class ChannelTemplateAuditTests(unittest.TestCase):
                 resolver=public_dns,
                 candidate_files=[candidates],
             )
-            self.assertEqual(max_shared[0], 1)
+            self.assertEqual(max_shared_gets[0], 1)
+            self.assertEqual(max_shared_bodies[0], 1)
+            self.assertEqual(sneaked_gets_during_body[0], 0)
+
+    def test_same_host_blocked_body_blocks_second_http_get(self):
+        with tempfile.TemporaryDirectory() as folder:
+            candidates = Path(folder) / "candidates.json"
+            output = Path(folder) / "out"
+            rows = [
+                public_entry(id="one", homepage_candidate="https://same.example.gov.cn/a"),
+                public_entry(id="two", homepage_candidate="https://same.example.gov.cn/b"),
+            ]
+            candidates.write_text(json.dumps(rows), encoding="utf-8")
+            body_started = threading.Event()
+            release_body = threading.Event()
+            state = threading.Lock()
+            http_gets = []
+            body_reads = []
+
+            class BlockingBody(FakeResponse):
+                def iter_content(self, chunk_size=65536):
+                    with state:
+                        body_reads.append(self.url)
+                    body_started.set()
+                    if not release_body.wait(timeout=8):
+                        raise TimeoutError("test did not release streamed body")
+                    yield from super().iter_content(chunk_size)
+
+            def http_get(url, timeout, headers):
+                with state:
+                    http_gets.append(url)
+                return BlockingBody(
+                    url, content=SAMPLE_HTML.format(title=url).encode("utf-8")
+                )
+
+            outcome = {}
+
+            def runner():
+                try:
+                    run_audit(
+                        "public_resource_platform",
+                        output,
+                        workers=2,
+                        http_get=http_get,
+                        resolver=public_dns,
+                        candidate_files=[candidates],
+                    )
+                    outcome["ok"] = True
+                except Exception as exc:
+                    outcome["error"] = exc
+
+            worker = threading.Thread(target=runner)
+            worker.start()
+            self.assertTrue(body_started.wait(timeout=5))
+            time.sleep(0.1)
+            with state:
+                get_snapshot = list(http_gets)
+                body_snapshot = list(body_reads)
+            self.assertEqual(len(get_snapshot), 1, get_snapshot)
+            self.assertEqual(len(body_snapshot), 1, body_snapshot)
+            release_body.set()
+            worker.join(timeout=10)
+            self.assertFalse(worker.is_alive())
+            self.assertNotIn("error", outcome)
+            self.assertTrue(outcome.get("ok"))
+            self.assertEqual(len(http_gets), 2)
+            self.assertEqual(len(body_reads), 2)
+
+    def test_thread_local_sessions_are_isolated(self):
+        seen = {}
+        barrier = threading.Barrier(2)
+        env = {
+            "HTTP_PROXY": "http://127.0.0.1:9",
+            "HTTPS_PROXY": "http://127.0.0.1:9",
+            "http_proxy": "http://127.0.0.1:9",
+            "https_proxy": "http://127.0.0.1:9",
+            "ALL_PROXY": "http://127.0.0.1:9",
+            "all_proxy": "http://127.0.0.1:9",
+        }
+
+        def worker(name):
+            first = thread_session()
+            barrier.wait(timeout=5)
+            second = thread_session()
+            seen[name] = (first, second)
+
+        with patch.dict(os.environ, env, clear=False):
+            threads = [
+                threading.Thread(target=worker, args=("a",)),
+                threading.Thread(target=worker, args=("b",)),
+            ]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=5)
+                self.assertFalse(thread.is_alive())
+        self.assertIs(seen["a"][0], seen["a"][1])
+        self.assertIs(seen["b"][0], seen["b"][1])
+        self.assertIsNot(seen["a"][0], seen["b"][0])
+        for first, _second in seen.values():
+            self.assertFalse(first.trust_env)
+            self.assertIsNone(first.proxies.get("http"))
+            self.assertIsNone(first.proxies.get("https"))
+
+    def test_dns_lookup_threads_are_bounded(self):
+        self.assertEqual(DNS_MAX_WORKERS, HARD_MAX_WORKERS)
+        unblock = threading.Event()
+        state = threading.Lock()
+        inflight = {"n": 0, "max": 0}
+        timeouts = []
+        timeout_lock = threading.Lock()
+        reset_dns_executor(wait=False)
+
+        def hanging_lookup(_host):
+            with state:
+                inflight["n"] += 1
+                inflight["max"] = max(inflight["max"], inflight["n"])
+            unblock.wait(timeout=30)
+            with state:
+                inflight["n"] -= 1
+            return [PUBLIC_IP]
+
+        callers = []
+
+        def caller(index):
+            try:
+                socket_resolver(f"stuck-{index}.example.gov.cn", wait_seconds=0.3, lookup=hanging_lookup)
+            except DnsTimeoutError:
+                with timeout_lock:
+                    timeouts.append(index)
+
+        try:
+            for index in range(40):
+                thread = threading.Thread(target=caller, args=(index,))
+                callers.append(thread)
+                thread.start()
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline:
+                with state:
+                    current = inflight["n"]
+                    peak = inflight["max"]
+                if current >= DNS_MAX_WORKERS:
+                    break
+                time.sleep(0.01)
+            else:
+                self.fail(f"DNS pool did not saturate, inflight={inflight['n']} peak={inflight['max']}")
+            dns_threads = [
+                thread for thread in threading.enumerate() if (thread.name or "").startswith("audit-dns")
+            ]
+            self.assertLessEqual(len(dns_threads), HARD_MAX_WORKERS, [thread.name for thread in dns_threads])
+            self.assertLessEqual(inflight["max"], HARD_MAX_WORKERS)
+            self.assertEqual(inflight["max"], DNS_MAX_WORKERS)
+            for thread in callers:
+                thread.join(timeout=5)
+                self.assertFalse(thread.is_alive())
+            self.assertEqual(len(timeouts), 40)
+            dns_threads_after = [
+                thread for thread in threading.enumerate() if (thread.name or "").startswith("audit-dns")
+            ]
+            self.assertLessEqual(len(dns_threads_after), HARD_MAX_WORKERS)
+        finally:
+            unblock.set()
+            reset_dns_executor(wait=True)
 
     def test_police_province_city_and_county_candidates_load(self):
         rows = load_candidates("police")
