@@ -38,7 +38,7 @@ print("heatmap ->", len(c.get("/api/heatmap").json()))
 print("sources ->", len(c.get("/api/sources").json()), "src health keys ok")
 coverage=c.get("/api/coverage").json()
 assert coverage["institutions"]["candidates"] >= 94
-assert coverage["channels"]["collection_enabled"] == 5
+assert coverage["channels"]["collection_enabled"] == 7
 assert coverage["channels"]["endpoint_verified"] == 0
 print("coverage ->",coverage["institutions"],coverage["channels"])
 print("high_value ->", len(c.get("/api/high_value").json()))

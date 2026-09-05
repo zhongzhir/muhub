@@ -5,7 +5,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from app.config import get_sources
 from app.scraper.pipeline import _source_items,should_verify_article
 from app.scraper.verification import verify_search_item
-ids={"police-tianjin","police-ningde","police-chongqing","public-shanxi-forfeiture","public-xinjiang-property"}
+ids={"police-tianjin","police-ningde","police-chongqing","public-shanxi-forfeiture","public-xinjiang-property","ggzy","qdpre"}
 out=[]
 for source in get_sources()["sources"]:
     if source["id"] not in ids: continue
